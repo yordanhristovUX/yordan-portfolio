@@ -1,0 +1,73 @@
+/* ============================================================
+   Yordan Hristov — portfolio page styles (layout + wiring only).
+
+   Tokens and components come from the design system:
+     design-system/dist/tokens.css      (generated from tokens.json)
+     design-system/css/components.css   (all component classes)
+   loaded before this file in index.html. This file may only
+   position and compose components — no palettes, no new component
+   styles. See design-system/README.md before adding UI.
+   ============================================================ */
+
+html { scroll-behavior: smooth; }
+
+/* ============ Hero ============ */
+.hero .well { padding-top: clamp(5.5rem, 14vh, 8rem); } /* clears the floating nav */
+
+.hero__role {
+  display: inline-block;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.4rem;
+  margin-bottom: clamp(1.25rem, 3vh, 2rem);
+}
+.hero__title { margin-bottom: clamp(1.5rem, 4vh, 2.5rem); }
+.hero__row { display: block; overflow: hidden; }
+.hero__word { display: inline-block; }
+
+.hero__body {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem 3rem;
+  margin-bottom: clamp(2rem, 5vh, 3rem);
+}
+.hero__lede {
+  flex: 1 1 24rem;
+  max-width: 38rem;
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  line-height: 1.55;
+}
+.hero__lede strong { color: var(--content-primary); }
+.hero__actions { display: flex; gap: 0.75rem; flex-shrink: 0; }
+
+/* ============ Background section ============ */
+.notes__lead { margin-top: clamp(2rem, 5vh, 3rem); font-size: 0.95rem; }
+.notes__statement { margin-bottom: clamp(1.25rem, 3.5vh, 2rem); }
+.notes__prose { margin-bottom: clamp(1.25rem, 3.5vh, 2rem); }
+#background .facts { margin-top: 1rem; }
+
+/* ============ Contact ============ */
+.sec--contact { border-bottom: 0; }
+.tx__kicker { margin-bottom: 1.75rem; }
+.tx { display: block; }
+.tx__big { display: block; transition: color 0.25s; }
+.tx:hover .tx__big { color: var(--primary-muted); }
+.tx__mail {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-size: 0.9rem; letter-spacing: 0.05em;
+  color: var(--chrome-label-strong);
+  border-bottom: 1px solid var(--chrome-border-strong);
+  padding-bottom: 2px;
+}
+.tx:hover .tx__mail { color: var(--content-primary); border-color: var(--content-primary); }
+.sec--contact .link-grid { margin-top: clamp(2rem, 5vh, 3rem); }
+
+/* ============ Reveal defaults (JS toggles) ============ */
+.js [data-reveal] { opacity: 0; transform: translateY(1.5rem); }
+.js [data-rise] { transform: translateY(110%); display: inline-block; }
+
+/* ============ Reduced motion ============ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .js [data-reveal] { opacity: 1; transform: none; }
+  .js [data-rise] { transform: none; }
+}

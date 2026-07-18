@@ -1,0 +1,15 @@
+# Dependencies / build output
+node_modules/
+design-system/storybook-static/
+
+# Private reference material — the complex design system this one simplifies.
+# Contains employer-internal configs; never publish.
+generated/
+generated.zip
+
+# Environment & noise
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
