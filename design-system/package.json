@@ -1,0 +1,17 @@
+{
+  "name": "@yordan/design-system",
+  "private": true,
+  "type": "module",
+  "description": "AI-ready, repo-first design system for the blueprint portfolio. Source of truth: tokens/tokens.json + components/*/spec.md + css/components.css. See README.md.",
+  "scripts": {
+    "build": "node scripts/build.mjs --check",
+    "storybook": "npm run build && storybook dev -p 6006 --no-open",
+    "build-storybook": "npm run build && storybook build"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^9.1.5",
+    "@storybook/html-vite": "^9.1.5",
+    "storybook": "^9.1.5",
+    "vite": "^6.3.5"
+  }
+}
