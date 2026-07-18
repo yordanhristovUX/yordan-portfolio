@@ -1,0 +1,28 @@
+# Link grid
+
+Bordered grid of equal-weight links (contact channels). Cells flex-fill the row and
+invert to ink on hover.
+
+## Pattern
+
+```html
+<div class="link-grid">
+  <a href="mailto:...">Email</a>
+  <a href="tel:...">+359 ...</a>
+  <a href="..." target="_blank" rel="noopener">LinkedIn ↗</a>
+</div>
+```
+
+## Tokens
+
+`--font-mono`, `--chrome-label-strong`, `--rule`, `--primary`, `--content-inverse`, `--pad`
+
+## A11y
+
+External links: `target="_blank" rel="noopener"` and a trailing `↗`. Labels name the
+destination, not "click here".
+
+## AI notes
+
+- 3–5 links; every cell equal weight — the primary contact action lives elsewhere
+  (the big display link), not here.

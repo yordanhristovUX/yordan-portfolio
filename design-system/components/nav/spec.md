@@ -1,0 +1,41 @@
+# Nav (floating bar)
+
+Compact chrome bar lying on the sheet: fixed, top-centered, max-content width, inset-shadow
+edges (no border) and a hard 5px offset shadow. Identity / links / availability status.
+
+## Pattern
+
+```html
+<header class="bar">
+  <a class="bar__id" href="#top">Yordan Hristov</a>
+  <nav class="bar__nav" aria-label="Primary">
+    <a href="#work">Work</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <div class="bar__status">
+    <span class="bar__dot" aria-hidden="true"></span>
+    <span>Available for work — Sofia, <time id="local-time">--:--</time></span>
+  </div>
+</header>
+```
+
+## Tokens
+
+`--chrome-bg`, `--chrome-border`, `--chrome-border-strong`, `--chrome-label`,
+`--chrome-label-strong`, `--content-primary`, `--primary`, `--accent` (dot), `--font-mono`
+
+## Behaviour
+
+The clock is filled by site JS (`#local-time`, Europe/Sofia). Status hides under 980px;
+paddings tighten under 480px. Content below needs top clearance (hero well padding).
+
+## A11y
+
+`<nav aria-label="Primary">`; the dot is decorative (`aria-hidden`). Link hover inverts to
+ink — AA contrast in both states.
+
+## AI notes
+
+- Three links maximum; this bar is a compass, not a sitemap.
+- Nothing else may be `position: fixed` except the dialog — the bar owns the floating layer.
