@@ -27,7 +27,7 @@
     }
   },
   "depth": 10,
-  "embeddings": "skipped (no VOYAGE_API_KEY)",
+  "embeddings": "voyage-3.5, vectors cached in evals/vectors.json",
   "arms": [
     {
       "arm": "tools-only",
@@ -111,6 +111,27 @@
         "structured-only": 0.6667,
         "corpus-gap": 0,
         "out-of-corpus": 0.8571
+      }
+    },
+    {
+      "arm": "embeddings",
+      "hit1": 0.8605,
+      "hit3": 0.9302,
+      "hit5": 0.9767,
+      "ent1": 0.7674,
+      "ent3": 0.8837,
+      "mrr": 0.9019,
+      "abstain": 0,
+      "separability": 0.8319,
+      "byCategory": {
+        "project": 0.8333,
+        "experience": 0.8571,
+        "skills": 1,
+        "cross-cutting": 1,
+        "metric": 1,
+        "structured-only": 0,
+        "corpus-gap": 0,
+        "out-of-corpus": 0
       }
     }
   ]
