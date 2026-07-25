@@ -46,6 +46,7 @@
       "expectedChunkIds": [
         "project:greenstreet-audit#subtitle",
         "project:greenstreet-audit#approach",
+        "project:greenstreet-audit#approach-2",
         "project:greenstreet-audit#summary"
       ]
     },
@@ -61,7 +62,7 @@
       "category": "project",
       "question": "How does this portfolio site get deployed, and how do tokens reach Figma?",
       "expectedEntity": "project:meta",
-      "expectedChunkIds": ["project:meta#system"]
+      "expectedChunkIds": ["project:meta#system-2"]
     },
     {
       "id": "proj-mindromeda",

@@ -36,7 +36,7 @@
       "hit5": 0.6744,
       "ent1": 0.5814,
       "ent3": 0.6279,
-      "mrr": 0.4985,
+      "mrr": 0.4974,
       "abstain": 0.7273,
       "separability": 0.8288,
       "byCategory": {
@@ -78,7 +78,7 @@
       "hit5": 0.7442,
       "ent1": 0.6279,
       "ent3": 0.7209,
-      "mrr": 0.5605,
+      "mrr": 0.5594,
       "abstain": 0,
       "separability": 0.5603,
       "byCategory": {

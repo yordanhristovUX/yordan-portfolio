@@ -728,10 +728,27 @@ const tokenize = (s) =>
     .filter((t) => t.length > 1 && t.length < 32);
 
 const chunks = [];
+/* Section kinds repeat within a single entity — the audit carries two
+   {#approach} and two {#outcome} — so `entity#kind` is not unique on its own.
+   Six of seventy-six ids collided before this. An ambiguous id makes a citation
+   point at a section KIND rather than a passage, and passage-level precision is
+   exactly what the provenance gate in lib/knowledge/schema.js exists to check;
+   a citation that can mean two paragraphs cannot prove either one.
+
+   Later collisions take an ordinal. The first keeps the bare id so the common
+   single-section case stays readable — note this means inserting a new section
+   ahead of an existing one of the same kind moves the bare id to the newcomer.
+   That is acceptable because citations are validated against the current index
+   on every request, never stored, so they are never stale in a way that matters. */
+const seenChunkIds = new Set();
+
 function addChunk(id, entity, kind, heading, text, cite) {
   const t = plain(text);
   if (!t) return;
-  chunks.push({ id, entity, kind, heading, text: t, cite });
+  let unique = id;
+  for (let n = 2; seenChunkIds.has(unique); n++) unique = `${id}-${n}`;
+  seenChunkIds.add(unique);
+  chunks.push({ id: unique, entity, kind, heading, text: t, cite });
 }
 
 for (const p of projects) {

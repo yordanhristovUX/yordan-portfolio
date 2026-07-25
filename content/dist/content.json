@@ -1161,7 +1161,7 @@
       }
     },
     {
-      "id": "project:domestina#approach",
+      "id": "project:domestina#approach-2",
       "entity": "project:domestina",
       "kind": "approach",
       "heading": "What I changed",
@@ -1560,7 +1560,7 @@
       }
     },
     {
-      "id": "project:greenstreet-audit#approach",
+      "id": "project:greenstreet-audit#approach-2",
       "entity": "project:greenstreet-audit",
       "kind": "approach",
       "heading": "Analytics & Research Platform — data-dense",
@@ -1695,7 +1695,7 @@
       }
     },
     {
-      "id": "project:greenstreet-audit#outcome",
+      "id": "project:greenstreet-audit#outcome-2",
       "entity": "project:greenstreet-audit",
       "kind": "outcome",
       "heading": "Outcomes",
@@ -2458,7 +2458,7 @@
       }
     },
     {
-      "id": "project:malko-tarnovo#system",
+      "id": "project:malko-tarnovo#system-2",
       "entity": "project:malko-tarnovo",
       "kind": "system",
       "heading": "Accessibility by default",
@@ -2814,7 +2814,7 @@
       }
     },
     {
-      "id": "project:meta#system",
+      "id": "project:meta#system-2",
       "entity": "project:meta",
       "kind": "system",
       "heading": "The pipeline",
@@ -3432,7 +3432,7 @@
       }
     },
     {
-      "id": "project:spetema#approach",
+      "id": "project:spetema#approach-2",
       "entity": "project:spetema",
       "kind": "approach",
       "heading": "Validation",
