@@ -1,0 +1,17 @@
+[
+  {
+    "id": "ai-ready-design-systems",
+    "title": "AI-ready design systems",
+    "body": "Figma component libraries with 1:1 parity to coded components, plus custom AI skills that let Claude Code read, assemble, and generate UI from the system — without drift."
+  },
+  {
+    "id": "platform-scale-ux",
+    "title": "Platform-scale UX",
+    "body": "Whole product surfaces — audited for consistency, accessibility, and usability. Not individual screens: the entire product."
+  },
+  {
+    "id": "design-to-code",
+    "title": "Design-to-code",
+    "body": "The handoff gap, bridged: AI-powered tooling, standardised naming, and — where it matters — production code written and shipped myself."
+  }
+]

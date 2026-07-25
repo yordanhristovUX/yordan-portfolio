@@ -1,0 +1,43 @@
+<svg viewBox="0 0 800 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline: tokens.json builds to dist, consumed by the site, Storybook, Figma and AI agents; GitHub auto-deploys both apps to Vercel" style="width:100%;height:auto;display:block;font-family:ui-monospace,monospace">
+  <g fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="20"  y="30" width="150" height="44"/>
+    <rect x="240" y="30" width="150" height="44"/>
+    <rect x="460" y="30" width="150" height="44"/>
+    <path d="M170 52h62m0 0-8-5m8 5-8 5"/>
+    <path d="M390 52h62m0 0-8-5m8 5-8 5"/>
+    <path d="M535 74v28"/>
+    <path d="M60 130h680" stroke-dasharray="4 4" stroke-width="1"/>
+    <path d="M110 130v34m0 0-5-8m5 8 5-8"/>
+    <path d="M310 130v34m0 0-5-8m5 8 5-8"/>
+    <path d="M510 130v34m0 0-5-8m5 8 5-8"/>
+    <path d="M690 130v34m0 0-5-8m5 8 5-8"/>
+    <rect x="35"  y="164" width="150" height="44"/>
+    <rect x="235" y="164" width="150" height="44"/>
+    <rect x="435" y="164" width="150" height="44"/>
+    <rect x="635" y="164" width="130" height="44"/>
+    <rect x="20"  y="262" width="200" height="44"/>
+    <path d="M220 284h96m0 0-8-5m8 5-8 5"/>
+    <rect x="316" y="262" width="200" height="44"/>
+    <path d="M110 208v54"/>
+    <path d="M310 208v54"/>
+  </g>
+  <g fill="currentColor" font-size="13" text-anchor="middle">
+    <text x="95"  y="56">tokens.json</text>
+    <text x="315" y="56">build.mjs</text>
+    <text x="535" y="56">dist/</text>
+    <text x="110" y="190">THE SITE</text>
+    <text x="310" y="190">STORYBOOK</text>
+    <text x="510" y="190">FIGMA VARS</text>
+    <text x="700" y="190">AI AGENTS</text>
+    <text x="120" y="288">GITHUB (main)</text>
+    <text x="416" y="288">VERCEL ×2</text>
+  </g>
+  <g fill="currentColor" font-size="10" opacity="0.65" text-anchor="middle">
+    <text x="95"  y="90">source of truth</text>
+    <text x="315" y="90">zero deps</text>
+    <text x="535" y="90">css + flat.json</text>
+    <text x="510" y="222">one-way, via MCP</text>
+    <text x="700" y="222">spec.md files</text>
+    <text x="268" y="254">auto-deploy on push</text>
+  </g>
+</svg>

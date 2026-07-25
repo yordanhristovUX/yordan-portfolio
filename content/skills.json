@@ -1,0 +1,78 @@
+{
+  "_note": "ONE list of groups. The site shows 6 rows, the CV shows 5 with different terms and a different taxonomy. Both wordings are the author's; neither is derived from the other. `order` fixes the row order per surface; a group without a key for a surface is not rendered there.",
+
+  "order": {
+    "site": ["design", "research", "accessibility", "ai-workflows", "engineering", "process"],
+    "cv": ["ai-workflows", "design-systems", "research", "product-design", "engineering"]
+  },
+
+  "groups": {
+    "design": {
+      "site": {
+        "term": "Design",
+        "text": "Figma, design systems, component architecture, token systems, prototyping, motion design"
+      }
+    },
+
+    "design-systems": {
+      "cv": {
+        "term": "Design systems",
+        "text": "design tokens, repo-first token architecture, Figma variables and components, component libraries, Storybook, style guides, design-to-code parity, theming, multi-brand and white-label systems"
+      }
+    },
+
+    "research": {
+      "site": {
+        "term": "Research",
+        "text": "user interviews, usability testing, competitor analysis, card sorting, Google Analytics, Hotjar"
+      },
+      "cv": {
+        "term": "Research",
+        "text": "user interviews, usability testing, heuristic evaluation, card sorting, competitor analysis, surveys, WCAG 2.1 AA auditing, screen reader testing, Hotjar and Google Analytics"
+      }
+    },
+
+    "accessibility": {
+      "site": {
+        "term": "Accessibility",
+        "text": "WCAG 2.1 AA, screen reader testing, semantic HTML review, accessibility auditing"
+      }
+    },
+
+    "ai-workflows": {
+      "site": {
+        "term": "AI workflows",
+        "text": "Claude Code, custom MCP skills, AI-assisted prototyping, design-to-code pipelines"
+      },
+      "cv": {
+        "term": "AI workflows",
+        "text": "Claude Code, custom skills, MCP servers, agent orchestration, agentic engineering, design-to-code pipelines, AI-assisted prototyping, prompt engineering, Google AI Studio"
+      }
+    },
+
+    "product-design": {
+      "cv": {
+        "term": "Product design",
+        "text": "information architecture, prototyping, interaction design, visual design, motion design, 0-to-1 product work"
+      }
+    },
+
+    "engineering": {
+      "site": {
+        "term": "Frontend",
+        "text": "HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship"
+      },
+      "cv": {
+        "term": "Engineering",
+        "text": "HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship"
+      }
+    },
+
+    "process": {
+      "site": {
+        "term": "Process",
+        "text": "design thinking, agile, cross-functional collaboration, stakeholder management"
+      }
+    }
+  }
+}
