@@ -35,6 +35,16 @@ const RULES = [
     why: "the API consumes lib/knowledge and content/dist, nothing else",
   },
   {
+    /* evals/ sits beside api/ under lib/knowledge: it measures the tool core
+       and may import it, but it is not a route and must never reach into one.
+       Nor may it read content/ source — the retriever's input is the generated
+       index, so an eval that read the .md files would be measuring something
+       the retriever never sees. */
+    slice: "evals",
+    banned: [/(^|\/)api\//, /(^|\/)js\//, /content\/[^"']*\.md/, /content\/(projects|experience)\//],
+    why: "evals measures lib/knowledge against the generated index — never a consumer, never content source",
+  },
+  {
     slice: "scripts",
     banned: [/(^|\/)lib\//, /(^|\/)api\//, /(^|\/)evals\//],
     why: "the generators run before those slices exist and must not depend on them",

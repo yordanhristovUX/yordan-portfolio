@@ -1,0 +1,117 @@
+{
+  "$schema": "evals/results.schema — see evals/CLAUDE.md",
+  "version": 1,
+  "generatedBy": "evals/run.mjs — do not edit",
+  "contentVersion": 1,
+  "corpus": {
+    "chunks": 76,
+    "terms": 1112,
+    "avgdl": 43.75,
+    "projects": 14,
+    "experience": 6,
+    "manifestChars": 4323
+  },
+  "questions": {
+    "total": 54,
+    "retrieval": 43,
+    "abstention": 11,
+    "categories": {
+      "project": 12,
+      "experience": 7,
+      "skills": 8,
+      "cross-cutting": 8,
+      "metric": 8,
+      "structured-only": 3,
+      "corpus-gap": 1,
+      "out-of-corpus": 7
+    }
+  },
+  "depth": 10,
+  "embeddings": "skipped (no VOYAGE_API_KEY)",
+  "arms": [
+    {
+      "arm": "tools-only",
+      "hit1": 0.3953,
+      "hit3": 0.5116,
+      "hit5": 0.6744,
+      "ent1": 0.5814,
+      "ent3": 0.6279,
+      "mrr": 0.4985,
+      "abstain": 0.7273,
+      "separability": 0.8288,
+      "byCategory": {
+        "project": 0.6667,
+        "experience": 0.5714,
+        "skills": 0.25,
+        "cross-cutting": 0.5,
+        "metric": 0.5,
+        "structured-only": 0.6667,
+        "corpus-gap": 0,
+        "out-of-corpus": 0.8571
+      }
+    },
+    {
+      "arm": "bm25",
+      "hit1": 0.4651,
+      "hit3": 0.7442,
+      "hit5": 0.8372,
+      "ent1": 0.4884,
+      "ent3": 0.814,
+      "mrr": 0.6127,
+      "abstain": 0,
+      "separability": 0.8372,
+      "byCategory": {
+        "project": 0.6667,
+        "experience": 0.7143,
+        "skills": 0.75,
+        "cross-cutting": 0.875,
+        "metric": 0.75,
+        "structured-only": 0,
+        "corpus-gap": 0,
+        "out-of-corpus": 0
+      }
+    },
+    {
+      "arm": "hybrid",
+      "hit1": 0.4419,
+      "hit3": 0.5814,
+      "hit5": 0.7442,
+      "ent1": 0.6279,
+      "ent3": 0.7209,
+      "mrr": 0.5605,
+      "abstain": 0,
+      "separability": 0.5603,
+      "byCategory": {
+        "project": 0.6667,
+        "experience": 0.5714,
+        "skills": 0.375,
+        "cross-cutting": 0.625,
+        "metric": 0.625,
+        "structured-only": 0,
+        "corpus-gap": 0,
+        "out-of-corpus": 0
+      }
+    },
+    {
+      "arm": "tools-gated",
+      "hit1": 0.4186,
+      "hit3": 0.6744,
+      "hit5": 0.7674,
+      "ent1": 0.4419,
+      "ent3": 0.7442,
+      "mrr": 0.5506,
+      "abstain": 0.7273,
+      "separability": 0.8689,
+      "byCategory": {
+        "project": 0.6667,
+        "experience": 0.7143,
+        "skills": 0.625,
+        "cross-cutting": 0.75,
+        "metric": 0.625,
+        "structured-only": 0.6667,
+        "corpus-gap": 0,
+        "out-of-corpus": 0.8571
+      }
+    }
+  ]
+}

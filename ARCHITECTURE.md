@@ -15,11 +15,12 @@ content/                owns every word on the site
    │  emits  content/dist/content.json · generated page regions · js/case-studies.js
    │         · content/dist/site.jsonld · llms.txt
    ▼
-lib/knowledge/          owns retrieval — tools, BM25, answer schema, validators   (Phase 1)
+lib/knowledge/          owns retrieval — tools, BM25, answer schema, validators
    │  emits  the tool API + JSON Schemas
    ├────────────────┬─────────────────┐
    ▼                ▼                 ▼
-api/chat.js      api/mcp.js        evals/                                        (Phases 2–4)
+api/chat.js      api/mcp.js        evals/
+  (Phase 3)        (Phase 2)          │  emits  results.json · evals.html regions
    
 (site root)  index.html · cv.html · css/ · js/
    consumes design-system/dist + content-generated regions + api/
@@ -52,7 +53,8 @@ CI, because every boundary in every repo erodes within a month of being drawn.
 | adding a project, a role, a skill row, a fact | `content/` | same |
 | changing page **layout or structure** (not words) | `index.html` / `cv.html` outside the `<!-- content:… -->` regions, `css/style.css`, `css/cv.css` | serve + open |
 | changing motion, the case dialog, the automata | `js/` | serve + open |
-| changing retrieval, tools, BM25, validators | `lib/knowledge/` *(Phase 1)* | unit tests vs a fixture `content.json` |
+| changing retrieval, tools, BM25, validators | `lib/knowledge/` — see its `CLAUDE.md` | `node evals/run.mjs` |
+| changing the question set, an arm, the published numbers | `evals/` — see its `CLAUDE.md` | `node evals/run.mjs --check` |
 | changing the chat or MCP endpoints | `api/` *(Phases 2–3)* | integration tests vs a stubbed tool core |
 
 **One honest caveat:** the site root is where everything meets, so it is the one slice that
@@ -73,6 +75,8 @@ Each carries a "generated — do not edit" banner. Editing one is caught by `--c
 | `content/dist/content.json` | same | `content/**` |
 | `content/dist/site.jsonld` | same | `content/**` |
 | `llms.txt` | same | `content/**` |
+| `evals/results.json` | `evals/run.mjs` | `evals/questions.json` + `lib/knowledge/` |
+| the `<!-- content:evals-… -->` regions of `evals.html` | same | same |
 
 ## Run order
 
@@ -83,11 +87,13 @@ statistics have exactly one source and drift is structurally impossible rather t
 ```sh
 node design-system/scripts/build.mjs        # tokens + dist + system.generated.json
 node scripts/build-content.mjs              # content → pages, case studies, index, llms.txt
+node evals/run.mjs                          # retrieval eval → results.json, evals.html
 
-# gates (CI runs all three)
+# gates (CI runs all four)
 node design-system/scripts/build.mjs --check
 node scripts/build-content.mjs --check
 node scripts/check-boundaries.mjs
+node evals/run.mjs --check                  # also fails on a regression vs evals/baseline.json
 ```
 
 The order matters in one direction only: a component or token landing changes the counts,
