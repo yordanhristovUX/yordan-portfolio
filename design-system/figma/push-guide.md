@@ -43,20 +43,35 @@ re-touching after a token-only rerun.
 ## Phase 1 — Tokens (variables)
 
 1. Read `design-system/dist/tokens.flat.json`. Each entry:
-   `"<category>.<name>": { cssVar, value, resolved?, description? }`.
-2. Ensure **variable collections** exist (one mode, "Value"): `color` · `font` · `space` ·
-   `border`. Categories `color-stone`, `color-slate`, `color-ink`, `surface`, `primary`,
-   `content`, `chrome`, `action`, `accent` → **color**; `font` → **font**; `space` →
-   **space**; `border` → **border**.
-3. For every token, create-or-update a variable named `<category>/<name>`:
+   `"<category>.<name>": { cssVar, value, resolved?, dark?, darkResolved?, description? }`.
+2. Ensure **variable collections** exist: `color` · `font` · `space` · `border`. Categories
+   `color-stone`, `color-slate`, `color-ink`, `surface`, `primary`, `content`, `chrome`,
+   `action`, `accent`, `effect`, `automata`, `scheme` → **color**; `font` → **font**;
+   `space` → **space**; `border` → **border**.
+3. **Modes.** `color` and `border` carry two modes named **Light** and **Dark** (rename the
+   default mode to `Light`; add `Dark` if missing — never add a third). `font` and `space`
+   stay single-mode "Value": nothing in them is themed. Modes are the whole reason the repo
+   emits `dark` values rather than a second token set — one variable, two modes, so a Figma
+   frame flips theme the same way the site does.
+4. For every token, create-or-update a variable named `<category>/<name>`:
    - **COLOR** for any value/`resolved` that parses as hex / rgb() / hsl() (use `resolved`
-     when present). RGBA floats 0–1. `accent-rgb` is a STRING (triplet, not a colour).
+     when present). RGBA floats 0–1. `accent-rgb` and `automata-cell-rgb` are STRINGs
+     (triplets, not colours), as is `color-scheme`.
    - **STRING** for everything else (font stacks, clamp() expressions, border shorthands) —
      pushed verbatim; they document intent.
    - Carry `description` over; set WEB code syntax to `var(<cssVar>)`.
-4. **Aliases:** where `value` is `var(--x)` and `--x` is a pushed variable, set a Figma
-   variable **alias** (semantic layer stays live). Fall back to resolved value if aliasing fails.
-5. **Prune check (report, don't delete):** list variables with no matching token.
+5. **Per-mode values.** Light mode ← `value`/`resolved`. Dark mode ← `dark`/`darkResolved`
+   **when present, else the light value** — a token with no dark entry is theme-independent
+   and must read identically in both modes, not be left unset.
+   Note `darkResolved` appears on tokens that have no `dark` of their own but alias one that
+   does (`content-primary` → `primary`): if you push those from `resolved` alone, dark mode
+   silently keeps the light ink. Aliasing (step 6) handles this correctly — `darkResolved`
+   is the fallback and the thing to verify against.
+6. **Aliases:** where `value` is `var(--x)` and `--x` is a pushed variable, set a Figma
+   variable **alias** *in both modes* (the semantic layer stays live, so re-aliasing
+   `primary` in Dark mode carries every dependant with it — the same cascade the CSS relies
+   on). Fall back to the per-mode resolved value if aliasing fails.
+7. **Prune check (report, don't delete):** list variables with no matching token.
 
 ## Phase 2 — Styles
 
@@ -77,7 +92,9 @@ max** of each clamp (rem × 16); Figma cannot set Archivo's `wdth` axis (site us
 | `body` | IBM Plex Sans Regular | 16 / 160% | — |
 
 Effect style `chrome/bar`: inner shadow 0/0/0 spread 1 `#94a3b8` + drop shadow 5/5/0
-`rgba(15,23,42,0.15)` — the nav bar "object lying on the sheet".
+`rgba(15,23,42,0.15)` — the nav bar "object lying on the sheet". Figma effect styles do not
+take modes, so this style is the **light** one; its dark counterpart is the `effect/shadow-drop`
+variable (`rgba(2,6,23,0.55)`), which dark-mode frames bind directly.
 
 Descriptions on styles carry the CSS class they mirror. If `components.css` changes a
 level, update the matching style in place — never create a parallel style.
@@ -88,8 +105,8 @@ Create-if-missing, never delete, keep this order:
 
 `Cover` · `Foundations / Color` · `Foundations / Typography` · `Foundations / Skeleton grid`
 · `--- Components ---` · `Button` · `Chip` · `Card` · `Section head` · `Row` · `Fact` ·
-`Stat` · `Media` · `Link grid` · `Profile` · `Nav bar` · `Footer` · `--- Templates ---` ·
-`Template / Dialog`
+`Stat` · `Media` · `Link grid` · `Profile` · `Nav bar` · `Theme toggle` · `Footer` ·
+`--- Templates ---` · `Template / Dialog`
 
 Foundations content (swatch grids with alias annotations, type specimens, skeleton
 explainer) is doc content: safe to wipe & regenerate on every run. Root doc frames carry
@@ -117,7 +134,8 @@ Inventory (stable names — the idempotency keys):
 | `Media` (Media) | Ratio=16:9 / 4:3 | Label |
 | `Link grid item` (Link grid) | State=Default/Hover | Label |
 | `Profile item` (Profile) | Value=Default/OK | Term, Value |
-| `Nav bar` (Nav bar) | — | Name, Status, Show status |
+| `Nav bar` (Nav bar) | — | Name, Status, Show status, Show theme |
+| `Theme toggle` (Theme toggle) | State=Auto/Light/Dark × Interaction=Default/Hover | Show label |
 | `Footer` (Footer) | — | Left, Right |
 
 Update flow per component: find the set/component by name on its page → if missing, build
@@ -140,11 +158,20 @@ edited the template since the last push, ask before regenerating.
 
 ## Phase 6 — Verification
 
-- Variables: count matches `tokens.flat.json`; spot-check `surface/surface-page` aliases
-  `color-stone/stone-100`, `accent/accent` ≈ rgb(0, 60, 240).
+- Variables: count matches `tokens.flat.json`; `color` and `border` have exactly two modes,
+  `Light` and `Dark`.
+- Spot-check **both modes**: `surface/surface-page` aliases `color-stone/stone-100` in Light
+  and `color-stone/stone-900` in Dark; `accent/accent` ≈ rgb(0, 60, 240) Light and
+  rgb(92, 133, 255) Dark; `content/content-primary` — which has no `dark` of its own —
+  must still resolve to `#fafaf9` in Dark via its alias. If it reads as ink in Dark, step 6
+  aliased Light only and the whole semantic layer is wrong in that mode.
+- Every non-themed variable (fonts, spacing, the raw ramps) reads **identically** in both
+  modes — a ramp that differs per mode means someone pushed a semantic value into it.
 - Styles: 9 text styles + `chrome/bar` present by name.
-- Components: all 13 present with variant counts per the inventory; binding audit finds
-  zero unbound visible SOLID paints inside components; no unnamed nodes.
+- Components: all 14 present with variant counts per the inventory; binding audit finds
+  zero unbound visible SOLID paints inside components; no unnamed nodes. Flip the file to
+  Dark mode and re-run the audit: any node that does not follow is bound to a raw ramp
+  instead of a semantic variable.
 - Report a summary table: created / updated / aliased / skipped / pruned-candidates.
 
 ## Unit conversion table
@@ -163,3 +190,8 @@ edited the template since the last push, ask before regenerating.
 2026-07-19: 54 variables (19 live aliases) · 9 text styles + 1 effect style · 19 pages ·
 13 component sets, zero unbound paints. First push was tokens-only; components and styles
 were added the same day under this contract.
+
+**Pending (not yet pushed):** the dark tier — 59 variables, 24 of them with a Dark-mode
+value, plus the `Theme toggle` component and the `Show theme` property on `Nav bar`. The
+next run is the first that has to create the `Dark` mode, so treat Phase 1 steps 3, 5 and 6
+as new work rather than a rerun, and verify per the two-mode checks in Phase 6.

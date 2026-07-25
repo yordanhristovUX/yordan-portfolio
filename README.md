@@ -27,9 +27,14 @@ generations. "An old sketchbook with machines that help."
 
 - **Repo-first tokens** — [`tokens/tokens.json`](design-system/tokens/tokens.json) is the
   only place a colour is born; a zero-dependency script generates the CSS variables the site
-  loads and a flat JSON that AI agents and the Figma push read. 54 tokens, two tiers
-  (raw ramps → semantic layer).
-- **15 components, triple-enforced** — each is a CSS block + an AI spec
+  loads and a flat JSON that AI agents and the Figma push read. 59 tokens carrying 106
+  values across light, dark and print, in two tiers (raw ramps → semantic layer).
+- **Light, dark and paper from one source** — a themed token carries its `dark` value (and,
+  where it matters, its `print` value) beside its light one; the build emits the media
+  query, the pinned-theme override, and the print block. The entire dark theme is 24
+  re-aliased semantic tokens and **zero** per-component dark rules — the sharpest test a
+  semantic tier can be put to. No stylesheet anywhere contains a colour for print.
+- **17 components, triple-enforced** — each is a CSS block + an AI spec
   ([example](design-system/components/button/spec.md)) + a Storybook story; `npm run build`
   fails if any leg is missing.
 - **AI-first** — [`CLAUDE.md`](CLAUDE.md) routes agents to
@@ -43,18 +48,26 @@ generations. "An old sketchbook with machines that help."
 ## Run it
 
 ```sh
-npx serve .                      # the site — no build step
+npx serve .                      # the site — no build step; / and /cv
 cd design-system
 npm install
 npm run build                    # tokens → dist + coverage check
 npm run storybook                # Storybook on :6006
 ```
 
+`/cv` is the CV: same tokens, same components, light and dark on screen, and a real print
+stylesheet — the colour half of which lives in `tokens.json`, not in the page.
+
 ## Accessibility
 
 WCAG 2.1 AA is a stated tolerance, not an aspiration: AA-checked contrast baked into the
-token choices (documented in tokens.json), full `prefers-reduced-motion` handling, dialog
-focus trap/restore, semantic landmarks, keyboard focus rings throughout.
+token choices **in both themes** (documented in tokens.json next to the values it justifies),
+full `prefers-reduced-motion` handling, dialog focus trap/restore, semantic landmarks,
+keyboard focus rings throughout.
+
+The site also degrades rather than breaks: GSAP is vendored rather than fetched from a CDN,
+and `main.js` only hides the animated-in elements once GSAP is confirmed loaded — so a
+missing or blocked script yields a static, fully readable page instead of a blank one.
 
 ## License
 

@@ -27,6 +27,9 @@ One card component serves every card grid on the site — do not invent section-
 | `.card--ruled` | 3px ink rule above the title (capability/emphasis cards) |
 | `.card-grid` | 3 → 2 → 1 column responsive grid with hairline dividers |
 
+The grid's dividers are computed from position, so any card count works: the last card and
+every card on the final row drop the rules that would otherwise trail into empty space.
+
 ## Tokens
 
 `--font-display`, `--font-mono`, `--content-primary`, `--chrome-label`, `--primary`, `--rule`, `--pad`

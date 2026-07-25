@@ -11,7 +11,7 @@ window.CASE_STUDIES = {
       <figure class="ph"><span class="ph__label">Cover — design system overview, 1600×900</span></figure>
 
       <h3>The problem</h3>
-      <p>Green Street is a leading commercial real estate data and analytics company. When I joined, PM wireframes, design files, and coded components lived in separate worlds — a component could look one way in Figma and behave completely differently in production.</p>
+      <p>Green Street is a leading commercial real estate data and analytics company. I was brought in to redesign the AI Assistant module, and found that PM wireframes, design files, and coded components lived in separate worlds — a component could look one way in Figma and behave completely differently in production.</p>
       <ul>
         <li><strong>Fragmented handoff.</strong> No enforced relationship between mockups, design, and code.</li>
         <li><strong>AI couldn't read the system.</strong> Every AI-generated UI drifted from the actual components.</li>
@@ -20,7 +20,9 @@ window.CASE_STUDIES = {
 
       <h3>The approach</h3>
       <p><strong>Audit and architecture.</strong> A full audit of the component landscape — duplication, inconsistency, missing states, accessibility failures — then a token-first architecture with semantic naming. Every component exposes its full range of states, so AI and developers never need to guess.</p>
-      <p><strong>1:1 Figma-to-code parity.</strong> Every Figma component maps exactly to a coded component: same name, same props, same variants. I drove the alignment with engineering — attending standups and reviewing implementations to catch drift early.</p>
+      <p><strong>1:1 Figma-to-code parity.</strong> A Figma library of <strong>~35 components and growing</strong>, each mapping exactly to a coded component: same name, same props, same variants. I drove the alignment with engineering — attending standups and reviewing implementations to catch drift early.</p>
+      <p><strong>Tokens in the frontend, not just the design file.</strong> I implemented the tokens directly in the frontend component library, replacing every hardcoded value for <strong>100% token coverage across the module</strong>. A design system that only exists in Figma is a picture of a design system.</p>
+      <p><strong>A living style guide.</strong> Every token and every component, rendered from the real implementation — used for visual regression testing and for design-to-code comparison, so drift is something you can see rather than something you discover in review.</p>
       <p><strong>Custom Claude skills.</strong> A persistent knowledge layer that teaches Claude to read the token structure, assemble the correct native components, respect spacing and hierarchy, and generate prototypes faithful to the real system. No drift. No invented components.</p>
       <p><strong>TPM prototype pipeline.</strong> A PM describes a screen; the pipeline assembles a working interactive prototype from real system components. The feedback loop between product thinking and validated interaction went from days to minutes.</p>
 
@@ -74,7 +76,8 @@ window.CASE_STUDIES = {
       </ul>
 
       <h3>Deliverables</h3>
-      <p>Every finding documented with a severity rating (Critical / Major / Minor), WCAG criterion reference, annotated screenshot, recommended fix, and estimated engineering effort — plus a mapping to the platform workflow it affects, so engineering unblocks the most-used analytical paths first.</p>
+      <p><span class="stat">200+</span></p>
+      <p>Issue instances catalogued across the two surfaces. Every finding documented with a severity rating (Critical / Major / Minor), WCAG criterion reference, annotated screenshot, recommended fix, and estimated engineering effort — plus a mapping to the platform workflow it affects, so engineering unblocks the most-used analytical paths first. The output is a prioritised remediation roadmap, not a list of complaints.</p>
 
       <div class="ph-grid">
         <figure class="ph"><span class="ph__label">Findings report — severity ratings</span></figure>
@@ -179,9 +182,9 @@ window.CASE_STUDIES = {
     index: "05 / Spetema Coffee",
     title: "Product & Corporate Website",
     subtitle:
-      "Full information architecture rework reconciling B2C e-commerce and B2B corporate needs on a single coherent site — with a bold visual system and purposeful motion.",
-    meta: ["Product Designer", "Information Architecture", "Motion design", "B2C + B2B", "In development"],
-    accentMeta: ["In development"],
+      "A 200+ product coffee catalogue reconciling B2C e-commerce and B2B corporate needs on a single coherent site — with a bold visual system and purposeful motion. Bilingual, live.",
+    meta: ["Product Designer", "Information Architecture", "Motion design", "B2C + B2B", "Live"],
+    accentMeta: ["Live"],
     content: `
       <figure class="ph"><span class="ph__label">Cover — homepage design, 1600×900</span></figure>
 
@@ -189,8 +192,9 @@ window.CASE_STUDIES = {
       <p>Spetema's audience is genuinely dual-natured. <strong>Consumers</strong> browse discovery-led, where visual appeal converts. <strong>Business and horeca buyers</strong> — café owners, procurement teams — move task-led, where clarity converts. Optimise purely for one and you frustrate the other.</p>
 
       <h3>Information architecture</h3>
-      <p>The existing site had grown reactively for years: products in multiple categories, the B2B offer with no clear entry point, corporate information buried. I rebuilt the sitemap from scratch around a clean top-level split — <strong>Products</strong>, <strong>For Business</strong>, <strong>About</strong>, <strong>Stockists</strong> — so both audiences orient within seconds.</p>
-      <p>A content model ensures product information is authored once and surfaced everywhere it's needed — consumer detail pages, B2B catalogue, homepage features — without duplication.</p>
+      <p>The existing site had grown reactively for years: 200+ products spread across overlapping categories, the B2B offer with no clear entry point, corporate information buried. I split the top level into two tracks — <strong>a home track and a business track</strong> — so both audiences orient within seconds instead of filtering past each other's content.</p>
+      <p>Underneath, a <strong>preparation-method finder</strong> layers over the category taxonomy. Category trees are organised the way a business classifies coffee; a lot of people shop by the machine sitting on their counter. The finder lets them enter that way without the taxonomy being rebuilt around it.</p>
+      <p>Eight sub-brands are structured on a <strong>shared attribute model</strong>, so product information is authored once and surfaced everywhere it's needed — consumer detail pages, B2B catalogue, homepage features — without duplication.</p>
 
       <h3>Visual system</h3>
       <ul>
@@ -209,7 +213,7 @@ window.CASE_STUDIES = {
       <p>A/B variants for navigation wording, hero layout (product-first vs. brand-story-first), B2B entry prominence, and grid density — evaluated with stakeholders and lightweight user testing. Winners were the approaches that worked for <strong>both</strong> audiences, not just one.</p>
 
       <h3>Status</h3>
-      <p>Design complete; the site is in development. Handoff used annotated Figma components with motion specs — everything the team needs to implement the system faithfully, without back-and-forth.</p>
+      <p><strong>Live and bilingual.</strong> Handoff used annotated Figma components with motion specs — everything the team needed to implement the system faithfully, without back-and-forth.</p>
     `,
   },
 
@@ -287,8 +291,9 @@ window.CASE_STUDIES = {
       <h3>Receipts</h3>
       <p><span class="stat">0</span></p>
       <ul>
-        <li><strong>0 accessibility violations</strong> across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves.</li>
-        <li><strong>54 tokens, 15 components</strong> — each component enforced as CSS + AI spec + story by the build.</li>
+        <li><strong>0 accessibility violations</strong> across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
+        <li><strong>59 tokens, 106 values, 17 components</strong> — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
+        <li><strong>Dark mode is 24 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS — the sharpest test a semantic token layer can be put to.</li>
         <li><strong>No build step in the site.</strong> Two link tags consume the system; view-source shows everything.</li>
       </ul>
 

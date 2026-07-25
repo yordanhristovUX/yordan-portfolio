@@ -33,18 +33,21 @@
   --ink-700: #24262b;
   --ink-900: #141518;
 
-  /* --- Semantic surfaces (warm — the paper) --- */
+  /* --- Tells the browser which built-in palette to use for scrollbars, form controls and the canvas. Applied once, in components.css, as `color-scheme: var(--color-scheme)`. --- */
+  --color-scheme: light;
+
+  /* --- Semantic surfaces (warm — the paper). Dark mode does not tint the paper blue: it walks the same stone ramp to the far end, so the sheet stays warm and the chrome stays cold in both themes. On paper every surface collapses to one: printers do not render a page background, and tinted blocks only cost ink. --- */
   --surface-page: var(--stone-100);
   --surface-raised: var(--stone-50);
   --surface-sunken: var(--stone-200);
   --surface-inverse: var(--stone-900);
 
-  /* --- The ONE changeable brand colour. Everything that reads as 'brand' (headline type, interactive states, the automata's resident ink) routes through these three. Retheme by editing them alone. --- */
+  /* --- The ONE changeable brand colour. Everything that reads as 'brand' (headline type, interactive states, the automata's resident ink) routes through these three. Retheme by editing them alone. In dark mode the ink inverts to paper: primary is what the page is NOT, which is why the same components read correctly with no per-component overrides. --- */
   --primary: var(--ink-900);
   --primary-hover: var(--ink-700);
   --primary-muted: var(--ink-500);
 
-  /* --- Semantic content colours. content-muted is stone-600, not -500: -500 measures 4.4:1 on the page background, just under the WCAG AA text minimum (4.5:1); -600 clears it (6.99:1). --- */
+  /* --- Semantic content colours. content-muted is stone-600, not -500: -500 measures 4.4:1 on the page background, just under the WCAG AA text minimum (4.5:1); -600 clears it (6.99:1). Dark mirrors the pairing — stone-400 on stone-900 measures 6.94:1, the same relationship read from the other end of the ramp. --- */
   --content-primary: var(--primary);
   --content-body: var(--stone-700);
   --content-muted: var(--stone-600);
@@ -57,15 +60,23 @@
   --chrome-border-strong: var(--slate-400);
   --chrome-label: var(--slate-600);
   --chrome-label-strong: var(--slate-700);
-  --chrome-grid: rgba(100, 116, 139, 0.16); /* slate-500 at 16% — the skeleton's square lines */
+  --chrome-label-on-strong: var(--slate-400); /* Text sitting on chrome-bg-strong (the footer). Has no dark variant on purpose: that surface is near-black in BOTH themes, so its label must stay light in both. 6.96:1 on slate-900, 7.87:1 on slate-950. It DOES need a print value: on paper that surface turns white, so a light label would vanish. */
+  --chrome-grid: rgba(100, 116, 139, 0.16); /* The skeleton's square lines — slate-500 at 16% on paper, slate-400 at 14% on dark (a lighter ink at lower alpha, so the grid stays a whisper rather than becoming a cage). Prints as nothing: the grid is screen scaffolding, not content. */
 
   /* --- Interactive states — always the primary ink --- */
   --action: var(--primary);
   --action-hover: var(--primary-hover);
 
-  /* --- Blueprint blue, used scarcely. Only five places wear it: role underline, section numbers, availability, the square cursor + user-seeded life, focus rings. --- */
-  --accent: hsl(225 100% 47%);
+  /* --- Blueprint blue, used scarcely. Only five places wear it: role underline, section numbers, availability, the square cursor + user-seeded life, focus rings. The dark value is the same hue lifted to 68% lightness — 47% blue on a stone-900 ground measures 1.9:1, invisible; 68% measures 5.19:1 on the page and 5.30:1 on the chrome, so the accent keeps its AA rating in both themes without changing hue. --- */
+  --accent: hsl(225 100% 47%); /* Prints as ink, not blue. A CV is as likely to be printed greyscale as in colour, and blue reduced to mid-grey reads as a mistake rather than an accent. */
   --accent-rgb: 0, 60, 240; /* rgb triplet of --accent, for rgba() composition in JS and hover states */
+
+  /* --- Composited colours that are neither surface nor content — they sit BETWEEN layers, so they cannot be aliased to a ramp step and are written literally here (the one file where that is allowed). --- */
+  --shadow-drop: rgba(15, 23, 42, 0.15); /* The hard offset shadow under the floating nav — an object lying on the sheet. Deeper and more opaque in dark, where a 15% veil would vanish. Nothing on paper: a shadow printed is just a grey smear. */
+  --scrim: rgba(28, 25, 23, 0.55); /* The veil behind the case-study dialog. Warm stone in light (it dims paper), cold slate in dark (it dims chrome). */
+
+  /* --- The Squares engine (site js/automata.js) reads these at runtime via getComputedStyle and recomposes them into rgba() per cell — which is why they are rgb triplets, not colours. Living cells are deliberately NOT primary: the resident population is a mid-ramp grey that recedes, so the automata never competes with type. --- */
+  --automata-cell-rgb: 120, 113, 108; /* The resident population — stone-500 on paper, stone-400 on dark (the ramp inverts with the surface, or the cells would sink into the page) */
 
   /* --- The humanist-machine family: Archivo for display, IBM Plex for body and mono --- */
   --font-display: "Archivo", "Arial Black", sans-serif;
@@ -78,5 +89,96 @@
 
   /* --- Rule shorthands. Used as border/box-shadow values in chrome; the square skeleton itself never uses border (inset shadows keep fr-track math exact). --- */
   --rule: 1px solid var(--chrome-border);
-  --rule-strong: 2px solid var(--content-primary);
+  --rule-strong: 2px solid var(--content-primary); /* The heavy rule. In light it is drawn ink — the section signature. Inverting it literally would make it a 2px stone-50 bar glaring across every section top, so on dark it becomes the strong chrome border instead: still structural, no longer a light source. On paper it returns to ink — the one place the rule is cheap and does the most work. */
+}
+
+/* ============ Dark theme ============
+   24 semantic tokens re-alias; the raw ramps never move.
+   Followed automatically unless the visitor has pinned light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-scheme: dark;
+    --surface-page: var(--stone-900);
+    --surface-raised: var(--stone-800);
+    --surface-sunken: var(--stone-950);
+    --surface-inverse: var(--stone-100);
+    --primary: var(--stone-50);
+    --primary-hover: var(--stone-300);
+    --primary-muted: var(--stone-400);
+    --content-body: var(--stone-300);
+    --content-muted: var(--stone-400);
+    --content-inverse: var(--stone-900);
+    --chrome-bg: var(--slate-900);
+    --chrome-bg-strong: var(--slate-950);
+    --chrome-border: var(--slate-700);
+    --chrome-border-strong: var(--slate-600);
+    --chrome-label: var(--slate-400);
+    --chrome-label-strong: var(--slate-300);
+    --chrome-grid: rgba(148, 163, 184, 0.14);
+    --accent: hsl(225 100% 68%);
+    --accent-rgb: 92, 133, 255;
+    --shadow-drop: rgba(2, 6, 23, 0.55);
+    --scrim: rgba(2, 6, 23, 0.72);
+    --automata-cell-rgb: 168, 162, 158;
+    --rule-strong: 2px solid var(--chrome-border-strong);
+  }
+}
+
+/* Pinned by the visitor — wins over the OS preference either way. */
+:root[data-theme="dark"] {
+  --color-scheme: dark;
+  --surface-page: var(--stone-900);
+  --surface-raised: var(--stone-800);
+  --surface-sunken: var(--stone-950);
+  --surface-inverse: var(--stone-100);
+  --primary: var(--stone-50);
+  --primary-hover: var(--stone-300);
+  --primary-muted: var(--stone-400);
+  --content-body: var(--stone-300);
+  --content-muted: var(--stone-400);
+  --content-inverse: var(--stone-900);
+  --chrome-bg: var(--slate-900);
+  --chrome-bg-strong: var(--slate-950);
+  --chrome-border: var(--slate-700);
+  --chrome-border-strong: var(--slate-600);
+  --chrome-label: var(--slate-400);
+  --chrome-label-strong: var(--slate-300);
+  --chrome-grid: rgba(148, 163, 184, 0.14);
+  --accent: hsl(225 100% 68%);
+  --accent-rgb: 92, 133, 255;
+  --shadow-drop: rgba(2, 6, 23, 0.55);
+  --scrim: rgba(2, 6, 23, 0.72);
+  --automata-cell-rgb: 168, 162, 158;
+  --rule-strong: 2px solid var(--chrome-border-strong);
+}
+
+/* ============ Print ============
+   23 tokens re-alias for paper. Emitted after the dark
+   blocks so it wins regardless of the theme on screen. */
+@media print {
+  :root, :root[data-theme="dark"], :root[data-theme="light"] {
+    --color-scheme: light;
+    --surface-page: var(--stone-50);
+    --surface-raised: var(--stone-50);
+    --surface-sunken: var(--stone-50);
+    --surface-inverse: var(--stone-900);
+    --primary: var(--ink-900);
+    --primary-hover: var(--ink-700);
+    --primary-muted: var(--ink-500);
+    --content-body: var(--stone-800);
+    --content-muted: var(--stone-600);
+    --content-inverse: var(--stone-100);
+    --chrome-bg: var(--stone-50);
+    --chrome-bg-strong: var(--stone-50);
+    --chrome-border: var(--stone-300);
+    --chrome-border-strong: var(--stone-400);
+    --chrome-label: var(--stone-600);
+    --chrome-label-strong: var(--stone-700);
+    --chrome-label-on-strong: var(--stone-700);
+    --chrome-grid: transparent;
+    --accent: var(--ink-900);
+    --shadow-drop: transparent;
+    --scrim: transparent;
+    --rule-strong: 2px solid var(--ink-900);
+  }
 }

@@ -24,7 +24,7 @@ borders in skeleton elements**: borders change track math; inset shadows don't.
 | --- | --- |
 | `.sheet` | 90rem max sheet, paper surface, hairline inset edges |
 | `.band` | `2fr 20fr 2fr` grid (mobile `1fr 10fr 1fr`); `.sec__head` spans all columns |
-| `.rail` (`--l`/`--r`) | JS-filled columns of whole squares; leftover height stays plain paper |
+| `.rail` (`--l`/`--r`) | JS-filled columns of whole squares; leftover height stays plain paper. `contain: size` — see below |
 | `.well` (`--flush`) | Solid-paper content column — squares never sit under text |
 | `.strip` | Full-width 2-square window between sections |
 | `.sq` | One square: `aspect-ratio: 1`, inset right/bottom lines, hover = accent |
@@ -37,6 +37,24 @@ hidden rows, middle 2 shown). Clicking a square seeds life with an accent-blue l
 that fades over ~10 generations; regions breathe (slow opacity sine) and pause off-screen.
 After DOM/layout changes call `window.rebuildCaseSquares()` for dialog rails; page rails
 rebuild on resize and font load.
+
+### The well sizes the band. The rail never does.
+
+`.rail` carries `contain: size`, and that declaration is load-bearing — do not remove it.
+
+The engine measures the rail (`clientHeight / squareSize`) to decide how many squares to
+make. Without containment those squares feed back into the band's row height, the well
+stretches to match, and the next rebuild measures the height it just caused. The loop is
+self-confirming, so it settles wherever it happens to land rather than converging on
+anything correct: one build that runs before layout has given the rail its real width is
+enough to kick it, and a band whose content is 420px tall ends up 36,000px tall with
+thousands of squares in it.
+
+`contain: size` makes the rail size purely from the outside — the well's content sets the
+row, the rail fills it, and the squares stay a consequence rather than a cause.
+
+The rule for anything added to a band: **content lives in the well.** If a new element
+belongs to the band directly, it must be able to size itself without consulting the rails.
 
 ## Tokens
 

@@ -17,8 +17,19 @@
   const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const MOBILE = window.matchMedia("(max-width: 760px)");
 
-  const STONE = "120, 113, 108"; // stone-500 — the resident population
-  const ACCENT = "0, 60, 240";   // --accent — user-seeded lineage
+  /* The two inks are read from the design system rather than restated here:
+     both flip with the theme, and a hardcoded stone-500 would sink into the
+     page the moment the sheet goes dark. Re-read on every theme change. */
+  const palette = { cell: "120, 113, 108", accent: "0, 60, 240" };
+  function readPalette() {
+    const cs = getComputedStyle(document.documentElement);
+    const cell = cs.getPropertyValue("--automata-cell-rgb").trim();
+    const accent = cs.getPropertyValue("--accent-rgb").trim();
+    if (cell) palette.cell = cell;
+    if (accent) palette.accent = accent;
+  }
+  readPalette();
+
   const TICK = 300;
   const HIDDEN_COLS = 6;         // rail sim columns under the paper
   const STRIP_SIM_ROWS = 10;     // strip sim height (2 visible)
@@ -166,10 +177,10 @@
         }
         if (blue[si] > 0) {
           // Your interventions are visibly yours for a few generations
-          el.style.backgroundColor = `rgba(${ACCENT}, ${0.1 + blue[si] * 0.045})`;
+          el.style.backgroundColor = `rgba(${palette.accent}, ${0.1 + blue[si] * 0.045})`;
         } else {
           const alpha = (0.5 + Math.min(age[si], 8) * 0.05) * breath;
-          el.style.backgroundColor = `rgba(${STONE}, ${alpha})`;
+          el.style.backgroundColor = `rgba(${palette.cell}, ${alpha})`;
         }
       }
     }
@@ -223,6 +234,13 @@
 
   // Webfonts change section heights — rebuild rails once they settle.
   document.fonts?.ready.then(() => pageRegions.forEach((r) => r.build()));
+
+  // Both inks belong to the theme. Re-read them and repaint the generation
+  // that is already on screen — the life goes on, it just changes colour.
+  window.addEventListener("themechange", () => {
+    readPalette();
+    all.forEach((r) => r.render(r.lastBreath));
+  });
 
   let resizeT;
   window.addEventListener("resize", () => {

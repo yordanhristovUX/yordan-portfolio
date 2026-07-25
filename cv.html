@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yordan Hristov — CV</title>
+  <meta name="description" content="CV of Yordan Hristov, Senior Product Designer: AI-ready design systems, design engineering, and seven years of research practice.">
+  <meta property="og:title" content="Yordan Hristov — CV">
+  <meta property="og:description" content="Senior Product Designer. AI-ready design systems, design engineering, research practice.">
+  <meta property="og:type" content="profile">
+  <meta property="og:url" content="https://yordan-portfolio.vercel.app/cv">
+  <meta name="twitter:card" content="summary">
+
+  <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)">
+
+  <!-- Theme, before first paint. Must stay inline and blocking. -->
+  <script>
+    try {
+      var t = localStorage.getItem("theme");
+      if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+    } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,700..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Design system first (tokens, then components), page styles last -->
+  <link rel="stylesheet" href="design-system/dist/tokens.css">
+  <link rel="stylesheet" href="design-system/css/components.css">
+  <link rel="stylesheet" href="css/cv.css">
+</head>
+<body>
+
+  <!-- ============ FLOATING NAV ============ -->
+  <header class="bar">
+    <a class="bar__id" href="index.html">← Portfolio</a>
+    <nav class="bar__nav" aria-label="Primary">
+      <a href="#experience">Experience</a>
+      <a href="#skills">Skills</a>
+    </nav>
+    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: following your system setting. Activate for light.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+      <span class="theme__label">Auto</span>
+    </button>
+    <button class="bar__action mono" data-print>Print / PDF</button>
+  </header>
+
+  <main id="top" class="sheet">
+
+    <!-- ============ HEAD ============ -->
+    <section class="band cv-head" aria-label="Yordan Hristov">
+      <div class="well">
+        <p class="cv-head__role t-label">Senior Product Designer</p>
+        <h1 class="cv-head__name t-display t-display--lg">Yordan Hristov</h1>
+        <p class="cv-head__disciplines mono">AI-ready design systems · Design engineering · Research</p>
+
+        <ul class="cv-contact mono" role="list">
+          <li><a href="mailto:yhristov.xyz@gmail.com">yhristov.xyz@gmail.com</a></li>
+          <li><a href="tel:+359884614579">+359 884 614 579</a></li>
+          <li><a href="https://yordan-portfolio.vercel.app">yordan-portfolio.vercel.app</a></li>
+          <li><a href="https://www.linkedin.com/in/yordan-hristov/" target="_blank" rel="noopener">linkedin.com/in/yordan-hristov</a></li>
+          <li>Sofia, Bulgaria</li>
+        </ul>
+
+        <p class="cv-summary t-lead">I build <strong>AI-ready design systems</strong>: component libraries with 1:1 parity between Figma and code, plus custom Claude skills and MCP setups that let agents assemble UI from the real system without drift. I write and ship the frontend myself, reviewed and merged by engineering. Under the tooling sits seven years of research practice — user interviews, usability testing, and WCAG 2.1 AA auditing.</p>
+      </div>
+    </section>
+
+    <!-- living separator -->
+    <div class="strip" aria-hidden="true"></div>
+
+    <!-- ============ 01 OPEN SOURCE ============ -->
+    <section class="band sec" id="open-source">
+      <header class="sec__head">
+        <span class="sec__no mono">01</span>
+        <h2 class="sec__title t-title">AI-ready design system</h2>
+        <span class="sec__note">Open source</span>
+      </header>
+      <div class="well">
+        <p>Tokens are born in the repo, not in Figma. One <code>tokens.json</code> builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and <strong>the build fails if any of the three is missing</strong>, so parity is enforced rather than maintained by hand.</p>
+        <p>Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules.</p>
+        <p class="cv-facts mono">59 tokens carrying 106 values across light, dark &amp; print · 17 components · 0 accessibility violations · MIT licensed</p>
+        <div class="link-grid">
+          <a href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener">GitHub repo ↗</a>
+          <a href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener">Storybook ↗</a>
+        </div>
+        <!-- Paper can't be clicked: the buttons above are replaced by their URLs in print. -->
+        <p class="print-only mono">github.com/yordanhristovUX/yordan-portfolio · yordan-design-system.vercel.app</p>
+      </div>
+    </section>
+
+    <!-- ============ 02 EXPERIENCE ============ -->
+    <section class="band sec" id="experience">
+      <header class="sec__head">
+        <span class="sec__no mono">02</span>
+        <h2 class="sec__title t-title">Experience</h2>
+      </header>
+      <div class="well well--flush">
+
+        <article class="entry">
+          <h3 class="entry__role">Senior Product Designer</h3>
+          <p class="entry__span">Jan 2026 – Present · Sofia · Hybrid</p>
+          <p class="entry__org">Green Street <em>— commercial real estate data and analytics</em></p>
+          <ul class="entry__list">
+            <li>Redesigned the AI Assistant module and built its design system end to end: a Figma library at 1:1 parity with the coded components (<strong>~35 and growing</strong>), tokens implemented directly in the frontend component library replacing every hardcoded value for <strong>100% token coverage</strong>, and a living style guide used for visual testing and design-to-code comparison.</li>
+            <li>Wrote custom Claude skills that let AI agents assemble UI from the real design system without drift. The TPM team uses them to generate interactive prototypes.</li>
+            <li>Wrote and shipped the responsive navigation for the Analytics platform — reviewed and merged by engineering, live in production.</li>
+            <li>Audited Green Street News and the Analytics &amp; Research Platform against WCAG 2.1 AA and UX heuristics: <strong>200+ issue instances</strong> catalogued with severity ratings and a prioritised remediation roadmap.</li>
+            <li>Building a design-to-code pipeline that generates frontend pages from Figma with AI assistance. The internal version is under NDA; the open-source system above is the same architecture, public.</li>
+          </ul>
+        </article>
+
+        <article class="entry">
+          <h3 class="entry__role">Senior Product Designer</h3>
+          <p class="entry__span">2023 – Dec 2025 · Sofia · Remote</p>
+          <p class="entry__org">Studio Kipo <em>— sole designer for all client work</em></p>
+          <ul class="entry__list">
+            <li>Introduced design systems as studio practice. No client asked for one — I built a white-label token-based system and reused it across projects, cutting setup time on every new brief and giving developers one source for spacing, colour, and type.</li>
+            <li><strong>Ubistats Football</strong> — analytics platform taken from research through design system, UI, and usability testing. Led to a partnership with the Bulgarian Football Union.</li>
+            <li><strong>Spetema</strong> — a 200+ product coffee catalogue serving households and businesses from one site. Split navigation into home and business tracks, layered a preparation-method finder over the category taxonomy, and structured eight sub-brands on a shared attribute model. Bilingual, live.</li>
+            <li><strong>Mindromeda</strong> — mental health marketplace connecting people to licensed therapists and coaches. Full design and IA: specialist matching by need, session booking, and consumer access alongside corporate vouchers. Live on Google Play.</li>
+            <li><strong>Malko Tarnovo Municipal App</strong> — semantic colour tokens and a dual visual language serving tourists and older residents at once. Live on the App Store and Google Play.</li>
+            <li>Also: the USD bank account feature for Tax Advice, a cross-border tax refund service, designed end to end from proposition to launch; Go Guide, the first mobile app for Bulgaria's leading lifestyle media brand; and an internal order management UI for a top US auto parts distributor.</li>
+          </ul>
+        </article>
+
+        <article class="entry">
+          <h3 class="entry__role">UX Researcher &amp; Consultant</h3>
+          <p class="entry__span">2019 – Present · advisory since 2022 · Sofia</p>
+          <p class="entry__org">Domestina <em>— Bulgaria's leading cleaning services marketplace</em></p>
+          <ul class="entry__list">
+            <li>Rebuilt the front page and the critical booking flows after heuristic evaluation, user interviews, and Hotjar session analysis. <strong>Bounce rate dropped 40%</strong> and sessions ran longer.</li>
+            <li>Shaped research-driven features including the Domestina Club loyalty programme and a rebuilt registration flow, supporting retention and the move beyond the local market.</li>
+            <li>Still consulting on research and flow decisions.</li>
+          </ul>
+        </article>
+
+        <article class="entry">
+          <h3 class="entry__role">Product Designer &amp; Frontend</h3>
+          <p class="entry__span">2018 – Present · Remote</p>
+          <p class="entry__org">Independent</p>
+          <ul class="entry__list">
+            <li>NFT and crypto: launched solo and collaborative projects covering digital art, community mechanics, and gamification. Creative coding in p5.js and Three.js sold as digital art; market and competitor research produced profitable collections during a bear market.</li>
+            <li>Design, frontend implementation, and QA for portfolio and small-business sites, working in a small team.</li>
+          </ul>
+        </article>
+
+        <article class="entry">
+          <h3 class="entry__role">Service Designer &amp; Team Lead</h3>
+          <p class="entry__span">2009 – 2020 · Sofia</p>
+          <p class="entry__org">Live to Lift</p>
+          <ul class="entry__list">
+            <li>Managed a team of 5–6 coaches. Designed the recruitment programme and trained every new hire into it.</li>
+            <li>Built the assessment and interview framework the whole practice ran on: <strong>hundreds of client interviews</strong>, structured progress measurement, outcome tracking.</li>
+            <li>Ran client surveys, analysed outcome and business data, and owned the online presence and camp programme.</li>
+          </ul>
+        </article>
+
+        <article class="entry">
+          <h3 class="entry__role">Quality Assurance Expert</h3>
+          <p class="entry__span">2007 – 2009</p>
+          <p class="entry__org">CNCsys PLC <em>— manufacturing software QA, first technical role</em></p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- living separator -->
+    <div class="strip" aria-hidden="true"></div>
+
+    <!-- ============ 03 SKILLS ============ -->
+    <section class="band sec" id="skills">
+      <header class="sec__head">
+        <span class="sec__no mono">03</span>
+        <h2 class="sec__title t-title">Skills</h2>
+      </header>
+      <div class="well well--flush">
+        <dl class="tools">
+          <div class="tools__row">
+            <dt>AI workflows</dt>
+            <dd>Claude Code, custom skills, MCP servers, agent orchestration, agentic engineering, design-to-code pipelines, AI-assisted prototyping, prompt engineering, Google AI Studio</dd>
+          </div>
+          <div class="tools__row">
+            <dt>Design systems</dt>
+            <dd>design tokens, repo-first token architecture, Figma variables and components, component libraries, Storybook, style guides, design-to-code parity, theming, multi-brand and white-label systems</dd>
+          </div>
+          <div class="tools__row">
+            <dt>Research</dt>
+            <dd>user interviews, usability testing, heuristic evaluation, card sorting, competitor analysis, surveys, WCAG 2.1 AA auditing, screen reader testing, Hotjar and Google Analytics</dd>
+          </div>
+          <div class="tools__row">
+            <dt>Product design</dt>
+            <dd>information architecture, prototyping, interaction design, visual design, motion design, 0-to-1 product work</dd>
+          </div>
+          <div class="tools__row">
+            <dt>Engineering</dt>
+            <dd>HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ============ 04 EDUCATION ============ -->
+    <section class="band sec" id="education">
+      <header class="sec__head">
+        <span class="sec__no mono">04</span>
+        <h2 class="sec__title t-title">Education &amp; languages</h2>
+      </header>
+      <div class="well well--flush">
+        <dl class="tools">
+          <div class="tools__row">
+            <dt>Education</dt>
+            <dd>UX/UI Design — Telerik Academy · UX Web Design — Software University (SoftUni) · Applied Mathematics (coursework) — Sofia University</dd>
+          </div>
+          <div class="tools__row">
+            <dt>Languages</dt>
+            <dd>Bulgarian (native) · English (professional proficiency)</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ============ 05 UNEXPECTED ============ -->
+    <section class="band sec sec--tint" id="unexpected">
+      <header class="sec__head">
+        <span class="sec__no mono">05</span>
+        <h2 class="sec__title t-title">Unexpected facts</h2>
+      </header>
+      <div class="well">
+        <div class="facts">
+          <div class="fact">
+            <span class="fact__num">42<small>km</small></span>
+            <span class="fact__title">Endurance</span>
+            <span class="fact__label">Marathon finisher. Multi-year engagements don't wear me down.</span>
+          </div>
+          <div class="fact">
+            <span class="fact__num">250<small>kg</small></span>
+            <span class="fact__title">Power</span>
+            <span class="fact__label">Heaviest deadlift. I ship heavy things — whole systems, not single screens.</span>
+          </div>
+          <div class="fact">
+            <span class="fact__num">2<small>m up</small></span>
+            <span class="fact__title">Balance</span>
+            <span class="fact__label">Walks on stilts. Design craft on one side, production code on the other.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="foot mono">
+    <span>© <span id="year">2026</span> Yordan Hristov — Sofia, Bulgaria</span>
+    <a href="index.html">← Back to the portfolio</a>
+  </footer>
+
+  <script src="js/theme.js" defer></script>
+  <script src="js/automata.js" defer></script>
+  <script src="js/cv.js" defer></script>
+</body>
+</html>

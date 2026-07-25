@@ -10,6 +10,11 @@
 /* ============ Foundation ============ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Hands the theme to the browser's own furniture — scrollbars, form
+   controls, the canvas behind the page. The value is a token, so this is
+   the only place in the system that mentions light or dark by name. */
+:root { color-scheme: var(--color-scheme); }
+
 body {
   background: var(--surface-sunken);
   color: var(--content-body);
@@ -119,6 +124,13 @@ body.is-locked { overflow: hidden; }
   min-width: 0;
   cursor: cell;
   box-shadow: inset 0 1px 0 var(--chrome-grid); /* opening line of the first row */
+
+  /* The rail is decoration and must never size the band. Without this its
+     squares feed the row height, the well stretches to match, and the next
+     rebuild measures the height it just caused — a self-confirming loop that
+     settles wherever it happens to land. `contain: size` makes the rail size
+     purely from the outside: the well sets the row, the rail fills it. */
+  contain: size;
 }
 
 .sq {
@@ -153,7 +165,7 @@ body.is-locked { overflow: hidden; }
   background: var(--chrome-bg);
   box-shadow:
     inset 0 0 0 1px var(--chrome-border-strong),
-    5px 5px 0 rgba(15, 23, 42, 0.15); /* an object lying on the sheet */
+    5px 5px 0 var(--shadow-drop); /* an object lying on the sheet */
   font-family: var(--font-mono);
   font-size: 0.78rem; letter-spacing: 0.04em;
 }
@@ -178,6 +190,19 @@ body.is-locked { overflow: hidden; }
   padding: 0 1.25rem;
   color: var(--chrome-label);
 }
+/* An action segment — same cell as a nav link, but it does something to the
+   page rather than navigating. Styled identically on purpose: the bar is one
+   instrument, and a button that announced itself would break the row. */
+.bar__action {
+  display: flex; align-items: center;
+  padding: 0 1.25rem;
+  color: var(--chrome-label-strong);
+  box-shadow: inset 1px 0 0 var(--chrome-border);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transition: background-color 0.2s, color 0.2s;
+}
+.bar__action:hover { background: var(--primary); color: var(--content-inverse); }
 .bar__dot {
   width: 8px; height: 8px;
   background: var(--accent);
@@ -188,6 +213,39 @@ body.is-locked { overflow: hidden; }
 @media (max-width: 480px) {
   .bar__id { padding: 0.8rem 0.9rem; }
   .bar__nav a { padding: 0 0.7rem; }
+}
+
+/* ============ Theme toggle ============
+   Lives in the nav bar and inherits its mono/size, so it reads as one more
+   segment of the instrument rather than a widget stuck onto it. Three states
+   cycle: auto → light → dark. The label is the CURRENT state, not the next
+   one — this is a readout you can press, like the rest of the bar. */
+.theme {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0 1rem;
+  color: var(--chrome-label);
+  box-shadow: inset 1px 0 0 var(--chrome-border);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  transition: background-color 0.2s, color 0.2s;
+}
+.theme:hover { background: var(--primary); color: var(--content-inverse); }
+
+/* The state lamp: an outline that fills as the theme is pinned. Auto reads
+   as half-lit — following something, not set. */
+.theme__lamp {
+  width: 9px; height: 9px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px currentColor;
+  background: linear-gradient(to right, currentColor 50%, transparent 50%);
+}
+.theme[data-state="light"] .theme__lamp { background: none; }
+.theme[data-state="dark"] .theme__lamp { background: currentColor; }
+
+.theme__label { min-width: 3.2em; text-align: left; } /* AUTO/LIGHT/DARK must not shift the bar */
+
+@media (max-width: 480px) {
+  .theme { padding: 0 0.7rem; }
+  .theme__label { display: none; } /* the lamp alone; aria-label still speaks */
 }
 
 /* ============ Section head ============ */
@@ -251,6 +309,8 @@ body.is-locked { overflow: hidden; }
   border-bottom: var(--rule);
 }
 .card:nth-child(3n) { border-right: 0; }
+/* An incomplete final row would otherwise trail a rule into empty space */
+.card:last-child { border-right: 0; }
 .card:nth-last-child(-n+3):nth-child(3n+1),
 .card:nth-last-child(-n+3):nth-child(3n+1) ~ .card { border-bottom: 0; }
 .card__type {
@@ -339,6 +399,59 @@ body.is-locked { overflow: hidden; }
 @media (max-width: 560px) {
   .idx__row { grid-template-columns: 2.5rem 1fr; }
   .idx__go { display: none; }
+}
+
+/* ============ Entry — a dated record ============
+   Experience, education, anything with a role / org / span and a list of
+   what happened. The span sits in its own column on wide screens so the
+   dates form a readable edge you can scan without reading the roles. */
+.entry {
+  display: grid;
+  grid-template-columns: 1fr minmax(9rem, 14rem);
+  gap: 0.35rem 2rem;
+  padding: clamp(1.4rem, 3vh, 2rem) var(--pad);
+  border-bottom: var(--rule);
+}
+.entry:last-child { border-bottom: 0; }
+
+.entry__role {
+  font-family: var(--font-display); font-weight: 800;
+  font-variation-settings: "wdth" 108;
+  font-size: clamp(1.1rem, 1.9vw, 1.45rem);
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--content-primary);
+}
+.entry__org { font-weight: 600; color: var(--content-primary); }
+.entry__org em { color: var(--content-muted); font-weight: 400; }
+
+/* Column 2, both rows — the dates line up with the role, not the body. */
+.entry__span {
+  grid-column: 2; grid-row: 1 / span 2;
+  font-family: var(--font-mono);
+  font-size: 0.75rem; letter-spacing: 0.05em;
+  color: var(--chrome-label);
+  text-align: right;
+  text-transform: uppercase;
+}
+.entry__lede { grid-column: 1; color: var(--content-muted); font-size: 0.92rem; }
+
+.entry__list { grid-column: 1 / -1; list-style: none; margin-top: 0.7rem; }
+.entry__list li {
+  position: relative;
+  padding: 0.4rem 0 0.4rem 1.4rem;
+  font-size: 0.92rem; line-height: 1.55;
+  max-width: 52rem;
+}
+.entry__list li::before {
+  content: "▪"; position: absolute; left: 0; top: 0.4rem;
+  color: var(--primary); font-size: 0.8rem;
+}
+.entry__list strong { color: var(--content-primary); font-weight: 600; }
+
+@media (max-width: 720px) {
+  .entry { grid-template-columns: 1fr; gap: 0.3rem; }
+  .entry__span { grid-column: 1; grid-row: auto; text-align: left; }
 }
 
 /* ============ Row — definition (skills) ============ */
@@ -484,7 +597,7 @@ body.is-locked { overflow: hidden; }
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 2rem;
   padding: 1rem clamp(1.25rem, 3vw, 2.5rem);
   background: var(--chrome-bg-strong);
-  color: var(--chrome-border-strong);
+  color: var(--chrome-label-on-strong); /* not chrome-border-strong: a border token read as text, which inverts to 2.7:1 in dark */
   font-family: var(--font-mono);
   font-size: 0.7rem; letter-spacing: 0.06em;
 }
@@ -494,7 +607,7 @@ body.is-locked { overflow: hidden; }
 .case[hidden] { display: none; }
 .case__backdrop {
   position: absolute; inset: 0;
-  background: rgba(28, 25, 23, 0.55); /* surface-inverse veil */
+  background: var(--scrim);
 }
 .case__panel {
   position: absolute; inset: 0;
@@ -538,7 +651,7 @@ body.is-locked { overflow: hidden; }
 .case__content li {
   padding: 0.55rem 0 0.55rem 1.4rem;
   position: relative;
-  border-bottom: 1px solid var(--surface-sunken);
+  border-bottom: var(--rule); /* not surface-sunken: a surface token read as a border, which in dark sits behind the page and vanishes */
   max-width: 44rem;
 }
 .case__content li::before {

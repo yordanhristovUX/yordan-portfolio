@@ -17,8 +17,26 @@ edges (no border) and a hard 5px offset shadow. Identity / links / availability 
     <span class="bar__dot" aria-hidden="true"></span>
     <span>Available for work — Sofia, <time id="local-time">--:--</time></span>
   </div>
+  <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: following your system setting. Activate for light.">
+    <span class="theme__lamp" aria-hidden="true"></span>
+    <span class="theme__label">Auto</span>
+  </button>
 </header>
 ```
+
+## Segments
+
+| Class | Use |
+| --- | --- |
+| `.bar__id` | Identity or the way back; always first |
+| `.bar__nav` | Up to three links |
+| `.bar__status` | Passive readout (availability, clock). Hidden under 980px |
+| `.theme` | The theme toggle — see `components/theme-toggle/spec.md` |
+| `.bar__action` | A button that acts on the page (Print / PDF), styled as a nav cell |
+
+`.bar__action` deliberately looks identical to a `.bar__nav` link. The bar reads as one
+instrument; a segment that announced itself as a button would break the row. Use it only
+for page-level actions, never for navigation — that is what `.bar__nav` is for.
 
 ## Tokens
 

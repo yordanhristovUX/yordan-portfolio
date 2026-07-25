@@ -10,6 +10,31 @@ fonts.href =
 document.head.appendChild(fonts);
 
 export default {
+  /* The theme is a global, not a per-story arg: it is a property of the
+     document, and every story must be reviewable in both. Switching it
+     writes the same data-theme attribute the site writes, so what
+     Storybook shows is what ships — no story-only theming path. */
+  initialGlobals: { theme: "light" },
+  globalTypes: {
+    theme: {
+      description: "Colour theme",
+      toolbar: {
+        title: "Theme",
+        icon: "mirror",
+        items: [
+          { value: "light", title: "Light" },
+          { value: "dark", title: "Dark" },
+        ],
+        dynamicTitle: true,
+      },
+    },
+  },
+  decorators: [
+    (story, context) => {
+      document.documentElement.setAttribute("data-theme", context.globals.theme);
+      return story();
+    },
+  ],
   parameters: {
     layout: "padded",
     options: {

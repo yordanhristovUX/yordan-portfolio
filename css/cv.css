@@ -1,0 +1,197 @@
+/* ============================================================
+   CV page styles (layout + wiring only).
+
+   Tokens and components come from the design system:
+     design-system/dist/tokens.css      (generated from tokens.json)
+     design-system/css/components.css   (all component classes)
+   loaded before this file. This file may only position and
+   compose components — no palettes, no new component styles.
+   See design-system/README.md before adding UI.
+
+   The print rules at the bottom are layout only. Every colour
+   change for paper lives in tokens.json under `print` and is
+   emitted into tokens.css — there is not one hex value here.
+   ============================================================ */
+
+/* ============ Nav ============
+   This bar carries a segment more than the portfolio's — Print / PDF — and at
+   narrow widths the four together overflow the bar's own box. The section
+   links are the cheapest thing to lose: the CV is a handful of screens and
+   scrolling finds everything, whereas Print is the reason many people open
+   this page at all. */
+@media (max-width: 560px) {
+  .bar__nav { display: none; }
+  .bar__id { box-shadow: inset -1px 0 0 var(--chrome-border); }
+}
+
+/* ============ Head ============ */
+.cv-head .well { padding-top: clamp(5.5rem, 14vh, 8rem); } /* clears the floating nav */
+
+.cv-head__role {
+  display: inline-block;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.4rem;
+  margin-bottom: clamp(1rem, 2.5vh, 1.5rem);
+}
+.cv-head__name { margin-bottom: 0.6rem; }
+.cv-head__disciplines {
+  font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--chrome-label);
+  margin-bottom: 1.5rem;
+}
+
+.cv-contact {
+  display: flex; flex-wrap: wrap; gap: 0.35rem 1.5rem;
+  list-style: none;
+  font-size: 0.8rem;
+  padding-bottom: 1.5rem;
+  border-bottom: var(--rule);
+  margin-bottom: 1.5rem;
+}
+.cv-contact a { border-bottom: 1px solid var(--chrome-border-strong); padding-bottom: 1px; }
+.cv-contact a:hover { color: var(--content-primary); border-color: var(--content-primary); }
+
+.cv-summary { max-width: 46rem; }
+
+/* ============ Open source section ============ */
+#open-source p { max-width: 46rem; margin-bottom: 1rem; }
+#open-source code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--content-primary);
+}
+.cv-facts {
+  font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--chrome-label-strong);
+  padding: 0.75rem 0;
+  border-top: var(--rule);
+  border-bottom: var(--rule);
+  margin: 1.5rem 0;
+}
+#open-source .link-grid { margin-top: 1.5rem; }
+
+/* Print-only content: paper cannot be clicked, so a couple of things are
+   swapped for a form that survives being on a page. */
+.print-only { display: none; }
+
+/* ============ Print ============
+   Not the screen page shrunk — a different document. On screen this is a
+   site: floating chrome, living squares, buttons, boxed figures, generous
+   air. On paper it is a CV, and a CV is read as a dense two-page scan, so
+   every box becomes prose and every decoration goes.
+
+   Everything here is layout and typography. Colour for paper is handled by
+   the `print` tier in tokens.json — there is not one hex value below. */
+@media print {
+  @page { margin: 12mm 13mm; }
+
+  /* ---- what does not exist on paper ---- */
+  .bar,               /* floating nav — nothing to click */
+  .strip, .rail,      /* the living squares are decoration */
+  .foot,              /* the copyright line repeats the header */
+  .sec__no,           /* section numbers are a screen device */
+  .link-grid,         /* buttons; their URLs print via .print-only instead */
+  .fact__label        /* the one-line jokes survive; their explanations do not */
+    { display: none !important; }
+
+  .print-only { display: block; }
+
+  /* ---- the sheet becomes the page ---- */
+  .sheet { max-width: none; box-shadow: none; }
+  .well { padding: 0; box-shadow: none; }
+  .band { display: block; }          /* the 24-square grid has no meaning here */
+  .sec { border-top: 0; }            /* the section head's own rule is enough */
+
+  body { font-size: 9.5pt; line-height: 1.38; }
+
+  /* ---- header: six stacked blocks become three lines ---- */
+  .cv-head .well { padding-top: 0; }
+  .cv-head__role {
+    display: inline; border: 0; padding: 0; margin: 0;
+    font-size: 8pt;
+  }
+  .cv-head__role::after { content: " ·"; }
+  .cv-head__name { font-size: 20pt; margin-bottom: 0.5mm; }
+  .cv-head__disciplines { display: inline; font-size: 8pt; margin: 0; }
+  .cv-contact {
+    gap: 0 3mm;
+    font-size: 8pt;
+    padding-bottom: 1.5mm;
+    margin: 1.5mm 0 2mm;
+  }
+  .cv-contact a { border-bottom: 0; }
+  .cv-summary { font-size: 9.4pt; max-width: none; }
+
+  /* ---- section heads: a rule and a small caps line ---- */
+  .sec__head {
+    display: block;
+    background: none;
+    padding: 0 0 1mm;
+    margin: 4mm 0 2mm;
+    border-bottom: 1px solid var(--content-primary);
+    break-after: avoid; page-break-after: avoid;
+  }
+  .sec__title { font-size: 11pt; }
+  .sec__note { font-size: 7.5pt; }
+
+  /* ---- open source ---- */
+  #open-source p { margin-bottom: 1.2mm; max-width: none; font-size: 9pt; }
+  .cv-facts {
+    font-size: 7.5pt;
+    padding: 1mm 0 0;
+    margin: 1.2mm 0 0;
+    border-bottom: 0;
+  }
+  #open-source .print-only { font-size: 7.5pt; margin-top: 0.8mm; }
+
+  /* ---- experience: the densest part of the document ----
+     A role orphaned from its outcomes is the one break that actually costs
+     the reader, so entries stay whole. */
+  .entry {
+    grid-template-columns: 1fr auto;
+    gap: 0 5mm;
+    padding: 0 0 2.5mm;
+    border-bottom: 0;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .entry__role { font-size: 10pt; }
+  .entry__span { font-size: 7.5pt; }
+  .entry__org { font-size: 9pt; }
+  .entry__list { margin-top: 1mm; }
+  .entry__list li {
+    padding: 0 0 0 3.2mm;
+    font-size: 9pt; line-height: 1.36;
+    max-width: none;
+  }
+  .entry__list li::before { top: 0; font-size: 6pt; }
+
+  /* ---- skills & education: the ruled table becomes running prose ---- */
+  .tools__row {
+    display: block;
+    padding: 0 0 1.2mm;
+    border-bottom: 0;
+    break-inside: avoid;
+  }
+  .tools__row dt {
+    display: inline;
+    font-family: var(--font-body); font-weight: 600;
+    font-size: 9pt; text-transform: none; letter-spacing: 0;
+  }
+  .tools__row dt::after { content: " — "; font-weight: 400; }
+  .tools__row dd { display: inline; font-size: 9pt; }
+
+  /* ---- unexpected facts: a bordered three-column figure becomes one line ---- */
+  .facts { display: block; border: 0; background: none; }
+  .fact {
+    display: inline; padding: 0; border: 0;
+    font-size: 9pt;
+  }
+  .fact + .fact::before { content: " · "; }
+  .fact__num {
+    font-family: var(--font-body); font-size: 9pt; font-weight: 600;
+    line-height: inherit;
+  }
+  .fact__num small { font-size: 1em; font-weight: 600; margin-left: 0.5mm; }
+  .fact__title { display: inline; font-size: 9pt; letter-spacing: 0; }
+  .fact__title::before { content: " "; }
+}

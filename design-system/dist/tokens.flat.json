@@ -99,114 +99,225 @@
     "cssVar": "--ink-900",
     "value": "#141518"
   },
+  "scheme.color-scheme": {
+    "cssVar": "--color-scheme",
+    "value": "light",
+    "dark": "dark",
+    "darkResolved": "dark",
+    "print": "light"
+  },
   "surface.surface-page": {
     "cssVar": "--surface-page",
     "value": "var(--stone-100)",
-    "resolved": "#f5f5f4"
+    "resolved": "#f5f5f4",
+    "dark": "var(--stone-900)",
+    "darkResolved": "#1c1917",
+    "print": "var(--stone-50)",
+    "printResolved": "#fafaf9"
   },
   "surface.surface-raised": {
     "cssVar": "--surface-raised",
     "value": "var(--stone-50)",
-    "resolved": "#fafaf9"
+    "resolved": "#fafaf9",
+    "dark": "var(--stone-800)",
+    "darkResolved": "#292524",
+    "print": "var(--stone-50)"
   },
   "surface.surface-sunken": {
     "cssVar": "--surface-sunken",
     "value": "var(--stone-200)",
-    "resolved": "#e7e5e4"
+    "resolved": "#e7e5e4",
+    "dark": "var(--stone-950)",
+    "darkResolved": "#0c0a09",
+    "print": "var(--stone-50)",
+    "printResolved": "#fafaf9"
   },
   "surface.surface-inverse": {
     "cssVar": "--surface-inverse",
     "value": "var(--stone-900)",
-    "resolved": "#1c1917"
+    "resolved": "#1c1917",
+    "dark": "var(--stone-100)",
+    "darkResolved": "#f5f5f4",
+    "print": "var(--stone-900)"
   },
   "primary.primary": {
     "cssVar": "--primary",
     "value": "var(--ink-900)",
-    "resolved": "#141518"
+    "resolved": "#141518",
+    "dark": "var(--stone-50)",
+    "darkResolved": "#fafaf9",
+    "print": "var(--ink-900)"
   },
   "primary.primary-hover": {
     "cssVar": "--primary-hover",
     "value": "var(--ink-700)",
-    "resolved": "#24262b"
+    "resolved": "#24262b",
+    "dark": "var(--stone-300)",
+    "darkResolved": "#d6d3d1",
+    "print": "var(--ink-700)"
   },
   "primary.primary-muted": {
     "cssVar": "--primary-muted",
     "value": "var(--ink-500)",
-    "resolved": "#3b3e44"
+    "resolved": "#3b3e44",
+    "dark": "var(--stone-400)",
+    "darkResolved": "#a8a29e",
+    "print": "var(--ink-500)"
   },
   "content.content-primary": {
     "cssVar": "--content-primary",
     "value": "var(--primary)",
-    "resolved": "#141518"
+    "resolved": "#141518",
+    "darkResolved": "#fafaf9"
   },
   "content.content-body": {
     "cssVar": "--content-body",
     "value": "var(--stone-700)",
-    "resolved": "#44403c"
+    "resolved": "#44403c",
+    "dark": "var(--stone-300)",
+    "darkResolved": "#d6d3d1",
+    "print": "var(--stone-800)",
+    "printResolved": "#292524"
   },
   "content.content-muted": {
     "cssVar": "--content-muted",
     "value": "var(--stone-600)",
-    "resolved": "#57534e"
+    "resolved": "#57534e",
+    "dark": "var(--stone-400)",
+    "darkResolved": "#a8a29e",
+    "print": "var(--stone-600)"
   },
   "content.content-inverse": {
     "cssVar": "--content-inverse",
     "value": "var(--stone-100)",
-    "resolved": "#f5f5f4"
+    "resolved": "#f5f5f4",
+    "dark": "var(--stone-900)",
+    "darkResolved": "#1c1917",
+    "print": "var(--stone-100)"
   },
   "chrome.chrome-bg": {
     "cssVar": "--chrome-bg",
     "value": "var(--slate-100)",
-    "resolved": "#f1f5f9"
+    "resolved": "#f1f5f9",
+    "dark": "var(--slate-900)",
+    "darkResolved": "#0f172a",
+    "print": "var(--stone-50)",
+    "printResolved": "#fafaf9"
   },
   "chrome.chrome-bg-strong": {
     "cssVar": "--chrome-bg-strong",
     "value": "var(--slate-900)",
-    "resolved": "#0f172a"
+    "resolved": "#0f172a",
+    "dark": "var(--slate-950)",
+    "darkResolved": "#020617",
+    "print": "var(--stone-50)",
+    "printResolved": "#fafaf9"
   },
   "chrome.chrome-border": {
     "cssVar": "--chrome-border",
     "value": "var(--slate-300)",
-    "resolved": "#cbd5e1"
+    "resolved": "#cbd5e1",
+    "dark": "var(--slate-700)",
+    "darkResolved": "#334155",
+    "print": "var(--stone-300)",
+    "printResolved": "#d6d3d1"
   },
   "chrome.chrome-border-strong": {
     "cssVar": "--chrome-border-strong",
     "value": "var(--slate-400)",
-    "resolved": "#94a3b8"
+    "resolved": "#94a3b8",
+    "dark": "var(--slate-600)",
+    "darkResolved": "#475569",
+    "print": "var(--stone-400)",
+    "printResolved": "#a8a29e"
   },
   "chrome.chrome-label": {
     "cssVar": "--chrome-label",
     "value": "var(--slate-600)",
-    "resolved": "#475569"
+    "resolved": "#475569",
+    "dark": "var(--slate-400)",
+    "darkResolved": "#94a3b8",
+    "print": "var(--stone-600)",
+    "printResolved": "#57534e"
   },
   "chrome.chrome-label-strong": {
     "cssVar": "--chrome-label-strong",
     "value": "var(--slate-700)",
-    "resolved": "#334155"
+    "resolved": "#334155",
+    "dark": "var(--slate-300)",
+    "darkResolved": "#cbd5e1",
+    "print": "var(--stone-700)",
+    "printResolved": "#44403c"
+  },
+  "chrome.chrome-label-on-strong": {
+    "cssVar": "--chrome-label-on-strong",
+    "value": "var(--slate-400)",
+    "resolved": "#94a3b8",
+    "print": "var(--stone-700)",
+    "printResolved": "#44403c",
+    "description": "Text sitting on chrome-bg-strong (the footer). Has no dark variant on purpose: that surface is near-black in BOTH themes, so its label must stay light in both. 6.96:1 on slate-900, 7.87:1 on slate-950. It DOES need a print value: on paper that surface turns white, so a light label would vanish."
   },
   "chrome.chrome-grid": {
     "cssVar": "--chrome-grid",
     "value": "rgba(100, 116, 139, 0.16)",
-    "description": "slate-500 at 16% — the skeleton's square lines"
+    "dark": "rgba(148, 163, 184, 0.14)",
+    "darkResolved": "rgba(148, 163, 184, 0.14)",
+    "print": "transparent",
+    "printResolved": "transparent",
+    "description": "The skeleton's square lines — slate-500 at 16% on paper, slate-400 at 14% on dark (a lighter ink at lower alpha, so the grid stays a whisper rather than becoming a cage). Prints as nothing: the grid is screen scaffolding, not content."
   },
   "action.action": {
     "cssVar": "--action",
     "value": "var(--primary)",
-    "resolved": "#141518"
+    "resolved": "#141518",
+    "darkResolved": "#fafaf9"
   },
   "action.action-hover": {
     "cssVar": "--action-hover",
     "value": "var(--primary-hover)",
-    "resolved": "#24262b"
+    "resolved": "#24262b",
+    "darkResolved": "#d6d3d1"
   },
   "accent.accent": {
     "cssVar": "--accent",
-    "value": "hsl(225 100% 47%)"
+    "value": "hsl(225 100% 47%)",
+    "dark": "hsl(225 100% 68%)",
+    "darkResolved": "hsl(225 100% 68%)",
+    "print": "var(--ink-900)",
+    "printResolved": "#141518",
+    "description": "Prints as ink, not blue. A CV is as likely to be printed greyscale as in colour, and blue reduced to mid-grey reads as a mistake rather than an accent."
   },
   "accent.accent-rgb": {
     "cssVar": "--accent-rgb",
     "value": "0, 60, 240",
+    "dark": "92, 133, 255",
+    "darkResolved": "92, 133, 255",
     "description": "rgb triplet of --accent, for rgba() composition in JS and hover states"
+  },
+  "effect.shadow-drop": {
+    "cssVar": "--shadow-drop",
+    "value": "rgba(15, 23, 42, 0.15)",
+    "dark": "rgba(2, 6, 23, 0.55)",
+    "darkResolved": "rgba(2, 6, 23, 0.55)",
+    "print": "transparent",
+    "printResolved": "transparent",
+    "description": "The hard offset shadow under the floating nav — an object lying on the sheet. Deeper and more opaque in dark, where a 15% veil would vanish. Nothing on paper: a shadow printed is just a grey smear."
+  },
+  "effect.scrim": {
+    "cssVar": "--scrim",
+    "value": "rgba(28, 25, 23, 0.55)",
+    "dark": "rgba(2, 6, 23, 0.72)",
+    "darkResolved": "rgba(2, 6, 23, 0.72)",
+    "print": "transparent",
+    "printResolved": "transparent",
+    "description": "The veil behind the case-study dialog. Warm stone in light (it dims paper), cold slate in dark (it dims chrome)."
+  },
+  "automata.automata-cell-rgb": {
+    "cssVar": "--automata-cell-rgb",
+    "value": "120, 113, 108",
+    "dark": "168, 162, 158",
+    "darkResolved": "168, 162, 158",
+    "description": "The resident population — stone-500 on paper, stone-400 on dark (the ramp inverts with the surface, or the cells would sink into the page)"
   },
   "font.font-display": {
     "cssVar": "--font-display",
@@ -231,11 +342,17 @@
   "border.rule": {
     "cssVar": "--rule",
     "value": "1px solid var(--chrome-border)",
-    "resolved": "1px solid #cbd5e1"
+    "resolved": "1px solid #cbd5e1",
+    "darkResolved": "1px solid #334155",
+    "printResolved": "1px solid #d6d3d1"
   },
   "border.rule-strong": {
     "cssVar": "--rule-strong",
     "value": "2px solid var(--content-primary)",
-    "resolved": "2px solid #141518"
+    "resolved": "2px solid #141518",
+    "dark": "2px solid var(--chrome-border-strong)",
+    "darkResolved": "2px solid #475569",
+    "print": "2px solid var(--ink-900)",
+    "description": "The heavy rule. In light it is drawn ink — the section signature. Inverting it literally would make it a 2px stone-50 bar glaring across every section top, so on dark it becomes the strong chrome border instead: still structural, no longer a light source. On paper it returns to ink — the one place the rule is cheap and does the most work."
   }
 }
