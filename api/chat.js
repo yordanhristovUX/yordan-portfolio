@@ -144,6 +144,8 @@ If the corpus does not cover the question, the whole answer is one \`prose\` blo
    `runTool` stays as the single funnel every tool call passes through — it is
    where the trace events are emitted — but it no longer decides anything. */
 const runTool = (name, input) => callTool(name, input);
+/* callTool is async now — search_content may embed the query. Every call site
+   below awaits it. */
 
 /** One line for the trace viewer. Never the whole tool result. */
 function summarize(name, result) {
@@ -340,7 +342,7 @@ export default async function handler(req, res) {
       const results = [];
       for (const call of calls) {
         const started = Date.now();
-        const result = runTool(call.name, call.input ?? {});
+        const result = await runTool(call.name, call.input ?? {});
         const ms = Date.now() - started;
 
         toolCallsThisTurn.push({ name: call.name, input: call.input, result });

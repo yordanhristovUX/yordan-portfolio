@@ -176,11 +176,13 @@ function buildServer() {
        and correct itself, which is the whole point of the distinction. */
     let result;
     try {
-      result = callTool(name, args ?? {});
+      result = await callTool(name, args ?? {});
     } catch (err) {
-      /* The tool core is pure functions over a loaded object, so this should be
-         unreachable. If it ever is reached, the caller gets the message and
-         never the stack. */
+      /* Five of the six tools are pure functions over a loaded object, so this
+         is near-unreachable for them. search_content may embed the query over
+         the network, but embed.js swallows its own failures and falls back to
+         BM25 rather than throwing. If this IS reached, the caller gets the
+         message and never the stack. */
       console.error(`[mcp] tool "${name}" threw:`, err);
       return {
         isError: true,

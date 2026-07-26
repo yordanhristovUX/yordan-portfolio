@@ -133,6 +133,27 @@
         "corpus-gap": 0,
         "out-of-corpus": 0
       }
+    },
+    {
+      "arm": "gated-embeddings",
+      "hit1": 0.7442,
+      "hit3": 0.7907,
+      "hit5": 0.8372,
+      "ent1": 0.6512,
+      "ent3": 0.7674,
+      "mrr": 0.7779,
+      "abstain": 0.9091,
+      "separability": 0.9197,
+      "byCategory": {
+        "project": 0.8333,
+        "experience": 0.7143,
+        "skills": 0.75,
+        "cross-cutting": 0.875,
+        "metric": 0.75,
+        "structured-only": 1,
+        "corpus-gap": 0,
+        "out-of-corpus": 1
+      }
     }
   ]
 }

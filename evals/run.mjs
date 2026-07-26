@@ -473,6 +473,21 @@ if (process.env.VOYAGE_API_KEY || hasVectorCache) {
   try {
     const run = await buildEmbeddings(process.env.VOYAGE_API_KEY);
     results.push(measure("embeddings", run));
+
+    /* THE SHIPPED CONFIGURATION. lib/knowledge/ gates with entityGate and ranks
+       with embeddings, so this row — not `embeddings` and not `tools-gated` —
+       is what api/chat.js and api/mcp.js actually do. It was added the moment
+       the two were combined in production, because a deployed configuration
+       that appears in no row of the table is exactly the unmeasured claim this
+       whole suite exists to prevent.
+
+       Expect it to cost recall against ungated `embeddings`: the gate matches
+       entity NAMES, so a question that names nothing ("how far has he run?")
+       is refused before the ranker ever sees it, even when the corpus holds
+       the answer. That trade is the row's whole point — it is what buys the
+       abstention that ungated embeddings does not have. */
+    results.push(measure("gated-embeddings", (q, qid) => (entityGate(q) ? run(q, qid) : [])));
+
     embeddingsNote = `${VOYAGE_MODEL}, vectors cached in evals/vectors.json`;
   } catch (e) {
     embeddingsNote = `failed — ${e.message}`;
@@ -491,8 +506,10 @@ const padStart = (s, n) => String(s).padStart(n);
 for (const line of preflight) console.log(`✓ ${line}`);
 console.log("");
 
+/* 17 wide: "gated-embeddings" is 16 characters and the column must not collide
+   with the numbers beside it. Widen this, not the numbers, when an arm is added. */
 const COLS = [
-  ["arm", 13, (r) => r.arm],
+  ["arm", 17, (r) => r.arm],
   ["hit@1", 7, (r) => pct(r.hit1)],
   ["hit@3", 7, (r) => pct(r.hit3)],
   ["hit@5", 7, (r) => pct(r.hit5)],
@@ -530,14 +547,14 @@ console.log(
 console.log("");
 const cats = [...new Set(QUESTIONS.map((q) => q.category))];
 const CW = 17;
-console.log(padEnd("category", CW) + results.map((r) => padStart(r.arm, 13)).join(""));
-console.log("─".repeat(CW + results.length * 13));
+console.log(padEnd("category", CW) + results.map((r) => padStart(r.arm, 18)).join(""));
+console.log("─".repeat(CW + results.length * 18));
 for (const c of cats) {
   const isAbstain = QUESTIONS.find((q) => q.category === c).expectedChunkIds.length === 0;
   const label = `${c}${isAbstain ? " *" : ""}`;
   console.log(
     padEnd(label, CW) +
-      results.map((r) => padStart(r.byCategory[c] ? pct(r.byCategory[c].score) : "—", 13)).join("")
+      results.map((r) => padStart(r.byCategory[c] ? pct(r.byCategory[c].score) : "—", 18)).join("")
   );
 }
 console.log("─".repeat(CW + results.length * 13));

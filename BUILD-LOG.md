@@ -219,14 +219,66 @@ id and the client renders from the index. The model composes; it does not restat
   `vercel.json`; two worktrees each inventing them is a guaranteed conflict. Landed on the
   base before dispatch.
 
-### Still open
+### The gate that didn't work, and the test that passed for the wrong reason
 
-- **The MCP server serves ungated search.** The entity gate lives in `api/chat.js`, because
-  `lib/knowledge/` was declared off-limits to both parallel agents to avoid a collision. The
-  consequence: the web chat refuses "did he work at Google?" and a recruiter's Claude Desktop
-  would not. The plan's claim that "a tool bug cannot exist on one surface and not the
-  other" is currently false — the gate isn't in the core, it's in one surface. **Scoping
-  decisions made for merge safety leaked into architecture.**
+**Closed since.** The entity gate was built inside `api/chat.js`, because `lib/knowledge/`
+had been declared off-limits to both parallel agents so they could not collide in it. The
+consequence: the web chat refused "did he work at Google?" and the MCP server — same tool,
+same corpus — served the ungated arm to anyone who added it to their own Claude. **A scoping
+decision taken for merge safety became an architectural defect**, and the slice's own
+`CLAUDE.md` already forbade it in as many words.
+
+Moving it into the core exposed something worse. **The gate did not actually work on its
+headline case.** `"did he work at Google"` *opened* it, because Studio Kipo's descriptor is
+*"sole designer for all client work"*, so the token `work` sat in that entity's name surface.
+
+Production had been refusing the question by luck: the model happened to call
+`list_experience` rather than searching. **The end-to-end test passed and proved less than it
+appeared to** — the strongest evidence in this log that a green test is not the same as a
+working mechanism.
+
+The fix was principled rather than tuned. A descriptor is a *sentence*, and the gate's
+contract says it matches names and never bodies. Excluding it added no parameter, so nothing
+could have been fitted to the question set.
+
+```
+tools-gated   abstain 72.7% → 90.9%   separability 0.869 → 0.920
+              hit@3 67.4% (unchanged)
+```
+
+### A trap in the same change
+
+Making `search_content` gated would have silently gated the eval's `bm25` arm too, since it
+called the tool — turning the ungated baseline into a second copy of `tools-gated`. The
+published table would have compared an arm against itself and shown a flattering,
+meaningless result. The arm now calls raw `search()`, and `tools-gated` imports the *shipped*
+gate rather than approximating it.
+
+### Shipping the measured winner — and measuring what actually ships
+
+Embeddings won the eval, so they became the ranker: chunk vectors are built once by
+`scripts/build-vectors.mjs` and committed, and a query is embedded per request with a 2.5s
+timeout and a BM25 fallback. Degraded ranking is a far better failure than a dead endpoint.
+
+But gate + embeddings was a combination **no row of the table described**. A deployed
+configuration that appears in no measurement is exactly the unmeasured claim the suite exists
+to prevent, so it got its own arm:
+
+```
+arm                 hit@3   abstain    sep.
+bm25                74.4%      0.0%   0.837
+tools-gated         67.4%     90.9%   0.920
+embeddings          93.0%      0.0%   0.832
+gated-embeddings    79.1%     90.9%   0.920   ← what actually ships
+```
+
+The shipped arm beats the old gated arm by **11.7pp with identical abstention**, and gives up
+13.9pp against ungated embeddings to buy refusal. Both gated arms reach **100% on
+out-of-corpus and structured-only**.
+
+The cost is visible and worth naming: the gate matches entity *names*, so *"how far has he
+run?"* is refused even though "42 km. Marathon finisher." is in the corpus. Recall paid for
+refusal. That is the trade, stated rather than hidden.
 
 ---
 
