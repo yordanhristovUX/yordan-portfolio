@@ -84,22 +84,23 @@ three in order.
 `validateAnswer` also returns `hasUnsourcedClaim` — prose survived with nothing backing it.
 That is the retry signal: retry once, then degrade to an explicit "not on file" block.
 
-## Two defects in the input, worked around here rather than hidden
+## Known properties of the input
 
-Both belong to `scripts/build-content.mjs`, not to this slice. They are recorded here
-because a reader of this module will otherwise assume neither exists.
+Both belong to `scripts/build-content.mjs`, not to this slice. Recorded here because a
+reader of this module will otherwise assume neither exists.
 
-- **Chunk ids are not unique.** The id is `entity#kind`, and a kind may repeat, so 6 of the
-  76 ids name two chunks each (`project:greenstreet-audit#approach`,
-  `…#outcome`, `project:domestina#approach`, `project:malko-tarnovo#system`,
-  `project:meta#system`, `project:spetema#approach`). `resolve.chunks(id)` therefore returns
-  an **array**. A citation is still sound — the two chunks sharing an id belong to the same
-  project and carry the identical `cite` — but the id does not identify a paragraph.
-  Fixing it means an ordinal suffix in the id scheme, which regenerates `content.json`.
+- **Chunk ids are unique — FIXED in `299b67c`, this note kept as history.** The id was
+  `entity#kind` and kinds repeat, so 6 of 76 ids named two chunks each. `addChunk()` now
+  appends an ordinal to later collisions (`…#approach`, `…#approach-2`), and all 76 ids are
+  distinct. `resolve.chunks(id)` still returns an **array** for compatibility, but it is now
+  always length 0 or 1 — the one-to-many `byChunkId` map in `tools.js` is dead weight and
+  can be simplified whenever that file is next touched. **A citation now identifies a
+  passage**, which is what the provenance gate needs in order to prove anything.
 - **`experience:cncsys` has no chunks.** The 2007–2009 QA role has no bullets, so it
   produces no chunk and is invisible to `search_content`. It is reachable only through
-  `list_experience`. Any question about it is unanswerable by lexical search — see
-  `evals/questions.json`, category `corpus-gap`.
+  `list_experience`. Any question about it is unanswerable by search — see
+  `evals/questions.json`, category `corpus-gap`. This is a *content* gap, not a code bug:
+  the fix is bullets in `content/experience/cncsys.md`, and that is the author's call.
 
 ## How to verify in isolation
 

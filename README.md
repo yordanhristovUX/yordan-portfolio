@@ -58,6 +58,36 @@ npm run storybook                # Storybook on :6006
 `/cv` is the CV: same tokens, same components, light and dark on screen, and a real print
 stylesheet — the colour half of which lives in `tokens.json`, not in the page.
 
+## The MCP server (`api/mcp.js`)
+
+The portfolio is also a **remote MCP server**: six read-only tools over the same content
+index the site is built from, served over streamable HTTP. Add it to Claude Code —
+
+```sh
+claude mcp add --transport http yordan https://yordan-portfolio.vercel.app/api/mcp
+```
+
+— or to `claude_desktop_config.json`:
+
+```json
+{ "mcpServers": { "yordan": { "url": "https://yordan-portfolio.vercel.app/api/mcp" } } }
+```
+
+Then ask your own Claude "what did Yordan do at Domestina?" and it answers from
+`get_project`, not from a chat widget on someone else's page. Setup, the tool table and the
+reasoning are at [`/mcp`](mcp.html).
+
+The tools are not implemented in `api/`. They live in `lib/knowledge/` as pure functions over
+`content/dist/content.json`, and **both** consumers import that one module — the site's own
+assistant calls it in process, this endpoint exposes it to everyone else. One core, two
+surfaces, so a tool bug cannot exist on one and not the other. MCP here is a *distribution*
+surface, not the web chat's internal boundary; `api/CLAUDE.md` says why routing the chat
+through it was rejected.
+
+Every tool is read-only by construction — no writes, no side effects, no state, no auth, no
+API key on the server's side. That is what bounds the worst case of a public endpoint to cost
+rather than to data.
+
 ## Accessibility
 
 WCAG 2.1 AA is a stated tolerance, not an aspiration: AA-checked contrast baked into the

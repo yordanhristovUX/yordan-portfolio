@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP server — Yordan Hristov</title>
+  <meta name="description" content="Install this portfolio as a read-only MCP server and query the work, the CV and the case studies from Claude Desktop, Claude Code or any MCP client. Six tools, no auth, no writes.">
+  <meta property="og:title" content="MCP server — Yordan Hristov">
+  <meta property="og:description" content="Six read-only tools over a product designer's portfolio corpus, served over streamable HTTP. Add it to Claude Desktop in one JSON block.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://yordan-portfolio.vercel.app/mcp">
+  <meta name="twitter:card" content="summary">
+
+  <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)">
+
+  <!-- Theme, before first paint. This must stay inline and blocking: a
+       deferred script runs after the first frame, which is exactly the
+       flash of the wrong theme it exists to prevent. -->
+  <script>
+    try {
+      var t = localStorage.getItem("theme");
+      if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+    } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,700..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Design system first (tokens, then components), page styles last -->
+  <link rel="stylesheet" href="design-system/dist/tokens.css">
+  <link rel="stylesheet" href="design-system/css/components.css">
+  <link rel="stylesheet" href="css/mcp.css">
+</head>
+<body>
+
+  <!-- ============ FLOATING NAV ============ -->
+  <header class="bar">
+    <a class="bar__id" href="index.html">← Portfolio</a>
+    <nav class="bar__nav" aria-label="Primary">
+      <a href="#install">Install</a>
+      <a href="#tools">Tools</a>
+      <a href="#why">Why MCP</a>
+    </nav>
+    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: following your system setting. Activate for light.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+      <span class="theme__label">Auto</span>
+    </button>
+  </header>
+
+  <main id="top" class="sheet">
+
+    <!-- ============ HEAD ============ -->
+    <section class="band mcp-head" aria-label="Introduction">
+      <div class="well">
+        <p class="mcp-head__kicker t-label">Model Context Protocol</p>
+        <h1 class="mcp-head__title t-display t-display--lg">Ask your own agent</h1>
+        <p class="mcp-head__lede t-lead">
+          This portfolio is also a remote MCP server. Add one line to your client and your
+          Claude — not a chat widget on someone else's website — can read the projects, the
+          case studies, the CV and the design-system statistics directly.
+        </p>
+        <div class="mcp-prose">
+          <p>
+            It is <strong>read-only, unauthenticated and stateless</strong>. Six tools, no
+            writes, no sign-up, no key. The interesting part is not that an MCP server exists;
+            it is that these six tools are the <em>same functions</em> the site's own assistant
+            calls in process, so a bug cannot exist on one surface and not the other.
+          </p>
+        </div>
+        <div class="link-grid">
+          <a href="#install">Install it</a>
+          <a href="#tools">See the tools</a>
+          <a href="evals.html">Retrieval evaluation</a>
+          <a href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener">Source ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="strip" aria-hidden="true"></div>
+
+    <!-- ============ 01 · INSTALL ============ -->
+    <section id="install" class="band sec" aria-labelledby="install-title">
+      <header class="sec__head">
+        <span class="sec__no mono">01</span>
+        <h2 id="install-title" class="sec__title t-title">Install</h2>
+        <span class="sec__note">Streamable HTTP · no authentication</span>
+      </header>
+      <div class="well">
+
+        <div class="mcp-endpoint">
+          <span class="mcp-endpoint__label mono">Endpoint</span>
+          <code class="mcp-endpoint__url">https://yordan-portfolio.vercel.app/api/mcp</code>
+          <div class="chips">
+            <span class="chip chip--solid">Read-only</span>
+            <span class="chip">No auth</span>
+            <span class="chip">Stateless</span>
+            <span class="chip">6 tools</span>
+          </div>
+        </div>
+
+        <h3 class="mcp-sub t-label">Claude Code — one command</h3>
+        <div class="mcp-prose">
+          <p>The fastest route. Run it in any project; add <code>--scope user</code> to make it available everywhere.</p>
+        </div>
+<pre class="mcp-code"><code>claude mcp add --transport http yordan https://yordan-portfolio.vercel.app/api/mcp</code></pre>
+        <div class="mcp-prose">
+          <p>
+            Then ask, in Claude Code: <em>“What did Yordan do at Domestina?”</em> It will call
+            <code>get_project</code> and answer from the returned text.
+          </p>
+        </div>
+
+        <h3 class="mcp-sub t-label">Claude Desktop — config file</h3>
+        <div class="mcp-prose">
+          <p>
+            Settings → Developer → Edit Config opens <code>claude_desktop_config.json</code>. On
+            macOS it lives at <code>~/Library/Application Support/Claude/</code>; on Windows at
+            <code>%APPDATA%\Claude\</code>. Paste the block below — if the file already has an
+            <code>mcpServers</code> object, add the <code>"yordan"</code> entry inside it rather
+            than creating a second one — then quit and reopen Claude Desktop.
+          </p>
+        </div>
+<pre class="mcp-code" id="claudeDesktopConfig"><code>{
+  "mcpServers": {
+    "yordan": {
+      "url": "https://yordan-portfolio.vercel.app/api/mcp"
+    }
+  }
+}</code></pre>
+        <div class="mcp-prose">
+          <p>
+            The tools then appear under the tools icon in the composer. Nothing needs to be
+            installed locally: the server runs as a function on this site, not on your machine.
+          </p>
+        </div>
+
+        <h3 class="mcp-sub t-label">Anything else</h3>
+        <div class="mcp-prose">
+          <p>
+            Any client that speaks MCP streamable HTTP works — point it at the endpoint and
+            <code>POST</code> JSON-RPC. There is no <code>GET</code> stream and no session id,
+            because the server keeps no state between requests; every call is complete in one
+            round trip. To look under the hood without a client at all:
+          </p>
+        </div>
+<pre class="mcp-code"><code>curl -s https://yordan-portfolio.vercel.app/api/mcp \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'</code></pre>
+      </div>
+    </section>
+
+    <div class="strip" aria-hidden="true"></div>
+
+    <!-- ============ 02 · THE TOOLS ============ -->
+    <section id="tools" class="band sec" aria-labelledby="tools-title">
+      <header class="sec__head">
+        <span class="sec__no mono">02</span>
+        <h2 id="tools-title" class="sec__title t-title">The tools</h2>
+        <span class="sec__note">Six, deliberately — every one read-only</span>
+      </header>
+      <div class="well">
+        <dl class="tools">
+          <div class="tools__row">
+            <dt>list_projects</dt>
+            <dd>
+              The catalogue — every project as a compact record: id, title, client, period, tags
+              and a one-line summary. Optional filters for tag, client and whether a full case
+              study exists. Start here if you do not know what the corpus contains.
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>get_project</dt>
+            <dd>
+              One project in full: summary, subtitle, every body section in the order it was
+              written, metrics, links, media slots and tags. Sections are an ordered array, and a
+              section kind may appear more than once.
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>list_experience</dt>
+            <dd>
+              Employment history, most recent first — organisation, role, dates, location, working
+              mode, a one-line descriptor and the bullet points for each role.
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>get_profile</dt>
+            <dd>
+              The person: identity, location, availability, contact details, the skills taxonomy,
+              education, languages and three personal facts. These are structured fields, so this
+              is the <em>only</em> tool that can answer “where is he based?” or “is he available?”.
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>get_system_facts</dt>
+            <dd>
+              The repository rather than the work: the design system's own token and component
+              counts, corpus statistics, and the case study about how this site is built. Asked
+              more often than you would expect.
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>search_content</dt>
+            <dd>
+              Lexical BM25 across every chunk of the corpus, returning ranked passages with their
+              citations. It is keyword search, not semantic — and an empty result means the corpus
+              does not cover the question, which is the answer rather than a failure.
+            </dd>
+          </div>
+        </dl>
+
+        <p class="mcp-note">
+          Every tool declares readOnlyHint · destructiveHint false · openWorldHint false — the
+          protocol's own way of saying nothing here can change anything
+        </p>
+      </div>
+    </section>
+
+    <div class="strip" aria-hidden="true"></div>
+
+    <!-- ============ 03 · WHY MCP HERE ============ -->
+    <section id="why" class="band sec sec--tint" aria-labelledby="why-title">
+      <header class="sec__head">
+        <span class="sec__no mono">03</span>
+        <h2 id="why-title" class="sec__title t-title">Why MCP</h2>
+        <span class="sec__note">And where it deliberately is not used</span>
+      </header>
+      <div class="well">
+        <div class="mcp-prose">
+          <p>
+            <strong>MCP here is a distribution surface, not this app's internal boundary.</strong>
+            That distinction is worth stating plainly, because putting an agent↔tool protocol
+            behind a public web chat invites a fair question: is the protocol doing real work, or
+            is it architecture worn as a costume?
+          </p>
+          <p>
+            <strong>The tools are the asset; the protocol is one way to reach them.</strong> They
+            live in <code>lib/knowledge/</code> as pure functions over a generated content index —
+            no network, no state, no dependencies. The site's own assistant imports that module and
+            calls it <em>in process</em>. This endpoint imports the same module and exposes the same
+            six functions to anyone. Two consumers, one core.
+          </p>
+          <p>
+            <strong>The web chat does not call this endpoint, and that is deliberate.</strong>
+            Routing it through here would mean the serverless function calling itself over HTTP once
+            per tool call — an extra hundred to three hundred milliseconds per hop, a second
+            cold-start path, and a self-referential dependency, all bought to satisfy a purity
+            argument. The Claude API supports remote MCP servers natively, so this was a real option
+            rather than a straw man. It was rejected on latency and on the self-call.
+          </p>
+          <p>
+            <strong>What the endpoint adds is the thing a reader can take away.</strong> A chat
+            widget only works while you are on the page. An MCP server installs into your tooling
+            and answers from wherever you already work — inside a review, next to a job spec, in a
+            terminal. That is the whole feature, and it costs a page and a JSON snippet.
+          </p>
+          <p>
+            <strong>Both surfaces share the core, so a tool bug cannot exist in one and not the
+            other.</strong> That equivalence is the argument for the boundary being where it is —
+            and it is also why the retrieval underneath got
+            <a href="evals.html">measured and published</a> rather than asserted.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="strip" aria-hidden="true"></div>
+
+    <!-- ============ 04 · LIMITS ============ -->
+    <section id="limits" class="band sec" aria-labelledby="limits-title">
+      <header class="sec__head">
+        <span class="sec__no mono">04</span>
+        <h2 id="limits-title" class="sec__title t-title">Limits</h2>
+        <span class="sec__note">What it will not do, stated up front</span>
+      </header>
+      <div class="well">
+        <div class="card-grid">
+          <article class="card card--ruled">
+            <h3 class="card__title">Read-only by construction</h3>
+            <p>
+              No tool writes, mutates or sends anything. There is nothing to authorise, so the worst
+              case of an abused endpoint is cost, never data.
+            </p>
+          </article>
+          <article class="card card--ruled">
+            <h3 class="card__title">Stateless</h3>
+            <p>
+              No session, no memory, no per-caller history. Each request is complete on its own and
+              nothing about you is stored.
+            </p>
+          </article>
+          <article class="card card--ruled">
+            <h3 class="card__title">A closed corpus</h3>
+            <p>
+              One person's work, written by him. Ask it something outside that and it returns
+              nothing — which is the correct answer, not a bug.
+            </p>
+          </article>
+          <article class="card card--ruled">
+            <h3 class="card__title">No model, no key</h3>
+            <p>
+              The server spends no inference. Your own client pays for the reasoning; this endpoint
+              only hands it text.
+            </p>
+          </article>
+          <article class="card card--ruled">
+            <h3 class="card__title">Rate limited</h3>
+            <p>
+              Throttled per address at the edge, before the function runs. Fair use is generous;
+              scraping is not the intended shape.
+            </p>
+          </article>
+          <article class="card card--ruled">
+            <h3 class="card__title">Content, not a contract</h3>
+            <p>
+              The corpus changes when the work does. Tool names and shapes are stable; the words
+              inside them are meant to move.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="foot mono">
+    <span>© <span id="year">2026</span> Yordan Hristov — Sofia, Bulgaria</span>
+    <a href="index.html">← Back to the portfolio</a>
+  </footer>
+
+  <script src="js/theme.js" defer></script>
+  <script src="js/automata.js" defer></script>
+</body>
+</html>
