@@ -20,8 +20,14 @@
    That is a deliberate, visible degradation rather than a silent pass.
    ============================================================ */
 
-const URL_ = process.env.UPSTASH_REDIS_REST_URL;
-const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+/* Accept BOTH naming conventions. The Vercel↔Upstash integration has injected
+   `KV_REST_API_*` (the old Vercel KV names) and `UPSTASH_REDIS_REST_*` at
+   different times, and which pair you get depends on how the store was
+   connected. Reading both removes an entire class of "it silently isn't
+   enforcing and nobody knows why" — the failure would otherwise look exactly
+   like not having configured it at all. */
+const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 
 /** Tokens per UTC day across all visitors. Haiku 4.5 at $1/$5 per MTok:
  *  2M tokens is roughly $2-4/day worst case, and a normal day is cents. */
@@ -34,7 +40,8 @@ function warnOnce() {
   if (warned) return;
   warned = true;
   console.warn(
-    "[budget] UPSTASH_REDIS_REST_URL/TOKEN not set — the daily token cap is NOT enforced. " +
+    "[budget] No Redis credentials found — the daily token cap is NOT enforced. " +
+      "Set UPSTASH_REDIS_REST_URL/TOKEN or KV_REST_API_URL/TOKEN. " +
       "Per-request caps (turns, max_tokens, input length) still apply."
   );
 }
