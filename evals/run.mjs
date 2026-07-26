@@ -447,8 +447,18 @@ const results = [
   measure("tools-gated", armToolsGated),
 ];
 
-let embeddingsNote = "skipped (no VOYAGE_API_KEY)";
-if (process.env.VOYAGE_API_KEY) {
+/* The arm runs from the committed vector cache when one is present, and only
+   needs a key to BUILD that cache. Gating on the key alone made the generated
+   artefacts key-dependent: a run with a key wrote five arms, and `--check` in
+   CI — which has no key — then recomputed four and called them stale. The
+   cache is the thing that makes this arm reproducible offline, so the cache is
+   what the gate should ask about. A key is still required if the cache is
+   missing or has gone stale against the corpus. */
+const hasVectorCache = existsSync(VECTORS_PATH);
+let embeddingsNote = hasVectorCache
+  ? "skipped (cached vectors are stale — set VOYAGE_API_KEY to rebuild)"
+  : "skipped (no cached vectors and no VOYAGE_API_KEY)";
+if (process.env.VOYAGE_API_KEY || hasVectorCache) {
   try {
     const run = await buildEmbeddings(process.env.VOYAGE_API_KEY);
     results.push(measure("embeddings", run));

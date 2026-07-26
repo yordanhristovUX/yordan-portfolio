@@ -1,0 +1,169 @@
+# Chat
+
+The assistant surface: a turn list, a composer, a streaming state, and a collapsible tool
+trace. It is a **section of the page**, not a widget floating over it — it lives inside a
+`.band`/`.well` and obeys the skeleton's rules like everything else.
+
+The answer inside an assistant turn is not chat markup. It is **the site's own components**,
+built from `content/dist/content.json` by `js/answer-render.js`: a project renders as the
+real `.idx__row` and opens the real case dialog, a role renders as the real `.entry`. Chat
+owns the conversation chrome; it owns none of the answer.
+
+## Pattern
+
+```html
+<section class="band sec" id="ask">
+  <header class="sec__head">
+    <span class="sec__no mono">07</span>
+    <h2 class="sec__title t-title">Ask</h2>
+    <span class="sec__note">Answers are built from the same source as the page</span>
+  </header>
+  <div class="well">
+    <div class="chat" data-chat>
+      <div class="chat__thread" role="log" aria-live="polite" aria-label="Conversation">
+
+        <article class="chat__turn chat__turn--user">
+          <p class="chat__role t-label">You</p>
+          <div class="chat__body">
+            <p class="chat__prose">What did he do at Green Street?</p>
+          </div>
+        </article>
+
+        <article class="chat__turn chat__turn--assistant">
+          <p class="chat__role t-label">Assistant</p>
+          <div class="chat__body">
+            <details class="chat__trace">
+              <summary class="chat__trace-toggle mono">2 tool calls</summary>
+              <ol class="chat__trace-list">
+                <li class="chat__trace-row">
+                  <code class="chat__trace-name">get_project</code>
+                  <span class="chat__trace-args">id: greenstreet-ds</span>
+                  <span class="chat__trace-result">→ 6 sections, 7 chunks</span>
+                  <span class="chat__trace-ms mono">1ms</span>
+                </li>
+              </ol>
+            </details>
+            <div class="chat__answer">
+              <p class="chat__prose">One paragraph of connective prose.</p>
+              <p class="chat__why">Why this project answers the question.</p>
+              <!-- .idx__row · .entry · .profile · .stat · .chips · .link-grid · .ph · .sources -->
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <form class="chat__form">
+        <textarea class="chat__input" rows="2" maxlength="1000"
+                  placeholder="Ask about the work, the roles, or this design system"
+                  aria-label="Ask a question"></textarea>
+        <button class="btn btn--solid chat__send" type="submit">Ask →</button>
+      </form>
+
+      <div class="chat__suggest">
+        <button class="btn btn--small" type="button" data-chat-ask="What has he shipped?">What has he shipped?</button>
+      </div>
+      <p class="chat__status mono"></p>
+    </div>
+  </div>
+</section>
+```
+
+Streaming state, replacing nothing — appended to `.chat__body` while the loop runs and
+removed when it ends:
+
+```html
+<p class="chat__state mono" role="status" aria-live="polite">
+  <span class="chat__cell"></span><span class="chat__cell"></span>
+  <span class="chat__cell"></span><span class="chat__cell"></span>
+  <span class="chat__state-label">Reading the corpus…</span>
+</p>
+```
+
+## Elements
+
+| Class | Role |
+| --- | --- |
+| `.chat` | Grid wrapper. Carries `data-chat` — the hook `js/chat.js` binds to |
+| `.chat__thread` | The turn list. **Bounded height, scrolls internally** — see below |
+| `.chat__turn` (`--user` / `--assistant`) | One turn. User turns sit on `--surface-raised` |
+| `.chat__role` | `t-label` speaker tag; accent on the assistant side |
+| `.chat__body` | Everything the turn contains, in source order |
+| `.chat__answer` | The rendered block list — design-system components, not chat markup |
+| `.chat__prose` | The ONLY model-authored text. Written with `textContent`, never `innerHTML` |
+| `.chat__why` | One model-authored clause annotating a project row |
+| `.chat__metric` | Wraps a `.stat` plus its label inline |
+| `.chat__state` + `.chat__cell` | Streaming indicator — four cells from the automata's vocabulary |
+| `.chat__trace` / `--toggle` / `--list` / `--row` | Collapsible tool trace (`<details>`, closed by default) |
+| `.chat__form` / `.chat__input` / `.chat__send` | Composer. Textarea + Button — no new button styles |
+| `.chat__suggest` | Seed questions. Buttons, not Chips (chips are display-only) |
+| `.chat__error` | Structured failure text. Never a stack trace |
+
+## The thread must not size the band
+
+`.rail { contain: size }` stops the rails feeding their squares back into the band's row
+height (`components/skeleton/spec.md` — the documented failure is a 420 px band reaching
+36,000 px). That fixes the rail. **A growing message list is the same failure from the other
+side**: the well would grow without bound, the row would follow, and the rails would rebuild
+against a height that keeps moving.
+
+So `.chat__thread` carries `max-height: min(30rem, 60vh)` and `overflow-y: auto`. The band is
+exactly as tall on message 20 as on message 1, and the page's node count stays flat because
+no rail is ever rebuilt taller. `stories/chat.stories.js` has a 20-message story that exists
+purely to keep this honest — if that story makes the band grow, the regression is back.
+
+`js/chat.js` calls `window.rebuildCaseSquares?.()` after appending, the same way
+`js/main.js:167` does on dialog open.
+
+## Tokens
+
+`--surface-raised`, `--surface-page`, `--chrome-bg`, `--chrome-border`,
+`--chrome-border-strong`, `--chrome-label`, `--chrome-label-strong`, `--content-primary`,
+`--content-body`, `--content-muted`, `--primary-muted`, `--accent`, `--rule`, `--pad`,
+`--font-mono`
+
+No `prefers-color-scheme` anywhere in this block. Every colour above flips through its own
+`dark` value in `tokens.json`; the component does not know a theme exists.
+
+## Behaviour (site JS contract — js/chat.js)
+
+`POST /api/chat` with `{messages}`; the response is SSE. The server validates every block
+through all three gates before emitting it, so complete block objects arrive as discrete
+events and the client needs **SSE framing only** — buffer to a blank line, parse each event.
+There is no streaming JSON parser here and there must never be one.
+
+| Event | Effect |
+| --- | --- |
+| `meta` | Model and turn budget, for the trace |
+| `turn` | Updates `.chat__state-label` |
+| `trace` | Appends a `.chat__trace-row` the moment the tool ran — also the keep-alive |
+| `block` | `window.AnswerRender.render()` → appended to `.chat__answer` |
+| `notice` | Gate outcomes: dropped blocks, stripped sources |
+| `error` | Renders `.chat__error`. Structured payload, never a stack trace |
+| `done` | Ends the turn; `degraded` marks a "not on file" answer |
+
+## A11y
+
+- `.chat__thread` is `role="log" aria-live="polite"` — new turns are announced without
+  stealing focus.
+- `.chat__state` is `role="status" aria-live="polite"`; the label carries the meaning, the
+  cells are decoration.
+- The composer is a real `<form>` with a labelled `<textarea>`. Enter submits, Shift+Enter
+  breaks the line.
+- `.chat__trace` is a native `<details>`: keyboard-operable and announced as a disclosure
+  with no ARIA of its own.
+- Input and submit are disabled while a request is in flight, so the busy state is real
+  rather than advisory.
+
+## AI notes
+
+- **Never render `prose` as HTML.** `textContent`, always. The schema stops the model
+  emitting markup; this stops it mattering if that ever changed.
+- Every non-prose block is an **id**, resolved against `content/dist/content.json` at render
+  time. An id that does not resolve renders nothing — never a placeholder.
+- Reuse `window.openCase` for project rows. Do not build a second dialog; the focus trap and
+  the rail rebuild live in `js/main.js`.
+- Do not put a background on `.chat__turn--assistant` — the well is already paper, and a
+  second tint makes the answer read as quoted rather than as the page's own content.
+- Print is a *layout* rule and lives in `css/style.css`: the chat surface is hidden on paper.
+  Never put a print colour here.

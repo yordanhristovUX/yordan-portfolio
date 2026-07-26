@@ -5,7 +5,7 @@
   "system": {
     "tokens": 59,
     "values": 106,
-    "components": 17
+    "components": 19
   },
   "profile": {
     "identity": {
@@ -77,7 +77,7 @@
         "Tokens are born in the repo, not in Figma. One tokens.json builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and the build fails if any of the three is missing, so parity is enforced rather than maintained by hand.",
         "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules."
       ],
-      "openSourceFacts": "59 tokens carrying 106 values across light, dark & print · 17 components · 0 accessibility violations · MIT licensed"
+      "openSourceFacts": "59 tokens carrying 106 values across light, dark & print · 19 components · 0 accessibility violations · MIT licensed"
     }
   },
   "capabilities": [
@@ -676,7 +676,7 @@
         {
           "kind": "outcome",
           "heading": "Receipts",
-          "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 59 tokens, 106 values, 17 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything."
+          "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 59 tokens, 106 values, 19 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything."
         },
         {
           "kind": "status",
@@ -2894,7 +2894,7 @@
       "entity": "project:meta",
       "kind": "outcome",
       "heading": "Receipts",
-      "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 59 tokens, 106 values, 17 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything.",
+      "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 59 tokens, 106 values, 19 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything.",
       "cite": {
         "page": "/",
         "anchor": "#work",
@@ -2903,7 +2903,7 @@
       },
       "len": 121,
       "tf": {
-        "17": 1,
+        "19": 1,
         "24": 1,
         "59": 1,
         "106": 1,
@@ -4820,7 +4820,7 @@
       "entity": "profile",
       "kind": "system",
       "heading": "AI-ready design system",
-      "text": "Tokens are born in the repo, not in Figma. One tokens.json builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and the build fails if any of the three is missing, so parity is enforced rather than maintained by hand. Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules. 59 tokens carrying 106 values across light, dark & print · 17 components · 0 accessibility violations · MIT licensed",
+      "text": "Tokens are born in the repo, not in Figma. One tokens.json builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and the build fails if any of the three is missing, so parity is enforced rather than maintained by hand. Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules. 59 tokens carrying 106 values across light, dark & print · 19 components · 0 accessibility violations · MIT licensed",
       "cite": {
         "page": "/cv",
         "anchor": "#open-source",
@@ -4828,7 +4828,7 @@
       },
       "len": 129,
       "tf": {
-        "17": 1,
+        "19": 1,
         "24": 1,
         "59": 1,
         "106": 1,
@@ -4964,7 +4964,7 @@
     "N": 76,
     "avgdl": 43.75,
     "df": {
-      "17": 2,
+      "19": 2,
       "24": 2,
       "42": 1,
       "50": 1,

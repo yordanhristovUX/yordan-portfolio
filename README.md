@@ -34,7 +34,7 @@ generations. "An old sketchbook with machines that help."
   query, the pinned-theme override, and the print block. The entire dark theme is 24
   re-aliased semantic tokens and **zero** per-component dark rules — the sharpest test a
   semantic tier can be put to. No stylesheet anywhere contains a colour for print.
-- **17 components, triple-enforced** — each is a CSS block + an AI spec
+- **19 components, triple-enforced** — each is a CSS block + an AI spec
   ([example](design-system/components/button/spec.md)) + a Storybook story; `npm run build`
   fails if any leg is missing.
 - **AI-first** — [`CLAUDE.md`](CLAUDE.md) routes agents to

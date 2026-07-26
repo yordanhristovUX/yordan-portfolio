@@ -330,10 +330,44 @@
     <!-- living separator -->
     <div class="strip" aria-hidden="true"></div>
 
-    <!-- ============ 06 CONTACT ============ -->
-    <section class="band sec sec--contact" id="contact">
+    <!-- ============ 06 ASK ============
+         Hand-authored: this section has no <!-- content:… --> region because
+         none of its words come from content/. The prose the assistant emits
+         is model-authored; everything else it renders is resolved from
+         content/dist/content.json at runtime by js/answer-render.js. -->
+    <section class="band sec" id="ask">
       <header class="sec__head">
         <span class="sec__no mono">06</span>
+        <h2 class="sec__title t-title">Ask</h2>
+        <span class="sec__note">Answers are built from the same source as this page</span>
+      </header>
+      <div class="well">
+        <div class="chat" data-chat data-chat-endpoint="/api/chat">
+          <div class="chat__thread" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+          <form class="chat__form">
+            <textarea class="chat__input" rows="2" maxlength="1000"
+              placeholder="Ask about the work, the roles, or this design system"
+              aria-label="Ask a question about Yordan's work"></textarea>
+            <button class="btn btn--solid chat__send" type="submit">Ask →</button>
+          </form>
+
+          <div class="chat__suggest">
+            <button class="btn btn--small" type="button" data-chat-ask="What has he shipped?">What has he shipped?</button>
+            <button class="btn btn--small" type="button" data-chat-ask="What accessibility work has he done?">Accessibility work?</button>
+            <button class="btn btn--small" type="button" data-chat-ask="Where is he based and is he available?">Where is he based?</button>
+            <button class="btn btn--small" type="button" data-chat-ask="How is this site and its design system built?">How is this built?</button>
+          </div>
+
+          <p class="chat__status mono">Every answer is built from Yordan's own written record, cited to the passage it came from — or it says so.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 07 CONTACT ============ -->
+    <section class="band sec sec--contact" id="contact">
+      <header class="sec__head">
+        <span class="sec__no mono">07</span>
         <h2 class="sec__title t-title">Contact</h2>
       </header>
       <div class="well">
@@ -394,5 +428,11 @@
   <script src="js/theme.js" defer></script>
   <script src="js/automata.js" defer></script>
   <script src="js/main.js" defer></script>
+  <!-- Classic defer, no modules, no bundler. answer-render.js must load
+       before chat.js: chat.js consumes window.AnswerRender, and main.js
+       must already have published window.openCase for project blocks to
+       open the real case dialog. -->
+  <script src="js/answer-render.js" defer></script>
+  <script src="js/chat.js" defer></script>
 </body>
 </html>
