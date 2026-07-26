@@ -80,6 +80,44 @@ itself over HTTP once per tool call — an extra hop, a second cold-start path a
 self-referential dependency, bought to satisfy a purity argument. The Claude API supports
 remote MCP servers natively, so this is a rejected option rather than an unavailable one.
 
+## Spend control — what is code and what is dashboard
+
+Two quantities that get confused constantly, and the confusion is expensive.
+
+| Quantity | Mechanism | Where | Covers |
+| --- | --- | --- | --- |
+| **Requests** | Vercel WAF rate limit rule | dashboard, not this repo | `/api/*` |
+| **Tokens** | daily cap in `api/_budget.js` | code | `chat.js` only |
+
+A rate limit cannot catch one slow, legal, expensive conversation. A token budget cannot
+catch a thousand cheap ones. Both are needed, and neither substitutes for the other.
+
+### The WAF rule (manual — it cannot be set from `vercel.json`)
+
+Firewall rules live in the Vercel dashboard or its API; there is no `vercel.json` key for
+them, which is why this is written down rather than committed.
+
+> Project → **Firewall** → **Custom Rules** → New Rule
+> - **`/api/chat`** — path equals `/api/chat`, **rate limit 10 requests / 60s per IP**, action
+>   *Deny*. Generous for a human, useless for a script.
+> - **`/api/mcp`** — path equals `/api/mcp`, **rate limit 60 requests / 60s per IP**, action
+>   *Deny*. Higher because an agent legitimately makes several tool calls per question, and
+>   because this endpoint spends no inference — the cost of abuse here is invocations, not
+>   model tokens.
+
+Rejections happen at the edge, so a blocked request never invokes a function and never
+appears in the token budget.
+
+### The token budget (code, but inert until configured)
+
+`api/_budget.js` needs `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Without them
+it logs one warning and reports `enforced: false` — a visible degradation, never a silent
+pass. `DAILY_TOKEN_BUDGET` overrides the 2M default.
+
+It **fails open** on an Upstash error and **fails closed** on being over budget: a monitoring
+outage must not take the assistant down, but a real overrun must stop it. Over budget returns
+`429` with `kind: "over_budget"` and a truthful `Retry-After`.
+
 ## How to verify in isolation
 
 No API key. `api/mcp.js` makes no model call and reads no environment variable — if you ever
@@ -129,10 +167,17 @@ node scripts/check-boundaries.mjs
 - **Never add an application-level rate limiter.** Rate limiting is Vercel WAF, at the edge,
   *before* the function is invoked — so abuse costs nothing rather than one invocation per
   rejection. An app-level limiter would also need shared state a stateless function does not
-  have. The daily *token* budget is a different quantity, belongs to `chat.js`, and does not
-  apply to `mcp.js` at all: this endpoint spends no inference. The caller's client pays.
-- **Never read a secret in `mcp.js`.** No `ANTHROPIC_API_KEY`, no anything. The endpoint is
-  unauthenticated by design and has no model in its path.
+  have. The daily *token* budget is a different quantity, belongs to `chat.js` via
+  `api/_budget.js`, and does not apply to `mcp.js` at all: this endpoint spends no inference.
+  The caller's client pays.
+- **Never read `ANTHROPIC_API_KEY` in `mcp.js`.** The endpoint is unauthenticated by design
+  and has no model in its path. **Amended:** this rule used to read "no secret, no anything",
+  and that is no longer literally true — `lib/knowledge/` now embeds search queries through
+  Voyage, so `VOYAGE_API_KEY` is reachable from both surfaces. The distinction that matters
+  is preserved and is worth stating precisely: `VOYAGE_API_KEY` is a *server-side retrieval
+  credential* whose absence degrades ranking to BM25, while `ANTHROPIC_API_KEY` buys
+  *inference* and is what an abused endpoint would spend. The MCP endpoint must never be able
+  to spend inference. That is the rule; "no secrets at all" was a proxy for it.
 - **Never let a stack trace, a file path or an internal error reach a response body.**
 - **Never hold a stream open to deliver one complete object.** These tools are property access
   on an object already in memory. `enableJsonResponse: true` is correct here; SSE is for

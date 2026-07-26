@@ -45,6 +45,7 @@ import {
   tokenize,
   validateAnswer,
 } from "../lib/knowledge/index.js";
+import { checkBudget, recordUsage } from "./_budget.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -143,6 +144,10 @@ If the corpus does not cover the question, the whole answer is one \`prose\` blo
 
    `runTool` stays as the single funnel every tool call passes through — it is
    where the trace events are emitted — but it no longer decides anything. */
+/** Seconds until the budget window rolls over, for a truthful Retry-After. */
+const secondsUntilUtcMidnight = () =>
+  Math.max(1, Math.ceil((new Date().setUTCHours(24, 0, 0, 0) - Date.now()) / 1000));
+
 const runTool = (name, input) => callTool(name, input);
 /* callTool is async now — search_content may embed the query. Every call site
    below awaits it. */
@@ -200,24 +205,37 @@ export default async function handler(req, res) {
     return;
   }
 
-  /* ---- PHASE 4 ATTACHES HERE ----------------------------------------
+  /* ---- SPEND CONTROL (Phase 4) --------------------------------------
      Two different quantities, two different mechanisms:
 
        requests  → Vercel WAF rate limiting, at the edge, BEFORE this
-                   function is ever invoked. Nothing to write here; it is
-                   platform config on /api/*.
-       tokens    → a daily spend cap in KV. That check belongs on this
-                   line, before the client is constructed: read the day's
-                   accumulated `usage.input_tokens + output_tokens`, and
-                   if it is over budget respond 429 with the same
-                   structured error payload used below (kind:
-                   "over_budget") plus a static FAQ built from
-                   content.json. The UI already renders that shape, so
-                   the degraded path costs no new client code.
-
-     Both are deliberately NOT stubbed now — a fake limiter that always
-     passes is worse than none, because it reads as done.
+                   function is invoked, so abuse costs nothing rather
+                   than one invocation per rejection. Platform config on
+                   /api/*, not code. See api/CLAUDE.md for the rules.
+       tokens    → the daily cap below. A rate limit cannot catch one
+                   slow, legal, expensive conversation; a token budget
+                   can. It needs shared state, so it is real only when
+                   Upstash is configured and says so plainly when it is
+                   not — see api/_budget.js for why an in-memory
+                   counter would be worse than none.
      -------------------------------------------------------------------- */
+  const budget = await checkBudget();
+  if (budget.over) {
+    res.statusCode = 429;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Retry-After", String(secondsUntilUtcMidnight()));
+    res.end(
+      JSON.stringify({
+        error: "over_budget",
+        kind: "over_budget",
+        message:
+          "The assistant is resting — it has reached its budget for today. " +
+          "Everything it would tell you is on this page already.",
+        resetsAt: new Date(new Date().setUTCHours(24, 0, 0, 0)).toISOString(),
+      })
+    );
+    return;
+  }
 
   let body = req.body;
   if (body === undefined || typeof body === "string") {
@@ -450,6 +468,12 @@ export default async function handler(req, res) {
     });
     send(res, "done", { turns, blocks: 0, error: kind, usage });
   } finally {
+    /* Bill what was actually spent, including a run that errored mid-way —
+       those tokens were still bought. In `finally` so no early return or throw
+       can skip it: under-counting a budget is the one direction that matters.
+       Not awaited — the answer is already on the wire and a bookkeeping round
+       trip should not delay `finish()`; recordUsage swallows its own failures. */
+    void recordUsage(usage.input_tokens + usage.output_tokens);
     finish();
   }
 }

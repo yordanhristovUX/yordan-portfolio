@@ -1,0 +1,59 @@
+# The first automated gate in this repo.
+#
+# Everything here runs with NO API KEY and NO network: tokens, content, vectors
+# and the eval all read committed artefacts. That is not an accident — it is why
+# an eval suite survives a year instead of rotting the first time a key expires.
+#
+# Each step answers one question:
+#   tokens    — is every component still CSS + spec + story, and do the numbers
+#               the site advertises about itself still match reality?
+#   content   — has anyone hand-edited a generated file?
+#   vectors   — has chunk text changed without the embeddings being rebuilt?
+#   bounds    — does the dependency direction between slices still hold?
+#   evals     — has retrieval regressed, and does /evals still show the numbers
+#               the runner actually produced?
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # The gates themselves are zero-dependency. Dependencies are installed
+      # only so the api/ modules can be smoke-imported at the end.
+      - run: npm ci
+
+      - name: tokens: coverage + counts
+        run: node design-system/scripts/build.mjs --check
+
+      - name: content: generated files are current
+        run: node scripts/build-content.mjs --check
+
+      - name: vectors: embeddings match the corpus
+        run: node scripts/build-vectors.mjs --check
+
+      - name: bounds: slice dependency direction
+        run: node scripts/check-boundaries.mjs
+
+      - name: evals: no retrieval regression
+        run: node evals/run.mjs --check
+
+      # Catches an import-time break — a bad path, a syntax error, a missing
+      # export — without calling a model or reading a secret. api/mcp.js is
+      # additionally proof that it needs no key: if it ever starts reaching for
+      # one, this step fails here rather than in production.
+      - name: api: modules load
+        run: |
+          node -e "import('./api/mcp.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('mcp ok'); })"
+          node -e "import('./api/chat.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('chat ok'); })"
