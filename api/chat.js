@@ -129,80 +129,21 @@ If the corpus does not cover the question, the whole answer is one \`prose\` blo
    content.bm25.df: a statistic of the corpus, not of any question set.
    Nothing here is tuned.
    ============================================================ */
-const { N, df } = content.bm25;
-const idf = (t) => Math.log(1 + (N - (df[t] ?? 0) + 0.5) / ((df[t] ?? 0) + 0.5));
+/* The gate used to be implemented here. It now lives in lib/knowledge/gate.js
+   and is applied inside search_content itself, so api/mcp.js gets it too —
+   while it lived in this file, the web chat abstained correctly and the MCP
+   server handed the ungated arm to anyone who added it to their own Claude.
+   Same tool, same corpus, two different answers to "did he work at Google?".
 
-const NAME_SURFACES = [];
-{
-  const add = (entity, parts) =>
-    NAME_SURFACES.push({ entity, terms: new Set(tokenize(parts.filter(Boolean).join(" "))) });
+   The cause is worth remembering: lib/knowledge/ was declared off-limits to
+   both Phase 2 and Phase 3 so two parallel agents could not collide in it, and
+   the gate landed in a surface because that was the only place it was allowed
+   to land. A scoping decision taken for merge safety became an architectural
+   defect. api/CLAUDE.md forbids exactly this and it happened anyway.
 
-  for (const p of content.projects) {
-    add(`project:${p.id}`, [
-      p.id.replace(/-/g, " "),
-      p.title,
-      p.client,
-      p.indexTitle,
-      p.indexClient,
-      p.cardType,
-      ...(p.tags ?? []),
-      ...(p.indexTags ?? []),
-    ]);
-  }
-  for (const e of content.experience) {
-    add(`experience:${e.id}`, [e.id.replace(/-/g, " "), e.org, e.role, e.descriptor]);
-  }
-  for (const c of content.capabilities ?? []) add(`capability:${c.id}`, [c.id.replace(/-/g, " "), c.title]);
-  for (const [id, g] of Object.entries(content.skills.groups)) {
-    add(`skills:${id}`, [id.replace(/-/g, " "), g.site?.term, g.cv?.term]);
-  }
-  for (const f of content.facts) add(`fact:${f.id}`, [f.id, f.title, f.unit]);
-  add("profile", [
-    content.profile.identity.name,
-    content.profile.identity.role,
-    ...content.profile.identity.disciplines,
-    ...content.education.education.map((e) => `${e.qualification} ${e.institution}`),
-    ...content.education.languages.map((l) => l.language),
-    ...content.profile.rows.map((r) => r.term),
-  ]);
-}
-
-/** @returns {{entity:string, score:number}|null} */
-function entityGate(query) {
-  const terms = [...new Set(tokenize(query))];
-  let best = null;
-  let bestScore = 0;
-  for (const surface of NAME_SURFACES) {
-    let score = 0;
-    for (const t of terms) if (surface.terms.has(t)) score += idf(t);
-    if (score > bestScore) {
-      bestScore = score;
-      best = surface.entity;
-    }
-  }
-  return bestScore > 0 ? { entity: best, score: Number(bestScore.toFixed(4)) } : null;
-}
-
-/**
- * Every tool call goes through here, so the gate cannot be bypassed by
- * calling search_content directly.
- */
-function runTool(name, input) {
-  if (name !== "search_content") return callTool(name, input);
-
-  const gate = entityGate(String(input?.query ?? ""));
-  if (!gate) {
-    return {
-      query: input?.query ?? "",
-      count: 0,
-      results: [],
-      gated: true,
-      message:
-        "No entity in this corpus matches that query. The corpus does not cover it — say so rather than rephrasing.",
-    };
-  }
-  return { ...callTool(name, input), gated: false, gateMatched: gate.entity };
-}
+   `runTool` stays as the single funnel every tool call passes through — it is
+   where the trace events are emitted — but it no longer decides anything. */
+const runTool = (name, input) => callTool(name, input);
 
 /** One line for the trace viewer. Never the whole tool result. */
 function summarize(name, result) {

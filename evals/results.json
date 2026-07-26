@@ -100,17 +100,17 @@
       "ent1": 0.4419,
       "ent3": 0.7442,
       "mrr": 0.5506,
-      "abstain": 0.7273,
-      "separability": 0.8689,
+      "abstain": 0.9091,
+      "separability": 0.9197,
       "byCategory": {
         "project": 0.6667,
         "experience": 0.7143,
         "skills": 0.625,
         "cross-cutting": 0.75,
         "metric": 0.625,
-        "structured-only": 0.6667,
+        "structured-only": 1,
         "corpus-gap": 0,
-        "out-of-corpus": 0.8571
+        "out-of-corpus": 1
       }
     },
     {

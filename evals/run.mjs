@@ -27,6 +27,8 @@ import { fileURLToPath } from "node:url";
 import {
   content,
   callTool,
+  search,
+  entityGate,
   tokenize,
   verifyTokeniser,
   validateReferential,
@@ -219,7 +221,12 @@ function armTools(question) {
    3. Arm — bm25
    ============================================================ */
 function armBm25(question) {
-  return callTool("search_content", { query: question, limit: DEPTH }).results.map((r) => ({
+  /* RAW search, deliberately not callTool("search_content"). The tool is now
+     entity-gated in lib/knowledge/, which is correct for production and would
+     be fatal here: it would make this arm identical to `tools-gated` and the
+     published table would be comparing an arm against itself. This arm's whole
+     job is to be the UNGATED baseline that shows what the gate is worth. */
+  return search(content, question, DEPTH).map((r) => ({
     chunkId: r.chunkId,
     chunkIndex: r.chunkIndex,
     score: r.score,
@@ -246,7 +253,11 @@ function armBm25(question) {
    suggested it.
    ============================================================ */
 function armToolsGated(question) {
-  return armTools(question).length ? armBm25(question) : [];
+  /* Calls the SHIPPED gate from lib/knowledge/gate.js rather than approximating
+     it with `armTools(...).length`. This arm is now a measurement of the thing
+     production actually runs, not of something that resembles it — which is the
+     only way its numbers can be claimed for the deployed system. */
+  return entityGate(question) ? armBm25(question) : [];
 }
 
 /* ============================================================

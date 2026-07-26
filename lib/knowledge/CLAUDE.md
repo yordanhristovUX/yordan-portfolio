@@ -67,6 +67,37 @@ of a discriminated union**, never a tree: strict JSON Schema does not support re
 `validateBlocks` → `validateReferential` → `validateProvenance`, or `validateAnswer` for all
 three in order.
 
+## The entity gate — `gate.js`
+
+`search_content` applies it **internally**, so both API surfaces get it and neither can
+bypass it. Do not wrap a gate around the tool in a consumer; that is how the defect below
+happened.
+
+    the gate decides WHETHER · the ranker decides WHAT
+
+Phase 1 measured why it exists: raw BM25 abstains on **0 of 11** unanswerable questions.
+Gated, correct abstention is **90.9%** with ranking unchanged.
+
+Matching is over **name surfaces only** — ids, orgs, roles, titles, clients, tags, skill
+terms, fact titles. Never a body, and never a *sentence*: `experience.descriptor` is
+deliberately excluded, because "sole designer for all client work" put the token `work` in
+Studio Kipo's name surface and opened the gate for *"did he work at Google"* — the exact
+question the gate exists to refuse. Each matched term contributes its corpus IDF from
+`content.bm25.df`. **Nothing is tuned**, so no parameter could have been fitted to the eval.
+
+**Why this is in the core, recorded because it was nearly not.** The gate was first written
+inside `api/chat.js`, which made the web chat refuse correctly while `api/mcp.js` — same
+tool, same corpus — served the ungated arm to anyone who added this server to their own
+Claude. `lib/knowledge/` had been declared off-limits to two parallel agents so they could
+not collide in it, so the gate landed in the only place it was allowed to land. **A scoping
+decision taken for merge safety became an architectural defect**, and `api/CLAUDE.md`
+already forbade it. Correctness outranks merge convenience.
+
+`evals/run.mjs` imports this same `entityGate` for its `tools-gated` arm, so the published
+numbers describe the shipped gate rather than a lookalike. The `bm25` arm deliberately calls
+raw `search()` instead of the tool, because a gated baseline would make that arm identical
+to `tools-gated` and the table would compare an arm against itself.
+
 ## The three gates
 
 1. **Schema.** `prose` is the only block carrying model-authored text. Every other block
