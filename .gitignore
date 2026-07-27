@@ -6,6 +6,13 @@ design-system/storybook-static/
 # .claude/launch.json IS committed — it is the shared dev-server config.
 .claude/settings.local.json
 
+# Transient git worktrees used to run build phases in parallel. These are whole
+# checkouts of this repo; committing them would nest the repo inside itself.
+.claude/worktrees/
+
+# Vercel CLI project linkage — machine-local, and it is not gitignored by default.
+.vercel/
+
 # Private reference material — the complex design system this one simplifies.
 # Contains employer-internal configs; never publish.
 generated/
@@ -17,3 +24,5 @@ generated.zip
 *.log
 .DS_Store
 Thumbs.db
+.vercel
+.env*

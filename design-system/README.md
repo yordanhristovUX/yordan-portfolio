@@ -100,7 +100,7 @@ exists to prevent.
 - **values** — light + dark + print authored values across those tokens (106). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
-- **components** — directories under `components/` (17)
+- **components** — directories under `components/` (19)
 
 Add a token or a component and the build tells you which sentence to update, with the new
 numbers. Matching is whitespace-insensitive, so the prose may wrap wherever it reads best.

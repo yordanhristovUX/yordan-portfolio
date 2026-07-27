@@ -193,6 +193,12 @@
     });
   }
 
+  /* The dialog is the site's, not the chat's. js/answer-render.js builds
+     `.idx__row`s for the assistant's `project` blocks and opens THIS
+     dialog with them — same focus trap, same rail rebuild, same content.
+     A second dialog would be a second set of bugs. */
+  window.openCase = openCase;
+
   $$("[data-project]").forEach((btn) =>
     btn.addEventListener("click", () => openCase(btn.dataset.project))
   );

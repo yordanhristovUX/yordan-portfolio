@@ -1,0 +1,28 @@
+[
+  {
+    "id": "endurance",
+    "value": "42",
+    "unit": "km",
+    "count": 42,
+    "title": "Endurance",
+    "label": "Marathon finisher. Multi-year engagements don't wear me down."
+  },
+  {
+    "id": "power",
+    "value": "250",
+    "unit": "kg",
+    "count": 250,
+    "title": "Power",
+    "label": "Heaviest lift. I ship heavy things — whole systems, not single screens.",
+    "cv": {
+      "label": "Heaviest deadlift. I ship heavy things — whole systems, not single screens."
+    }
+  },
+  {
+    "id": "balance",
+    "value": "2",
+    "unit": "m up",
+    "title": "Balance",
+    "label": "Walks on stilts. Design craft on one side, production code on the other."
+  }
+]

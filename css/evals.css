@@ -1,0 +1,85 @@
+/* ============================================================
+   Evals page styles (layout + wiring only).
+
+   Tokens and components come from the design system:
+     design-system/dist/tokens.css      (generated from tokens.json)
+     design-system/css/components.css   (all component classes)
+   loaded before this file. This file may only position and
+   compose components — no palettes, no new component styles.
+   See design-system/README.md before adding UI.
+
+   There is not one colour value in this file. Everything that
+   differs between light, dark and paper is a token with a `dark`
+   or `print` value in tokens.json; the print block at the bottom
+   is layout only.
+   ============================================================ */
+
+/* ============ Head ============ */
+.ev-head .well { padding-top: clamp(5.5rem, 14vh, 8rem); } /* clears the floating nav */
+
+.ev-head__kicker {
+  display: inline-block;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.4rem;
+  margin-bottom: clamp(1rem, 2.5vh, 1.5rem);
+}
+.ev-head__title { margin-bottom: 1rem; }
+.ev-head__lede { max-width: 46rem; margin-bottom: 1.25rem; }
+.ev-head p + p { margin-top: 1rem; }
+
+/* ============ Prose inside wells ============ */
+.ev-prose { max-width: 46rem; }
+.ev-prose p + p { margin-top: 1rem; }
+.ev-prose ul { list-style: none; margin: 1rem 0; }
+.ev-prose li {
+  position: relative;
+  padding-left: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+.ev-prose li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--chrome-label);
+}
+.ev-prose strong { color: var(--content-primary); font-weight: 600; }
+.ev-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--content-primary);
+}
+
+/* The measurement tables run wide on a narrow screen. A definition row is a
+   two-column grid, so the chips inside it wrap on their own — but the row
+   itself must never make the page scroll sideways. */
+.tools__row dd.chips { align-content: flex-start; }
+
+.ev-note {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--chrome-label-strong);
+  padding: 0.75rem 0;
+  border-top: var(--rule);
+  margin-top: 1.5rem;
+}
+
+.ev-facts { margin-bottom: 1.5rem; }
+
+/* ============ Print ============
+   Layout only. Paper drops the floating chrome and the living squares; every
+   colour swap for print is a `print` value in tokens.json. */
+@media print {
+  .bar,
+  .strip,
+  .rail { display: none; }
+
+  .ev-head .well { padding-top: 0; }
+
+  .band { display: block; }
+
+  .sec { break-inside: auto; }
+  .tools__row { break-inside: avoid; }
+  .fact { break-inside: avoid; }
+}

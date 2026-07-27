@@ -1,0 +1,152 @@
+/* ============================================================
+   MCP page styles (layout + wiring only).
+
+   Tokens and components come from the design system:
+     design-system/dist/tokens.css      (generated from tokens.json)
+     design-system/css/components.css   (all component classes)
+   loaded before this file. This file may only position and
+   compose components — no palettes, no new component styles.
+   See design-system/README.md before adding UI.
+
+   There is not one colour value in this file. Everything that
+   differs between light, dark and paper is a token with a `dark`
+   or `print` value in tokens.json; the print block at the bottom
+   is layout only.
+
+   Note the absence of `prefers-color-scheme`. A themed colour is
+   a token, not a media query — the code block below is the case
+   that most invites the mistake, and it does not need one: it
+   sits on --surface-sunken, which already carries its own dark
+   and print values.
+   ============================================================ */
+
+/* ============ Head ============ */
+.mcp-head .well { padding-top: clamp(5.5rem, 14vh, 8rem); } /* clears the floating nav */
+
+.mcp-head__kicker {
+  display: inline-block;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.4rem;
+  margin-bottom: clamp(1rem, 2.5vh, 1.5rem);
+}
+.mcp-head__title { margin-bottom: 1rem; }
+.mcp-head__lede { max-width: 46rem; margin-bottom: 1.25rem; }
+.mcp-head .link-grid { margin-top: 1.75rem; }
+
+/* ============ Prose inside wells ============ */
+.mcp-prose { max-width: 46rem; }
+.mcp-prose p + p { margin-top: 1rem; }
+.mcp-prose strong { color: var(--content-primary); font-weight: 600; }
+.mcp-prose a {
+  color: var(--content-primary);
+  border-bottom: 1px solid var(--chrome-border-strong);
+}
+.mcp-prose a:hover { border-bottom-color: var(--content-primary); }
+.mcp-prose code,
+.tools__row dd code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--content-primary);
+}
+
+/* ============ Sub-heading inside a well ============
+   The page's <h3>s are set in the label vocabulary rather than the title one:
+   they subdivide a section that already has its own .sec__head, so competing
+   with it at display weight would flatten the hierarchy. */
+.mcp-sub {
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: var(--rule);
+  color: var(--content-primary);
+}
+.mcp-sub:first-child { margin-top: 0; }
+
+/* ============ Endpoint plate ============
+   The one thing a visitor came for, given the weight of a heavy-ruled block so
+   it survives a scan that reads nothing else on the page. */
+.mcp-endpoint {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  border-top: var(--rule-strong);
+  border-bottom: var(--rule);
+  padding: 1.25rem 0 1.5rem;
+  margin-bottom: 2.5rem;
+}
+.mcp-endpoint__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--chrome-label);
+}
+.mcp-endpoint__url {
+  font-family: var(--font-mono);
+  font-size: clamp(0.9rem, 2.4vw, 1.15rem);
+  font-weight: 500;
+  color: var(--content-primary);
+  overflow-wrap: anywhere;
+}
+
+/* ============ Code block ============
+   Copy-paste is the whole job here, so the block wraps nothing that must not
+   wrap: the config JSON is short enough to fit, and the curl command carries
+   its own backslash continuations. Long lines scroll inside the block rather
+   than widening the page. */
+.mcp-code {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--content-primary);
+  background: var(--surface-sunken);
+  border: var(--rule);
+  border-left: 2px solid var(--content-primary);
+  padding: 1rem 1.1rem;
+  margin: 0 0 1.25rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  tab-size: 2;
+}
+.mcp-code code { font: inherit; color: inherit; }
+
+/* ============ Note rule ============ */
+.mcp-note {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--chrome-label-strong);
+  padding: 0.75rem 0;
+  border-top: var(--rule);
+  margin-top: 1.5rem;
+}
+
+/* The tool table runs long: a definition is a paragraph here, not a chip list. */
+.tools__row dd { line-height: 1.55; max-width: 46rem; }
+
+/* ============ Print ============
+   Layout only. Paper drops the floating chrome and the living squares; every
+   colour swap for print is a `print` value in tokens.json. A code block that
+   scrolls on screen must show its full contents on paper, since there is
+   nothing to scroll. */
+@media print {
+  .bar,
+  .strip,
+  .rail { display: none; }
+
+  .mcp-head .well { padding-top: 0; }
+  .mcp-head .link-grid { display: none; }
+
+  .band { display: block; }
+
+  .mcp-code {
+    overflow-x: visible;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    break-inside: avoid;
+  }
+
+  .sec { break-inside: auto; }
+  .tools__row { break-inside: avoid; }
+  .card { break-inside: avoid; }
+  .mcp-endpoint { break-inside: avoid; }
+}

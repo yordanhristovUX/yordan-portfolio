@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "functions": {
+    "api/chat.js": {
+      "maxDuration": 300
+    },
+    "api/mcp.js": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/content/dist/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, s-maxage=3600" }]
+    },
+    {
+      "source": "/design-system/dist/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, s-maxage=3600" }]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    }
+  ]
+}

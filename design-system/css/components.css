@@ -660,8 +660,203 @@ body.is-locked { overflow: hidden; }
 }
 .case__content li strong { color: var(--content-primary); font-weight: 600; }
 
+/* ============ Chat ============
+   The assistant surface: turn list, composer, streaming state and a
+   collapsible tool trace. Lives inside a `.band`/`.well` like any other
+   section — it is a section of the page, not a widget floating over it.
+
+   The thread has a max-height and scrolls internally. That is not
+   cosmetic: `.rail { contain: size }` stops the rails sizing the band,
+   and a bounded thread stops the WELL doing it instead. A conversation
+   of any length leaves the band exactly as tall as it started.
+
+   Every colour here is a semantic token. There is no
+   `prefers-color-scheme` query in this file and adding one would be a
+   bug — a colour that differs in dark is a `dark` value in tokens.json. */
+.chat { display: grid; gap: 1.25rem; }
+
+.chat__thread {
+  display: grid;
+  gap: 0;
+  max-height: min(30rem, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top: var(--rule);
+}
+.chat__thread:empty { display: none; }
+
+.chat__turn {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.25rem var(--pad) 1.25rem 0;
+  border-bottom: var(--rule);
+}
+.chat__turn:last-child { border-bottom: 0; }
+.chat__turn--user { background: var(--surface-raised); padding-left: var(--pad); }
+
+.chat__role { color: var(--chrome-label); }
+.chat__turn--assistant .chat__role { color: var(--accent); }
+
+.chat__body { display: grid; gap: 0.75rem; min-width: 0; }
+.chat__answer { display: grid; gap: 0.75rem; min-width: 0; }
+
+/* The only model-authored text on the page. */
+.chat__prose { max-width: 44rem; line-height: 1.6; }
+.chat__prose strong { color: var(--content-primary); font-weight: 600; }
+
+/* One clause on why a project answers the question — model-authored,
+   so it reads as annotation rather than as the project's own copy. */
+.chat__why {
+  font-size: 0.88rem;
+  color: var(--content-muted);
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--chrome-border-strong);
+  max-width: 44rem;
+}
+
+.chat__metric { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.chat__metric .stat { margin: 0; }
+
+.chat__error {
+  padding: 0.9rem 1rem;
+  background: var(--chrome-bg);
+  box-shadow: inset 0 0 0 1px var(--chrome-border-strong);
+  font-size: 0.9rem;
+  color: var(--content-body);
+  max-width: 44rem;
+}
+
+/* ---- Streaming state ----
+   Four squares from the same vocabulary as the skeleton's automata, so
+   "thinking" reads as this site rather than as a generic spinner. */
+.chat__state {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--chrome-label);
+}
+.chat__cell {
+  width: 9px; height: 9px;
+  flex-shrink: 0;
+  background: var(--primary-muted);
+  animation: chat-life 1.6s steps(2) infinite;
+}
+.chat__cell:nth-child(2) { animation-delay: 0.2s; }
+.chat__cell:nth-child(3) { animation-delay: 0.4s; }
+.chat__cell:nth-child(4) { animation-delay: 0.6s; }
+.chat__state-label { margin-left: 0.5rem; }
+@keyframes chat-life { 50% { opacity: 0.15; } }
+
+/* ---- Tool trace ----
+   Collapsed by default: it is evidence, not narration. */
+.chat__trace {
+  background: var(--chrome-bg);
+  box-shadow: inset 0 0 0 1px var(--chrome-border);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+.chat__trace-toggle {
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+  color: var(--chrome-label-strong);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  list-style: none;
+}
+.chat__trace-toggle::-webkit-details-marker { display: none; }
+.chat__trace-toggle::before { content: "▸ "; }
+.chat__trace[open] .chat__trace-toggle::before { content: "▾ "; }
+.chat__trace-list { list-style: none; }
+.chat__trace-row {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  border-top: var(--rule);
+  color: var(--chrome-label);
+}
+.chat__trace-name { color: var(--content-primary); font-weight: 600; }
+.chat__trace-args { color: var(--chrome-label); word-break: break-word; min-width: 0; }
+.chat__trace-result { color: var(--content-body); }
+.chat__trace-ms { margin-left: auto; color: var(--chrome-label); }
+
+/* ---- Composer ---- */
+.chat__form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+.chat__input {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--content-body);
+  background: var(--surface-page);
+  border: 1px solid var(--chrome-border-strong);
+  padding: 0.75rem 0.9rem;
+  resize: vertical;
+  min-height: 3rem;
+  width: 100%;
+}
+.chat__input::placeholder { color: var(--chrome-label); }
+.chat__input:focus-visible { border-color: var(--accent); }
+.chat__input:disabled { color: var(--content-muted); }
+
+.chat__status { font-size: 0.8rem; color: var(--chrome-label); }
+
+/* Prompts that seed the first question. Chips are display-only by
+   contract, so a suggestion the visitor can press is a small Button. */
+.chat__suggest { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+@media (max-width: 560px) {
+  .chat__form { grid-template-columns: 1fr; }
+  .chat__send { width: 100%; }
+  .chat__trace-ms { margin-left: 0; }
+}
+
+/* ============ Source (citations) ============
+   Every claim traced to the passage it came from. An id reaches this
+   list only after the provenance gate has confirmed a tool actually
+   returned it this turn, so the list is a record, not a bibliography. */
+.sources {
+  border-top: var(--rule);
+  padding-top: 0.9rem;
+  margin-top: 0.25rem;
+}
+.sources__title {
+  font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--chrome-label);
+  margin-bottom: 0.5rem;
+}
+.sources__list { list-style: none; display: grid; gap: 0.35rem; counter-reset: none; }
+
+.source {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.source__ref {
+  flex-shrink: 0;
+  width: 1.4rem; height: 1.4rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.68rem; font-weight: 600;
+  color: var(--chrome-label-strong);
+  border: 1px solid var(--chrome-border-strong);
+}
+.source__link {
+  color: var(--content-primary);
+  text-align: left;
+  border-bottom: 1px solid var(--chrome-border-strong);
+  transition: border-color 0.2s, color 0.2s;
+}
+.source__link:hover, .source__link:focus-visible { border-color: var(--accent); color: var(--accent); }
+.source__id {
+  font-size: 0.68rem;
+  color: var(--chrome-label);
+  word-break: break-all;
+  min-width: 0;
+}
+
 /* ============ Reduced motion ============ */
 @media (prefers-reduced-motion: reduce) {
   .sq { transition: none; }
   .bar__dot { animation: none; }
+  .chat__cell { animation: none; opacity: 0.5; }
 }

@@ -1,0 +1,134 @@
+{
+  "identity": {
+    "name": "Yordan Hristov",
+    "role": "Senior Product Designer",
+    "disciplines": ["AI-ready design systems", "Design engineering", "Research"],
+    "location": {
+      "city": "Sofia",
+      "country": "Bulgaria",
+      "full": "Sofia, Bulgaria",
+      "timezone": "Europe/Sofia"
+    }
+  },
+
+  "availability": {
+    "term": "Availability",
+    "value": "Open to new projects",
+    "status": "ok"
+  },
+
+  "contact": {
+    "email": "yhristov.xyz@gmail.com",
+    "phone": "+359 884 614 579",
+    "phoneHref": "tel:+359884614579",
+    "site": "https://yordan-portfolio.vercel.app",
+    "linkedin": "https://www.linkedin.com/in/yordan-hristov/",
+    "linkedinLabel": "linkedin.com/in/yordan-hristov",
+    "repo": "https://github.com/yordanhristovUX/yordan-portfolio",
+    "storybook": "https://yordan-design-system.vercel.app"
+  },
+
+  "hero": {
+    "titleLines": ["YORDAN", "HRISTOV"],
+    "actions": [
+      { "label": "See the work ↓", "href": "#work", "variant": "solid" },
+      { "label": "Get in touch", "href": "mailto:yhristov.xyz@gmail.com" }
+    ]
+  },
+
+  "profileRows": [
+    { "term": "Focus", "value": "AI-ready design systems · platform-scale UX · design-to-code" },
+    { "term": "Currently", "value": "Green Street — commercial real estate analytics (2026–)" },
+    { "term": "Previously", "value": "Studio Kipo — sole designer, all client work (2023–25)" },
+    { "term": "Advising", "value": "Domestina — UX research & flows (2019–)" },
+    { "term": "Before tech", "value": "Live to Lift — service design, team lead (2009–20)" },
+    { "ref": "availability" }
+  ],
+
+  "contactSection": {
+    "bigLines": ["LET'S WORK", "TOGETHER"],
+    "links": [
+      { "label": "Email", "href": "mailto:yhristov.xyz@gmail.com" },
+      { "label": "+359 884 614 579", "href": "tel:+359884614579" },
+      { "label": "LinkedIn ↗", "href": "https://www.linkedin.com/in/yordan-hristov/", "external": true },
+      { "label": "CV →", "href": "cv.html" }
+    ]
+  },
+
+  "cv": {
+    "openSource": {
+      "links": [
+        { "label": "GitHub repo ↗", "href": "https://github.com/yordanhristovUX/yordan-portfolio", "external": true },
+        { "label": "Storybook ↗", "href": "https://yordan-design-system.vercel.app", "external": true }
+      ],
+      "printUrls": ["github.com/yordanhristovUX/yordan-portfolio", "yordan-design-system.vercel.app"]
+    },
+    "contactList": [
+      { "label": "yhristov.xyz@gmail.com", "href": "mailto:yhristov.xyz@gmail.com" },
+      { "label": "+359 884 614 579", "href": "tel:+359884614579" },
+      { "label": "yordan-portfolio.vercel.app", "href": "https://yordan-portfolio.vercel.app" },
+      { "label": "linkedin.com/in/yordan-hristov", "href": "https://www.linkedin.com/in/yordan-hristov/", "external": true },
+      { "label": "Sofia, Bulgaria" }
+    ]
+  },
+
+  "footer": {
+    "_note": "`{{year}}` renders as <span id=\"year\">fallbackYear</span>; site JS overwrites it with the real year on load, so fallbackYear is only what a no-JS reader sees.",
+    "fallbackYear": 2026,
+
+    "index": {
+      "copyright": "© {{year}} Yordan Hristov — Sofia, Bulgaria",
+      "link": {
+        "label": "Built by hand, with machines that help — view source ↗",
+        "href": "https://github.com/yordanhristovUX/yordan-portfolio",
+        "external": true
+      }
+    },
+    "cv": {
+      "copyright": "© {{year}} Yordan Hristov — Sofia, Bulgaria",
+      "link": { "label": "← Back to the portfolio", "href": "index.html" }
+    }
+  },
+
+  "meta": {
+    "index": {
+      "title": "Yordan Hristov — Product Designer",
+      "description": "Senior Product Designer specialising in AI-ready design systems, platform-scale UX, and design-to-code workflows.",
+      "ogTitle": "Yordan Hristov — Product Designer",
+      "ogDescription": "AI-ready design systems. Platform-scale UX. Design-to-code workflows. A portfolio built on its own open-source design system.",
+      "ogType": "website",
+      "ogUrl": "https://yordan-portfolio.vercel.app",
+      "twitterCard": "summary"
+    },
+    "cv": {
+      "title": "Yordan Hristov — CV",
+      "description": "CV of Yordan Hristov, Senior Product Designer: AI-ready design systems, design engineering, and seven years of research practice.",
+      "ogTitle": "Yordan Hristov — CV",
+      "ogDescription": "Senior Product Designer. AI-ready design systems, design engineering, research practice.",
+      "ogType": "profile",
+      "ogUrl": "https://yordan-portfolio.vercel.app/cv",
+      "twitterCard": "summary"
+    }
+  },
+
+  "prose": {
+    "heroLede": "I build **AI-ready design systems** — component libraries with 1:1 parity to code, custom Claude skills that read them, and production PRs merged by engineering. Currently at Green Street, making AI generate production-faithful UI.",
+
+    "contactKicker": "Have a system to build, a surface to audit, or a handoff gap to close?",
+
+    "cvSummary": "I build **AI-ready design systems**: component libraries with 1:1 parity between Figma and code, plus custom Claude skills and MCP setups that let agents assemble UI from the real system without drift. I write and ship the frontend myself, reviewed and merged by engineering. Under the tooling sits seven years of research practice — user interviews, usability testing, and WCAG 2.1 AA auditing.",
+
+    "background": {
+      "prose": "Before tech: eleven years running a training practice as service designer and team lead. A team of 5–6 coaches, a recruitment programme I designed and trained every hire into, and an assessment framework the whole practice ran on — hundreds of client interviews, structured progress measurement, outcome tracking.",
+      "statement": "It taught me what design school doesn't: people don't behave the way they say they will. You have to watch them — and design for what they actually want.",
+      "kicker": "The research habits started there, not in tech. So did these:"
+    },
+
+    "cvOpenSource": [
+      "Tokens are born in the repo, not in Figma. One `tokens.json` builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and **the build fails if any of the three is missing**, so parity is enforced rather than maintained by hand.",
+      "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules."
+    ],
+
+    "cvOpenSourceFacts": "{{tokens}} tokens carrying {{values}} values across light, dark & print · {{components}} components · 0 accessibility violations · MIT licensed"
+  }
+}

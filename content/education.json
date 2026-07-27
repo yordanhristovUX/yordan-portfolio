@@ -1,0 +1,16 @@
+{
+  "_note": "Rendered as `·`-joined rows in the CV's Education & languages table. The separator is formatting, not content — do not author the joined string.",
+
+  "labels": { "education": "Education", "languages": "Languages" },
+
+  "education": [
+    { "qualification": "UX/UI Design", "institution": "Telerik Academy" },
+    { "qualification": "UX Web Design", "institution": "Software University (SoftUni)" },
+    { "qualification": "Applied Mathematics (coursework)", "institution": "Sofia University" }
+  ],
+
+  "languages": [
+    { "language": "Bulgarian", "level": "native" },
+    { "language": "English", "level": "professional proficiency" }
+  ]
+}

@@ -7,10 +7,20 @@
                        →  dist/tokens.flat.json (dotted keys with resolved
                                                  values, consumed by AI agents
                                                  and the Figma push procedure)
+                       →  ../content/system.generated.json
+                                                 (the system's own statistics,
+                                                 consumed by scripts/build-content.mjs
+                                                 so the prose that advertises them
+                                                 has exactly one source)
 
-   `node scripts/build.mjs`          build tokens
+   `node scripts/build.mjs`          build tokens + system stats
    `node scripts/build.mjs --check`  build + verify every component has
-                                     spec.md and a story (coverage gate)
+                                     spec.md and a story (coverage gate), and
+                                     that the generated prose still quotes the
+                                     current numbers (counts gate)
+
+   Run order for the repo as a whole: this script first (it emits the stats),
+   then `node scripts/build-content.mjs` from the repo root (it consumes them).
    ============================================================ */
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -145,14 +155,44 @@ writeFileSync(join(root, "dist", "tokens.flat.json"), JSON.stringify(flat, null,
 console.log(`✓ dist/tokens.css        (${categories.reduce((n, c) => n + c.vars.length, 0)} variables, ${darkVars.length} dark, ${printVars.length} print)`);
 console.log(`✓ dist/tokens.flat.json  (${Object.keys(flat).length} entries)`);
 
+/* ---------- ../content/system.generated.json ----------
+   The system's statistics, emitted rather than asserted. The site and the CV
+   advertise these numbers in prose; build-content.mjs interpolates them from
+   here, so a token or a component landing updates every sentence that quotes
+   it. The counts gate below then only has to catch a hand-edit of a generated
+   file — it can no longer be the thing that keeps the numbers honest, because
+   nothing types them by hand any more. */
+const compDir = join(root, "components");
+const storyDir = join(root, "stories");
+const components = existsSync(compDir)
+  ? readdirSync(compDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
+  : [];
+const tokenCount = categories.reduce((n, c) => n + c.vars.length, 0);
+const valueCount = tokenCount + darkVars.length + printVars.length;
+
+mkdirSync(join(root, "..", "content"), { recursive: true });
+writeFileSync(
+  join(root, "..", "content", "system.generated.json"),
+  JSON.stringify(
+    {
+      $generatedBy: "design-system/scripts/build.mjs — do not edit",
+      tokens: tokenCount,
+      values: valueCount,
+      light: tokenCount,
+      dark: darkVars.length,
+      print: printVars.length,
+      components: components.length,
+      componentNames: components,
+    },
+    null,
+    2
+  ) + "\n"
+);
+console.log(`✓ ../content/system.generated.json (${tokenCount} tokens, ${valueCount} values, ${components.length} components)`);
+
 /* ---------- coverage gate: every component = spec.md + story ---------- */
 if (CHECK) {
-  const compDir = join(root, "components");
-  const storyDir = join(root, "stories");
   const problems = [];
-  const components = existsSync(compDir)
-    ? readdirSync(compDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
-    : [];
   for (const c of components) {
     if (!existsSync(join(compDir, c, "spec.md"))) problems.push(`components/${c}/ has no spec.md`);
     if (!existsSync(join(storyDir, `${c}.stories.js`))) problems.push(`components/${c}/ has no stories/${c}.stories.js`);
@@ -163,13 +203,17 @@ if (CHECK) {
   }
   console.log(`✓ coverage check         (${components.length} components, each with spec.md + story)`);
 
-  /* ---------- counts gate: the docs advertise numbers; keep them true ----------
-     These figures are a claim the site makes about itself, so they are worth the
-     same enforcement as component coverage. Positive assertions, not a scan:
-     each file must contain the current number, which is unambiguous and cannot
-     false-positive on unrelated figures in the prose. */
-  const tokenCount = categories.reduce((n, c) => n + c.vars.length, 0);
-  const valueCount = tokenCount + darkVars.length + printVars.length;
+  /* ---------- counts gate: the generated prose must still quote the truth ----------
+     These figures are a claim the site makes about itself. They are no longer
+     typed by hand — build-content.mjs interpolates them from
+     content/system.generated.json — so this is no longer the mechanism that
+     keeps them true. It is the guard against someone hand-editing a generated
+     file, which is the one way drift can still get in. Positive assertions, not
+     a scan: each file must contain the current number, which is unambiguous and
+     cannot false-positive on unrelated figures in the prose.
+
+     A missing file is a FAILURE, not a pass. The old `existsSync → continue`
+     meant relocating content silently disabled the check. */
   const advertised = [
     ["../README.md", [`${tokenCount} tokens`, `${valueCount} values`, `${components.length} components`]],
     ["../cv.html", [`${tokenCount} tokens`, `${valueCount} values`, `${components.length} components`]],
@@ -181,7 +225,10 @@ if (CHECK) {
   const flatten = (s) => s.replace(/\s+/g, " ");
   for (const [rel, needles] of advertised) {
     const path = join(root, rel);
-    if (!existsSync(path)) continue;
+    if (!existsSync(path)) {
+      stale.push(`${rel} is missing — it advertises the counts and must exist`);
+      continue;
+    }
     const text = flatten(readFileSync(path, "utf8"));
     for (const needle of needles) {
       if (!text.includes(needle)) stale.push(`${rel} does not say "${needle}"`);
@@ -190,7 +237,9 @@ if (CHECK) {
   if (stale.length) {
     console.error(
       `✗ counts check failed — the docs advertise numbers that are no longer true:\n  - ${stale.join("\n  - ")}\n` +
-        `  Current: ${tokenCount} tokens, ${valueCount} values (${tokenCount} light + ${darkVars.length} dark + ${printVars.length} print), ${components.length} components.`
+        `  Current: ${tokenCount} tokens, ${valueCount} values (${tokenCount} light + ${darkVars.length} dark + ${printVars.length} print), ${components.length} components.\n` +
+        `  cv.html and js/case-studies.js are GENERATED — do not edit them. Run:\n` +
+        `    node design-system/scripts/build.mjs && node scripts/build-content.mjs`
     );
     process.exit(1);
   }

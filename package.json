@@ -1,0 +1,20 @@
+{
+  "name": "yordan-portfolio",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "tokens": "node design-system/scripts/build.mjs --check",
+    "content": "node scripts/build-content.mjs",
+    "check": "node design-system/scripts/build.mjs --check && node scripts/build-content.mjs --check && node scripts/check-boundaries.mjs",
+    "evals": "node evals/run.mjs",
+    "serve": "npx --yes serve . -l 3000 --no-clipboard"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "zod": "^3.25.76"
+  }
+}

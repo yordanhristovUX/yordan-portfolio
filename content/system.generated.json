@@ -1,0 +1,30 @@
+{
+  "$generatedBy": "design-system/scripts/build.mjs — do not edit",
+  "tokens": 59,
+  "values": 106,
+  "light": 59,
+  "dark": 24,
+  "print": 23,
+  "components": 19,
+  "componentNames": [
+    "button",
+    "card",
+    "chat",
+    "chip",
+    "dialog",
+    "entry",
+    "fact",
+    "footer",
+    "link-grid",
+    "media",
+    "nav",
+    "profile",
+    "row",
+    "section-head",
+    "skeleton",
+    "source",
+    "stat",
+    "theme-toggle",
+    "typography"
+  ]
+}

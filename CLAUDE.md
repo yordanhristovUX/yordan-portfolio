@@ -5,6 +5,11 @@ Static site (no build step) + its design system. Two pages: `index.html` (portfo
 
 Run it locally with `npx serve .` — or the `site` config in `.claude/launch.json`.
 
+**Start at [`ARCHITECTURE.md`](ARCHITECTURE.md)** — one page: the dependency graph, the rule
+that every boundary crossing is a generated artefact rather than a code import, and a
+"for task X, open slice Y" table. It is the only file you need to read to find out which
+slice you actually need.
+
 **Before touching any UI, read `design-system/README.md`.** In short:
 
 - All colours/fonts/spacing come from `design-system/tokens/tokens.json` → run
@@ -26,6 +31,12 @@ Run it locally with `npx serve .` — or the `site` config in `.claude/launch.js
 - GSAP is vendored in `js/vendor/gsap/` — do not swap it back to a CDN, and keep the
   `HAS_GSAP` guard in `js/main.js`: it is what stops a load failure from leaving the page
   blank. Details in `js/vendor/gsap/README.md`.
+- **Copy is generated too.** Every word on both pages is authored in `content/` and compiled
+  by `scripts/build-content.mjs` into `js/case-studies.js`, the `<!-- content:… -->` regions
+  of `index.html`/`cv.html`, `content/dist/`, and `llms.txt`. Never hand-edit those; edit
+  `content/` and re-run. Copy is moved verbatim, never rewritten — see `content/CLAUDE.md`.
+  Run order is `design-system/scripts/build.mjs` (it emits the counts) then
+  `scripts/build-content.mjs` (it interpolates them).
 - Figma sync is one-way repo → Figma: `design-system/figma/push-guide.md`.
 - Storybook: `npm run storybook` in `design-system/` (port 6006).
 - `generated/` is a read-only reference (the complex design system this one simplifies) —

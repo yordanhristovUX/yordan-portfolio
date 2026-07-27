@@ -1,0 +1,63 @@
+{
+  "$schema": "evals/baseline.schema — see evals/CLAUDE.md",
+  "generatedBy": "evals/run.mjs --update-baseline",
+  "note": "Committed floor. run.mjs exits non-zero if any tracked metric falls below these. Raise it deliberately; never lower it to make a build pass.",
+  "contentVersion": 1,
+  "questions": 54,
+  "arms": {
+    "tools-only": {
+      "hit1": 0.3953,
+      "hit3": 0.5116,
+      "hit5": 0.6744,
+      "ent1": 0.5814,
+      "ent3": 0.6279,
+      "mrr": 0.4974,
+      "abstain": 0.7273
+    },
+    "bm25": {
+      "hit1": 0.4651,
+      "hit3": 0.7442,
+      "hit5": 0.8372,
+      "ent1": 0.4884,
+      "ent3": 0.814,
+      "mrr": 0.6127,
+      "abstain": 0
+    },
+    "hybrid": {
+      "hit1": 0.4419,
+      "hit3": 0.5814,
+      "hit5": 0.7442,
+      "ent1": 0.6279,
+      "ent3": 0.7209,
+      "mrr": 0.5594,
+      "abstain": 0
+    },
+    "tools-gated": {
+      "hit1": 0.4186,
+      "hit3": 0.6744,
+      "hit5": 0.7674,
+      "ent1": 0.4419,
+      "ent3": 0.7442,
+      "mrr": 0.5506,
+      "abstain": 0.9091
+    },
+    "embeddings": {
+      "hit1": 0.8605,
+      "hit3": 0.9302,
+      "hit5": 0.9767,
+      "ent1": 0.7674,
+      "ent3": 0.8837,
+      "mrr": 0.9019,
+      "abstain": 0
+    },
+    "gated-embeddings": {
+      "hit1": 0.7442,
+      "hit3": 0.7907,
+      "hit5": 0.8372,
+      "ent1": 0.6512,
+      "ent3": 0.7674,
+      "mrr": 0.7779,
+      "abstain": 0.9091
+    }
+  }
+}

@@ -1,0 +1,452 @@
+{
+  "$schema": "evals/questions.schema — see evals/CLAUDE.md",
+  "version": 1,
+  "note": "Golden retrieval set. Every expectedChunkId is a real id in content/dist/content.json and run.mjs refuses to run if one is not. Questions with an empty expectedChunkIds are ABSTENTION questions: the correct behaviour is to retrieve nothing. They are split three ways — out-of-corpus (not in the corpus at all), structured-only (in content.json as a structured field, but not as a chunk, so only the tool layer can answer it), and corpus-gap (an entity that exists but produced no chunk).",
+  "questions": [
+    {
+      "id": "proj-domestina-what",
+      "category": "project",
+      "question": "What was the Domestina project about?",
+      "expectedEntity": "project:domestina",
+      "expectedChunkIds": ["project:domestina#summary", "project:domestina#subtitle"]
+    },
+    {
+      "id": "proj-domestina-users",
+      "category": "project",
+      "question": "Who were the three user types on the Domestina marketplace?",
+      "expectedEntity": "project:domestina",
+      "expectedChunkIds": ["project:domestina#problem"]
+    },
+    {
+      "id": "proj-spetema-ia",
+      "category": "project",
+      "question": "How was the information architecture of the Spetema coffee site structured?",
+      "expectedEntity": "project:spetema",
+      "expectedChunkIds": ["project:spetema#approach"]
+    },
+    {
+      "id": "proj-malko-colour",
+      "category": "project",
+      "question": "Why does the Malko Tarnovo app use green for some things and blue for others?",
+      "expectedEntity": "project:malko-tarnovo",
+      "expectedChunkIds": ["project:malko-tarnovo#approach"]
+    },
+    {
+      "id": "proj-greenstreet-ds-problem",
+      "category": "project",
+      "question": "What problem was the Green Street design system built to solve?",
+      "expectedEntity": "project:greenstreet-ds",
+      "expectedChunkIds": ["project:greenstreet-ds#problem"]
+    },
+    {
+      "id": "proj-audit-surfaces",
+      "category": "project",
+      "question": "Which two Green Street product surfaces were audited for accessibility?",
+      "expectedEntity": "project:greenstreet-audit",
+      "expectedChunkIds": [
+        "project:greenstreet-audit#subtitle",
+        "project:greenstreet-audit#approach",
+        "project:greenstreet-audit#approach-2",
+        "project:greenstreet-audit#summary"
+      ]
+    },
+    {
+      "id": "proj-audit-severity",
+      "category": "project",
+      "question": "How were the accessibility findings documented and prioritised?",
+      "expectedEntity": "project:greenstreet-audit",
+      "expectedChunkIds": ["project:greenstreet-audit#outcome"]
+    },
+    {
+      "id": "proj-meta-pipeline",
+      "category": "project",
+      "question": "How does this portfolio site get deployed, and how do tokens reach Figma?",
+      "expectedEntity": "project:meta",
+      "expectedChunkIds": ["project:meta#system-2"]
+    },
+    {
+      "id": "proj-mindromeda",
+      "category": "project",
+      "question": "What is Mindromeda?",
+      "expectedEntity": "project:mindromeda",
+      "expectedChunkIds": ["project:mindromeda#summary"]
+    },
+    {
+      "id": "proj-football",
+      "category": "project",
+      "question": "Tell me about the football analytics platform.",
+      "expectedEntity": "project:ubistats-football",
+      "expectedChunkIds": ["project:ubistats-football#summary", "experience:studio-kipo#outcome"]
+    },
+    {
+      "id": "proj-crypto-platform",
+      "category": "project",
+      "question": "Has he designed anything for crypto or stock trading?",
+      "expectedEntity": "project:payment-crypto-stocks",
+      "expectedChunkIds": [
+        "project:payment-crypto-stocks#summary",
+        "experience:independent#outcome"
+      ]
+    },
+    {
+      "id": "proj-tax-usd",
+      "category": "project",
+      "question": "What did he design for the cross-border tax refund service?",
+      "expectedEntity": "project:tax-advice-usd-accounts",
+      "expectedChunkIds": ["project:tax-advice-usd-accounts#summary"]
+    },
+
+    {
+      "id": "exp-current",
+      "category": "experience",
+      "question": "Where is he working at the moment?",
+      "expectedEntity": "experience:green-street",
+      "expectedChunkIds": ["profile:hero", "experience:green-street#outcome"]
+    },
+    {
+      "id": "exp-studio-kipo",
+      "category": "experience",
+      "question": "What did he do at Studio Kipo?",
+      "expectedEntity": "experience:studio-kipo",
+      "expectedChunkIds": ["experience:studio-kipo#outcome"]
+    },
+    {
+      "id": "exp-before-tech",
+      "category": "experience",
+      "question": "What was he doing before he worked in tech?",
+      "expectedEntity": "profile",
+      "expectedChunkIds": ["profile:background", "experience:live-to-lift#outcome"]
+    },
+    {
+      "id": "exp-team-lead",
+      "category": "experience",
+      "question": "Has he ever managed or led a team?",
+      "expectedEntity": "experience:live-to-lift",
+      "expectedChunkIds": ["experience:live-to-lift#outcome", "profile:background"]
+    },
+    {
+      "id": "exp-domestina-now",
+      "category": "experience",
+      "question": "Is he still involved with Domestina?",
+      "expectedEntity": "experience:domestina",
+      "expectedChunkIds": ["experience:domestina#outcome"]
+    },
+    {
+      "id": "exp-independent-nft",
+      "category": "experience",
+      "question": "What did he do independently with NFTs and generative art?",
+      "expectedEntity": "experience:independent",
+      "expectedChunkIds": ["experience:independent#outcome", "project:generative-art-platform#summary"]
+    },
+    {
+      "id": "exp-greenstreet-scope",
+      "category": "experience",
+      "question": "What has he shipped at Green Street so far?",
+      "expectedEntity": "experience:green-street",
+      "expectedChunkIds": ["experience:green-street#outcome", "project:greenstreet-ds#system"]
+    },
+
+    {
+      "id": "skill-accessibility",
+      "category": "skills",
+      "question": "What accessibility experience does he have?",
+      "expectedEntity": "skills:accessibility",
+      "expectedChunkIds": [
+        "skills:accessibility:site",
+        "skills:research:cv",
+        "project:greenstreet-audit#summary"
+      ]
+    },
+    {
+      "id": "skill-ai-tools",
+      "category": "skills",
+      "question": "Which AI tools and agent workflows does he actually use?",
+      "expectedEntity": "skills:ai-workflows",
+      "expectedChunkIds": ["skills:ai-workflows:cv", "skills:ai-workflows:site"]
+    },
+    {
+      "id": "skill-frontend",
+      "category": "skills",
+      "question": "Can he write frontend code, and in what?",
+      "expectedEntity": "skills:engineering",
+      "expectedChunkIds": ["skills:engineering:cv", "skills:engineering:site"]
+    },
+    {
+      "id": "skill-research-methods",
+      "category": "skills",
+      "question": "What user research methods does he use?",
+      "expectedEntity": "skills:research",
+      "expectedChunkIds": ["skills:research:cv", "skills:research:site"]
+    },
+    {
+      "id": "skill-design-systems",
+      "category": "skills",
+      "question": "How deep is his design systems and token architecture knowledge?",
+      "expectedEntity": "skills:design-systems",
+      "expectedChunkIds": ["skills:design-systems:cv", "skills:design:site"]
+    },
+    {
+      "id": "skill-motion",
+      "category": "skills",
+      "question": "Does he do motion design?",
+      "expectedEntity": "skills:product-design",
+      "expectedChunkIds": ["skills:product-design:cv", "skills:design:site", "project:spetema#system"]
+    },
+    {
+      "id": "skill-languages",
+      "category": "skills",
+      "question": "What languages does he speak?",
+      "expectedEntity": "profile",
+      "expectedChunkIds": ["profile:education"]
+    },
+    {
+      "id": "skill-education",
+      "category": "skills",
+      "question": "Where did he study?",
+      "expectedEntity": "profile",
+      "expectedChunkIds": ["profile:education"]
+    },
+
+    {
+      "id": "cross-local-government",
+      "category": "cross-cutting",
+      "question": "Has he done anything with local government?",
+      "expectedEntity": "project:malko-tarnovo",
+      "expectedChunkIds": [
+        "project:malko-tarnovo#summary",
+        "project:malko-tarnovo#subtitle",
+        "project:malko-tarnovo#outcome",
+        "project:malko-tarnovo#problem"
+      ]
+    },
+    {
+      "id": "cross-design-systems-where",
+      "category": "cross-cutting",
+      "question": "Where has he built design systems, across all his work?",
+      "expectedEntity": "project:greenstreet-ds",
+      "expectedChunkIds": [
+        "project:greenstreet-ds#summary",
+        "experience:studio-kipo#outcome",
+        "project:malko-tarnovo#system",
+        "project:meta#summary"
+      ]
+    },
+    {
+      "id": "cross-app-stores",
+      "category": "cross-cutting",
+      "question": "Which of his projects are actually live in the app stores?",
+      "expectedEntity": "project:malko-tarnovo",
+      "expectedChunkIds": [
+        "project:malko-tarnovo#outcome",
+        "project:malko-tarnovo#summary",
+        "project:mindromeda#summary"
+      ]
+    },
+    {
+      "id": "cross-conflicting-audiences",
+      "category": "cross-cutting",
+      "question": "Has he designed for two audiences with conflicting needs on one product?",
+      "expectedEntity": "project:spetema",
+      "expectedChunkIds": [
+        "project:spetema#problem",
+        "project:malko-tarnovo#problem",
+        "project:domestina#problem"
+      ]
+    },
+    {
+      "id": "cross-production-code",
+      "category": "cross-cutting",
+      "question": "Has he written and shipped production code himself, or only designs?",
+      "expectedEntity": "project:greenstreet-ds",
+      "expectedChunkIds": [
+        "project:greenstreet-ds#system",
+        "profile:cv-summary",
+        "skills:engineering:cv"
+      ]
+    },
+    {
+      "id": "cross-b2b-b2c",
+      "category": "cross-cutting",
+      "question": "Any experience reconciling B2B and B2C on one site?",
+      "expectedEntity": "project:spetema",
+      "expectedChunkIds": ["project:spetema#problem", "project:spetema#subtitle", "project:spetema#approach"]
+    },
+    {
+      "id": "cross-white-label",
+      "category": "cross-cutting",
+      "question": "Has he built anything white-label or multi-brand?",
+      "expectedEntity": "project:malko-tarnovo",
+      "expectedChunkIds": [
+        "project:malko-tarnovo#system",
+        "project:malko-tarnovo#outcome",
+        "experience:studio-kipo#outcome",
+        "skills:design-systems:cv"
+      ]
+    },
+    {
+      "id": "cross-open-source",
+      "category": "cross-cutting",
+      "question": "Is any of his work open source and inspectable?",
+      "expectedEntity": "project:meta",
+      "expectedChunkIds": ["profile:open-source", "project:meta#summary", "project:meta#context"]
+    },
+
+    {
+      "id": "metric-bounce-rate",
+      "category": "metric",
+      "question": "By how much did the bounce rate drop on the Domestina front page?",
+      "expectedEntity": "project:domestina",
+      "expectedChunkIds": [
+        "project:domestina#outcome",
+        "project:domestina#summary",
+        "experience:domestina#outcome"
+      ]
+    },
+    {
+      "id": "metric-issue-count",
+      "category": "metric",
+      "question": "How many accessibility issue instances did he catalogue?",
+      "expectedEntity": "project:greenstreet-audit",
+      "expectedChunkIds": ["project:greenstreet-audit#summary", "experience:green-street#outcome"]
+    },
+    {
+      "id": "metric-component-count",
+      "category": "metric",
+      "question": "How many components are in the Green Street Figma library?",
+      "expectedEntity": "project:greenstreet-ds",
+      "expectedChunkIds": [
+        "project:greenstreet-ds#summary",
+        "project:greenstreet-ds#approach",
+        "experience:green-street#outcome"
+      ]
+    },
+    {
+      "id": "metric-token-count",
+      "category": "metric",
+      "question": "How many tokens and components does this site's own design system have?",
+      "expectedEntity": "project:meta",
+      "expectedChunkIds": ["project:meta#outcome", "profile:open-source"]
+    },
+    {
+      "id": "metric-spetema-products",
+      "category": "metric",
+      "question": "How many products are in the Spetema catalogue?",
+      "expectedEntity": "project:spetema",
+      "expectedChunkIds": [
+        "project:spetema#summary",
+        "project:spetema#subtitle",
+        "project:spetema#approach"
+      ]
+    },
+    {
+      "id": "metric-marathon",
+      "category": "metric",
+      "question": "How far has he run?",
+      "expectedEntity": "fact:endurance",
+      "expectedChunkIds": ["fact:endurance"]
+    },
+    {
+      "id": "metric-deadlift",
+      "category": "metric",
+      "question": "What is his heaviest deadlift?",
+      "expectedEntity": "fact:power",
+      "expectedChunkIds": ["fact:power:cv", "fact:power"]
+    },
+    {
+      "id": "metric-team-size",
+      "category": "metric",
+      "question": "How big was the coaching team he managed?",
+      "expectedEntity": "experience:live-to-lift",
+      "expectedChunkIds": ["experience:live-to-lift#outcome", "profile:background"]
+    },
+
+    {
+      "id": "struct-location",
+      "category": "structured-only",
+      "question": "Where is he based?",
+      "expectedEntity": "profile",
+      "expectedTool": "get_profile",
+      "expectedChunkIds": [],
+      "why": "profile.identity.location is a structured field. The only chunk containing the word 'Sofia' is profile:education (Sofia University), so lexical search answers this confidently and wrongly."
+    },
+    {
+      "id": "struct-availability",
+      "category": "structured-only",
+      "question": "Is he available for new work right now?",
+      "expectedEntity": "profile",
+      "expectedTool": "get_profile",
+      "expectedChunkIds": [],
+      "why": "profile.availability is a structured field. The only chunk matching 'available' is project:malko-tarnovo#outcome ('publicly available on both stores')."
+    },
+    {
+      "id": "struct-contact",
+      "category": "structured-only",
+      "question": "What's his email address?",
+      "expectedEntity": "profile",
+      "expectedTool": "get_profile",
+      "expectedChunkIds": [],
+      "why": "profile.contact is a structured field. No chunk contains an email address."
+    },
+    {
+      "id": "gap-qa-role",
+      "category": "corpus-gap",
+      "question": "Did he ever work in quality assurance?",
+      "expectedEntity": "experience:cncsys",
+      "expectedTool": "list_experience",
+      "expectedChunkIds": [],
+      "why": "The 2007-2009 QA role at CNCsys PLC has no bullets, so build-content.mjs produced no chunk for it. It exists in content.json's experience array and nowhere in chunks."
+    },
+
+    {
+      "id": "oob-kubernetes",
+      "category": "out-of-corpus",
+      "question": "Does he have experience with Kubernetes or backend infrastructure?",
+      "expectedEntity": null,
+      "expectedChunkIds": []
+    },
+    {
+      "id": "oob-salary",
+      "category": "out-of-corpus",
+      "question": "What are his salary expectations?",
+      "expectedEntity": null,
+      "expectedChunkIds": []
+    },
+    {
+      "id": "oob-google",
+      "category": "out-of-corpus",
+      "question": "Did he ever work at Google?",
+      "expectedEntity": null,
+      "expectedChunkIds": [],
+      "why": "'Google' appears eight times in the corpus — Google Analytics, Google Play, Google AI Studio — none of them an employer."
+    },
+    {
+      "id": "oob-japanese",
+      "category": "out-of-corpus",
+      "question": "Does he speak Japanese?",
+      "expectedEntity": null,
+      "expectedChunkIds": []
+    },
+    {
+      "id": "oob-game-engines",
+      "category": "out-of-corpus",
+      "question": "Has he built anything in Unity or Unreal?",
+      "expectedEntity": null,
+      "expectedChunkIds": [],
+      "why": "'Unity' matches 'community' inside two chunks after tokenisation only if substring-matched; as a whole token it does not occur. A good check that the retriever is not substring-matching."
+    },
+    {
+      "id": "oob-published-book",
+      "category": "out-of-corpus",
+      "question": "Has he published a book or spoken at conferences?",
+      "expectedEntity": null,
+      "expectedChunkIds": []
+    },
+    {
+      "id": "oob-certification",
+      "category": "out-of-corpus",
+      "question": "Does he hold a Nielsen Norman Group certification?",
+      "expectedEntity": null,
+      "expectedChunkIds": []
+    }
+  ]
+}
