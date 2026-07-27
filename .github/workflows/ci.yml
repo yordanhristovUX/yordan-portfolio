@@ -34,26 +34,26 @@ jobs:
       # only so the api/ modules can be smoke-imported at the end.
       - run: npm ci
 
-      - name: tokens: coverage + counts
+      - name: "tokens: coverage + counts"
         run: node design-system/scripts/build.mjs --check
 
-      - name: content: generated files are current
+      - name: "content: generated files are current"
         run: node scripts/build-content.mjs --check
 
-      - name: vectors: embeddings match the corpus
+      - name: "vectors: embeddings match the corpus"
         run: node scripts/build-vectors.mjs --check
 
-      - name: bounds: slice dependency direction
+      - name: "bounds: slice dependency direction"
         run: node scripts/check-boundaries.mjs
 
-      - name: evals: no retrieval regression
+      - name: "evals: no retrieval regression"
         run: node evals/run.mjs --check
 
       # Catches an import-time break — a bad path, a syntax error, a missing
       # export — without calling a model or reading a secret. api/mcp.js is
       # additionally proof that it needs no key: if it ever starts reaching for
       # one, this step fails here rather than in production.
-      - name: api: modules load
+      - name: "api: modules load"
         run: |
           node -e "import('./api/mcp.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('mcp ok'); })"
           node -e "import('./api/chat.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('chat ok'); })"
