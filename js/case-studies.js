@@ -2,225 +2,8 @@
    Edit content/projects/*.md and run `node scripts/build-content.mjs`.
    Case study content — condensed from the full Notion case studies. */
 window.CASE_STUDIES = {
-  "greenstreet-ds": {
-    index: "01 / Green Street",
-    title: "AI-Ready Design System",
-    subtitle:
-      "Infrastructure that lets AI generate production-faithful UI: 1:1 Figma-to-code parity, custom Claude skills, and a prototype pipeline for the whole TPM team.",
-    meta: ["Senior Product Designer", "Design Systems", "AI Workflows", "Figma-to-code", "WCAG", "Production code"],
-    accentMeta: ["Production code"],
-    content: `
-      <figure class="ph"><span class="ph__label">Cover — design system overview, 1600×900</span></figure>
-
-      <h3>The problem</h3>
-      <p>Green Street is a leading commercial real estate data and analytics company. I was brought in to redesign the AI Assistant module, and found that PM wireframes, design files, and coded components lived in separate worlds — a component could look one way in Figma and behave completely differently in production.</p>
-      <ul>
-        <li><strong>Fragmented handoff.</strong> No enforced relationship between mockups, design, and code.</li>
-        <li><strong>AI couldn't read the system.</strong> Every AI-generated UI drifted from the actual components.</li>
-        <li><strong>No prototype pipeline.</strong> TPMs pulled design resources into every minor exploration.</li>
-      </ul>
-
-      <h3>The approach</h3>
-      <p><strong>Audit and architecture.</strong> A full audit of the component landscape — duplication, inconsistency, missing states, accessibility failures — then a token-first architecture with semantic naming. Every component exposes its full range of states, so AI and developers never need to guess.</p>
-      <p><strong>1:1 Figma-to-code parity.</strong> A Figma library of <strong>~35 components and growing</strong>, each mapping exactly to a coded component: same name, same props, same variants. I drove the alignment with engineering — attending standups and reviewing implementations to catch drift early.</p>
-      <p><strong>Tokens in the frontend, not just the design file.</strong> I implemented the tokens directly in the frontend component library, replacing every hardcoded value for <strong>100% token coverage across the module</strong>. A design system that only exists in Figma is a picture of a design system.</p>
-      <p><strong>A living style guide.</strong> Every token and every component, rendered from the real implementation — used for visual regression testing and for design-to-code comparison, so drift is something you can see rather than something you discover in review.</p>
-      <p><strong>Custom Claude skills.</strong> A persistent knowledge layer that teaches Claude to read the token structure, assemble the correct native components, respect spacing and hierarchy, and generate prototypes faithful to the real system. No drift. No invented components.</p>
-      <p><strong>TPM prototype pipeline.</strong> A PM describes a screen; the pipeline assembles a working interactive prototype from real system components. The feedback loop between product thinking and validated interaction went from days to minutes.</p>
-
-      <h3>Shipping production code</h3>
-      <p>I authored the complete responsive navigation component for the Green Street Analytics platform — built with Claude Code guided by the custom skills, reviewed and approved by the engineering team, and live in production. Not a prototype: production frontend code serving real users.</p>
-
-      <div class="ph-grid">
-        <figure class="ph"><span class="ph__label">Figma library — components &amp; tokens</span></figure>
-        <figure class="ph"><span class="ph__label">Shipped navigation, live in production</span></figure>
-      </div>
-
-      <h3>Outcomes</h3>
-      <ul>
-        <li>TPMs generate accurate prototypes without design involvement in every cycle.</li>
-        <li>A single source of truth between Figma and code — translation ambiguity eliminated.</li>
-        <li>Every new component added becomes immediately AI-accessible.</li>
-        <li>A design-to-code pipeline in progress: from Figma screen to reviewed frontend implementation.</li>
-      </ul>
-      <p>This work sits at the intersection of deep Figma craft, frontend architecture, and applied AI expertise — not using off-the-shelf tools, but building the tools themselves.</p>
-    `,
-  },
-
-  "greenstreet-audit": {
-    index: "02 / Green Street",
-    title: "UX & Accessibility Audits",
-    subtitle:
-      "End-to-end WCAG 2.1 AA audits of two distinct product surfaces — an editorial platform and a data-dense analytics platform — with severity-rated, annotated remediation roadmaps.",
-    meta: ["Senior Product Designer", "Accessibility", "UX Audit", "WCAG 2.1 AA", "Two products"],
-    accentMeta: ["WCAG 2.1 AA"],
-    content: `
-      <figure class="ph"><span class="ph__label">Cover — annotated audit findings, 1600×900</span></figure>
-
-      <h3>Why it matters here</h3>
-      <p>Green Street's users are professional analysts, investors, and brokers making high-stakes financial decisions — many across multiple screens for hours, some with assistive technologies. For a data company, an unlabelled filter or a contrast failure isn't just an accessibility issue. It's a credibility gap.</p>
-
-      <h3>Green Street News — editorial</h3>
-      <ul>
-        <li><strong>Colour contrast</strong> — systematic review against WCAG 2.1 AA thresholds across article bodies, bylines, timestamps, and navigation.</li>
-        <li><strong>Semantic structure</strong> — heading hierarchy that means something to a screen reader, not just visually.</li>
-        <li><strong>Keyboard navigation</strong> — focus traps, missing indicators, mouse-only elements.</li>
-        <li><strong>Labelling</strong> — icon-only buttons, ambiguous "read more" links, unlabelled form controls.</li>
-      </ul>
-
-      <h3>Analytics &amp; Research Platform — data-dense</h3>
-      <ul>
-        <li><strong>Data tables</strong> — header scope, captions, sortable column accessibility, nested headers.</li>
-        <li><strong>Charts</strong> — text alternatives, colour-only encoding, keyboard-accessible data views.</li>
-        <li><strong>Filters &amp; faceted search</strong> — keyboard operability, focus management, live region announcements.</li>
-        <li><strong>Dynamic content</strong> — explicit focus management for async loading, panels, and modals.</li>
-        <li><strong>Full AA sweep</strong> — criterion-by-criterion review of all 50 AA success criteria.</li>
-      </ul>
-
-      <h3>Deliverables</h3>
-      <p><span class="stat">200+</span></p>
-      <p>Issue instances catalogued across the two surfaces. Every finding documented with a severity rating (Critical / Major / Minor), WCAG criterion reference, annotated screenshot, recommended fix, and estimated engineering effort — plus a mapping to the platform workflow it affects, so engineering unblocks the most-used analytical paths first. The output is a prioritised remediation roadmap, not a list of complaints.</p>
-
-      <div class="ph-grid">
-        <figure class="ph"><span class="ph__label">Findings report — severity ratings</span></figure>
-        <figure class="ph"><span class="ph__label">Annotated Figma documentation</span></figure>
-      </div>
-
-      <h3>Outcomes</h3>
-      <ul>
-        <li>Both products now have a clear, actionable roadmap to WCAG 2.1 AA compliance.</li>
-        <li>Cross-product observations shaped component prioritisation in the AI-ready design system — the most inconsistent patterns became the first to be standardised.</li>
-        <li>A repeatable audit methodology for every new product surface as the platform grows.</li>
-      </ul>
-    `,
-  },
-
-  "malko-tarnovo": {
-    index: "03 / Municipality of Malko Tarnovo",
-    title: "Municipal Mobile App",
-    subtitle:
-      "End-to-end design of a cross-platform civic app serving two opposing audiences — tourists and older residents — live on the App Store and Google Play.",
-    meta: ["Product Designer", "Shipped", "Design System", "iOS & Android", "White-label", "Accessibility"],
-    accentMeta: ["Shipped"],
-    content: `
-      <figure class="ph"><span class="ph__label">Cover — app screens on device, 1600×900</span></figure>
-
-      <h3>The challenge</h3>
-      <p>Two audiences with almost opposing needs. <strong>Tourists</strong> are explorers — visual richness, maps, discovery flows. <strong>Local residents</strong>, many of them older, need municipal services: waste schedules, announcements, contacts — with large touch targets, minimal cognitive load, and zero ambiguity.</p>
-
-      <h3>The dual colour logic</h3>
-      <p><strong>Green</strong> encodes everything tourism — nature reserves, trails, gastronomy — connecting to the Strandzha region's identity. <strong>Blue</strong> encodes everything administrative, carrying the institutional calm of government services.</p>
-      <p>This is not decoration; it's a wayfinding system. A user glancing at a card knows instantly whether it's a tourist recommendation or a municipal service — before reading a word. For older users, colour becomes a cognitive shortcut.</p>
-
-      <h3>White-label design system</h3>
-      <ul>
-        <li><strong>Semantic colour tokens</strong> — swap the green/blue for any municipality's brand and it cascades through the entire system.</li>
-        <li><strong>Spacing and rounding tokens</strong> — no arbitrary values anywhere in the library.</li>
-        <li><strong>Typography system</strong> — Comfortaa, tokenised scale, friendly yet official.</li>
-        <li><strong>Icon system</strong> — municipal logo redesigned on a 64×80 grid, coherent from app icon to in-app header.</li>
-      </ul>
-
-      <h3>Accessibility by default</h3>
-      <ul>
-        <li>Touch targets exceeding WCAG's 44×44px minimum throughout.</li>
-        <li>WCAG 2.1 AA contrast across both colour contexts.</li>
-        <li>Hierarchy through size, weight, and spacing — never colour alone.</li>
-        <li>Progressive disclosure for dense municipal content.</li>
-      </ul>
-
-      <div class="ph-grid">
-        <figure class="ph"><span class="ph__label">Tourism flow — green context</span></figure>
-        <figure class="ph"><span class="ph__label">Municipal services — blue context</span></figure>
-      </div>
-
-      <h3>Outcomes</h3>
-      <p>Launched on iOS and Android, publicly available on both stores. The white-label system is a reusable product — any Bulgarian municipality can deploy it with brand-token changes alone. The dual colour logic became a reference model for designing civic services for mixed-age audiences.</p>
-      <a class="btn btn--solid" href="https://apps.apple.com/bg/app/malko-tarnovo-municipality/id6742865585" target="_blank" rel="noopener">View on the App Store ↗</a>
-    `,
-  },
-
-  domestina: {
-    index: "04 / Domestina.bg",
-    title: "Cleaning Service Marketplace",
-    subtitle:
-      "A research-led, multi-year UX engagement on Bulgaria's leading cleaning services marketplace — every design change grounded in evidence, not assumption.",
-    meta: ["UX Researcher & Designer", "UX Research", "Data-driven", "Marketplace", "Multi-year"],
-    accentMeta: ["Data-driven"],
-    content: `
-      <figure class="ph"><span class="ph__label">Cover — front page redesign, 1600×900</span></figure>
-
-      <h3>The brief</h3>
-      <p>Three user types, three definitions of success: <strong>clients</strong> booking a service and deciding who to trust, <strong>service providers</strong> competing on reputation, and <strong>housemaids</strong> needing a low-friction onboarding path. The challenge: serve all three without making any of them feel second-class.</p>
-
-      <h3>Research</h3>
-      <p>Competitor analysis showed Domestina had no direct comprehensive competitor in the Bulgarian market — it had to define its own UX standards. Personas built from interviews, support tickets, Google Analytics, and Hotjar surfaced the critical insight: <strong>clients were anxious about inviting a stranger into their home.</strong> Trust signals weren't nice-to-haves — they were the primary conversion driver.</p>
-
-      <h3>What I changed</h3>
-      <ul>
-        <li><strong>Front page redesign</strong> — restructured around the primary client action, trust signals moved above the fold, provider recruitment split into its own entry point.</li>
-        <li><strong>Domestina Club</strong> — loyalty mechanics designed into existing flows without adding friction to conversion.</li>
-        <li><strong>Provider workshops</strong> — made performance feedback clear and actionable, improving the whole provider pool.</li>
-        <li><strong>Housemaid registration</strong> — progressive disclosure with named stages and visible momentum.</li>
-      </ul>
-
-      <div class="ph-grid">
-        <figure class="ph"><span class="ph__label">Before — original front page</span></figure>
-        <figure class="ph"><span class="ph__label">After — trust-first hierarchy</span></figure>
-      </div>
-
-      <h3>Measured outcomes</h3>
-      <p><span class="stat">−40%</span></p>
-      <ul>
-        <li><strong>40% reduction in front page bounce rate</strong> — from a focused hierarchy redesign, not a full rebuild.</li>
-        <li>Marked increase in completed housemaid registrations.</li>
-        <li>Improved retention following the Domestina Club launch.</li>
-        <li>Stronger provider performance after workshop-driven design changes.</li>
-      </ul>
-      <p>Not a single project — a continuous improvement methodology applied to a live, growing marketplace over multiple years.</p>
-    `,
-  },
-
-  spetema: {
-    index: "05 / Spetema Coffee",
-    title: "Product & Corporate Website",
-    subtitle:
-      "A 200+ product coffee catalogue reconciling B2C e-commerce and B2B corporate needs on a single coherent site — with a bold visual system and purposeful motion. Bilingual, live.",
-    meta: ["Product Designer", "Information Architecture", "Motion design", "B2C + B2B", "Live"],
-    accentMeta: ["Live"],
-    content: `
-      <figure class="ph"><span class="ph__label">Cover — homepage design, 1600×900</span></figure>
-
-      <h3>The challenge</h3>
-      <p>Spetema's audience is genuinely dual-natured. <strong>Consumers</strong> browse discovery-led, where visual appeal converts. <strong>Business and horeca buyers</strong> — café owners, procurement teams — move task-led, where clarity converts. Optimise purely for one and you frustrate the other.</p>
-
-      <h3>Information architecture</h3>
-      <p>The existing site had grown reactively for years: 200+ products spread across overlapping categories, the B2B offer with no clear entry point, corporate information buried. I split the top level into two tracks — <strong>a home track and a business track</strong> — so both audiences orient within seconds instead of filtering past each other's content.</p>
-      <p>Underneath, a <strong>preparation-method finder</strong> layers over the category taxonomy. Category trees are organised the way a business classifies coffee; a lot of people shop by the machine sitting on their counter. The finder lets them enter that way without the taxonomy being rebuilt around it.</p>
-      <p>Eight sub-brands are structured on a <strong>shared attribute model</strong>, so product information is authored once and surfaced everywhere it's needed — consumer detail pages, B2B catalogue, homepage features — without duplication.</p>
-
-      <h3>Visual system</h3>
-      <ul>
-        <li><strong>Strong typographic hierarchy</strong> — large, confident headlines with clear reading order.</li>
-        <li><strong>Product-first imagery</strong> — UI frames the photography rather than competing with it.</li>
-        <li><strong>Modular components</strong> — the same card renders a consumer product, a business service, or an article.</li>
-        <li><strong>Purposeful motion</strong> — every animation reviewed against one question: does this help the user understand what's interactive? Decoration was removed.</li>
-      </ul>
-
-      <div class="ph-grid">
-        <figure class="ph"><span class="ph__label">Sitemap — consumer / business split</span></figure>
-        <figure class="ph"><span class="ph__label">Product pages — visual system</span></figure>
-      </div>
-
-      <h3>Validation</h3>
-      <p>A/B variants for navigation wording, hero layout (product-first vs. brand-story-first), B2B entry prominence, and grid density — evaluated with stakeholders and lightweight user testing. Winners were the approaches that worked for <strong>both</strong> audiences, not just one.</p>
-
-      <h3>Status</h3>
-      <p><strong>Live and bilingual.</strong> Handoff used annotated Figma components with motion specs — everything the team needed to implement the system faithfully, without back-and-forth.</p>
-    `,
-  },
-
   "portfolio-system": {
-    index: "06 / This site",
+    index: "01 / This site",
     title: "Portfolio as a Product",
     subtitle:
       "Every claim on this page is inspectable in the same public repository that renders it. If the system were not real, this page could not exist in the shape it does.",
@@ -311,6 +94,184 @@ window.CASE_STUDIES = {
         <a class="btn" href="evals.html" style="margin-right:.6rem">Retrieval evaluation →</a>
         <a class="btn" href="mcp.html">MCP server →</a>
       </p>
+    `,
+  },
+
+  "greenstreet-ds": {
+    index: "02 / Green Street",
+    title: "AI-Ready design systems and Agentic workflows",
+    subtitle:
+      "Infrastructure that lets AI generate production-faithful UI: 1:1 Figma-to-code parity, custom Claude skills, and a prototype pipeline for the whole TPM team.",
+    meta: ["Senior Product Designer", "Design Systems", "AI Workflows", "Figma-to-code", "WCAG", "Production code"],
+    accentMeta: ["Production code"],
+    content: `
+      <figure class="ph"><span class="ph__label">Cover — design system overview, 1600×900</span></figure>
+
+      <h3>The problem</h3>
+      <p>Green Street is a leading commercial real estate data and analytics company. I was brought in to redesign the AI Assistant module, and found that PM wireframes, design files, and coded components lived in separate worlds — a component could look one way in Figma and behave completely differently in production.</p>
+      <ul>
+        <li><strong>Fragmented handoff.</strong> No enforced relationship between mockups, design, and code.</li>
+        <li><strong>AI couldn't read the system.</strong> Every AI-generated UI drifted from the actual components.</li>
+        <li><strong>No prototype pipeline.</strong> TPMs pulled design resources into every minor exploration.</li>
+      </ul>
+
+      <h3>The approach</h3>
+      <p><strong>Audit and architecture.</strong> A full audit of the component landscape — duplication, inconsistency, missing states, accessibility failures — then a token-first architecture with semantic naming. Every component exposes its full range of states, so AI and developers never need to guess.</p>
+      <p><strong>1:1 Figma-to-code parity.</strong> A Figma library of <strong>~35 components and growing</strong>, each mapping exactly to a coded component: same name, same props, same variants. I drove the alignment with engineering — attending standups and reviewing implementations to catch drift early.</p>
+      <p><strong>Tokens in the frontend, not just the design file.</strong> I implemented the tokens directly in the frontend component library, replacing every hardcoded value for <strong>100% token coverage across the module</strong>. A design system that only exists in Figma is a picture of a design system.</p>
+      <p><strong>A living style guide.</strong> Every token and every component, rendered from the real implementation — used for visual regression testing and for design-to-code comparison, so drift is something you can see rather than something you discover in review.</p>
+      <p><strong>Custom Claude skills.</strong> A persistent knowledge layer that teaches Claude to read the token structure, assemble the correct native components, respect spacing and hierarchy, and generate prototypes faithful to the real system. No drift. No invented components.</p>
+      <p><strong>TPM prototype pipeline.</strong> A PM describes a screen; the pipeline assembles a working interactive prototype from real system components. The feedback loop between product thinking and validated interaction went from days to minutes.</p>
+
+      <h3>Shipping production code</h3>
+      <p>I authored the complete responsive navigation component for the Green Street Analytics platform — built with Claude Code guided by the custom skills, reviewed and approved by the engineering team, and live in production. Not a prototype: production frontend code serving real users.</p>
+
+      <div class="ph-grid">
+        <figure class="ph"><span class="ph__label">Figma library — components &amp; tokens</span></figure>
+        <figure class="ph"><span class="ph__label">Shipped navigation, live in production</span></figure>
+      </div>
+
+      <h3>Outcomes</h3>
+      <ul>
+        <li>TPMs generate accurate prototypes without design involvement in every cycle.</li>
+        <li>A single source of truth between Figma and code — translation ambiguity eliminated.</li>
+        <li>Every new component added becomes immediately AI-accessible.</li>
+        <li>A design-to-code pipeline in progress: from Figma screen to reviewed frontend implementation.</li>
+      </ul>
+      <p>This work sits at the intersection of deep Figma craft, frontend architecture, and applied AI expertise — not using off-the-shelf tools, but building the tools themselves.</p>
+    `,
+  },
+
+  "greenstreet-audit": {
+    index: "03 / Green Street",
+    title: "UX & Accessibility Audits",
+    subtitle:
+      "End-to-end WCAG 2.1 AA audits of two distinct product surfaces — an editorial platform and a data-dense analytics platform — with severity-rated, annotated remediation roadmaps.",
+    meta: ["Senior Product Designer", "Accessibility", "UX Audit", "WCAG 2.1 AA", "Two products"],
+    accentMeta: ["WCAG 2.1 AA"],
+    content: `
+      <figure class="ph"><span class="ph__label">Cover — annotated audit findings, 1600×900</span></figure>
+
+      <h3>Why it matters here</h3>
+      <p>Green Street's users are professional analysts, investors, and brokers making high-stakes financial decisions — many across multiple screens for hours, some with assistive technologies. For a data company, an unlabelled filter or a contrast failure isn't just an accessibility issue. It's a credibility gap.</p>
+
+      <h3>Green Street News — editorial</h3>
+      <ul>
+        <li><strong>Colour contrast</strong> — systematic review against WCAG 2.1 AA thresholds across article bodies, bylines, timestamps, and navigation.</li>
+        <li><strong>Semantic structure</strong> — heading hierarchy that means something to a screen reader, not just visually.</li>
+        <li><strong>Keyboard navigation</strong> — focus traps, missing indicators, mouse-only elements.</li>
+        <li><strong>Labelling</strong> — icon-only buttons, ambiguous "read more" links, unlabelled form controls.</li>
+      </ul>
+
+      <h3>Analytics &amp; Research Platform — data-dense</h3>
+      <ul>
+        <li><strong>Data tables</strong> — header scope, captions, sortable column accessibility, nested headers.</li>
+        <li><strong>Charts</strong> — text alternatives, colour-only encoding, keyboard-accessible data views.</li>
+        <li><strong>Filters &amp; faceted search</strong> — keyboard operability, focus management, live region announcements.</li>
+        <li><strong>Dynamic content</strong> — explicit focus management for async loading, panels, and modals.</li>
+        <li><strong>Full AA sweep</strong> — criterion-by-criterion review of all 50 AA success criteria.</li>
+      </ul>
+
+      <h3>Deliverables</h3>
+      <p><span class="stat">200+</span></p>
+      <p>Issue instances catalogued across the two surfaces. Every finding documented with a severity rating (Critical / Major / Minor), WCAG criterion reference, annotated screenshot, recommended fix, and estimated engineering effort — plus a mapping to the platform workflow it affects, so engineering unblocks the most-used analytical paths first. The output is a prioritised remediation roadmap, not a list of complaints.</p>
+
+      <div class="ph-grid">
+        <figure class="ph"><span class="ph__label">Findings report — severity ratings</span></figure>
+        <figure class="ph"><span class="ph__label">Annotated Figma documentation</span></figure>
+      </div>
+
+      <h3>Outcomes</h3>
+      <ul>
+        <li>Both products now have a clear, actionable roadmap to WCAG 2.1 AA compliance.</li>
+        <li>Cross-product observations shaped component prioritisation in the AI-ready design system — the most inconsistent patterns became the first to be standardised.</li>
+        <li>A repeatable audit methodology for every new product surface as the platform grows.</li>
+      </ul>
+    `,
+  },
+
+  domestina: {
+    index: "04 / Domestina.bg",
+    title: "Cleaning Service Marketplace",
+    subtitle:
+      "A research-led, multi-year UX engagement on Bulgaria's leading cleaning services marketplace — every design change grounded in evidence, not assumption.",
+    meta: ["UX Researcher & Designer", "UX Research", "Data-driven", "Marketplace", "Multi-year"],
+    accentMeta: ["Data-driven"],
+    content: `
+      <figure class="ph"><span class="ph__label">Cover — front page redesign, 1600×900</span></figure>
+
+      <h3>The brief</h3>
+      <p>Three user types, three definitions of success: <strong>clients</strong> booking a service and deciding who to trust, <strong>service providers</strong> competing on reputation, and <strong>housemaids</strong> needing a low-friction onboarding path. The challenge: serve all three without making any of them feel second-class.</p>
+
+      <h3>Research</h3>
+      <p>Competitor analysis showed Domestina had no direct comprehensive competitor in the Bulgarian market — it had to define its own UX standards. Personas built from interviews, support tickets, Google Analytics, and Hotjar surfaced the critical insight: <strong>clients were anxious about inviting a stranger into their home.</strong> Trust signals weren't nice-to-haves — they were the primary conversion driver.</p>
+
+      <h3>What I changed</h3>
+      <ul>
+        <li><strong>Front page redesign</strong> — restructured around the primary client action, trust signals moved above the fold, provider recruitment split into its own entry point.</li>
+        <li><strong>Domestina Club</strong> — loyalty mechanics designed into existing flows without adding friction to conversion.</li>
+        <li><strong>Provider workshops</strong> — made performance feedback clear and actionable, improving the whole provider pool.</li>
+        <li><strong>Housemaid registration</strong> — progressive disclosure with named stages and visible momentum.</li>
+      </ul>
+
+      <div class="ph-grid">
+        <figure class="ph"><span class="ph__label">Before — original front page</span></figure>
+        <figure class="ph"><span class="ph__label">After — trust-first hierarchy</span></figure>
+      </div>
+
+      <h3>Measured outcomes</h3>
+      <p><span class="stat">−40%</span></p>
+      <ul>
+        <li><strong>40% reduction in front page bounce rate</strong> — from a focused hierarchy redesign, not a full rebuild.</li>
+        <li>Marked increase in completed housemaid registrations.</li>
+        <li>Improved retention following the Domestina Club launch.</li>
+        <li>Stronger provider performance after workshop-driven design changes.</li>
+      </ul>
+      <p>Not a single project — a continuous improvement methodology applied to a live, growing marketplace over multiple years.</p>
+    `,
+  },
+
+  "malko-tarnovo": {
+    index: "05 / Municipality of Malko Tarnovo",
+    title: "Municipal Mobile App",
+    subtitle:
+      "End-to-end design of a cross-platform civic app serving two opposing audiences — tourists and older residents — live on the App Store and Google Play.",
+    meta: ["Product Designer", "Shipped", "Design System", "iOS & Android", "White-label", "Accessibility"],
+    accentMeta: ["Shipped"],
+    content: `
+      <figure class="ph"><span class="ph__label">Cover — app screens on device, 1600×900</span></figure>
+
+      <h3>The challenge</h3>
+      <p>Two audiences with almost opposing needs. <strong>Tourists</strong> are explorers — visual richness, maps, discovery flows. <strong>Local residents</strong>, many of them older, need municipal services: waste schedules, announcements, contacts — with large touch targets, minimal cognitive load, and zero ambiguity.</p>
+
+      <h3>The dual colour logic</h3>
+      <p><strong>Green</strong> encodes everything tourism — nature reserves, trails, gastronomy — connecting to the Strandzha region's identity. <strong>Blue</strong> encodes everything administrative, carrying the institutional calm of government services.</p>
+      <p>This is not decoration; it's a wayfinding system. A user glancing at a card knows instantly whether it's a tourist recommendation or a municipal service — before reading a word. For older users, colour becomes a cognitive shortcut.</p>
+
+      <h3>White-label design system</h3>
+      <ul>
+        <li><strong>Semantic colour tokens</strong> — swap the green/blue for any municipality's brand and it cascades through the entire system.</li>
+        <li><strong>Spacing and rounding tokens</strong> — no arbitrary values anywhere in the library.</li>
+        <li><strong>Typography system</strong> — Comfortaa, tokenised scale, friendly yet official.</li>
+        <li><strong>Icon system</strong> — municipal logo redesigned on a 64×80 grid, coherent from app icon to in-app header.</li>
+      </ul>
+
+      <h3>Accessibility by default</h3>
+      <ul>
+        <li>Touch targets exceeding WCAG's 44×44px minimum throughout.</li>
+        <li>WCAG 2.1 AA contrast across both colour contexts.</li>
+        <li>Hierarchy through size, weight, and spacing — never colour alone.</li>
+        <li>Progressive disclosure for dense municipal content.</li>
+      </ul>
+
+      <div class="ph-grid">
+        <figure class="ph"><span class="ph__label">Tourism flow — green context</span></figure>
+        <figure class="ph"><span class="ph__label">Municipal services — blue context</span></figure>
+      </div>
+
+      <h3>Outcomes</h3>
+      <p>Launched on iOS and Android, publicly available on both stores. The white-label system is a reusable product — any Bulgarian municipality can deploy it with brand-token changes alone. The dual colour logic became a reference model for designing civic services for mixed-age audiences.</p>
+      <a class="btn btn--solid" href="https://apps.apple.com/bg/app/malko-tarnovo-municipality/id6742865585" target="_blank" rel="noopener">View on the App Store ↗</a>
     `,
   },
 };

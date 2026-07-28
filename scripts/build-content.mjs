@@ -449,7 +449,10 @@ function buildCaseStudiesJs() {
 
    The generator owns the inner HTML of each `<!-- content:NAME -->` region and
    nothing else: the skeleton, the section structure and the data-reveal /
-   data-rise / data-lines / data-count hooks stay in the page where they belong.
+   data-rise / data-lines hooks stay in the page where they belong.
+
+   `data-count` used to be in that list. It is not emitted anywhere any more —
+   see the note above factCell.
    ============================================================ */
 function applyRegions(html, regions, file) {
   let out = lf(html);
@@ -562,6 +565,21 @@ function cardGrid(items, cardClass, extraAttr, typeOf) {
 const capabilitiesRegion = () =>
   cardGrid(capabilities, "card card--ruled", " data-reveal");
 
+/* The Notable Projects grid. A card is `cardType` + `title` + `{#summary}` — and
+   OPTIONALLY a `{#subtitle}`, which is the "more info on demand" field:
+
+     "one is great, when I have time I will write bigger descriptions for all
+      notable projects and we can add subtitle or something that the assistant
+      could provide more info on demand."
+
+   That field already exists and needs no schema change, now or later. Any
+   project may carry a `{#subtitle}` section; the build only REQUIRES one when
+   `hasCaseStudy` is true. On a card it is deliberately not rendered here — the
+   card stays two lines — but it is emitted as `projects[].subtitle` in
+   content.json and becomes the retrievable chunk `project:<id>#subtitle` the
+   moment it has text in it. An absent one is an empty string and produces no
+   chunk, so nine empty fields cost nothing and nothing has to change when the
+   first one is written. */
 const moreProjectsRegion = () =>
   cardGrid(
     cardProjects.map((p) => ({ title: p.title, body: section(p, "summary").blocks[0].text, cardType: p.cardType })),
@@ -602,21 +620,29 @@ function workIndexRegion() {
   return out;
 }
 
+/* ---------- the unexpected facts, without the big numbers ----------
+
+   There is no `.fact__num` here any more, and that is the owner's decision, not
+   a simplification: "I don't like all the importance and big numbers on the
+   unexpected facts, I am not an athlete to show these. I prefer them small and
+   tidy." `facts.json` no longer carries `value`, `unit` or `count`; the whole
+   fact is the label sentence, and 250 kg survives inside the sentence that
+   claims it rather than as a headline numeral.
+
+   TWO CONSEQUENCES FOR OTHER OWNERS, neither of them this file's to fix.
+     · `data-count` is now emitted NOWHERE in the repo, so js/main.js's odometer
+       — the [data-count] loop, its no-motion branch and the 4s stalled-ticker
+       failsafe — has no elements to find. That machinery is dead, including the
+       progressive-enhancement fix that made this emitter ship the real figure
+       instead of the animation's first frame. It is js/'s to retire.
+     · `.fact__num` is NOT dead CSS: evals/run.mjs writes its own `.facts` block
+       into evals.html and that one still carries `fact__num`. The fact
+       component's spec and story do document `data-count`, which now documents
+       an unused hook — design-system's call. */
 function factCell(f, surface) {
   const label = (surface === "cv" && f.cv?.label) || f.label;
-  /* `data-count` is the ANIMATION's target; the element's text is the FACT. A
-     reader with no JS, a stalled GSAP ticker or a throttled tab must see "42km",
-     because a page that says he ran 0km is not a degraded page, it is a false
-     one. The literal `0` that used to ship here was the animation's first frame
-     leaking into the document — js/main.js has never written it and has been
-     waiting for this emitter (see its note above the [data-count] loop). */
-  const num =
-    surface === "site" && f.count !== undefined
-      ? `<span data-count="${f.count}">${inline(f.value)}</span><small>${inline(f.unit)}</small>`
-      : `${inline(f.value)}<small>${inline(f.unit)}</small>`;
   return [
     `<div class="fact">`,
-    `  <span class="fact__num">${num}</span>`,
     `  <span class="fact__title">${inline(f.title)}</span>`,
     `  <span class="fact__label">${inline(label)}</span>`,
     `</div>`,
@@ -851,12 +877,18 @@ for (const [id, g] of Object.entries(skills.groups)) {
     });
   }
 }
+/* The chunk text is the label sentence and nothing else. It used to be
+   `${value} ${unit}. ${label}` — a headline numeral glued to its caption — and
+   both halves of that came out of the display fields the owner has now removed.
+   "I can deadlift 250 kg" still carries its number because he wrote it into the
+   sentence; "I ran a marathon" no longer carries `42 km`, so the tokens `42` and
+   `km` leave the corpus with it. */
 for (const f of facts) {
-  addChunk(`fact:${f.id}`, `fact:${f.id}`, "summary", f.title, `${f.value} ${f.unit}. ${f.label}`, {
+  addChunk(`fact:${f.id}`, `fact:${f.id}`, "summary", f.title, f.label, {
     page: "/", anchor: "#background", label: f.title,
   });
   if (f.cv?.label) {
-    addChunk(`fact:${f.id}:cv`, `fact:${f.id}`, "summary", f.title, `${f.value} ${f.unit}. ${f.cv.label}`, {
+    addChunk(`fact:${f.id}:cv`, `fact:${f.id}`, "summary", f.title, f.cv.label, {
       page: "/cv", anchor: "#unexpected", label: f.title,
     });
   }

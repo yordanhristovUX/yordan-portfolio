@@ -168,7 +168,13 @@
       const dd = el(
         "dd",
         row && /^open/i.test(row.value) ? "is-ok" : null,
-        row ? row.value : fact.value + (fact.unit ? " " + fact.unit : "") + " — " + fact.label
+        /* A fact is its label and nothing else. It used to be composed here as
+           `value + unit + " — " + label` ("42 km — Marathon finisher."), because
+           facts.json carried a numeral, a unit and a caption for them. The owner
+           removed the numerals: the labels are now whole sentences ("I ran a
+           marathon"), so value and unit no longer exist and composing them
+           rendered a literal "undefined — " in front of every fact. */
+        row ? row.value : fact.label
       );
       div.appendChild(dd);
       dl.appendChild(div);

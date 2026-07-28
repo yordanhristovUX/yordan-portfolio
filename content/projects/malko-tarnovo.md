@@ -1,7 +1,7 @@
 ---
 {
   "id": "malko-tarnovo",
-  "index": 3,
+  "index": 5,
   "client": "Municipality of Malko Tarnovo",
   "indexClient": "Malko Tarnovo",
   "title": "Municipal Mobile App",

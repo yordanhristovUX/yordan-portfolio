@@ -1,7 +1,7 @@
 ---
 {
   "id": "portfolio-system",
-  "index": 6,
+  "index": 1,
   "client": "This site",
   "indexClient": "This Site",
   "title": "Portfolio as a Product",

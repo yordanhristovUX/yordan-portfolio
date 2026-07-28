@@ -1,9 +1,9 @@
 ---
 {
   "id": "greenstreet-ds",
-  "index": 1,
+  "index": 2,
   "client": "Green Street",
-  "title": "AI-Ready Design System",
+  "title": "AI-Ready design systems and Agentic workflows",
   "hasCaseStudy": true,
 
   "tags": ["Senior Product Designer", "Design Systems", "AI Workflows", "Figma-to-code", "WCAG", "Production code"],

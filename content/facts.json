@@ -1,28 +1,20 @@
 [
   {
     "id": "endurance",
-    "value": "42",
-    "unit": "km",
-    "count": 42,
     "title": "Endurance",
-    "label": "Marathon finisher."
+    "label": "I ran a marathon"
   },
   {
     "id": "power",
-    "value": "250",
-    "unit": "kg",
-    "count": 250,
     "title": "Power",
-    "label": "Heaviest lift.",
+    "label": "I can deadlift 250 kg",
     "cv": {
       "label": "Heaviest deadlift."
     }
   },
   {
     "id": "balance",
-    "value": "2",
-    "unit": "m up",
     "title": "Balance",
-    "label": "Walks on stilts."
+    "label": "I can walk on stilts"
   }
 ]

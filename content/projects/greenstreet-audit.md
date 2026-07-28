@@ -1,7 +1,7 @@
 ---
 {
   "id": "greenstreet-audit",
-  "index": 2,
+  "index": 3,
   "client": "Green Street",
   "title": "UX & Accessibility Audits",
   "hasCaseStudy": true,
