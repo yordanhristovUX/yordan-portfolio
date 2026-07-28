@@ -123,18 +123,34 @@ const MAX_WALL_MS = 35_000;
    than evidence. The breakpoint is on the LAST system block (see `ask`),
    because a breakpoint caches everything BEFORE it — tools included.
 
-   WHAT IT SAVES, honestly. A cache write costs 1.25x and a read 0.1x, so
-   this is a loss on a one-turn conversation and a win on every other:
+   AND IT IS VERIFIED RATHER THAN INFERRED, because "4,096" above was a
+   number quoted from a comment and the arithmetic is worth nothing if the
+   request shape is rejected. Two live calls with exactly the `system` and
+   `tools` this file sends:
+
+       call 1   input 324   cache_write 4,808   cache_read     0
+       call 2   input 324   cache_write     0   cache_read 4,808
+
+   So the prefix is over this model's real minimum whatever that minimum
+   is, and 4,808 of the 5,132 tokens a turn are cacheable. The 324 that
+   are not are the tail after the breakpoint.
+
+   WHAT IT SAVES. A write costs 1.25x and a read 0.1x, so per conversation
+   the prefix costs 324 + 1.25x4,808 once and 324 + 0.1x4,808 thereafter.
+   That is a loss on a one-turn conversation and a win on every other —
    the loop makes 2-4 calls with an identical prefix seconds apart, and
-   the read/write ratio inside a single conversation is what pays for it.
-       1 turn   5,124 -> 6,405 token-equivalents   (+25%)
-       2 turns 10,248 -> 6,917                     (-33%)
-       3 turns 15,372 -> 7,429                     (-52%)
-       4 turns 20,496 -> 7,942                     (-61%)  (the retry)
-   The file's own §1 says most questions cost two turns and 45% of turns
-   fire the provenance retry, so the expected value is comfortably
-   positive. Cached tokens are BILLED to the daily budget at face value
-   (see `tally`): under-counting is the one direction that matters.
+   the read/write ratio WITHIN one conversation is what pays for it, not
+   traffic. Traffic only adds the cross-request hits inside the 5-minute
+   TTL, which are free money on top:
+       1 turn   5,132 -> 6,334 token-equivalents   (+23%)
+       2 turns 10,264 -> 7,139                     (-30%)
+       3 turns 15,396 -> 7,944                     (-48%)
+       4 turns 20,528 -> 8,749                     (-57%)  (the retry)
+   Prefix only — the message tail grows with each turn either way. The
+   file's own §1 says most questions cost two turns and 45% of them fire
+   the provenance retry, so the expected value is comfortably positive.
+   Cached tokens are BILLED to the daily budget at face value (see
+   `tally`): under-counting is the one direction that matters.
    ============================================================ */
 function renderManifest(m) {
   const lines = [];
@@ -211,33 +227,38 @@ If the corpus does not cover the question, the whole answer is one \`prose\` blo
 const SYSTEM = [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }];
 
 /* ============================================================
-   The entity gate
+   The entity gate is NOT here, and no longer works the way this banner
+   used to describe
 
-   The `tools-gated` arm from Phase 1, in production form. Structured
-   entity matching decides WHETHER the corpus covers a query; BM25
-   decides WHAT comes back. Match is over each entity's NAME SURFACE
-   only — ids, titles, clients, tags, org and role names, skill terms,
-   fact titles — never its body, so a term that merely appears somewhere
-   in the prose cannot open the gate.
+   It lives in lib/knowledge/gate.js, is COMPUTED inside search_content
+   and is APPLIED by neither surface. Read gate.js's header for the
+   scoring; do not trust a summary of it written on this side of the
+   boundary — the one that stood here described a flat IDF sum and
+   ended "nothing here is tuned", and both of those had stopped being
+   true. The weighting is idf/sf now, and lib/knowledge/CLAUDE.md
+   formally withdraws the "nothing is tuned" defence rather than
+   repeating it.
 
-   Each matched term contributes its corpus IDF, taken from
-   content.bm25.df: a statistic of the corpus, not of any question set.
-   Nothing here is tuned.
+   WHY IT MOVED, kept because the cause matters more than the fix: while
+   the gate lived in this file the web chat abstained correctly and
+   api/mcp.js handed the ungated arm to anyone who added this server to
+   their own Claude. Same tool, same corpus, two different answers to
+   "did he work at Google?". lib/knowledge/ had been declared off-limits
+   to two parallel agents so they could not collide in it, so the gate
+   landed in the only place it was allowed to land — a scoping decision
+   taken for merge safety became an architectural defect, and
+   api/CLAUDE.md already forbade it.
+
+   WHAT IS LEFT HERE is the decision, not the computation: a gate miss
+   returns the full ranking with GATE_MISS_MESSAGE attached, and the only
+   thing that refuses is the system prompt's corpus-boundary section. If
+   you want a code-level refusal on gateMatched, that is a policy change
+   to argue for on both surfaces at once — not a condition to add here,
+   which is how the two answers to the Google question happened.
+
+   `runTool` stays as the single funnel every tool call passes through —
+   it is where the trace events are emitted — but it decides nothing.
    ============================================================ */
-/* The gate used to be implemented here. It now lives in lib/knowledge/gate.js
-   and is applied inside search_content itself, so api/mcp.js gets it too —
-   while it lived in this file, the web chat abstained correctly and the MCP
-   server handed the ungated arm to anyone who added it to their own Claude.
-   Same tool, same corpus, two different answers to "did he work at Google?".
-
-   The cause is worth remembering: lib/knowledge/ was declared off-limits to
-   both Phase 2 and Phase 3 so two parallel agents could not collide in it, and
-   the gate landed in a surface because that was the only place it was allowed
-   to land. A scoping decision taken for merge safety became an architectural
-   defect. api/CLAUDE.md forbids exactly this and it happened anyway.
-
-   `runTool` stays as the single funnel every tool call passes through — it is
-   where the trace events are emitted — but it no longer decides anything. */
 /** Seconds until the budget window rolls over, for a truthful Retry-After. */
 const secondsUntilUtcMidnight = () =>
   Math.max(1, Math.ceil((new Date().setUTCHours(24, 0, 0, 0) - Date.now()) / 1000));

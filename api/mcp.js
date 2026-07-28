@@ -89,7 +89,7 @@ Choosing a tool — the design system:
 
 Boundaries worth knowing:
 - Every tool is READ-ONLY. There is no write, no mutation, no side effect, and no state carried between calls.
-- The corpus is closed and single-subject. If it does not cover something, say so rather than inferring — an empty search result means "not on file", not "search harder".
+- The corpus is closed and single-subject. If it does not cover something, say so rather than inferring. No tool will refuse on your behalf: \`search_content\` always returns its closest passages, including for a question this corpus knows nothing about, and reports coverage separately — \`gateMatched\` is null when your query names nothing here, and \`note\` says what that does and does not imply. Judge the passages on their text. "Not on file" is a complete answer; searching again is not, because the ranking already covered everything.
 - Sections within a project are an ordered array and a kind may repeat. Read them in order.
 - The design system is a CSS-class system with no component runtime: you compose plain HTML and apply classes. A class the contract does not list has no rule behind it and renders as nothing.
 - The component contract is the MECHANICAL half only. The reasoning, the accessibility rationale and the per-component constraints are human-written in each component's \`spec.md\`, which the tools point at by path and never reproduce. Do not infer a component's purpose from its selector list.`;
@@ -133,11 +133,19 @@ const SCOPE = {
    cannot, and a search tool is the wrong first move when you do not yet know
    what exists. get_component has the same cold-start gap for a different
    reason: component ids are not in the manifest at all, on either surface. */
+/* The closing sentence here used to read "An empty result means the corpus does
+   not cover the question." That was true while the gate filtered inside the tool
+   and has been false since it moved above it: a miss returns the FULL ranking
+   with a coverage note attached, so a client acting on this would wait for a
+   signal that never arrives. It is gone rather than reworded, because the
+   verbatim description from lib/knowledge/tools.js already carries the coverage
+   semantics correctly — restating them here is how the two drift apart. What is
+   left is the cold-start gap this note exists for: no manifest. */
 const NOTE = {
   search_content:
     "The corpus is Yordan Hristov's portfolio and CV. This client holds no manifest of it, so call " +
     "list_projects or list_experience first when you need to know what exists; use search only to " +
-    "locate material you cannot place. An empty result means the corpus does not cover the question.",
+    "locate material you cannot place.",
   get_component:
     "Component ids are not in any manifest this client holds — call get_design_system first for the " +
     "list, and for the rules that make the difference between markup that uses these classes and " +
