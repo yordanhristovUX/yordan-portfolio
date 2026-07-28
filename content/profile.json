@@ -124,8 +124,9 @@
 
     "background": {
       "prose": "Before tech, I spent eleven years helping build and grow a strength and nutrition coaching practice. As the owner's close business partner, I took ownership of many of the systems that defined the business. I led a team of coaches, designed the recruitment and onboarding programme, created the assessment framework used across the practice, conducted hundreds of client interviews, and built a data-driven approach to measuring progress and outcomes.",
-      "statement": "It taught me something design school doesn't: people rarely behave the way they say they will. You have to meet them where they are and design not for what they say, not even what they think they want, but for what they truly need at that moment in their journey.",
-      "kicker": "The research habits started there, not in tech. So did these:"
+      "_statementNote": "Nothing follows `statement` in the Background region, and that is the owner's decision: the facts used to hang off a kicker sentence here (\"The research habits started there, not in tech. So did these:\"), which landed \"I can walk on stilts\" immediately after the strongest sentence on the site. The kicker had no subject once the facts moved to their own section, so it was deleted rather than left pointing at nothing.",
+
+      "statement": "It taught me something design school doesn't: people rarely behave the way they say they will. You have to meet them where they are and design not for what they say, not even what they think they want, but for what they truly need at that moment in their journey."
     },
 
     "cvOpenSource": [

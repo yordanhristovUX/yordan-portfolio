@@ -40,11 +40,25 @@ html { scroll-behavior: smooth; }
 .hero__lede strong { color: var(--content-primary); }
 .hero__actions { display: flex; gap: var(--space-3); flex-shrink: 0; }
 
-/* ============ Background section ============ */
-.notes__lead { margin-top: var(--space-flow-lg); font-size: var(--text-md); }
-.notes__statement { margin-bottom: var(--space-flow); }
+/* ============ Background section ============
+   Two rules used to live here and both lost their subject when the unexpected
+   facts moved to their own section:
+
+   `.notes__lead` styled the kicker paragraph ("The research habits started
+   there, not in tech. So did these:") that introduced the facts. The kicker was
+   deleted rather than left pointing at nothing, and the class had no other user
+   anywhere in the repo — verified across every page, story and emitter.
+
+   `#background .facts` set the kicker-to-facts gap. The facts now sit alone in
+   `#unexpected`, whose `.well` already carries `padding: var(--pad-y)`, and
+   cv.html's identical section has never needed the rule. Ported literally it
+   would have added a second gap on top of the padding.
+
+   `.notes__statement`'s `margin-bottom` went with them: the statement is the
+   last child of the well now, so it was reserving space below the final
+   sentence on the section. Neither `check-css.mjs` nor any gate reports an
+   unmatched selector, so this is recorded rather than merely deleted. */
 .notes__prose { margin-bottom: var(--space-flow); }
-#background .facts { margin-top: var(--space-4); }
 
 /* ============ Contact ============ */
 .sec--contact { border-bottom: 0; }

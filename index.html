@@ -269,22 +269,6 @@
         <!-- content:background -->
         <p class="t-lead notes__prose" data-lines>Before tech, I spent eleven years helping build and grow a strength and nutrition coaching practice. As the owner's close business partner, I took ownership of many of the systems that defined the business. I led a team of coaches, designed the recruitment and onboarding programme, created the assessment framework used across the practice, conducted hundreds of client interviews, and built a data-driven approach to measuring progress and outcomes.</p>
         <p class="t-statement notes__statement" data-lines>It taught me something design school doesn't: people rarely behave the way they say they will. You have to meet them where they are and design not for what they say, not even what they think they want, but for what they truly need at that moment in their journey.</p>
-
-        <p class="t-kicker notes__lead">The research habits started there, not in tech. So did these:</p>
-        <div class="facts" data-reveal>
-          <div class="fact">
-            <span class="fact__title">Endurance</span>
-            <span class="fact__label">I ran a marathon</span>
-          </div>
-          <div class="fact">
-            <span class="fact__title">Power</span>
-            <span class="fact__label">I can deadlift 250 kg</span>
-          </div>
-          <div class="fact">
-            <span class="fact__title">Balance</span>
-            <span class="fact__label">I can walk on stilts</span>
-          </div>
-        </div>
         <!-- /content:background -->
       </div>
     </section>
@@ -370,12 +354,16 @@
     </section>
 
     <!-- ============ 07 UNEXPECTED FACTS ============
-         The destination for the facts that currently render at the end of
-         Background. Moving them OUT of `content:background` is the content
-         pipeline's emitter change, not a markup edit — so this region is
-         deliberately empty until scripts/build-content.mjs fills it. It has
-         to exist first: applyRegions() writes between the two markers and
-         exits non-zero if it cannot find them.
+         The facts used to hang off a kicker sentence at the end of Background
+         ("The research habits started there, not in tech. So did these:"),
+         which landed "I can walk on stilts" immediately after the strongest
+         sentence on the site. They are their own section now, and Background
+         ends on its statement.
+
+         The anchor matters beyond structure: js/answer-render.js builds a
+         source link as `cite.page + cite.anchor`, so a fact citation still
+         pointing at #background would link to a section that no longer
+         contains the sentence.
 
          Structure and id mirror cv.html's `05 Unexpected facts` exactly,
          including `#unexpected` — the CV's fact chunks already cite that
@@ -387,6 +375,20 @@
       </header>
       <div class="well">
         <!-- content:facts -->
+        <div class="facts" data-reveal>
+          <div class="fact">
+            <span class="fact__title">Endurance</span>
+            <span class="fact__label">I ran a marathon</span>
+          </div>
+          <div class="fact">
+            <span class="fact__title">Power</span>
+            <span class="fact__label">I can deadlift 250 kg</span>
+          </div>
+          <div class="fact">
+            <span class="fact__title">Balance</span>
+            <span class="fact__label">I can walk on stilts</span>
+          </div>
+        </div>
         <!-- /content:facts -->
       </div>
     </section>

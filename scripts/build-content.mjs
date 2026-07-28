@@ -629,6 +629,15 @@ function workIndexRegion() {
    fact is the label sentence, and 250 kg survives inside the sentence that
    claims it rather than as a headline numeral.
 
+   THE BLOCK STILL EARNS ITS `.facts` WRAPPER, which is worth stating because
+   losing the numerals makes it look like three bare title/label pairs. It is
+   not: `.facts` is the frame (`border: var(--rule-strong)`, the page surface,
+   `display:flex`) and every `.fact` sizes itself with `flex: 1 1 14rem` and
+   draws the divider between cells with `border-right`, zeroed on
+   `.fact:last-child`. Drop the wrapper and the three cells stack full-width,
+   unframed, each with a stray right-hand rule. The container is the component;
+   only the number left.
+
    TWO CONSEQUENCES FOR OTHER OWNERS, neither of them this file's to fix.
      · `data-count` is now emitted NOWHERE in the repo, so js/main.js's odometer
        — the [data-count] loop, its no-motion branch and the 4s stalled-ticker
@@ -657,14 +666,23 @@ function factsBlock(surface, attr) {
   ];
 }
 
+/* Background ends on the statement, and nothing follows it. The section used to
+   close with a kicker sentence and the three facts; the owner moved the facts
+   out to their own section (`indexRegions.facts` → `#unexpected`, mirroring
+   cv.html), which left the kicker introducing nothing, so `background.kicker`
+   is gone from profile.json rather than emptied — an empty `.t-kicker` would
+   still ship a paragraph box and `margin-top: var(--space-flow-lg)` after the
+   statement.
+
+   ONE CONSEQUENCE FOR css/, which is not this file's to fix:
+   `css/style.css:47` is `#background .facts { margin-top: var(--space-4) }` and
+   it now matches nothing, because the only `.facts` on the page moved to
+   `#unexpected`. Reported to design-system with the replacement selector. */
 function backgroundRegion() {
   const b = profile.prose.background;
   return [
     `<p class="t-lead notes__prose" data-lines>${inline(b.prose)}</p>`,
     `<p class="t-statement notes__statement" data-lines>${inline(b.statement)}</p>`,
-    ``,
-    `<p class="t-kicker notes__lead">${inline(b.kicker)}</p>`,
-    ...factsBlock("site", " data-reveal"),
   ];
 }
 
@@ -883,9 +901,16 @@ for (const [id, g] of Object.entries(skills.groups)) {
    "I can deadlift 250 kg" still carries its number because he wrote it into the
    sentence; "I ran a marathon" no longer carries `42 km`, so the tokens `42` and
    `km` leave the corpus with it. */
+/* The site cite is `#unexpected`, not `#background`: the facts no longer render
+   inside the Background section, and a citation whose anchor scrolls a reader to
+   a section that does not contain the sentence is wrong in the one way this
+   corpus cannot afford. Both surfaces now point at `#unexpected` — index.html's
+   new section reuses the CV's id deliberately, so no second name was invented.
+   Cites are not part of the vector corpus hash (build-vectors digests
+   `heading. text` only), so this moves no embedding cache. */
 for (const f of facts) {
   addChunk(`fact:${f.id}`, `fact:${f.id}`, "summary", f.title, f.label, {
-    page: "/", anchor: "#background", label: f.title,
+    page: "/", anchor: "#unexpected", label: f.title,
   });
   if (f.cv?.label) {
     addChunk(`fact:${f.id}:cv`, `fact:${f.id}`, "summary", f.title, f.cv.label, {
@@ -966,10 +991,15 @@ function buildContentJson() {
       prose: {
         heroLede: plain(profile.prose.heroLede),
         cvSummary: plain(profile.prose.cvSummary),
+        /* Two fields, not three. `kicker` was the lead-in to the facts; the
+           facts left the section and the sentence was deleted from
+           profile.json, so the retrieval index must stop carrying it — a tool
+           that returned a sentence which renders nowhere is exactly the drift
+           this pipeline exists to prevent. `get_profile` passes this object
+           through as `background`, so its consumers see two keys now. */
         background: {
           prose: plain(profile.prose.background.prose),
           statement: plain(profile.prose.background.statement),
-          kicker: plain(profile.prose.background.kicker),
         },
         openSource: profile.prose.cvOpenSource.map(plain),
         openSourceFacts: plain(profile.prose.cvOpenSourceFacts),
@@ -1194,6 +1224,12 @@ const indexRegions = {
   "more-projects": moreProjectsRegion(),
   background: backgroundRegion(),
   skills: skillsRegion("site"),
+  /* Same block as cvRegions.facts, same region name, different surface: the
+     site labels get `data-reveal` (there is no scroll reveal on paper) and the
+     CV may substitute `f.cv.label`. Both now sit in a section called
+     "Unexpected facts" anchored at `#unexpected`, so `fact:*` chunks cite the
+     same anchor on both pages. */
+  facts: factsBlock("site", " data-reveal"),
   contact: contactRegion(),
   footer: footerRegion("index"),
 };
