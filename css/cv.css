@@ -26,10 +26,16 @@
    narrow widths the four together overflow the bar's own box. The section
    links are the cheapest thing to lose: the CV is a handful of screens and
    scrolling finds everything, whereas Print is the reason many people open
-   this page at all. */
+   this page at all.
+
+   There used to be a second declaration here restating `.bar__id`'s right-hand
+   divider so the identity kept an edge once the links vanished. It is gone
+   because every seam in the bar is now owned by the segment on its RIGHT (see
+   the nav block in components.css): with the links hidden, the toggle's own
+   left edge draws that seam, and the old rule was adding a second 1px line on
+   top of it rather than supplying a missing one. */
 @media (max-width: 560px) {
   .bar__nav { display: none; }
-  .bar__id { box-shadow: inset -1px 0 0 var(--chrome-border); }
 }
 
 /* ============ Head ============ */

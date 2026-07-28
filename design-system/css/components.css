@@ -187,11 +187,23 @@ body.is-locked { overflow: hidden; }
   font-family: var(--font-mono);
   font-size: var(--text-xs); letter-spacing: 0.04em;
 }
+/* EVERY SEAM IS OWNED BY THE SEGMENT ON ITS RIGHT — one 1px inset line on the
+   LEFT edge of everything except `.bar__id`, which is always first. The bar
+   used to be drawn the other way round (each segment carried its own right
+   edge) and that is a rule which cannot survive a hidden neighbour: whichever
+   segment happens to end the row leaves a stray line hanging off the end, so
+   `.bar__nav a:last-child` needed a `box-shadow: none` inside the media query
+   that hid `.bar__status` — the divider was coupled to a breakpoint. It was
+   also wrong wherever no status exists at all: cv, mcp and evals put a nav
+   link straight against the toggle, and the link's right edge plus the
+   toggle's left edge drew a 2px line on every one of those pages at every
+   width above 980px (two of them on cv). Left-owned edges are invariant under
+   hiding: the first VISIBLE segment never draws one, and no segment can end
+   the row with a line, whatever the breakpoints do. */
 .bar__id {
   display: flex; align-items: center;
   padding: var(--space-3) var(--space-5);
   font-weight: 600; color: var(--content-primary);
-  box-shadow: inset -1px 0 0 var(--chrome-border);
   white-space: nowrap;
 
   /* The bar is `width: max-content` under a `max-width`, so when its segments
@@ -208,7 +220,7 @@ body.is-locked { overflow: hidden; }
   display: flex; align-items: center;
   padding: 0 var(--space-5);
   color: var(--chrome-label-strong);
-  box-shadow: inset -1px 0 0 var(--chrome-border);
+  box-shadow: inset 1px 0 0 var(--chrome-border);
   transition: background-color 0.2s, color 0.2s;
 }
 .bar__nav a:hover { background: var(--primary); color: var(--content-inverse); }
@@ -216,7 +228,17 @@ body.is-locked { overflow: hidden; }
   display: flex; align-items: center; gap: var(--space-2);
   padding: 0 var(--space-5);
   color: var(--chrome-label);
+  box-shadow: inset 1px 0 0 var(--chrome-border);
 }
+/* The clock is the one thing in the bar that moves on its own and the least
+   informative token in it — the hour in Sofia is a nicety, the availability is
+   the message. It is also 55.9px of a 319.6px segment, so it is the first
+   thing to give up when the bar starts crowding the page. `display: none`
+   rather than removal from the markup: `#local-time` has to stay in the
+   document or js/main.js's 30s Intl.DateTimeFormat interval writes to nothing
+   and starts throwing. Hiding is presentation; the words are unchanged. */
+.bar__clock { display: none; }
+@media (min-width: 1280px) { .bar__clock { display: inline; } }
 /* An action segment — same cell as a nav link, but it does something to the
    page rather than navigating. Styled identically on purpose: the bar is one
    instrument, and a button that announced itself would break the row. */
@@ -236,16 +258,53 @@ body.is-locked { overflow: hidden; }
   animation: blink 2.4s steps(2) infinite;
 }
 @keyframes blink { 50% { opacity: 0.25; } }
-@media (max-width: 980px) { .bar__status { display: none; } .bar__nav a:last-child { box-shadow: none; } }
-/* Identity + three links + the toggle have to fit inside `calc(100vw - 1.5rem)`.
-   At the previous paddings they did not: on a 375px viewport the bar's content
-   measured 367px inside a 351px box and the toggle ran to x=379 — roughly an
-   eighth of the control off the right edge of the screen, silently, because a
+/* WHEN THE STATUS IS ALLOWED IN, and why it is not 980px any more.
+   The bar is chrome; the `.well` beneath it is the page's content column. Once
+   the chrome is as wide as the content it labels, it has stopped being an
+   object lying on the sheet and become a header. At the old threshold the bar
+   appeared at its proportionally LARGEST: 808px inside an 817px well at 981px
+   viewport — 98.9% — and shrank relative to the page from there, so the wider
+   the screen the better it looked and the narrowest screen that showed the
+   status showed the worst version of it. That is the "gets too long" report.
+
+   Two reveals instead of one, each set where the resulting bar still fits
+   comfortably inside the well (measured, not guessed):
+
+     bar without status   488.6px   ≤ 1079px:  54.3% of the well at 1079
+     bar + status         752.2px   1080-1279: 83.6% at 1080, 70.6% at 1279
+     bar + status + clock 808.2px   ≥ 1280px:  75.8% at 1280, 67.3% at 1440
+
+   67.3% is the floor, not a waypoint: the well stops growing at 1200px, so
+   every viewport from 1440 up reads identically. Worst case anywhere is now
+   83.6% of the well against 98.9% before, and the single +65% jump at 980px is
+   split into +54% and +7.4%. */
+@media (max-width: 1079px) { .bar__status { display: none; } }
+
+/* Identity + links + the toggle have to fit inside `calc(100vw - 1.5rem)`, and
+   at the full paddings they do not on a narrow screen: on a 375px viewport the
+   bar's content measured 367px inside a 351px box and the toggle ran to x=379 —
+   roughly an eighth of the control off the right edge, silently, because a
    fixed element's overflow does not extend the document. These paddings bring
-   the content back inside the box with room to spare. Measured at 375px; keep
-   the slack when editing, and note that the steps here are the SMALL end of the
-   space ramp precisely because this is the one place where 4px matters. */
-@media (max-width: 480px) {
+   the content back inside the box.
+
+   THE BOUNDARY IS 600px, NOT 480px, and that is the whole point of the rule.
+   Tightening only to 480px left a band immediately above it where the padding
+   had sprung back but the viewport had not yet grown enough to pay for it, so
+   `.bar__id`'s overflow guard engaged and the identity was silently truncated
+   on four pages at once:
+
+     index  481-511px  content 488.6 in a 457-487 box   name clipped by up to 32px
+     evals  481-528px  content 511.9                    clipped by up to 31px
+     mcp    481-504px  content 487.9                    clipped by up to  7px
+     cv     561-574px  content 551.8 (its nav returns
+                       at 561 — see css/cv.css)         clipped by up to 15px
+
+   600px clears the widest of those (cv's 551.8px needs a 576px viewport) with
+   24px to spare. Keep the slack when editing, and note that the steps here are
+   the SMALL end of the space ramp precisely because this is the one place where
+   4px matters. The toggle's own label survives to 480px rather than 600px: it
+   costs 63.9px and the arithmetic above has room for it. */
+@media (max-width: 600px) {
   .bar__id { padding: var(--space-3) var(--space-3); }
   .bar__nav a { padding: 0 var(--space-2); }
 }
@@ -253,8 +312,12 @@ body.is-locked { overflow: hidden; }
 /* ============ Theme toggle ============ @component theme-toggle
    Lives in the nav bar and inherits its mono/size, so it reads as one more
    segment of the instrument rather than a widget stuck onto it. Three states
-   cycle: auto → light → dark. The label is the CURRENT state, not the next
-   one — this is a readout you can press, like the rest of the bar. */
+   cycle, and the ORDER OF THAT CYCLE IS NOT FIXED — it is chosen by
+   js/theme.js against whatever the system is currently resolving to, so that
+   the first press always changes the page's colours. The note above the 480px
+   block has the arithmetic that forces this, and why there is no flash. The
+   label is the CURRENT state, not the next one — this is a readout you can
+   press, like the rest of the bar. */
 .theme {
   display: flex; align-items: center; gap: var(--space-2);
   padding: 0 var(--space-4);
@@ -278,8 +341,36 @@ body.is-locked { overflow: hidden; }
 
 .theme__label { min-width: 3.2em; text-align: left; } /* AUTO/LIGHT/DARK must not shift the bar */
 
+/* THERE IS NO PRESS-ACKNOWLEDGEMENT ANIMATION HERE, and the reason is worth
+   the paragraph because it is the obvious thing to reach for.
+
+   Three states map onto two renderings, so going round the ring must repeat a
+   rendering: somewhere in auto → X → Y → auto there is one press that leaves
+   the page's colours exactly as they were. That is arithmetic and cannot be
+   designed away without dropping a state. What CAN be chosen is WHICH press it
+   is, and js/theme.js chooses the last one — the deliberate return to auto —
+   instead of the first, which was the reported bug.
+
+   The tempting next move is to flash the lamp so the remaining no-op press
+   still feels answered. It does not work in CSS alone. An animation restarts
+   only when its NAME changes, so it needs one keyframe name per state; and an
+   element that enters the document already matching such a rule starts that
+   animation immediately. Measured: the lamp fired `theme-ack-auto` at t≈111ms
+   on a cold load with nothing stored and nothing pressed. A flash that happens
+   on every page load is not an acknowledgement, it is noise, and it devalues
+   the flash that does follow a press. Gating on `.theme:focus` suppresses the
+   load case correctly but silently does nothing in Safari, which does not
+   focus a button on click.
+
+   It is also unnecessary. The lamp fill and the word beside it already change
+   on every single press, including the no-op one, and the accessible name now
+   states the consequence BEFORE the press rather than acknowledging it after:
+   "Activate for auto (your system setting, currently light)." Announcing a
+   no-op in advance beats confirming it in retrospect. See
+   components/theme-toggle/spec.md. */
+
 @media (max-width: 480px) {
-  .theme { padding: 0 var(--space-2); } /* see the .bar 480px block: the row has to fit */
+  .theme { padding: 0 var(--space-2); } /* see the .bar 600px block: the row has to fit */
   .theme__label { display: none; } /* the lamp alone; aria-label still speaks */
 }
 

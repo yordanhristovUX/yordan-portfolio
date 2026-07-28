@@ -1517,6 +1517,7 @@
         "classes": [
           ".bar",
           ".bar__action",
+          ".bar__clock",
           ".bar__dot",
           ".bar__id",
           ".bar__nav",
@@ -1524,6 +1525,7 @@
         ],
         "elements": [
           "__action",
+          "__clock",
           "__dot",
           "__id",
           "__nav",
@@ -1534,12 +1536,12 @@
           ".bar",
           ".bar__action",
           ".bar__action:hover",
+          ".bar__clock",
           ".bar__dot",
           ".bar__id",
           ".bar__nav",
           ".bar__nav a",
           ".bar__nav a:hover",
-          ".bar__nav a:last-child",
           ".bar__status"
         ],
         "tokens": [
