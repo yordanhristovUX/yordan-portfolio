@@ -29,7 +29,8 @@ Rectangular mono-type action. Outline by default; solid ink for the primary acti
 
 ## Tokens
 
-`--font-mono`, `--content-primary`, `--primary`, `--action-hover`, `--content-inverse`
+`--action-hover`, `--content-inverse`, `--content-primary`, `--font-mono`, `--primary`,
+`--text-2xs`, `--text-xs`, `--space-2`, `--space-3`, `--space-5`
 
 ## A11y
 

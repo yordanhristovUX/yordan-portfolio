@@ -39,7 +39,12 @@
         "--content-inverse",
         "--content-primary",
         "--font-mono",
-        "--primary"
+        "--primary",
+        "--space-2",
+        "--space-3",
+        "--space-5",
+        "--text-2xs",
+        "--text-xs"
       ]
     },
     {
@@ -88,7 +93,12 @@
         "--font-mono",
         "--pad",
         "--primary",
-        "--rule"
+        "--rule",
+        "--space-3",
+        "--space-flow",
+        "--text-2xs",
+        "--text-md",
+        "--text-sub"
       ]
     },
     {
@@ -225,8 +235,16 @@
         "--pad",
         "--primary-muted",
         "--rule",
+        "--space-2",
+        "--space-3",
+        "--space-4",
+        "--space-5",
         "--surface-page",
-        "--surface-raised"
+        "--surface-raised",
+        "--text-2xs",
+        "--text-md",
+        "--text-sm",
+        "--text-xs"
       ]
     },
     {
@@ -258,7 +276,10 @@
         "--chrome-label-strong",
         "--content-inverse",
         "--font-mono",
-        "--primary"
+        "--primary",
+        "--space-1",
+        "--space-2",
+        "--text-2xs"
       ]
     },
     {
@@ -333,7 +354,18 @@
         "--rule",
         "--rule-strong",
         "--scrim",
-        "--surface-page"
+        "--space-2",
+        "--space-3",
+        "--space-4",
+        "--space-5",
+        "--space-6",
+        "--space-7",
+        "--space-flow-lg",
+        "--surface-page",
+        "--text-2xs",
+        "--text-base",
+        "--text-sub",
+        "--text-xs"
       ]
     },
     {
@@ -383,7 +415,17 @@
         "--font-mono",
         "--pad",
         "--primary",
-        "--rule"
+        "--rule",
+        "--space-1",
+        "--space-2",
+        "--space-3",
+        "--space-6",
+        "--space-7",
+        "--space-flow",
+        "--text-2xs",
+        "--text-md",
+        "--text-sub",
+        "--text-xs"
       ]
     },
     {
@@ -427,7 +469,14 @@
         "--font-mono",
         "--rule",
         "--rule-strong",
-        "--surface-page"
+        "--space-1",
+        "--space-2",
+        "--space-6",
+        "--surface-page",
+        "--text-2xs",
+        "--text-display",
+        "--text-sm",
+        "--text-unit"
       ]
     },
     {
@@ -451,7 +500,12 @@
       "tokens": [
         "--chrome-bg-strong",
         "--chrome-label-on-strong",
-        "--font-mono"
+        "--font-mono",
+        "--pad",
+        "--space-2",
+        "--space-4",
+        "--space-7",
+        "--text-2xs"
       ]
     },
     {
@@ -480,7 +534,9 @@
         "--font-mono",
         "--pad",
         "--primary",
-        "--rule"
+        "--rule",
+        "--space-4",
+        "--text-xs"
       ]
     },
     {
@@ -519,7 +575,11 @@
         "--chrome-bg",
         "--chrome-border-strong",
         "--chrome-label",
-        "--font-mono"
+        "--font-mono",
+        "--space-2",
+        "--space-4",
+        "--space-6",
+        "--text-2xs"
       ]
     },
     {
@@ -571,7 +631,11 @@
         "--content-primary",
         "--font-mono",
         "--primary",
-        "--shadow-drop"
+        "--shadow-drop",
+        "--space-2",
+        "--space-3",
+        "--space-5",
+        "--text-xs"
       ]
     },
     {
@@ -603,7 +667,11 @@
         "--chrome-label",
         "--content-body",
         "--font-mono",
-        "--rule"
+        "--rule",
+        "--space-3",
+        "--space-4",
+        "--space-7",
+        "--text-xs"
       ]
     },
     {
@@ -673,7 +741,18 @@
         "--pad",
         "--primary",
         "--rule",
-        "--surface-raised"
+        "--space-1",
+        "--space-2",
+        "--space-3",
+        "--space-4",
+        "--space-7",
+        "--space-flow",
+        "--surface-raised",
+        "--text-base",
+        "--text-heading",
+        "--text-md",
+        "--text-sm",
+        "--text-xs"
       ]
     },
     {
@@ -719,7 +798,10 @@
         "--pad",
         "--rule",
         "--rule-strong",
-        "--surface-raised"
+        "--space-4",
+        "--space-6",
+        "--surface-raised",
+        "--text-xs"
       ]
     },
     {
@@ -819,7 +901,12 @@
         "--chrome-label",
         "--chrome-label-strong",
         "--content-primary",
-        "--rule"
+        "--rule",
+        "--space-1",
+        "--space-2",
+        "--space-3",
+        "--text-2xs",
+        "--text-sm"
       ]
     },
     {
@@ -843,7 +930,12 @@
       "tokens": [
         "--content-primary",
         "--font-display",
-        "--rule-strong"
+        "--rule-strong",
+        "--space-1",
+        "--space-2",
+        "--space-4",
+        "--space-6",
+        "--text-display"
       ]
     },
     {
@@ -878,7 +970,9 @@
         "--chrome-border",
         "--chrome-label",
         "--content-inverse",
-        "--primary"
+        "--primary",
+        "--space-2",
+        "--space-4"
       ]
     },
     {
@@ -925,7 +1019,13 @@
         "--content-muted",
         "--content-primary",
         "--font-display",
-        "--font-mono"
+        "--font-mono",
+        "--text-display",
+        "--text-display-hero",
+        "--text-display-xl",
+        "--text-lead",
+        "--text-title",
+        "--text-xs"
       ]
     }
   ]

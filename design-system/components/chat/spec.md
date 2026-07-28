@@ -127,10 +127,11 @@ purely to keep this honest — if that story makes the band grow, the regression
 
 ## Tokens
 
-`--surface-raised`, `--surface-page`, `--chrome-bg`, `--chrome-border`,
-`--chrome-border-strong`, `--chrome-label`, `--chrome-label-strong`, `--content-primary`,
-`--content-body`, `--content-muted`, `--primary-muted`, `--accent`, `--rule`, `--pad`,
-`--font-mono`
+`--accent`, `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`, `--chrome-label`,
+`--chrome-label-strong`, `--content-body`, `--content-muted`, `--content-primary`,
+`--font-mono`, `--primary-muted`, `--rule`, `--surface-page`, `--surface-raised`,
+`--text-2xs`, `--text-md`, `--text-sm`, `--text-xs`, `--pad`, `--space-2`, `--space-3`,
+`--space-4`, `--space-5`
 
 No `prefers-color-scheme` anywhere in this block. Every colour above flips through its own
 `dark` value in `tokens.json`; the component does not know a theme exists.

@@ -1,17 +1,28 @@
 # The first automated gate in this repo.
 #
-# Everything here runs with NO API KEY and NO network: tokens, content, vectors
-# and the eval all read committed artefacts. That is not an accident — it is why
-# an eval suite survives a year instead of rotting the first time a key expires.
+# Everything here runs with NO API KEY and NO network: tokens, content, css,
+# vectors, the eval and the behavioural suite all read committed artefacts. That
+# is not an accident — it is why an eval suite survives a year instead of rotting
+# the first time a key expires.
+#
+# `npm run check` runs exactly these steps, in exactly this order, and
+# test/ci.test.js fails if the two ever disagree. A contributor who is green
+# locally cannot break CI, which is the only reason a local check is worth
+# running.
 #
 # Each step answers one question:
 #   tokens    — is every component still CSS + spec + story, and do the numbers
 #               the site advertises about itself still match reality?
 #   content   — has anyone hand-edited a generated file?
+#   css       — has a literal font-size, colour or media query got back in?
 #   vectors   — has chunk text changed without the embeddings being rebuilt?
 #   bounds    — does the dependency direction between slices still hold?
 #   evals     — has retrieval regressed, and does /evals still show the numbers
 #               the runner actually produced?
+#   behaviour — do the gate, the schema validators, the tool handlers and the
+#               budget still BEHAVE as their specs say? Everything above this
+#               line compares artefacts; this is the only step that runs
+#               lib/ and api/ code.
 name: ci
 
 on:
@@ -40,6 +51,9 @@ jobs:
       - name: "content: generated files are current"
         run: node scripts/build-content.mjs --check
 
+      - name: "css: no literal size, colour or media query"
+        run: node scripts/check-css.mjs
+
       - name: "vectors: embeddings match the corpus"
         run: node scripts/build-vectors.mjs --check
 
@@ -48,6 +62,14 @@ jobs:
 
       - name: "evals: no retrieval regression"
         run: node evals/run.mjs --check
+
+      # The only step that executes lib/ and api/ rather than comparing a
+      # generated file: the entity gate, the answer schema, the tool handlers
+      # and the budget's fail-open/fail-closed policy. node:test, no network,
+      # no key, no dependency — the suite deletes VOYAGE_API_KEY itself so a
+      # developer with one in the environment runs the same test CI does.
+      - name: "behaviour: node:test suite"
+        run: npm test
 
       # Catches an import-time break — a bad path, a syntax error, a missing
       # export — without calling a model or reading a secret. api/mcp.js is

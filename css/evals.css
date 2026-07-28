@@ -8,34 +8,35 @@
    compose components — no palettes, no new component styles.
    See design-system/README.md before adding UI.
 
-   There is not one colour value in this file. Everything that
+   There is not one colour value in this file, and — since the type
+   scale landed — not one literal font-size either. Everything that
    differs between light, dark and paper is a token with a `dark`
    or `print` value in tokens.json; the print block at the bottom
    is layout only.
    ============================================================ */
 
 /* ============ Head ============ */
-.ev-head .well { padding-top: clamp(5.5rem, 14vh, 8rem); } /* clears the floating nav */
+.ev-head .well { padding-top: var(--space-nav); } /* clears the floating nav; 0 on paper */
 
 .ev-head__kicker {
   display: inline-block;
   border-bottom: 2px solid var(--accent);
-  padding-bottom: 0.4rem;
-  margin-bottom: clamp(1rem, 2.5vh, 1.5rem);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-flow-sm);
 }
-.ev-head__title { margin-bottom: 1rem; }
-.ev-head__lede { max-width: 46rem; margin-bottom: 1.25rem; }
-.ev-head p + p { margin-top: 1rem; }
+.ev-head__title { margin-bottom: var(--space-4); }
+.ev-head__lede { max-width: 46rem; margin-bottom: var(--space-5); }
+.ev-head p + p { margin-top: var(--space-4); }
 
 /* ============ Prose inside wells ============ */
 .ev-prose { max-width: 46rem; }
-.ev-prose p + p { margin-top: 1rem; }
-.ev-prose ul { list-style: none; margin: 1rem 0; }
+.ev-prose p + p { margin-top: var(--space-4); }
+.ev-prose ul { list-style: none; margin: var(--space-4) 0; }
 .ev-prose li {
   position: relative;
-  padding-left: 1.1rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
+  padding-left: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--text-md);
 }
 .ev-prose li::before {
   content: "—";
@@ -46,7 +47,7 @@
 .ev-prose strong { color: var(--content-primary); font-weight: 600; }
 .ev-prose code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
+  font-size: var(--text-code);
   color: var(--content-primary);
 }
 
@@ -56,16 +57,16 @@
 .tools__row dd.chips { align-content: flex-start; }
 
 .ev-note {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--chrome-label-strong);
-  padding: 0.75rem 0;
+  padding: var(--space-3) 0;
   border-top: var(--rule);
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
 }
 
-.ev-facts { margin-bottom: 1.5rem; }
+.ev-facts { margin-bottom: var(--space-6); }
 
 /* ============ Print ============
    Layout only. Paper drops the floating chrome and the living squares; every
@@ -75,7 +76,7 @@
   .strip,
   .rail { display: none; }
 
-  .ev-head .well { padding-top: 0; }
+  /* the nav clearance resets itself: --space-nav's print value is 0 */
 
   .band { display: block; }
 

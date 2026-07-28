@@ -46,12 +46,16 @@
   ],
 
   "contactSection": {
+    "_linksNote": "`Retrieval evaluation` and `MCP server` are the two pages' own <title> text, reused verbatim as labels. They were reachable only by typing the URL: nothing on the homepage linked to /evals or /mcp, which made the two most differentiating artefacts in the repo invisible to every reader who did not already know they existed. The link-grid is the one place on the homepage where a link can be added without touching page markup.",
+
     "bigLines": ["LET'S WORK", "TOGETHER"],
     "links": [
       { "label": "Email", "href": "mailto:yhristov.xyz@gmail.com" },
       { "label": "+359 884 614 579", "href": "tel:+359884614579" },
       { "label": "LinkedIn ↗", "href": "https://www.linkedin.com/in/yordan-hristov/", "external": true },
-      { "label": "CV →", "href": "cv.html" }
+      { "label": "CV →", "href": "cv.html" },
+      { "label": "Retrieval evaluation →", "href": "evals.html" },
+      { "label": "MCP server →", "href": "mcp.html" }
     ]
   },
 
@@ -126,9 +130,11 @@
 
     "cvOpenSource": [
       "Tokens are born in the repo, not in Figma. One `tokens.json` builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and **the build fails if any of the three is missing**, so parity is enforced rather than maintained by hand.",
-      "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules."
+      "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is {{dark}} re-aliased tokens with zero per-component rules."
     ],
 
-    "cvOpenSourceFacts": "{{tokens}} tokens carrying {{values}} values across light, dark & print · {{components}} components · 0 accessibility violations · MIT licensed"
+    "_cvOpenSourceFactsNote": "`0 axe violations across N Storybook stories` is the SCOPED form of the claim. The unscoped `0 accessibility violations` that used to sit here read as a claim about the whole site; the case study has always qualified it correctly as `across the component library — axe-audited per story`, and this line now says the same thing. It is deliberately NOT widened to a screen-reader claim: screen-reader behaviour was not verified in this programme. The story count is `{{components}}` because the design-system build fails a component that has no story, so the two counts are the same number by construction and interpolating it keeps that true.",
+
+    "cvOpenSourceFacts": "{{tokens}} tokens carrying {{values}} values across light, dark & print · {{components}} components · 0 axe violations across {{components}} Storybook stories · MIT licensed"
   }
 }

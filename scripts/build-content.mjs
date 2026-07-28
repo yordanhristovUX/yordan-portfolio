@@ -8,17 +8,27 @@
      skills.json              content/dist/content.json (retrieval index)
      education.json           content/dist/site.jsonld  (schema.org)
      facts.json               llms.txt                  (agent-readable summary)
+     evals.json
      projects/*.md
      experience/*.md
      assets/pipeline.svg
-     system.generated.json ← emitted by design-system/scripts/build.mjs
+     system.generated.json         ← emitted by design-system/scripts/build.mjs
+   design-system/dist/components.json  ← same, folded in verbatim
 
    `node scripts/build-content.mjs`          write every artefact
    `node scripts/build-content.mjs --check`  regenerate into memory and fail if
                                              anything on disk is stale (CI gate)
 
    Run order: `design-system/scripts/build.mjs` first — it emits
-   content/system.generated.json, which the prose here interpolates — then this.
+   content/system.generated.json and dist/components.json, which this build
+   interpolates and folds in — then this.
+
+   THE COUNTS DO NOT REACH THE CORPUS. Everything the design system emits is
+   rendered into pages and into non-chunk fields of content.json, and is elided
+   from chunk text. scripts/build-vectors.mjs fingerprints the corpus as a hash
+   over chunk heading+text, so this is what stops a token or component landing
+   from invalidating a billed embedding cache and moving the eval baseline. See
+   `elideStats` below, and the `designSystem` key in buildContentJson.
 
    The one rule: prose is moved, never rewritten. Every string this script
    emits was authored in content/ and is reproduced verbatim. If a sentence
@@ -43,9 +53,16 @@ const lf = (s) => s.replace(/\r\n/g, "\n");
    1. Load
    ============================================================ */
 
-if (!existsSync(join(root, "content", "system.generated.json"))) {
+/* Both of these are emitted by design-system/scripts/build.mjs. Neither is ever
+   hand-edited, and this build cannot run without them — which is the whole
+   reason the run order is "design system, then content". */
+for (const artefact of [
+  ["content", "system.generated.json"],
+  ["design-system", "dist", "components.json"],
+]) {
+  if (existsSync(join(root, ...artefact))) continue;
   console.error(
-    `✗ content/system.generated.json is missing.\n` +
+    `✗ ${artefact.join("/")} is missing.\n` +
       `  It is emitted by the design system build. Run:\n` +
       `    node design-system/scripts/build.mjs`
   );
@@ -53,11 +70,20 @@ if (!existsSync(join(root, "content", "system.generated.json"))) {
 }
 
 const system = readJSON("content", "system.generated.json");
+
+/* The component contract, folded in so lib/knowledge has ONE artefact to read.
+   Boundary note: this is the design system's PUBLISHED dist/, not its internals
+   (scripts/check-boundaries.mjs guards design-system/{tokens,components,stories,
+   scripts,figma}/), and it enters the graph the same way the token counts do —
+   through the content build, never by a consumer reaching sideways into
+   design-system/dist/ for itself. */
+const dsComponents = readJSON("design-system", "dist", "components.json");
 const profile = readJSON("content", "profile.json");
 const capabilities = readJSON("content", "capabilities.json");
 const skills = readJSON("content", "skills.json");
 const education = readJSON("content", "education.json");
 const facts = readJSON("content", "facts.json");
+const evalsPage = readJSON("content", "evals.json");
 const pipelineSvg = lf(read("content", "assets", "pipeline.svg")).trimEnd();
 
 /* The system's own statistics are interpolated into the prose that advertises
@@ -67,9 +93,42 @@ const STATS = {
   tokens: String(system.tokens),
   values: String(system.values),
   components: String(system.components),
+  /* `dark` was the counter-example that proved the point: the theme count was
+     typed as a literal "24" in two places rather than interpolated, so when the
+     design system re-aliased its way down to 23 nothing flowed and both the CV
+     and the case study shipped a false number. It is a placeholder now. */
+  dark: String(system.dark),
 };
-const stats = (s) =>
-  typeof s === "string" ? s.replace(/\{\{(tokens|values|components)\}\}/g, (_, k) => STATS[k]) : s;
+const STATS_RE = /\{\{(tokens|values|components|dark)\}\}/g;
+const stats = (s) => (typeof s === "string" ? s.replace(STATS_RE, (_, k) => STATS[k]) : s);
+
+/* ---------- and the counterpart: the numbers do NOT enter the corpus ----------
+
+   RENDERED surfaces (pages, case studies, llms.txt, the non-chunk fields of
+   content.json) get the live figure. The RETRIEVAL CHUNKS get the sentence with
+   the figure ELIDED — the placeholder is replaced by nothing and the surrounding
+   whitespace collapses, exactly as `plain()` already does to a `{{metric:0}}`
+   directive.
+
+   Why: scripts/build-vectors.mjs fingerprints the corpus as
+   sha256(`${heading}. ${text}` of every chunk). While the digits sat in chunk
+   text, adding one component or renaming one token invalidated the committed
+   embedding cache — a billed Voyage rebuild — and moved the eval baseline. A
+   pure design-system change reached all the way into the retrieval evaluation.
+   Eliding the digits severs that: chunk text is now invariant under a count
+   change, so `corpusHash` does not move and the eval numbers stay comparable.
+
+   Why elide rather than leave `{{tokens}}` in place: the placeholder would
+   become a BM25 term, would be embedded as noise, and — worse — `search_content`
+   hands `chunk.text` to a model, which would then quote "Dark mode is {{dark}}
+   tokens" at a reader. Eliding loses only the digit.
+
+   Why nothing is lost by losing the digit: these numbers are structured data,
+   not prose. `get_system_facts` returns `content.system` directly and the tool
+   description points at it, so "how many tokens?" is answered by the tool layer
+   — the same argument /evals already makes for location and availability, which
+   are structured fields that deliberately appear in no chunk. */
+const elideStats = (s) => (typeof s === "string" ? s.replace(STATS_RE, "") : s);
 
 /* ---------- content files: JSON frontmatter + markdown body ---------- */
 function parseEntity(rel) {
@@ -545,9 +604,15 @@ function workIndexRegion() {
 
 function factCell(f, surface) {
   const label = (surface === "cv" && f.cv?.label) || f.label;
+  /* `data-count` is the ANIMATION's target; the element's text is the FACT. A
+     reader with no JS, a stalled GSAP ticker or a throttled tab must see "42km",
+     because a page that says he ran 0km is not a degraded page, it is a false
+     one. The literal `0` that used to ship here was the animation's first frame
+     leaking into the document — js/main.js has never written it and has been
+     waiting for this emitter (see its note above the [data-count] loop). */
   const num =
     surface === "site" && f.count !== undefined
-      ? `<span data-count="${f.count}">0</span><small>${inline(f.unit)}</small>`
+      ? `<span data-count="${f.count}">${inline(f.value)}</span><small>${inline(f.unit)}</small>`
       : `${inline(f.value)}<small>${inline(f.unit)}</small>`;
   return [
     `<div class="fact">`,
@@ -749,12 +814,15 @@ const chunks = [];
 const seenChunkIds = new Set();
 
 function addChunk(id, entity, kind, heading, text, cite) {
-  const t = plain(text);
+  /* elideStats BEFORE plain(): see the note beside it. Both fields are elided
+     because build-vectors hashes `${heading}. ${text}` — a statistic in a
+     heading would couple the cache just as tightly as one in the body. */
+  const t = plain(elideStats(text));
   if (!t) return;
   let unique = id;
   for (let n = 2; seenChunkIds.has(unique); n++) unique = `${id}-${n}`;
   seenChunkIds.add(unique);
-  chunks.push({ id: unique, entity, kind, heading, text: t, cite });
+  chunks.push({ id: unique, entity, kind, heading: elideStats(heading), text: t, cite });
 }
 
 for (const p of projects) {
@@ -843,7 +911,21 @@ function buildContentJson() {
     $schema: "content/dist/content.schema — see content/CLAUDE.md",
     version: 1,
     generatedBy: "scripts/build-content.mjs — do not edit",
-    system: { tokens: system.tokens, values: system.values, components: system.components },
+    /* The advertised statistics, verbatim from system.generated.json. This is
+       the ONLY place in content.json the digits survive — chunk text elides
+       them (see elideStats) — so get_system_facts is the answer path for
+       "how many tokens?", exactly as its tool description says. `light`, `dark`
+       and `print` are here because prose now interpolates `{{dark}}` and a
+       reader who asks about the theme count must be able to get it from a tool
+       rather than from a sentence. */
+    system: {
+      tokens: system.tokens,
+      values: system.values,
+      components: system.components,
+      light: system.light,
+      dark: system.dark,
+      print: system.print,
+    },
     profile: {
       identity: profile.identity,
       availability: profile.availability,
@@ -903,6 +985,46 @@ function buildContentJson() {
         .flatMap((b) => b.items)
         .map(plain),
     })),
+    /* ---------- the design system's component contract, folded in ----------
+       design-system/dist/components.json, verbatim. It is HERE rather than read
+       directly by lib/knowledge because content.json is the one artefact that
+       crosses that boundary; a consumer that opened design-system/dist/ for
+       itself would add a second edge to the graph for no gain.
+
+       Two properties this MUST keep, or a pure design-system change starts
+       costing money again:
+         · it is NOT chunked — no chunk is derived from it, so it cannot enter
+           the build-vectors corpus hash;
+         · it is NOT in `doc.manifest` — evals/run.mjs publishes
+           `corpus.manifestChars` into results.json, so putting it in the
+           manifest would invalidate the eval artefacts every time a CSS block
+           gained a selector. */
+    designSystem: {
+      $derivedFrom: "design-system/dist/components.json (generated) — folded in verbatim",
+      count: dsComponents.count,
+      components: dsComponents.components,
+    },
+    /* ---------- /evals page prose, as a TEMPLATE ----------
+       See content/evals.json for the full argument. Three properties matter:
+         · the `{{evals:…}}` placeholders are left UNSUBSTITUTED — this build may
+           not read evals/results.json (check-boundaries.mjs bans scripts/ →
+           evals/), so the numbers are filled in by evals/run.mjs, which has both
+           this artefact and the run it just produced;
+         · `html` is rendered through the same `inline()` as every other
+           sentence on the site, so the markdown subset and the no-raw-HTML rule
+           hold here too;
+         · like `designSystem`, it is NOT chunked and NOT in the manifest. */
+    evalsPage: {
+      $doc:
+        "Hand-authored prose for evals.html section 04. Placeholders are filled by evals/run.mjs. " +
+        "Not chunked, not in the manifest: changing it moves neither the vector corpus hash nor corpus.manifestChars.",
+      reading: {
+        region: evalsPage.reading.region,
+        html: evalsPage.reading.paragraphs.map((p) => `<p>${inline(p)}</p>`),
+        placeholders: evalsPage.reading.placeholders,
+        review: evalsPage.reading.review,
+      },
+    },
     chunks,
     bm25: {
       N: chunks.length,

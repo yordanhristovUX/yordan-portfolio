@@ -57,9 +57,11 @@ list a rail belongs to with `el.closest(".case")`, not with a class on the band.
 
 ## Tokens
 
-`--surface-page`, `--chrome-bg`, `--chrome-border`, `--chrome-label-strong`,
-`--content-primary`, `--primary`, `--scrim` (the backdrop), `--font-display`, `--font-mono`,
-`--rule`, `--rule-strong`, `--pad`
+`--chrome-bg`, `--chrome-border`, `--chrome-label-strong`, `--content-primary`,
+`--font-display`, `--font-mono`, `--primary`, `--rule`, `--rule-strong`,
+`--scrim` (the backdrop), `--surface-page`, `--text-2xs`, `--text-base`, `--text-sub`,
+`--text-xs`, `--pad`, `--space-2`, `--space-3`, `--space-4`, `--space-5`, `--space-6`,
+`--space-7`, `--space-flow-lg`
 
 ## Behaviour (site JS contract — js/main.js)
 

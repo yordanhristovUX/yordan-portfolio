@@ -132,14 +132,6 @@
     "print": "var(--stone-50)",
     "printResolved": "#fafaf9"
   },
-  "surface.surface-inverse": {
-    "cssVar": "--surface-inverse",
-    "value": "var(--stone-900)",
-    "resolved": "#1c1917",
-    "dark": "var(--stone-100)",
-    "darkResolved": "#f5f5f4",
-    "print": "var(--stone-900)"
-  },
   "primary.primary": {
     "cssVar": "--primary",
     "value": "var(--ink-900)",
@@ -266,12 +258,6 @@
     "printResolved": "transparent",
     "description": "The skeleton's square lines — slate-500 at 16% on paper, slate-400 at 14% on dark (a lighter ink at lower alpha, so the grid stays a whisper rather than becoming a cage). Prints as nothing: the grid is screen scaffolding, not content."
   },
-  "action.action": {
-    "cssVar": "--action",
-    "value": "var(--primary)",
-    "resolved": "#141518",
-    "darkResolved": "#fafaf9"
-  },
   "action.action-hover": {
     "cssVar": "--action-hover",
     "value": "var(--primary-hover)",
@@ -330,6 +316,147 @@
   "font.font-mono": {
     "cssVar": "--font-mono",
     "value": "\"IBM Plex Mono\", ui-monospace, monospace"
+  },
+  "text.text-2xs": {
+    "cssVar": "--text-2xs",
+    "value": "0.72rem",
+    "print": "7pt",
+    "printResolved": "7pt",
+    "description": "The floor. Chips, the tool trace, the source list's ordinals, the ▪ bullets — text you are not meant to read so much as recognise."
+  },
+  "text.text-xs": {
+    "cssVar": "--text-xs",
+    "value": "0.78rem",
+    "print": "7.5pt",
+    "printResolved": "7.5pt",
+    "description": "The standard chrome label: the nav bar, buttons, section numbers, dated spans, page notes. Twelve of the old 89 declarations were already this value — it was the de-facto step, now it is the actual one."
+  },
+  "text.text-sm": {
+    "cssVar": "--text-sm",
+    "value": "0.85rem",
+    "print": "8pt",
+    "printResolved": "8pt",
+    "description": "Small prose — captions, fact labels, citation lines, code blocks."
+  },
+  "text.text-md": {
+    "cssVar": "--text-md",
+    "value": "0.92rem",
+    "print": "9pt",
+    "printResolved": "9pt",
+    "description": "Secondary prose: card copy, list items, definition bodies. Body's quieter sibling."
+  },
+  "text.text-base": {
+    "cssVar": "--text-base",
+    "value": "1rem",
+    "print": "9.5pt",
+    "printResolved": "9.5pt",
+    "description": "Body. Set on `body` in components.css; everything else is measured from here."
+  },
+  "text.text-lead": {
+    "cssVar": "--text-lead",
+    "value": "clamp(1.1rem, 1.7vw, 1.35rem)",
+    "print": "9.5pt",
+    "printResolved": "9.5pt",
+    "description": "The reading lede — one step above body, the paragraph that introduces a section. On paper it collapses back into body: a CV has no room for an emphasised opening size."
+  },
+  "text.text-sub": {
+    "cssVar": "--text-sub",
+    "value": "clamp(1.15rem, 2vw, 1.5rem)",
+    "print": "10pt",
+    "printResolved": "10pt",
+    "description": "Sub-titles: card titles, a role in an entry, an <h3> inside a case study. Three near-identical ramps used to live here — clamp(1.15rem,1.7vw,1.45rem), clamp(1.1rem,1.9vw,1.45rem) and clamp(1.2rem,2.2vw,1.55rem) — rendering at 1280px as 21.76 / 23.2 / 24.8px. That is drift, not hierarchy. A fourth, the work index's project name, was a genuine step larger and became `text-heading`."
+  },
+  "text.text-heading": {
+    "cssVar": "--text-heading",
+    "value": "clamp(1.3rem, 2.4vw, 1.9rem)",
+    "print": "10.5pt",
+    "printResolved": "10.5pt",
+    "description": "One step above a sub-title and below a section title: the work index's project names, which are the largest thing in a scannable list and must not fall back to card-title size."
+  },
+  "text.text-title": {
+    "cssVar": "--text-title",
+    "value": "clamp(1.65rem, 3.7vw, 2.8rem)",
+    "print": "11pt",
+    "printResolved": "11pt",
+    "description": "Section titles and the one statement per section. `.t-title` and `.t-statement` were 2.9rem and 2.7rem — the same level wearing different weights and cases, which is what the utility classes are for."
+  },
+  "text.text-display": {
+    "cssVar": "--text-display",
+    "value": "clamp(2.1rem, 4.8vw, 3.45rem)",
+    "print": "20pt",
+    "printResolved": "20pt",
+    "description": "Display: dialog titles, the CV name, a stat, a fact's number. `.fact__num` was clamp(2.2rem, 4.5vw, 3.5rem) and `.stat` was clamp(2.2rem, 5vw, 3.5rem) — a 0.5vw difference nobody chose."
+  },
+  "text.text-display-xl": {
+    "cssVar": "--text-display-xl",
+    "value": "clamp(2.6rem, 8.5vw, 7.5rem)",
+    "print": "26pt",
+    "printResolved": "26pt",
+    "description": "The contact headline."
+  },
+  "text.text-display-hero": {
+    "cssVar": "--text-display-hero",
+    "value": "clamp(3rem, 11.5vw, 10.5rem)",
+    "print": "32pt",
+    "printResolved": "32pt",
+    "description": "The hero name, once per site."
+  },
+  "text.text-code": {
+    "cssVar": "--text-code",
+    "value": "0.9em",
+    "description": "Inline <code> inside prose. A RATIO, not a step: monospace runs optically larger than the sans beside it, so it is set relative to whatever paragraph it lands in."
+  },
+  "text.text-unit": {
+    "cssVar": "--text-unit",
+    "value": "0.38em",
+    "description": "The unit suffix riding on a display number (`+`, `%`, `×`). A ratio for the same reason: it must stay proportional to the number it annotates, whatever size that number lands at."
+  },
+  "space.space-1": {
+    "cssVar": "--space-1",
+    "value": "0.25rem"
+  },
+  "space.space-2": {
+    "cssVar": "--space-2",
+    "value": "0.5rem"
+  },
+  "space.space-3": {
+    "cssVar": "--space-3",
+    "value": "0.75rem"
+  },
+  "space.space-4": {
+    "cssVar": "--space-4",
+    "value": "1rem"
+  },
+  "space.space-5": {
+    "cssVar": "--space-5",
+    "value": "1.25rem"
+  },
+  "space.space-6": {
+    "cssVar": "--space-6",
+    "value": "1.5rem"
+  },
+  "space.space-7": {
+    "cssVar": "--space-7",
+    "value": "2rem"
+  },
+  "space.space-flow-sm": {
+    "cssVar": "--space-flow-sm",
+    "value": "clamp(1rem, 2.5vh, 1.5rem)"
+  },
+  "space.space-flow": {
+    "cssVar": "--space-flow",
+    "value": "clamp(1.25rem, 3.5vh, 2rem)"
+  },
+  "space.space-flow-lg": {
+    "cssVar": "--space-flow-lg",
+    "value": "clamp(2rem, 5vh, 3rem)"
+  },
+  "space.space-nav": {
+    "cssVar": "--space-nav",
+    "value": "clamp(5.5rem, 14vh, 8rem)",
+    "print": "0",
+    "printResolved": "0",
+    "description": "Clearance under the fixed nav bar, on every page head. Prints as nothing: `.bar` is display:none on paper, so the clearance would be 88px of blank at the top of the sheet."
   },
   "space.pad": {
     "cssVar": "--pad",

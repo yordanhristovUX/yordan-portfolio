@@ -11,6 +11,14 @@
    The print rules at the bottom are layout only. Every colour
    change for paper lives in tokens.json under `print` and is
    emitted into tokens.css — there is not one hex value here.
+
+   The same is now true of TYPE. This file used to carry twenty-two
+   hand-tuned `pt` sizes for paper; the `--text-*` scale carries a
+   `print` value on every step, so the sizes come down the same pipe
+   the colours do. What survives below are the places where a
+   component changes LEVEL on paper — a fact's display number
+   becoming a run of body prose — and those are written as token
+   references, not numbers.
    ============================================================ */
 
 /* ============ Nav ============
@@ -25,28 +33,28 @@
 }
 
 /* ============ Head ============ */
-.cv-head .well { padding-top: clamp(5.5rem, 14vh, 8rem); } /* clears the floating nav */
+.cv-head .well { padding-top: var(--space-nav); } /* clears the floating nav; 0 on paper */
 
 .cv-head__role {
   display: inline-block;
   border-bottom: 2px solid var(--accent);
-  padding-bottom: 0.4rem;
-  margin-bottom: clamp(1rem, 2.5vh, 1.5rem);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-flow-sm);
 }
-.cv-head__name { margin-bottom: 0.6rem; }
+.cv-head__name { margin-bottom: var(--space-3); }
 .cv-head__disciplines {
-  font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--chrome-label);
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 .cv-contact {
-  display: flex; flex-wrap: wrap; gap: 0.35rem 1.5rem;
+  display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6);
   list-style: none;
-  font-size: 0.8rem;
-  padding-bottom: 1.5rem;
+  font-size: var(--text-xs);
+  padding-bottom: var(--space-6);
   border-bottom: var(--rule);
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 .cv-contact a { border-bottom: 1px solid var(--chrome-border-strong); padding-bottom: 1px; }
 .cv-contact a:hover { color: var(--content-primary); border-color: var(--content-primary); }
@@ -54,21 +62,21 @@
 .cv-summary { max-width: 46rem; }
 
 /* ============ Open source section ============ */
-#open-source p { max-width: 46rem; margin-bottom: 1rem; }
+#open-source p { max-width: 46rem; margin-bottom: var(--space-4); }
 #open-source code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
+  font-size: var(--text-code);
   color: var(--content-primary);
 }
 .cv-facts {
-  font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--chrome-label-strong);
-  padding: 0.75rem 0;
+  padding: var(--space-3) 0;
   border-top: var(--rule);
   border-bottom: var(--rule);
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
 }
-#open-source .link-grid { margin-top: 1.5rem; }
+#open-source .link-grid { margin-top: var(--space-6); }
 
 /* Print-only content: paper cannot be clicked, so a couple of things are
    swapped for a form that survives being on a page. */
@@ -80,8 +88,16 @@
    air. On paper it is a CV, and a CV is read as a dense two-page scan, so
    every box becomes prose and every decoration goes.
 
-   Everything here is layout and typography. Colour for paper is handled by
-   the `print` tier in tokens.json — there is not one hex value below. */
+   Everything here is LAYOUT. Colour for paper is the `print` tier in
+   tokens.json, and so is type: `--text-base` is 9.5pt here, `--text-title`
+   is 11pt, `--text-display` is 20pt, and none of that is written below.
+   The only font-size rules that remain are the four places where an element
+   changes level on paper — a display number that becomes body prose — and
+   they name a token, never a number.
+
+   The `mm` values stay literal on purpose. A millimetre is a physical fact
+   about the sheet, not a step on a rhythm ramp; expressing 1.2mm of lead
+   between entries as `--space-1` would be a lie about what it measures. */
 @media print {
   @page { margin: 12mm 13mm; }
 
@@ -102,25 +118,23 @@
   .band { display: block; }          /* the 24-square grid has no meaning here */
   .sec { border-top: 0; }            /* the section head's own rule is enough */
 
-  body { font-size: 9.5pt; line-height: 1.38; }
+  body { line-height: 1.38; } /* size comes from --text-base's print value (9.5pt) */
 
-  /* ---- header: six stacked blocks become three lines ---- */
-  .cv-head .well { padding-top: 0; }
+  /* ---- header: six stacked blocks become three lines ----
+     `.cv-head .well` needs no padding reset: --space-nav prints as 0. */
   .cv-head__role {
     display: inline; border: 0; padding: 0; margin: 0;
-    font-size: 8pt;
   }
   .cv-head__role::after { content: " ·"; }
-  .cv-head__name { font-size: 20pt; margin-bottom: 0.5mm; }
-  .cv-head__disciplines { display: inline; font-size: 8pt; margin: 0; }
+  .cv-head__name { margin-bottom: 0.5mm; }
+  .cv-head__disciplines { display: inline; margin: 0; }
   .cv-contact {
     gap: 0 3mm;
-    font-size: 8pt;
     padding-bottom: 1.5mm;
     margin: 1.5mm 0 2mm;
   }
   .cv-contact a { border-bottom: 0; }
-  .cv-summary { font-size: 9.4pt; max-width: none; }
+  .cv-summary { max-width: none; }
 
   /* ---- section heads: a rule and a small caps line ---- */
   .sec__head {
@@ -131,18 +145,20 @@
     border-bottom: 1px solid var(--content-primary);
     break-after: avoid; page-break-after: avoid;
   }
-  .sec__title { font-size: 11pt; }
-  .sec__note { font-size: 7.5pt; }
 
-  /* ---- open source ---- */
-  #open-source p { margin-bottom: 1.2mm; max-width: none; font-size: 9pt; }
+  /* ---- open source ----
+     No font-size here any more, and that fixed a live bug: `#open-source p`
+     is (0,1,1) against `.cv-facts`'s (0,1,0), so the 7.5pt this file asked
+     for on the facts line was never applied — it printed at the paragraph's
+     9pt. With both sizes coming from tokens, the facts line is --text-xs
+     (7.5pt) and the paragraphs are body (9.5pt), as always intended. */
+  #open-source p { margin-bottom: 1.2mm; max-width: none; }
   .cv-facts {
-    font-size: 7.5pt;
     padding: 1mm 0 0;
     margin: 1.2mm 0 0;
     border-bottom: 0;
   }
-  #open-source .print-only { font-size: 7.5pt; margin-top: 0.8mm; }
+  #open-source .print-only { font-size: var(--text-xs); margin-top: 0.8mm; }
 
   /* ---- experience: the densest part of the document ----
      A role orphaned from its outcomes is the one break that actually costs
@@ -154,16 +170,14 @@
     border-bottom: 0;
     break-inside: avoid; page-break-inside: avoid;
   }
-  .entry__role { font-size: 10pt; }
-  .entry__span { font-size: 7.5pt; }
-  .entry__org { font-size: 9pt; }
+  /* role 10pt / span 7.5pt / bullets 9pt all arrive from the token print tier */
   .entry__list { margin-top: 1mm; }
   .entry__list li {
     padding: 0 0 0 3.2mm;
-    font-size: 9pt; line-height: 1.36;
+    line-height: 1.36;
     max-width: none;
   }
-  .entry__list li::before { top: 0; font-size: 6pt; }
+  .entry__list li::before { top: 0; }
 
   /* ---- skills & education: the ruled table becomes running prose ---- */
   .tools__row {
@@ -172,26 +186,27 @@
     border-bottom: 0;
     break-inside: avoid;
   }
+  /* The term drops a level to match the definition beside it: on screen it is
+     display type in its own column, in print it is bold prose in a sentence. */
   .tools__row dt {
     display: inline;
     font-family: var(--font-body); font-weight: 600;
-    font-size: 9pt; text-transform: none; letter-spacing: 0;
+    font-size: var(--text-md); text-transform: none; letter-spacing: 0;
   }
   .tools__row dt::after { content: " — "; font-weight: 400; }
-  .tools__row dd { display: inline; font-size: 9pt; }
+  .tools__row dd { display: inline; }
 
-  /* ---- unexpected facts: a bordered three-column figure becomes one line ---- */
+  /* ---- unexpected facts: a bordered three-column figure becomes one line ----
+     The three level changes on paper: a display number, its mono title and
+     its unit suffix all become the body prose they are now embedded in. */
   .facts { display: block; border: 0; background: none; }
-  .fact {
-    display: inline; padding: 0; border: 0;
-    font-size: 9pt;
-  }
+  .fact { display: inline; padding: 0; border: 0; }
   .fact + .fact::before { content: " · "; }
   .fact__num {
-    font-family: var(--font-body); font-size: 9pt; font-weight: 600;
+    font-family: var(--font-body); font-size: var(--text-base); font-weight: 600;
     line-height: inherit;
   }
-  .fact__num small { font-size: 1em; font-weight: 600; margin-left: 0.5mm; }
-  .fact__title { display: inline; font-size: 9pt; letter-spacing: 0; }
+  .fact__num small { font-size: inherit; font-weight: 600; margin-left: 0.5mm; }
+  .fact__title { display: inline; font-size: var(--text-base); letter-spacing: 0; }
   .fact__title::before { content: " "; }
 }

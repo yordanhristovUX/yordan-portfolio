@@ -40,7 +40,6 @@
   --surface-page: var(--stone-100);
   --surface-raised: var(--stone-50);
   --surface-sunken: var(--stone-200);
-  --surface-inverse: var(--stone-900);
 
   /* --- The ONE changeable brand colour. Everything that reads as 'brand' (headline type, interactive states, the automata's resident ink) routes through these three. Retheme by editing them alone. In dark mode the ink inverts to paper: primary is what the page is NOT, which is why the same components read correctly with no per-component overrides. --- */
   --primary: var(--ink-900);
@@ -63,8 +62,7 @@
   --chrome-label-on-strong: var(--slate-400); /* Text sitting on chrome-bg-strong (the footer). Has no dark variant on purpose: that surface is near-black in BOTH themes, so its label must stay light in both. 6.96:1 on slate-900, 7.87:1 on slate-950. It DOES need a print value: on paper that surface turns white, so a light label would vanish. */
   --chrome-grid: rgba(100, 116, 139, 0.16); /* The skeleton's square lines — slate-500 at 16% on paper, slate-400 at 14% on dark (a lighter ink at lower alpha, so the grid stays a whisper rather than becoming a cage). Prints as nothing: the grid is screen scaffolding, not content. */
 
-  /* --- Interactive states — always the primary ink --- */
-  --action: var(--primary);
+  /* --- Interactive states — always the primary ink. `action` itself was deleted: it aliased `primary` verbatim, nothing consumed it, and a semantic tier earns its keep by being consumed. `action-hover` stays because `.btn--solid:hover` reads it and the distinction (hover is a state, not the brand) is real. --- */
   --action-hover: var(--primary-hover);
 
   /* --- Blueprint blue, used scarcely. Only five places wear it: role underline, section numbers, availability, the square cursor + user-seeded life, focus rings. The dark value is the same hue lifted to 68% lightness — 47% blue on a stone-900 ground measures 1.9:1, invisible; 68% measures 5.19:1 on the page and 5.30:1 on the chrome, so the accent keeps its AA rating in both themes without changing hue. --- */
@@ -83,7 +81,34 @@
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  /* --- Rhythm — inner padding of the content well --- */
+  /* --- The type scale: one ramp of twelve steps, static up to body and fluid above it. That split is the whole idea. Below body a size has no voice — it is chrome, and chrome must not resize with the window or a 12px label becomes an 18px one on a wide monitor; so those four steps and body itself are fixed rem on a ~1.085 ratio. Above body every step IS a voice in the hierarchy (lead, sub, heading, title, display), and a display line has to survive both a 375px phone and a 1600px sheet, so those seven are `clamp(min, vw, max)`. Every step also carries a `print` value in pt: paper is a third theme for type exactly as it is for colour, and a `vw` clamp has nothing to scale against on a page. The two `em` entries at the end are ratios, not steps — they mean 'a fraction of whatever set me', which is a relationship the scale cannot express. --- */
+  --text-2xs: 0.72rem; /* The floor. Chips, the tool trace, the source list's ordinals, the ▪ bullets — text you are not meant to read so much as recognise. */
+  --text-xs: 0.78rem; /* The standard chrome label: the nav bar, buttons, section numbers, dated spans, page notes. Twelve of the old 89 declarations were already this value — it was the de-facto step, now it is the actual one. */
+  --text-sm: 0.85rem; /* Small prose — captions, fact labels, citation lines, code blocks. */
+  --text-md: 0.92rem; /* Secondary prose: card copy, list items, definition bodies. Body's quieter sibling. */
+  --text-base: 1rem; /* Body. Set on `body` in components.css; everything else is measured from here. */
+  --text-lead: clamp(1.1rem, 1.7vw, 1.35rem); /* The reading lede — one step above body, the paragraph that introduces a section. On paper it collapses back into body: a CV has no room for an emphasised opening size. */
+  --text-sub: clamp(1.15rem, 2vw, 1.5rem); /* Sub-titles: card titles, a role in an entry, an <h3> inside a case study. Three near-identical ramps used to live here — clamp(1.15rem,1.7vw,1.45rem), clamp(1.1rem,1.9vw,1.45rem) and clamp(1.2rem,2.2vw,1.55rem) — rendering at 1280px as 21.76 / 23.2 / 24.8px. That is drift, not hierarchy. A fourth, the work index's project name, was a genuine step larger and became `text-heading`. */
+  --text-heading: clamp(1.3rem, 2.4vw, 1.9rem); /* One step above a sub-title and below a section title: the work index's project names, which are the largest thing in a scannable list and must not fall back to card-title size. */
+  --text-title: clamp(1.65rem, 3.7vw, 2.8rem); /* Section titles and the one statement per section. `.t-title` and `.t-statement` were 2.9rem and 2.7rem — the same level wearing different weights and cases, which is what the utility classes are for. */
+  --text-display: clamp(2.1rem, 4.8vw, 3.45rem); /* Display: dialog titles, the CV name, a stat, a fact's number. `.fact__num` was clamp(2.2rem, 4.5vw, 3.5rem) and `.stat` was clamp(2.2rem, 5vw, 3.5rem) — a 0.5vw difference nobody chose. */
+  --text-display-xl: clamp(2.6rem, 8.5vw, 7.5rem); /* The contact headline. */
+  --text-display-hero: clamp(3rem, 11.5vw, 10.5rem); /* The hero name, once per site. */
+  --text-code: 0.9em; /* Inline <code> inside prose. A RATIO, not a step: monospace runs optically larger than the sans beside it, so it is set relative to whatever paragraph it lands in. */
+  --text-unit: 0.38em; /* The unit suffix riding on a display number (`+`, `%`, `×`). A ratio for the same reason: it must stay proportional to the number it annotates, whatever size that number lands at. */
+
+  /* --- Rhythm, in two halves that answer different questions. `space-1..7` is a fixed 4px-based ramp (4/8/12/16/20/24/32) for space INSIDE a component — a chip's padding does not want to know how tall the window is. The fluid tokens are for space BETWEEN things, where the page's own rhythm should breathe with the viewport: `pad`/`pad-y` are the content well's inset, `space-flow*` are the vertical steps between blocks, and `space-nav` is the one clearance every page head needs under the floating bar. `space-nav` is the only spacing token with a `print` value, and it is 0 — the bar it clears does not exist on paper, and the same three page stylesheets each used to reset it by hand. --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-flow-sm: clamp(1rem, 2.5vh, 1.5rem);
+  --space-flow: clamp(1.25rem, 3.5vh, 2rem);
+  --space-flow-lg: clamp(2rem, 5vh, 3rem);
+  --space-nav: clamp(5.5rem, 14vh, 8rem); /* Clearance under the fixed nav bar, on every page head. Prints as nothing: `.bar` is display:none on paper, so the clearance would be 88px of blank at the top of the sheet. */
   --pad: clamp(1.25rem, 3vw, 3rem);
   --pad-y: clamp(2rem, 5vh, 3.5rem);
 
@@ -93,7 +118,7 @@
 }
 
 /* ============ Dark theme ============
-   24 semantic tokens re-alias; the raw ramps never move.
+   23 semantic tokens re-alias; the raw ramps never move.
    Followed automatically unless the visitor has pinned light. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -101,7 +126,6 @@
     --surface-page: var(--stone-900);
     --surface-raised: var(--stone-800);
     --surface-sunken: var(--stone-950);
-    --surface-inverse: var(--stone-100);
     --primary: var(--stone-50);
     --primary-hover: var(--stone-300);
     --primary-muted: var(--stone-400);
@@ -130,7 +154,6 @@
   --surface-page: var(--stone-900);
   --surface-raised: var(--stone-800);
   --surface-sunken: var(--stone-950);
-  --surface-inverse: var(--stone-100);
   --primary: var(--stone-50);
   --primary-hover: var(--stone-300);
   --primary-muted: var(--stone-400);
@@ -153,7 +176,7 @@
 }
 
 /* ============ Print ============
-   23 tokens re-alias for paper. Emitted after the dark
+   35 tokens re-alias for paper. Emitted after the dark
    blocks so it wins regardless of the theme on screen. */
 @media print {
   :root, :root[data-theme="dark"], :root[data-theme="light"] {
@@ -161,7 +184,6 @@
     --surface-page: var(--stone-50);
     --surface-raised: var(--stone-50);
     --surface-sunken: var(--stone-50);
-    --surface-inverse: var(--stone-900);
     --primary: var(--ink-900);
     --primary-hover: var(--ink-700);
     --primary-muted: var(--ink-500);
@@ -179,6 +201,19 @@
     --accent: var(--ink-900);
     --shadow-drop: transparent;
     --scrim: transparent;
+    --text-2xs: 7pt;
+    --text-xs: 7.5pt;
+    --text-sm: 8pt;
+    --text-md: 9pt;
+    --text-base: 9.5pt;
+    --text-lead: 9.5pt;
+    --text-sub: 10pt;
+    --text-heading: 10.5pt;
+    --text-title: 11pt;
+    --text-display: 20pt;
+    --text-display-xl: 26pt;
+    --text-display-hero: 32pt;
+    --space-nav: 0;
     --rule-strong: 2px solid var(--ink-900);
   }
 }

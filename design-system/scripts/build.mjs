@@ -421,10 +421,21 @@ if (CHECK) {
 
      A missing file is a FAILURE, not a pass. The old `existsSync → continue`
      meant relocating content silently disabled the check. */
+  const counts = [`${tokenCount} tokens`, `${valueCount} values`, `${components.length} components`];
+  /* The dark count is the OTHER hand-typed statistic, and it is the one that
+     went stale silently when `surface-inverse` was deleted: nothing asserted
+     it, so "the entire dark theme is 24 re-aliased tokens" survived becoming
+     23 in four places. It is only asserted against the two READMEs, which are
+     hand-authored and in this system's own hands. The same sentence in
+     content/profile.json is the content pipeline's to interpolate — it needs a
+     `{{dark}}` substitution first, which is why it is not asserted here yet. */
   const advertised = [
-    ["../README.md", [`${tokenCount} tokens`, `${valueCount} values`, `${components.length} components`]],
-    ["../cv.html", [`${tokenCount} tokens`, `${valueCount} values`, `${components.length} components`]],
-    ["../js/case-studies.js", [`${tokenCount} tokens`, `${valueCount} values`, `${components.length} components`]],
+    ["../README.md", [...counts, `${darkVars.length} re-aliased`]],
+    /* This system's own README states the three counts parenthetically, in the
+       bullet list that documents this very gate. */
+    ["README.md", [`(${tokenCount})`, `(${valueCount})`, `(${components.length})`, `${darkVars.length} re-aliased`]],
+    ["../cv.html", counts],
+    ["../js/case-studies.js", counts],
   ];
   const stale = [];
   // Prose wraps: "106\n  values" is the same claim as "106 values", so match on

@@ -6,12 +6,15 @@
     "node": ">=20"
   },
   "scripts": {
-    "tokens": "node design-system/scripts/build.mjs --check",
-    "content": "node scripts/build-content.mjs",
-    "check": "node design-system/scripts/build.mjs --check && node scripts/build-content.mjs --check && node scripts/check-boundaries.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "node design-system/scripts/build.mjs && node scripts/build-content.mjs",
+    "build:all": "npm run build && node --env-file=.env scripts/build-vectors.mjs && node --env-file=.env evals/run.mjs",
+    "check": "node design-system/scripts/build.mjs --check && node scripts/build-content.mjs --check && node scripts/check-css.mjs && node scripts/build-vectors.mjs --check && node scripts/check-boundaries.mjs && node evals/run.mjs --check && npm test && node -e \"import('./api/mcp.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('mcp ok'); })\" && node -e \"import('./api/chat.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('chat ok'); })\"",
     "test": "node --test",
-    "evals": "node evals/run.mjs",
-    "serve": "npx --yes serve . -l 3000 --no-clipboard"
+    "evals": "node --env-file=.env evals/run.mjs",
+    "serve": "npx --yes serve . -l 3000 --no-clipboard",
+    "new:component": "node scripts/new-component.mjs",
+    "new:project": "node scripts/new-project.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",

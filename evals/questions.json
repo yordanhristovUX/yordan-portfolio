@@ -61,8 +61,8 @@
       "id": "proj-meta-pipeline",
       "category": "project",
       "question": "How does this portfolio site get deployed, and how do tokens reach Figma?",
-      "expectedEntity": "project:meta",
-      "expectedChunkIds": ["project:meta#system-2"]
+      "expectedEntity": "project:portfolio-system",
+      "expectedChunkIds": ["project:portfolio-system#system-2"]
     },
     {
       "id": "proj-mindromeda",
@@ -228,7 +228,7 @@
         "project:greenstreet-ds#summary",
         "experience:studio-kipo#outcome",
         "project:malko-tarnovo#system",
-        "project:meta#summary"
+        "project:portfolio-system#summary"
       ]
     },
     {
@@ -287,8 +287,8 @@
       "id": "cross-open-source",
       "category": "cross-cutting",
       "question": "Is any of his work open source and inspectable?",
-      "expectedEntity": "project:meta",
-      "expectedChunkIds": ["profile:open-source", "project:meta#summary", "project:meta#context"]
+      "expectedEntity": "project:portfolio-system",
+      "expectedChunkIds": ["profile:open-source", "project:portfolio-system#summary", "project:portfolio-system#context"]
     },
 
     {
@@ -324,8 +324,8 @@
       "id": "metric-token-count",
       "category": "metric",
       "question": "How many tokens and components does this site's own design system have?",
-      "expectedEntity": "project:meta",
-      "expectedChunkIds": ["project:meta#outcome", "profile:open-source"]
+      "expectedEntity": "project:portfolio-system",
+      "expectedChunkIds": ["project:portfolio-system#outcome", "profile:open-source"]
     },
     {
       "id": "metric-spetema-products",

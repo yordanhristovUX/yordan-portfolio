@@ -3,7 +3,9 @@
    Hand-authored. Every block here has a matching spec in
    ../components/<name>/spec.md and a story in ../stories/.
    Uses ONLY semantic tokens from dist/tokens.css — raw palette
-   values are forbidden outside tokens/tokens.json.
+   values are forbidden outside tokens/tokens.json. That now covers
+   TYPE as well as colour: there is not one literal font-size below,
+   and `node scripts/check-css.mjs` fails the build if one appears.
    Load order: dist/tokens.css → this file → page stylesheet.
 
    EVERY banner below carries `@component <id>` on its first line.
@@ -28,7 +30,7 @@ body {
   background: var(--surface-sunken);
   color: var(--content-body);
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: var(--text-base);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -49,7 +51,14 @@ body.is-locked { overflow: hidden; }
 
 /* ============ Typography scale ============ @component typography
    One voice per level; components and pages compose these instead
-   of declaring their own font stacks. */
+   of declaring their own font stacks.
+
+   Every size here is a step of the `--text-*` ramp in tokens.json.
+   `.t-title` and `.t-statement` share `--text-title` on purpose: they
+   are the same LEVEL wearing different weights, widths and cases,
+   which is exactly what these utilities exist to express. A level
+   that needs its own size is a new step in the token file, not a
+   number typed here. */
 .t-display {
   font-family: var(--font-display);
   font-weight: 900;
@@ -59,15 +68,15 @@ body.is-locked { overflow: hidden; }
   line-height: 0.95;
   color: var(--content-primary);
 }
-.t-display--hero { font-size: clamp(3rem, 11.5vw, 10.5rem); line-height: 0.9; letter-spacing: -0.02em; }
-.t-display--xl { font-size: clamp(2.6rem, 8.5vw, 7.5rem); }
-.t-display--lg { font-size: clamp(2rem, 5vw, 3.4rem); font-variation-settings: "wdth" 112; }
+.t-display--hero { font-size: var(--text-display-hero); line-height: 0.9; letter-spacing: -0.02em; }
+.t-display--xl { font-size: var(--text-display-xl); }
+.t-display--lg { font-size: var(--text-display); font-variation-settings: "wdth" 112; }
 
 .t-title {
   font-family: var(--font-display);
   font-weight: 800;
   font-variation-settings: "wdth" 110;
-  font-size: clamp(1.7rem, 4vw, 2.9rem);
+  font-size: var(--text-title);
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: -0.01em;
@@ -78,14 +87,14 @@ body.is-locked { overflow: hidden; }
   font-family: var(--font-display);
   font-weight: 800;
   font-variation-settings: "wdth" 105;
-  font-size: clamp(1.6rem, 3.4vw, 2.7rem);
+  font-size: var(--text-title);
   line-height: 1.15;
   color: var(--content-primary);
   max-width: 56rem;
 }
 
 .t-lead {
-  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+  font-size: var(--text-lead);
   line-height: 1.55;
   color: var(--content-body);
   max-width: 46rem;
@@ -95,7 +104,7 @@ body.is-locked { overflow: hidden; }
 
 .t-label {
   font-family: var(--font-mono);
-  font-size: 0.78rem; font-weight: 500;
+  font-size: var(--text-xs); font-weight: 500;
   letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--chrome-label-strong);
 }
@@ -176,11 +185,11 @@ body.is-locked { overflow: hidden; }
     inset 0 0 0 1px var(--chrome-border-strong),
     5px 5px 0 var(--shadow-drop); /* an object lying on the sheet */
   font-family: var(--font-mono);
-  font-size: 0.78rem; letter-spacing: 0.04em;
+  font-size: var(--text-xs); letter-spacing: 0.04em;
 }
 .bar__id {
   display: flex; align-items: center;
-  padding: 0.8rem 1.25rem;
+  padding: var(--space-3) var(--space-5);
   font-weight: 600; color: var(--content-primary);
   box-shadow: inset -1px 0 0 var(--chrome-border);
   white-space: nowrap;
@@ -197,15 +206,15 @@ body.is-locked { overflow: hidden; }
 .bar__nav { display: flex; align-items: stretch; }
 .bar__nav a {
   display: flex; align-items: center;
-  padding: 0 1.25rem;
+  padding: 0 var(--space-5);
   color: var(--chrome-label-strong);
   box-shadow: inset -1px 0 0 var(--chrome-border);
   transition: background-color 0.2s, color 0.2s;
 }
 .bar__nav a:hover { background: var(--primary); color: var(--content-inverse); }
 .bar__status {
-  display: flex; align-items: center; gap: 0.6rem;
-  padding: 0 1.25rem;
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: 0 var(--space-5);
   color: var(--chrome-label);
 }
 /* An action segment — same cell as a nav link, but it does something to the
@@ -213,7 +222,7 @@ body.is-locked { overflow: hidden; }
    instrument, and a button that announced itself would break the row. */
 .bar__action {
   display: flex; align-items: center;
-  padding: 0 1.25rem;
+  padding: 0 var(--space-5);
   color: var(--chrome-label-strong);
   box-shadow: inset 1px 0 0 var(--chrome-border);
   letter-spacing: 0.04em;
@@ -233,10 +242,12 @@ body.is-locked { overflow: hidden; }
    measured 367px inside a 351px box and the toggle ran to x=379 — roughly an
    eighth of the control off the right edge of the screen, silently, because a
    fixed element's overflow does not extend the document. These paddings bring
-   the content to ~341px. Measured at 375px; keep the slack when editing. */
+   the content back inside the box with room to spare. Measured at 375px; keep
+   the slack when editing, and note that the steps here are the SMALL end of the
+   space ramp precisely because this is the one place where 4px matters. */
 @media (max-width: 480px) {
-  .bar__id { padding: 0.8rem 0.7rem; }
-  .bar__nav a { padding: 0 0.55rem; }
+  .bar__id { padding: var(--space-3) var(--space-3); }
+  .bar__nav a { padding: 0 var(--space-2); }
 }
 
 /* ============ Theme toggle ============ @component theme-toggle
@@ -245,8 +256,8 @@ body.is-locked { overflow: hidden; }
    cycle: auto → light → dark. The label is the CURRENT state, not the next
    one — this is a readout you can press, like the rest of the bar. */
 .theme {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0 1rem;
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: 0 var(--space-4);
   color: var(--chrome-label);
   box-shadow: inset 1px 0 0 var(--chrome-border);
   letter-spacing: 0.08em; text-transform: uppercase;
@@ -268,7 +279,7 @@ body.is-locked { overflow: hidden; }
 .theme__label { min-width: 3.2em; text-align: left; } /* AUTO/LIGHT/DARK must not shift the bar */
 
 @media (max-width: 480px) {
-  .theme { padding: 0 0.55rem; } /* see the .bar 480px block: the row has to fit */
+  .theme { padding: 0 var(--space-2); } /* see the .bar 480px block: the row has to fit */
   .theme__label { display: none; } /* the lamp alone; aria-label still speaks */
 }
 
@@ -278,13 +289,13 @@ body.is-locked { overflow: hidden; }
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
-  gap: 1.5rem;
-  padding: 1rem var(--pad);
+  gap: var(--space-6);
+  padding: var(--space-4) var(--pad);
   border-bottom: var(--rule);
   background: var(--chrome-bg);
 }
 .sec__no {
-  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em;
+  font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.1em;
   color: var(--accent);
 }
 /* The middle track of the head grid. Typography comes from `.t-title` beside
@@ -294,7 +305,7 @@ body.is-locked { overflow: hidden; }
    `1fr` track would blow past its share and push `.sec__note` off the band.
    `min-width: 0` lets the track shrink and the title wrap instead. */
 .sec__title { min-width: 0; }
-.sec__note { font-size: 0.8rem; color: var(--chrome-label); align-self: center; }
+.sec__note { font-size: var(--text-xs); color: var(--chrome-label); align-self: center; }
 @media (max-width: 640px) { .sec__note { display: none; } }
 
 .sec--tint .well { background: var(--surface-raised); }
@@ -303,8 +314,8 @@ body.is-locked { overflow: hidden; }
 .btn {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em;
-  padding: 0.75rem 1.25rem;
+  font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.05em;
+  padding: var(--space-3) var(--space-5);
   border: 1px solid var(--content-primary);
   color: var(--content-primary);
   transition: background-color 0.2s, color 0.2s;
@@ -314,20 +325,20 @@ body.is-locked { overflow: hidden; }
 .btn:hover { background: var(--primary); color: var(--content-inverse); }
 .btn--solid { background: var(--primary); color: var(--content-inverse); }
 .btn--solid:hover { background: var(--action-hover); }
-.btn--small { padding: 0.35rem 0.6rem; font-size: 0.72rem; }
+.btn--small { padding: var(--space-2) var(--space-3); font-size: var(--text-2xs); }
 
 /* ============ Chip ============ @component chip */
 .chip {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: 0.68rem; font-weight: 500;
+  font-size: var(--text-2xs); font-weight: 500;
   letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 0.3rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--chrome-border-strong);
   color: var(--chrome-label-strong);
 }
 .chip--solid { background: var(--primary); border-color: var(--primary); color: var(--content-inverse); }
-.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 
 /* ============ Card ============ @component card */
 .card-grid {
@@ -335,7 +346,7 @@ body.is-locked { overflow: hidden; }
   grid-template-columns: repeat(3, 1fr);
 }
 .card {
-  padding: clamp(1.5rem, 2.5vw, 2.25rem) var(--pad);
+  padding: var(--space-flow) var(--pad);
   border-right: var(--rule);
   border-bottom: var(--rule);
 }
@@ -347,23 +358,23 @@ body.is-locked { overflow: hidden; }
 .card__type {
   display: block;
   font-family: var(--font-mono);
-  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: var(--text-2xs); letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--chrome-label);
-  margin-bottom: 0.9rem;
+  margin-bottom: var(--space-3);
 }
 .card__title {
   font-family: var(--font-display); font-weight: 800;
   font-variation-settings: "wdth" 105;
-  font-size: clamp(1.15rem, 1.7vw, 1.45rem);
+  font-size: var(--text-sub);
   color: var(--content-primary);
   text-transform: uppercase;
-  margin-bottom: 0.6rem;
+  margin-bottom: var(--space-3);
 }
 .card--ruled .card__title {
-  padding-top: 0.9rem;
+  padding-top: var(--space-3);
   border-top: 3px solid var(--primary);
 }
-.card p { font-size: 0.92rem; }
+.card p { font-size: var(--text-md); }
 @media (max-width: 960px) {
   .card-grid { grid-template-columns: repeat(2, 1fr); }
   .card:nth-child(3n) { border-right: var(--rule); }
@@ -384,9 +395,9 @@ body.is-locked { overflow: hidden; }
   display: grid;
   grid-template-columns: 3.5rem 1fr auto auto;
   align-items: center;
-  gap: clamp(1rem, 2.5vw, 2.5rem);
+  gap: var(--space-flow);
   width: 100%; text-align: left;
-  padding: clamp(1.4rem, 3vh, 2rem) var(--pad);
+  padding: var(--space-flow) var(--pad);
   border-bottom: var(--rule);
   transition: background-color 0.2s;
   position: relative;
@@ -400,25 +411,25 @@ body.is-locked { overflow: hidden; }
   transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .idx__row:hover::before, .idx__row:focus-visible::before { width: 6px; }
-.idx__no { font-size: 0.78rem; font-weight: 600; color: var(--chrome-label); letter-spacing: 0.08em; }
-.idx__main { display: grid; gap: 0.45rem; min-width: 0; }
+.idx__no { font-size: var(--text-xs); font-weight: 600; color: var(--chrome-label); letter-spacing: 0.08em; }
+.idx__main { display: grid; gap: var(--space-2); min-width: 0; }
 .idx__name {
   font-family: var(--font-display); font-weight: 800;
   font-variation-settings: "wdth" 108;
-  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+  font-size: var(--text-heading);
   line-height: 1.05;
   color: var(--content-primary);
   text-transform: uppercase;
 }
 .idx__name em { color: var(--content-muted); font-variation-settings: "wdth" 100; font-weight: 700; }
-.idx__desc { font-size: 0.88rem; line-height: 1.5; max-width: 40rem; }
-.idx__tags { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-end; }
+.idx__desc { font-size: var(--text-sm); line-height: 1.5; max-width: 40rem; }
+.idx__tags { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
 .idx__go {
   font-family: var(--font-mono);
-  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em;
+  font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.05em;
   color: var(--content-primary);
   white-space: nowrap;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--chrome-border-strong);
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
@@ -439,8 +450,8 @@ body.is-locked { overflow: hidden; }
 .entry {
   display: grid;
   grid-template-columns: 1fr minmax(9rem, 14rem);
-  gap: 0.35rem 2rem;
-  padding: clamp(1.4rem, 3vh, 2rem) var(--pad);
+  gap: var(--space-2) var(--space-7);
+  padding: var(--space-flow) var(--pad);
   border-bottom: var(--rule);
 }
 .entry:last-child { border-bottom: 0; }
@@ -448,7 +459,7 @@ body.is-locked { overflow: hidden; }
 .entry__role {
   font-family: var(--font-display); font-weight: 800;
   font-variation-settings: "wdth" 108;
-  font-size: clamp(1.1rem, 1.9vw, 1.45rem);
+  font-size: var(--text-sub);
   line-height: 1.1;
   text-transform: uppercase;
   color: var(--content-primary);
@@ -460,28 +471,28 @@ body.is-locked { overflow: hidden; }
 .entry__span {
   grid-column: 2; grid-row: 1 / span 2;
   font-family: var(--font-mono);
-  font-size: 0.75rem; letter-spacing: 0.05em;
+  font-size: var(--text-xs); letter-spacing: 0.05em;
   color: var(--chrome-label);
   text-align: right;
   text-transform: uppercase;
 }
-.entry__lede { grid-column: 1; color: var(--content-muted); font-size: 0.92rem; }
+.entry__lede { grid-column: 1; color: var(--content-muted); font-size: var(--text-md); }
 
-.entry__list { grid-column: 1 / -1; list-style: none; margin-top: 0.7rem; }
+.entry__list { grid-column: 1 / -1; list-style: none; margin-top: var(--space-3); }
 .entry__list li {
   position: relative;
-  padding: 0.4rem 0 0.4rem 1.4rem;
-  font-size: 0.92rem; line-height: 1.55;
+  padding: var(--space-2) 0 var(--space-2) var(--space-6);
+  font-size: var(--text-md); line-height: 1.55;
   max-width: 52rem;
 }
 .entry__list li::before {
-  content: "▪"; position: absolute; left: 0; top: 0.4rem;
-  color: var(--primary); font-size: 0.8rem;
+  content: "▪"; position: absolute; left: 0; top: var(--space-2);
+  color: var(--primary); font-size: var(--text-2xs);
 }
 .entry__list strong { color: var(--content-primary); font-weight: 600; }
 
 @media (max-width: 720px) {
-  .entry { grid-template-columns: 1fr; gap: 0.3rem; }
+  .entry { grid-template-columns: 1fr; gap: var(--space-1); }
   .entry__span { grid-column: 1; grid-row: auto; text-align: left; }
 }
 
@@ -494,20 +505,20 @@ body.is-locked { overflow: hidden; }
 .tools__row {
   display: grid;
   grid-template-columns: minmax(9rem, 14rem) 1fr;
-  gap: 2rem;
-  padding: 1.1rem var(--pad);
+  gap: var(--space-7);
+  padding: var(--space-4) var(--pad);
   border-bottom: var(--rule);
 }
 .tools__row:last-child { border-bottom: 0; }
 .tools__row dt {
   font-family: var(--font-display); font-weight: 800;
   font-variation-settings: "wdth" 105;
-  font-size: 1rem; text-transform: uppercase;
+  font-size: var(--text-base); text-transform: uppercase;
   color: var(--content-primary);
   align-self: center;
 }
-.tools__row dd { font-size: 0.95rem; }
-@media (max-width: 620px) { .tools__row { grid-template-columns: 1fr; gap: 0.3rem; } }
+.tools__row dd { font-size: var(--text-md); }
+@media (max-width: 620px) { .tools__row { grid-template-columns: 1fr; gap: var(--space-1); } }
 
 /* ============ Profile (definition list) ============ @component profile */
 .profile {
@@ -515,13 +526,13 @@ body.is-locked { overflow: hidden; }
   grid-template-columns: 1fr 1fr;
   border-top: var(--rule);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
 }
 .profile > div {
   display: grid;
   grid-template-columns: 7rem 1fr;
-  gap: 1rem;
-  padding: 0.8rem 0;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
   border-bottom: var(--rule);
 }
 .profile dt {
@@ -530,7 +541,7 @@ body.is-locked { overflow: hidden; }
 }
 .profile dd { color: var(--content-body); }
 .profile .is-ok { color: var(--accent); font-weight: 600; }
-.profile > div:nth-child(odd) { padding-right: 2rem; }
+.profile > div:nth-child(odd) { padding-right: var(--space-7); }
 @media (max-width: 860px) {
   .profile { grid-template-columns: 1fr; }
   .profile > div:nth-child(odd) { padding-right: 0; }
@@ -544,26 +555,26 @@ body.is-locked { overflow: hidden; }
 }
 .fact {
   flex: 1 1 14rem;
-  padding: 1.5rem;
+  padding: var(--space-6);
   border-right: var(--rule);
-  display: flex; flex-direction: column; gap: 0.35rem;
+  display: flex; flex-direction: column; gap: var(--space-2);
 }
 .fact:last-child { border-right: 0; }
 .fact__num {
   font-family: var(--font-display); font-weight: 900;
   font-variation-settings: "wdth" 115;
-  font-size: clamp(2.2rem, 4.5vw, 3.5rem);
+  font-size: var(--text-display);
   line-height: 1;
   color: var(--content-primary);
   font-variant-numeric: tabular-nums;
 }
-.fact__num small { font-size: 0.38em; font-weight: 700; color: var(--content-muted); margin-left: 0.25rem; }
+.fact__num small { font-size: var(--text-unit); font-weight: 700; color: var(--content-muted); margin-left: var(--space-1); }
 .fact__title {
   font-family: var(--font-mono);
-  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: var(--text-2xs); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--chrome-label-strong);
 }
-.fact__label { font-size: 0.85rem; color: var(--content-body); line-height: 1.45; }
+.fact__label { font-size: var(--text-sm); color: var(--content-body); line-height: 1.45; }
 @media (max-width: 720px) {
   .fact { border-right: 0; border-bottom: var(--rule); }
   .fact:last-child { border-bottom: 0; }
@@ -576,38 +587,41 @@ body.is-locked { overflow: hidden; }
   border: 1px dashed var(--chrome-border-strong);
   background: var(--chrome-bg);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 0.4rem;
-  margin: 1.5rem 0;
+  gap: var(--space-2);
+  margin: var(--space-6) 0;
   max-width: none;
 }
 .ph--tall { aspect-ratio: 4 / 3; }
 .ph__label {
   font-family: var(--font-mono);
-  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: var(--text-2xs); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--chrome-label);
   text-align: center;
-  padding: 0 1rem;
+  padding: 0 var(--space-4);
 }
 .ph:has(img) { border: 0; background: none; aspect-ratio: auto; }
 .ph:has(img) .ph__label { display: none; }
 .ph img { width: 100%; height: auto; display: block; }
 .ph-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
-  margin: 1.5rem 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);
+  margin: var(--space-6) 0;
 }
 .ph-grid .ph { margin: 0; }
 @media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }
 
-/* ============ Stat ============ @component stat */
+/* ============ Stat ============ @component stat
+   Shares `--text-display` with `.fact__num` and `.t-display--lg`. It used to
+   carry its own clamp, one 0.5vw step away from the fact number's — the same
+   size twice, drifted apart by nobody's decision. */
 .stat {
   display: inline-block;
   font-family: var(--font-display); font-weight: 900;
   font-variation-settings: "wdth" 115;
-  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-size: var(--text-display);
   color: var(--content-primary);
   border: var(--rule-strong);
-  padding: 0.25rem 1rem;
-  margin: 0.5rem 1.5rem 1rem 0;
+  padding: var(--space-1) var(--space-4);
+  margin: var(--space-2) var(--space-6) var(--space-4) 0;
 }
 
 /* ============ Link grid ============ @component link-grid */
@@ -618,9 +632,9 @@ body.is-locked { overflow: hidden; }
 }
 .link-grid a {
   flex: 1 1 11rem;
-  padding: 1rem var(--pad);
+  padding: var(--space-4) var(--pad);
   font-family: var(--font-mono);
-  font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em;
+  font-size: var(--text-xs); font-weight: 500; letter-spacing: 0.05em;
   color: var(--chrome-label-strong);
   border: var(--rule);
   border-width: 0 1px 1px 0;
@@ -630,12 +644,12 @@ body.is-locked { overflow: hidden; }
 
 /* ============ Footer ============ @component footer */
 .foot {
-  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 2rem;
-  padding: 1rem clamp(1.25rem, 3vw, 2.5rem);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2) var(--space-7);
+  padding: var(--space-4) var(--pad); /* was its own clamp, one 0.5rem cap away from --pad's — identical below 1600px, so it was never a decision */
   background: var(--chrome-bg-strong);
   color: var(--chrome-label-on-strong); /* not chrome-border-strong: a border token read as text, which inverts to 2.7:1 in dark */
   font-family: var(--font-mono);
-  font-size: 0.7rem; letter-spacing: 0.06em;
+  font-size: var(--text-2xs); letter-spacing: 0.06em;
 }
 
 /* ============ Dialog (inner page) ============ @component dialog */
@@ -656,11 +670,11 @@ body.is-locked { overflow: hidden; }
 }
 .case__bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0.8rem var(--pad);
+  padding: var(--space-3) var(--pad);
   background: var(--chrome-bg);
   border-bottom: var(--rule-strong);
   font-family: var(--font-mono);
-  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em;
+  font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.05em;
   color: var(--chrome-label-strong);
 }
 /* Left segment of the bar, written by js/main.js on open ("Case study 03 /
@@ -674,35 +688,35 @@ body.is-locked { overflow: hidden; }
   white-space: nowrap;
 }
 .case__scroll { overflow-y: auto; overscroll-behavior: contain; flex: 1; }
-.case__well { padding-bottom: clamp(3rem, 8vh, 5rem); }
-.case__head { margin-bottom: 2rem; border-bottom: var(--rule-strong); padding-bottom: 1.75rem; }
-.case__title { margin-bottom: 1rem; }
-.case__subtitle { font-size: 1.02rem; max-width: 40rem; }
-.case__meta { margin-top: 1.25rem; }
+.case__well { padding-bottom: var(--space-flow-lg); }
+.case__head { margin-bottom: var(--space-7); border-bottom: var(--rule-strong); padding-bottom: var(--space-7); }
+.case__title { margin-bottom: var(--space-4); }
+.case__subtitle { font-size: var(--text-base); max-width: 40rem; }
+.case__meta { margin-top: var(--space-5); }
 
 .case__content h3 {
   font-family: var(--font-display); font-weight: 800;
   font-variation-settings: "wdth" 108;
-  font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+  font-size: var(--text-sub);
   text-transform: uppercase;
   color: var(--content-primary);
-  margin: 2.5rem 0 0.9rem;
-  padding-top: 1.75rem;
+  margin: var(--space-7) 0 var(--space-3);
+  padding-top: var(--space-7);
   border-top: var(--rule);
 }
 .case__content h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-.case__content p { margin-bottom: 1rem; max-width: 44rem; }
+.case__content p { margin-bottom: var(--space-4); max-width: 44rem; }
 .case__content p strong { color: var(--content-primary); font-weight: 600; }
-.case__content ul { list-style: none; margin-bottom: 1rem; }
+.case__content ul { list-style: none; margin-bottom: var(--space-4); }
 .case__content li {
-  padding: 0.55rem 0 0.55rem 1.4rem;
+  padding: var(--space-2) 0 var(--space-2) var(--space-6);
   position: relative;
   border-bottom: var(--rule); /* not surface-sunken: a surface token read as a border, which in dark sits behind the page and vanishes */
   max-width: 44rem;
 }
 .case__content li::before {
-  content: "▪"; position: absolute; left: 0; top: 0.55rem;
-  color: var(--primary); font-size: 0.8rem;
+  content: "▪"; position: absolute; left: 0; top: var(--space-2);
+  color: var(--primary); font-size: var(--text-2xs);
 }
 .case__content li strong { color: var(--content-primary); font-weight: 600; }
 
@@ -719,7 +733,7 @@ body.is-locked { overflow: hidden; }
    Every colour here is a semantic token. There is no
    `prefers-color-scheme` query in this file and adding one would be a
    bug — a colour that differs in dark is a `dark` value in tokens.json. */
-.chat { display: grid; gap: 1.25rem; }
+.chat { display: grid; gap: var(--space-5); }
 
 .chat__thread {
   display: grid;
@@ -733,8 +747,8 @@ body.is-locked { overflow: hidden; }
 
 .chat__turn {
   display: grid;
-  gap: 0.5rem;
-  padding: 1.25rem var(--pad) 1.25rem 0;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--pad) var(--space-5) 0;
   border-bottom: var(--rule);
 }
 .chat__turn:last-child { border-bottom: 0; }
@@ -743,8 +757,8 @@ body.is-locked { overflow: hidden; }
 .chat__role { color: var(--chrome-label); }
 .chat__turn--assistant .chat__role { color: var(--accent); }
 
-.chat__body { display: grid; gap: 0.75rem; min-width: 0; }
-.chat__answer { display: grid; gap: 0.75rem; min-width: 0; }
+.chat__body { display: grid; gap: var(--space-3); min-width: 0; }
+.chat__answer { display: grid; gap: var(--space-3); min-width: 0; }
 
 /* The only model-authored text on the page. */
 .chat__prose { max-width: 44rem; line-height: 1.6; }
@@ -753,21 +767,21 @@ body.is-locked { overflow: hidden; }
 /* One clause on why a project answers the question — model-authored,
    so it reads as annotation rather than as the project's own copy. */
 .chat__why {
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   color: var(--content-muted);
-  padding-left: 0.9rem;
+  padding-left: var(--space-3);
   border-left: 2px solid var(--chrome-border-strong);
   max-width: 44rem;
 }
 
-.chat__metric { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.chat__metric { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
 .chat__metric .stat { margin: 0; }
 
 .chat__error {
-  padding: 0.9rem 1rem;
+  padding: var(--space-3) var(--space-4);
   background: var(--chrome-bg);
   box-shadow: inset 0 0 0 1px var(--chrome-border-strong);
-  font-size: 0.9rem;
+  font-size: var(--text-md);
   color: var(--content-body);
   max-width: 44rem;
 }
@@ -779,7 +793,7 @@ body.is-locked { overflow: hidden; }
    be shown their own decision dressed as a failure. So: label colour, no
    frame, no border — chrome, at the weight of chrome. */
 .chat__note {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   color: var(--chrome-label);
   max-width: 44rem;
@@ -789,8 +803,8 @@ body.is-locked { overflow: hidden; }
    Four squares from the same vocabulary as the skeleton's automata, so
    "thinking" reads as this site rather than as a generic spinner. */
 .chat__state {
-  display: flex; align-items: center; gap: 0.4rem;
-  font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: var(--space-2);
+  font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--chrome-label);
 }
 .chat__cell {
@@ -802,7 +816,7 @@ body.is-locked { overflow: hidden; }
 .chat__cell:nth-child(2) { animation-delay: 0.2s; }
 .chat__cell:nth-child(3) { animation-delay: 0.4s; }
 .chat__cell:nth-child(4) { animation-delay: 0.6s; }
-.chat__state-label { margin-left: 0.5rem; }
+.chat__state-label { margin-left: var(--space-2); }
 @keyframes chat-life { 50% { opacity: 0.15; } }
 
 /* ---- Tool trace ----
@@ -815,10 +829,10 @@ body.is-locked { overflow: hidden; }
   background: var(--chrome-bg);
   box-shadow: inset 0 0 0 1px var(--chrome-border);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: var(--text-2xs);
 }
 .chat__trace-toggle {
-  padding: 0.55rem 0.8rem;
+  padding: var(--space-2) var(--space-3);
   cursor: pointer;
   color: var(--chrome-label-strong);
   letter-spacing: 0.06em; text-transform: uppercase;
@@ -829,8 +843,8 @@ body.is-locked { overflow: hidden; }
 .chat__trace[open] .chat__trace-toggle::before { content: "▾ "; }
 .chat__trace-list { list-style: none; }
 .chat__trace-row {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem;
-  padding: 0.5rem 0.8rem;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   border-top: var(--rule);
   color: var(--chrome-label);
 }
@@ -843,16 +857,16 @@ body.is-locked { overflow: hidden; }
 .chat__form {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0.75rem;
+  gap: var(--space-3);
   align-items: end;
 }
 .chat__input {
   font: inherit;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   color: var(--content-body);
   background: var(--surface-page);
   border: 1px solid var(--chrome-border-strong);
-  padding: 0.75rem 0.9rem;
+  padding: var(--space-3);
   resize: vertical;
   min-height: 3rem;
   width: 100%;
@@ -866,11 +880,11 @@ body.is-locked { overflow: hidden; }
    it is inert, the state needs a visible colour more than it did before. */
 .chat__input[aria-disabled="true"] { color: var(--content-muted); }
 
-.chat__status { font-size: 0.8rem; color: var(--chrome-label); }
+.chat__status { font-size: var(--text-xs); color: var(--chrome-label); }
 
 /* Prompts that seed the first question. Chips are display-only by
    contract, so a suggestion the visitor can press is a small Button. */
-.chat__suggest { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chat__suggest { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 
 @media (max-width: 560px) {
   .chat__form { grid-template-columns: 1fr; }
@@ -884,27 +898,27 @@ body.is-locked { overflow: hidden; }
    returned it this turn, so the list is a record, not a bibliography. */
 .sources {
   border-top: var(--rule);
-  padding-top: 0.9rem;
-  margin-top: 0.25rem;
+  padding-top: var(--space-3);
+  margin-top: var(--space-1);
 }
 .sources__title {
-  font-size: 0.7rem; font-weight: 600;
+  font-size: var(--text-2xs); font-weight: 600;
   letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--chrome-label);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
-.sources__list { list-style: none; display: grid; gap: 0.35rem; counter-reset: none; }
+.sources__list { list-style: none; display: grid; gap: var(--space-2); counter-reset: none; }
 
 .source {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem;
-  font-size: 0.82rem;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 .source__ref {
   flex-shrink: 0;
   width: 1.4rem; height: 1.4rem;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.68rem; font-weight: 600;
+  font-size: var(--text-2xs); font-weight: 600;
   color: var(--chrome-label-strong);
   border: 1px solid var(--chrome-border-strong);
 }
@@ -916,7 +930,7 @@ body.is-locked { overflow: hidden; }
 }
 .source__link:hover, .source__link:focus-visible { border-color: var(--accent); color: var(--accent); }
 .source__id {
-  font-size: 0.68rem;
+  font-size: var(--text-2xs);
   color: var(--chrome-label);
   word-break: break-all;
   min-width: 0;

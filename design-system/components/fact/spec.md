@@ -26,9 +26,9 @@ message — never decorative numbers.
 
 ## Tokens
 
-`--font-display`, `--font-mono`, `--content-primary`, `--content-body`,
-`--content-muted`, `--chrome-label-strong`, `--rule`, `--rule-strong`,
-`--surface-page`
+`--chrome-label-strong`, `--content-body`, `--content-muted`, `--content-primary`,
+`--font-display`, `--font-mono`, `--rule`, `--rule-strong`, `--surface-page`, `--text-2xs`,
+`--text-display`, `--text-sm`, `--text-unit`, `--space-1`, `--space-2`, `--space-6`
 
 ## Behaviour
 

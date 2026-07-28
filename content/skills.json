@@ -40,9 +40,11 @@
     },
 
     "ai-workflows": {
+      "_note": "The site row is the short form of the CV row and both are the author's. `custom skills, MCP servers` is NOT a shortening choice — the site used to read `custom MCP skills`, which conflates two different things (a Claude skill is not an MCP server). The CV row already had it right, so the site row was corrected to the CV's own two terms.",
+
       "site": {
         "term": "AI workflows",
-        "text": "Claude Code, custom MCP skills, AI-assisted prototyping, design-to-code pipelines"
+        "text": "Claude Code, custom skills, MCP servers, AI-assisted prototyping, design-to-code pipelines"
       },
       "cv": {
         "term": "AI workflows",

@@ -219,7 +219,7 @@ window.CASE_STUDIES = {
     `,
   },
 
-  meta: {
+  "portfolio-system": {
     index: "06 / This site",
     title: "Portfolio as a Product",
     subtitle:
@@ -294,8 +294,8 @@ window.CASE_STUDIES = {
       <p><span class="stat">0</span></p>
       <ul>
         <li><strong>0 accessibility violations</strong> across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
-        <li><strong>59 tokens, 106 values, 19 components</strong> — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
-        <li><strong>Dark mode is 24 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS — the sharpest test a semantic token layer can be put to.</li>
+        <li><strong>82 tokens, 140 values, 19 components</strong> — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
+        <li><strong>Dark mode is 23 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS — the sharpest test a semantic token layer can be put to.</li>
         <li><strong>No build step in the site.</strong> Two link tags consume the system; view-source shows everything.</li>
       </ul>
 
@@ -307,7 +307,9 @@ window.CASE_STUDIES = {
       <h3>See for yourself</h3>
       <p>
         <a class="btn btn--solid" href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener" style="margin-right:.6rem">GitHub repo ↗</a>
-        <a class="btn" href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener">Storybook ↗</a>
+        <a class="btn" href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener" style="margin-right:.6rem">Storybook ↗</a>
+        <a class="btn" href="evals.html" style="margin-right:.6rem">Retrieval evaluation →</a>
+        <a class="btn" href="mcp.html">MCP server →</a>
       </p>
     `,
   },

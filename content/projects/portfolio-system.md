@@ -1,6 +1,6 @@
 ---
 {
-  "id": "meta",
+  "id": "portfolio-system",
   "index": 6,
   "client": "This site",
   "indexClient": "This Site",
@@ -27,7 +27,9 @@
       "label": "Storybook ↗",
       "href": "https://yordan-design-system.vercel.app",
       "external": true
-    }
+    },
+    { "label": "Retrieval evaluation →", "href": "evals.html" },
+    { "label": "MCP server →", "href": "mcp.html" }
   ],
   "media": [
     {
@@ -93,7 +95,7 @@ AI-ready systems, the claim should be inspectable.
 - **{{tokens}} tokens, {{values}} values, {{components}} components** — one token carries its
   light, dark and print values together; each component is enforced as CSS + AI spec + story by
   the build.
-- **Dark mode is 24 tokens and zero component rules.** A themed colour carries its dark value
+- **Dark mode is {{dark}} tokens and zero component rules.** A themed colour carries its dark value
   beside its light one; the build emits the media query and the pinned-theme override. There is
   no `prefers-color-scheme` anywhere in the component CSS — the sharpest test a semantic token
   layer can be put to.

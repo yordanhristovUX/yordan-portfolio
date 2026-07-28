@@ -75,11 +75,15 @@ Measured on `index.html` at 1280px, on a clean load:
 
 | | |
 | --- | --- |
-| `.sq` divs in the document | **508** |
-| Total elements in the document | 862 |
-| Share of the DOM that is decoration | **58.9%** |
-| Cells simulated per generation | **2,176** (4.3× the visible ones) |
+| `.sq` divs in the document | **496** |
+| Total elements in the document | 848 |
+| Share of the DOM that is decoration | **58.5%** |
+| Cells simulated per generation | **2,128** (4.3× the visible ones) |
 | Per-square declaration | `transition: background-color 0.3s linear` |
+
+(Re-measured after the type and spacing scales landed: 508 / 862 / 58.9% / 2,176 before.
+The band heights moved by a few pixels and the square count followed, which is the point of
+the second consequence below — this number is a function of layout, not of the engine.)
 
 The simulation is deliberately wider than the picture — rails run 6 hidden columns under the
 paper and strips run 10 rows to show 2 — so patterns drift in from off-stage instead of
@@ -104,7 +108,8 @@ Two consequences worth stating for anyone extending the system:
 
 ## Tokens
 
-`--surface-page`, `--chrome-border`, `--chrome-grid`, `--accent-rgb` (hover/seed), `--pad`, `--pad-y`
+`--accent-rgb` (hover/seed), `--chrome-border`, `--chrome-grid`, `--surface-page`, `--pad`,
+`--pad-y`
 
 ## AI notes
 

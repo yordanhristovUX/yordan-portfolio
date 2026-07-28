@@ -6,59 +6,62 @@
      design-system/css/components.css   (all component classes)
    loaded before this file in index.html. This file may only
    position and compose components — no palettes, no new component
-   styles. See design-system/README.md before adding UI.
+   styles, and — since the type scale landed — no literal font-size
+   either: every size below is a `--text-*` step and every margin,
+   padding and gap is a `--space-*` step. `node scripts/check-css.mjs`
+   enforces the first of those. See design-system/README.md.
    ============================================================ */
 
 html { scroll-behavior: smooth; }
 
 /* ============ Hero ============ */
-.hero .well { padding-top: clamp(5.5rem, 14vh, 8rem); } /* clears the floating nav */
+.hero .well { padding-top: var(--space-nav); } /* clears the floating nav; 0 on paper */
 
 .hero__role {
   display: inline-block;
   border-bottom: 2px solid var(--accent);
-  padding-bottom: 0.4rem;
-  margin-bottom: clamp(1.25rem, 3vh, 2rem);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-flow);
 }
-.hero__title { margin-bottom: clamp(1.5rem, 4vh, 2.5rem); }
+.hero__title { margin-bottom: var(--space-flow); }
 .hero__row { display: block; overflow: hidden; }
 .hero__word { display: inline-block; }
 
 .hero__body {
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem 3rem;
-  margin-bottom: clamp(2rem, 5vh, 3rem);
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-6) var(--space-7);
+  margin-bottom: var(--space-flow-lg);
 }
 .hero__lede {
   flex: 1 1 24rem;
   max-width: 38rem;
-  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  font-size: var(--text-lead);
   line-height: 1.55;
 }
 .hero__lede strong { color: var(--content-primary); }
-.hero__actions { display: flex; gap: 0.75rem; flex-shrink: 0; }
+.hero__actions { display: flex; gap: var(--space-3); flex-shrink: 0; }
 
 /* ============ Background section ============ */
-.notes__lead { margin-top: clamp(2rem, 5vh, 3rem); font-size: 0.95rem; }
-.notes__statement { margin-bottom: clamp(1.25rem, 3.5vh, 2rem); }
-.notes__prose { margin-bottom: clamp(1.25rem, 3.5vh, 2rem); }
-#background .facts { margin-top: 1rem; }
+.notes__lead { margin-top: var(--space-flow-lg); font-size: var(--text-md); }
+.notes__statement { margin-bottom: var(--space-flow); }
+.notes__prose { margin-bottom: var(--space-flow); }
+#background .facts { margin-top: var(--space-4); }
 
 /* ============ Contact ============ */
 .sec--contact { border-bottom: 0; }
-.tx__kicker { margin-bottom: 1.75rem; }
+.tx__kicker { margin-bottom: var(--space-7); }
 .tx { display: block; }
 .tx__big { display: block; transition: color 0.25s; }
 .tx:hover .tx__big { color: var(--primary-muted); }
 .tx__mail {
   display: inline-block;
-  margin-top: 1.5rem;
-  font-size: 0.9rem; letter-spacing: 0.05em;
+  margin-top: var(--space-6);
+  font-size: var(--text-md); letter-spacing: 0.05em;
   color: var(--chrome-label-strong);
   border-bottom: 1px solid var(--chrome-border-strong);
-  padding-bottom: 2px;
+  padding-bottom: 2px; /* the underline's offset from the baseline, not spacing */
 }
 .tx:hover .tx__mail { color: var(--content-primary); border-color: var(--content-primary); }
-.sec--contact .link-grid { margin-top: clamp(2rem, 5vh, 3rem); }
+.sec--contact .link-grid { margin-top: var(--space-flow-lg); }
 
 /* ============ Ask ============
    Layout only — the chat component owns its own styling in
@@ -69,11 +72,11 @@ html { scroll-behavior: smooth; }
    that is what keeps the band a constant height as the conversation
    grows, so the rails never rebuild against a moving target. Do not
    remove the bound to "let the thread breathe". */
-#ask .well { padding-bottom: clamp(2rem, 5vh, 3rem); }
-#ask .chat__suggest { margin-top: 0.25rem; }
+#ask .well { padding-bottom: var(--space-flow-lg); }
+#ask .chat__suggest { margin-top: var(--space-1); }
 
 /* ============ Reveal defaults (JS toggles) ============ */
-.js [data-reveal] { opacity: 0; transform: translateY(1.5rem); }
+.js [data-reveal] { opacity: 0; transform: translateY(var(--space-6)); }
 .js [data-rise] { transform: translateY(110%); display: inline-block; }
 
 /* ============ Print ============

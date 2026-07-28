@@ -38,7 +38,8 @@ None. The three states are data, not variants.
 
 ## Tokens
 
-`--chrome-label`, `--chrome-border`, `--primary`, `--content-inverse`
+`--chrome-border`, `--chrome-label`, `--content-inverse`, `--primary`, `--space-2`,
+`--space-4`
 
 The lamp is drawn in `currentColor` on purpose, so it inverts with the button on hover
 without a second colour token.

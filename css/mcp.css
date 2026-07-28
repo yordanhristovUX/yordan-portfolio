@@ -8,7 +8,8 @@
    compose components — no palettes, no new component styles.
    See design-system/README.md before adding UI.
 
-   There is not one colour value in this file. Everything that
+   There is not one colour value in this file, and — since the type
+   scale landed — not one literal font-size either. Everything that
    differs between light, dark and paper is a token with a `dark`
    or `print` value in tokens.json; the print block at the bottom
    is layout only.
@@ -21,21 +22,21 @@
    ============================================================ */
 
 /* ============ Head ============ */
-.mcp-head .well { padding-top: clamp(5.5rem, 14vh, 8rem); } /* clears the floating nav */
+.mcp-head .well { padding-top: var(--space-nav); } /* clears the floating nav; 0 on paper */
 
 .mcp-head__kicker {
   display: inline-block;
   border-bottom: 2px solid var(--accent);
-  padding-bottom: 0.4rem;
-  margin-bottom: clamp(1rem, 2.5vh, 1.5rem);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-flow-sm);
 }
-.mcp-head__title { margin-bottom: 1rem; }
-.mcp-head__lede { max-width: 46rem; margin-bottom: 1.25rem; }
-.mcp-head .link-grid { margin-top: 1.75rem; }
+.mcp-head__title { margin-bottom: var(--space-4); }
+.mcp-head__lede { max-width: 46rem; margin-bottom: var(--space-5); }
+.mcp-head .link-grid { margin-top: var(--space-7); }
 
 /* ============ Prose inside wells ============ */
 .mcp-prose { max-width: 46rem; }
-.mcp-prose p + p { margin-top: 1rem; }
+.mcp-prose p + p { margin-top: var(--space-4); }
 .mcp-prose strong { color: var(--content-primary); font-weight: 600; }
 .mcp-prose a {
   color: var(--content-primary);
@@ -45,7 +46,7 @@
 .mcp-prose code,
 .tools__row dd code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
+  font-size: var(--text-code);
   color: var(--content-primary);
 }
 
@@ -54,9 +55,9 @@
    they subdivide a section that already has its own .sec__head, so competing
    with it at display weight would flatten the hierarchy. */
 .mcp-sub {
-  margin-top: 2.25rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.4rem;
+  margin-top: var(--space-7);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
   border-bottom: var(--rule);
   color: var(--content-primary);
 }
@@ -67,22 +68,25 @@
    it survives a scan that reads nothing else on the page. */
 .mcp-endpoint {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
   justify-items: start;
   border-top: var(--rule-strong);
   border-bottom: var(--rule);
-  padding: 1.25rem 0 1.5rem;
-  margin-bottom: 2.5rem;
+  padding: var(--space-5) 0 var(--space-6);
+  margin-bottom: var(--space-7);
 }
 .mcp-endpoint__label {
-  font-size: 0.72rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--chrome-label);
 }
+/* The URL is the page's lede — the one line a visitor came for — so it takes
+   `--text-lead` rather than a clamp of its own. `overflow-wrap: anywhere`
+   is what lets it take a larger step without widening the page on a phone. */
 .mcp-endpoint__url {
   font-family: var(--font-mono);
-  font-size: clamp(0.9rem, 2.4vw, 1.15rem);
+  font-size: var(--text-lead);
   font-weight: 500;
   color: var(--content-primary);
   overflow-wrap: anywhere;
@@ -95,14 +99,14 @@
    than widening the page. */
 .mcp-code {
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   line-height: 1.7;
   color: var(--content-primary);
   background: var(--surface-sunken);
   border: var(--rule);
   border-left: 2px solid var(--content-primary);
-  padding: 1rem 1.1rem;
-  margin: 0 0 1.25rem;
+  padding: var(--space-4);
+  margin: 0 0 var(--space-5);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   tab-size: 2;
@@ -111,13 +115,13 @@
 
 /* ============ Note rule ============ */
 .mcp-note {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--chrome-label-strong);
-  padding: 0.75rem 0;
+  padding: var(--space-3) 0;
   border-top: var(--rule);
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
 }
 
 /* The tool table runs long: a definition is a paragraph here, not a chip list. */
@@ -133,7 +137,7 @@
   .strip,
   .rail { display: none; }
 
-  .mcp-head .well { padding-top: 0; }
+  /* the nav clearance resets itself: --space-nav's print value is 0 */
   .mcp-head .link-grid { display: none; }
 
   .band { display: block; }

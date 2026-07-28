@@ -10,8 +10,8 @@ for (const [key, t] of Object.entries(flat)) {
 
 const isColor = (v) => /^(#|rgb|hsl)/.test(v);
 
-const cell = "padding:.45rem .75rem;border-bottom:1px solid var(--chrome-border)";
-const mono = "font-family:var(--font-mono);font-size:.75rem";
+const cell = "padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--chrome-border)";
+const mono = "font-family:var(--font-mono);font-size:var(--text-2xs)";
 
 const swatch = (v) =>
   isColor(v)
@@ -47,7 +47,7 @@ export const Reference = {
     Object.entries(groups)
       .map(
         ([cat, tokens]) => `
-        <h3 class="t-label" style="margin:1.75rem 0 .5rem">${cat}</h3>
+        <h3 class="t-label" style="margin:var(--space-7) 0 var(--space-2)">${cat}</h3>
         <table style="border-collapse:collapse;width:100%;max-width:60rem">${head}${tokens
           .map(row)
           .join("")}</table>`
@@ -63,8 +63,8 @@ export const ThemedOnly = {
       .flat()
       .filter((t) => (t.darkResolved ?? t.dark) !== undefined);
     return `
-      <h3 class="t-label" style="margin:0 0 .5rem">${themed.length} tokens change between themes</h3>
-      <p class="t-kicker" style="margin-bottom:1.25rem">Everything else — the raw ramps, fonts, spacing — is theme-independent. Tokens marked <em style="color:var(--accent)">(via alias)</em> carry no dark value of their own; they inherit one by pointing at a token that does.</p>
+      <h3 class="t-label" style="margin:0 0 var(--space-2)">${themed.length} tokens change between themes</h3>
+      <p class="t-kicker" style="margin-bottom:var(--space-5)">Everything else — the raw ramps, fonts, the type scale, rhythm — is dark-independent. (Type and <code>--space-nav</code> DO change for print: paper is a third theme for size as well as colour.) Tokens marked <em style="color:var(--accent)">(via alias)</em> carry no dark value of their own; they inherit one by pointing at a token that does.</p>
       <table style="border-collapse:collapse;width:100%;max-width:60rem">${head}${themed
         .map(row)
         .join("")}</table>`;

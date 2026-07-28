@@ -49,9 +49,10 @@ for page-level actions, never for navigation — that is what `.bar__nav` is for
 
 ## Tokens
 
-`--chrome-bg`, `--chrome-border`, `--chrome-border-strong`, `--chrome-label`,
-`--chrome-label-strong`, `--content-primary`, `--content-inverse`, `--primary`,
-`--accent` (dot), `--shadow-drop` (the offset drop shadow), `--font-mono`
+`--accent` (dot), `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`,
+`--chrome-label`, `--chrome-label-strong`, `--content-inverse`, `--content-primary`,
+`--font-mono`, `--primary`, `--shadow-drop` (the offset drop shadow), `--text-xs`,
+`--space-2`, `--space-3`, `--space-5`
 
 ## Behaviour
 

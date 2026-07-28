@@ -41,9 +41,10 @@ Full-width list rows. Two members of the family:
 
 ## Tokens
 
-`--font-display`, `--font-mono`, `--content-primary`, `--content-muted`,
-`--content-inverse`, `--chrome-label`, `--chrome-border-strong`, `--surface-raised`,
-`--primary`, `--rule`, `--pad`
+`--chrome-border-strong`, `--chrome-label`, `--content-inverse`, `--content-muted`,
+`--content-primary`, `--font-display`, `--font-mono`, `--primary`, `--rule`,
+`--surface-raised`, `--text-base`, `--text-heading`, `--text-md`, `--text-sm`, `--text-xs`,
+`--pad`, `--space-1`, `--space-2`, `--space-3`, `--space-4`, `--space-7`, `--space-flow`
 
 ## A11y
 

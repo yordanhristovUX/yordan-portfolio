@@ -23,7 +23,8 @@ Availability). Two columns desktop, one on mobile.
 
 ## Tokens
 
-`--font-mono`, `--chrome-label`, `--content-body`, `--accent` (`.is-ok`), `--rule`
+`--accent` (`.is-ok`), `--chrome-label`, `--content-body`, `--font-mono`, `--rule`,
+`--text-xs`, `--space-3`, `--space-4`, `--space-7`
 
 ## A11y
 

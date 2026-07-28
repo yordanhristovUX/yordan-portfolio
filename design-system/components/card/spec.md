@@ -41,7 +41,8 @@ every card on the final row drop the rules that would otherwise trail into empty
 
 ## Tokens
 
-`--font-display`, `--font-mono`, `--content-primary`, `--chrome-label`, `--primary`, `--rule`, `--pad`
+`--chrome-label`, `--content-primary`, `--font-display`, `--font-mono`, `--primary`, `--rule`,
+`--text-2xs`, `--text-md`, `--text-sub`, `--pad`, `--space-3`, `--space-flow`
 
 ## A11y
 

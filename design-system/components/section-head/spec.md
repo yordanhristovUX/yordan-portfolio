@@ -27,8 +27,9 @@ Parent section: `<section class="band sec">` (adds the strong top rule);
 
 ## Tokens
 
-`--chrome-bg`, `--accent`, `--chrome-label`, `--surface-raised` (`.sec--tint`), `--rule`,
-`--rule-strong`, `--pad` (title typography from `.t-title`)
+`--accent`, `--chrome-bg`, `--chrome-label`, `--rule`, `--rule-strong`,
+`--surface-raised` (`.sec--tint`), `--text-xs`, `--pad` (title typography from `.t-title`),
+`--space-4`, `--space-6`
 
 ## A11y
 
