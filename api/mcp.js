@@ -42,6 +42,7 @@ const SITE_URL = "https://yordan-portfolio.vercel.app";
 /* JSON-RPC error codes (the subset this endpoint can raise). */
 const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
+const INVALID_PARAMS = -32602;
 const INTERNAL_ERROR = -32603;
 
 /* ------------------------------------------------------------
@@ -273,6 +274,108 @@ function jsonRpcError(res, status, code, message) {
   res.end(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code, message } }));
 }
 
+/* ============================================================
+   The last thing between an internal error and the wire.
+
+   MEASURED, not assumed. api/CLAUDE.md says "a stack trace never reaches the
+   wire — it goes to console.error and the caller gets a sentence". Probed over
+   real HTTP against this handler, a request with no `params` —
+
+       {"jsonrpc":"2.0","id":1,"method":"tools/call"}
+
+   — came back 200 carrying
+
+       {"error":{"code":-32603,"message":"[\n  {\n    \"expected\": \"object\",
+        \"code\": \"invalid_type\", \"path\": [\"params\"], ... }]"}}
+
+   which is a zod issue array, verbatim, on a public unauthenticated endpoint.
+   Same for a `params.name` of the wrong type. The TOOLS are clean — the poison
+   arguments the Wave 0 audit used (`toString`, `constructor`, `hasOwnProperty`)
+   all come back as ordinary tool errors, because lib/knowledge inspects an
+   argument rather than coercing it. This is the ENVELOPE, and the envelope is
+   this file's job.
+
+   The SDK validates a request against its schema INSIDE the request handler, so
+   the ZodError is caught by the protocol layer and its `.message` — which in
+   zod is a JSON dump of every issue — becomes the JSON-RPC error message.
+
+   SANITISING WHAT GOES OUT, rather than re-validating what comes in, is
+   deliberate. A second copy of the SDK's schemas in this file would drift from
+   them at the next version bump, and reimplementing what the dependency already
+   does is exactly the duplication this slice exists to avoid. Nothing below
+   encodes a schema. It asserts one property — an error payload on the wire is a
+   sentence and nothing else — which is the property the docs already promise.
+
+   The `data` member goes with it: this file never sets one, so anything found
+   there came from inside a dependency. Dropping it can in principle lose a
+   detail a future error wanted to carry, which is the correct direction to be
+   wrong on an unauthenticated endpoint, and the log keeps the original.
+   ============================================================ */
+
+/** A sentence: one line, not a JSON dump, no stack frames. */
+const isSentence = (m) =>
+  typeof m === "string" && m.length > 0 && !/[\n\r]/.test(m) && !/^\s*[[{]/.test(m) && !m.includes("    at ");
+
+/** zod serialises its issues into `.message`. Best effort only — the caller
+ *  falls back to a generic sentence, so nothing here depends on the format
+ *  staying stable. The `path` entries are the CALLER'S OWN field names from the
+ *  public JSON-RPC shape ("params", "params.name"), not internals, so echoing
+ *  them tells a client what to fix without describing what runs here. */
+function schemaIssuePaths(message) {
+  if (typeof message !== "string" || !message.trimStart().startsWith("[")) return null;
+  let issues;
+  try {
+    issues = JSON.parse(message);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(issues) || !issues.length) return null;
+  if (!issues.every((i) => i && typeof i === "object" && "code" in i)) return null;
+  return [
+    ...new Set(
+      issues
+        .map((i) =>
+          Array.isArray(i.path)
+            ? i.path.filter((p) => typeof p === "string" || typeof p === "number").join(".")
+            : ""
+        )
+        .filter(Boolean)
+    ),
+  ];
+}
+
+/**
+ * Replace any outgoing JSON-RPC error message that is not a sentence. The
+ * original goes to the log, which is where it was always supposed to be.
+ */
+function sanitizeOutgoing(message) {
+  const err = message?.error;
+  if (!err) return message;
+  if (isSentence(err.message) && err.data === undefined) return message;
+
+  console.error("[mcp] suppressed a non-sentence error payload:", err.message, err.data ?? "");
+
+  const paths = schemaIssuePaths(err.message);
+  if (paths) {
+    return {
+      ...message,
+      error: {
+        code: INVALID_PARAMS,
+        message: paths.length
+          ? `Invalid request: ${paths.join(", ")} ${paths.length === 1 ? "is" : "are"} missing or the wrong type.`
+          : "Invalid request: the JSON-RPC message does not match this method's schema.",
+      },
+    };
+  }
+  return {
+    ...message,
+    error: {
+      code: typeof err.code === "number" ? err.code : INTERNAL_ERROR,
+      message: isSentence(err.message) ? err.message : "The request could not be handled.",
+    },
+  };
+}
+
 /* Vercel parses a JSON body onto req.body and leaves the stream consumed; a
    plain `node --run` server does not. Read it here only when nobody already
    has, so the same file works in both without a body-parser. */
@@ -385,6 +488,13 @@ export default async function handler(req, res) {
        open to deliver one complete object. */
     enableJsonResponse: true,
   });
+
+  /* Every JSON-RPC message the protocol layer emits goes through send(), which
+     is why the guard sits here rather than around one handler: the leak is
+     raised by the SDK's own request validation, before any handler in this file
+     runs, so there is nowhere upstream of it to stand. */
+  const rawSend = transport.send.bind(transport);
+  transport.send = (message, options) => rawSend(sanitizeOutgoing(message), options);
 
   try {
     await server.connect(transport);

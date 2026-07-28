@@ -25,6 +25,12 @@
         SSE framing and nothing else — no streaming JSON parser in
         vanilla JS. See §4 of the plan: this is the whole reason the
         stream framing question is a non-question.
+     6. THERE ARE THREE TERMINAL STATES, not two: grounded, uncited and
+        degraded, reported as `uncited` and `degraded` on the `done`
+        event. An answer that survives the provenance retry still
+        carrying no citation is SHIPPED WITH THAT SAID OUT LOUD rather
+        than silently or not at all — see "The terminal state" below for
+        the 40-turn measurement that forced the third state to exist.
 
    Tools come from lib/knowledge IN PROCESS. Routing them through
    /api/mcp would mean this function calling itself over HTTP once per
@@ -212,6 +218,78 @@ const NOT_ON_FILE = (why) => [
       "That is not on file. This assistant only answers from Yordan's own written record — his projects, his roles, and the design system behind this site — and nothing in it covers that.",
   },
 ];
+
+/* ============================================================
+   The terminal state — what an answer is allowed to be when the loop stops
+
+   MEASURED, not inferred. A 40-turn groundedness run (evals/groundedness.json)
+   put the shipped loop through 40 real questions: 18 turns fired the provenance
+   retry, and in 15 of them the retry came back carrying EXACTLY the defect that
+   triggered it — prose, no surviving citation — and was accepted, because the
+   retry verdict was taken on `blocks.length` alone and `hasUnsourcedClaim` was
+   never re-read. The gate fired, cost a model turn, and changed nothing.
+
+   Those 15 answers are mostly TRUE ("Bulgarian (native) and English
+   (professional proficiency)", "QA Expert at CNCsys PLC from 2007 to 2009").
+   The failure is LOSS OF PROVENANCE, not fabrication. So "degrade everything
+   that fails the retry" would swap fifteen correct answers for fifteen
+   refusals and make the product worse — the strongest answers failing in the
+   shape of the weakest, which is the same mistake the list_experience
+   provenance bug made.
+
+   There are therefore THREE terminal states, not two:
+
+     grounded   blocks survived and at least one citation survived. Ship.
+     uncited    blocks survived, prose survived, nothing backs it after the
+                retry. SHIP IT AND SAY SO — the answer is probably right and
+                the reader is entitled to know it is uncorroborated.
+     degraded   nothing survived at all. NOT_ON_FILE, as before.
+
+   WHAT WAS DELIBERATELY NOT DONE, because it is the tempting fix and it is
+   wrong: this loop knows every chunk id the turn licensed (`retrievedChunkIds`
+   computes it), so it could attach them and every answer would come out
+   "cited". That would manufacture provenance the model never claimed, drive
+   the measured citation rate to 100% while making the prose↔passage relation
+   LESS honest, and paper over the real finding underneath — that the model
+   reads STRUCTURED FIELDS (role, org, period, availability, languages) out of
+   get_profile / list_experience and then attaches chunk ids the same tool call
+   licensed, whose TEXT never contained the field. Tool-call provenance is not
+   sentence provenance. That needs a second provenance kind for structured
+   reads, which is an architecture decision and not this file's to take. The
+   `uncited` state is the honest placeholder for it: it reports the gap instead
+   of filling it.
+   ============================================================ */
+
+/* Server-authored, like NOT_ON_FILE — not model text, and deliberately makes
+   no claim about the corpus. It is in-band rather than only a `notice` because
+   the notice channel lands in a collapsed trace viewer, and the reader is who
+   the provenance is for. */
+const UNCITED_NOTE = {
+  type: "prose",
+  text:
+    "One caveat on the answer above: none of it carries a citation. The assistant read the corpus this turn but could not tie the answer to a specific passage, so treat it as uncorroborated — the CV and the case studies on this page are the record.",
+};
+
+/* How complete an answer is, as a total order. The retry is accepted on a TIE,
+   because it is the corrected answer and the instruction it was given told it
+   to drop what it could not back; it is refused only when it is strictly worse
+   than the answer it was meant to repair. `blocks.length` alone — the shipped
+   test — cannot tell state 1 from state 2, which is the whole defect. */
+const completeness = (v) => (!v.blocks.length ? 0 : v.hasUnsourcedClaim ? 1 : 2);
+
+/* `retry.blocks.length &&` is the shipped test, kept deliberately: when the
+   retry produced nothing at all, the FIRST verdict is the one that still
+   carries the `dropped` and `strippedSources` diagnostics the trace and the
+   `gates` notice report. Dropping it would degrade the answer AND lose the
+   reason. All that is added is the completeness guard in front. */
+const betterOf = (first, retry) =>
+  retry.blocks.length && completeness(retry) >= completeness(first) ? retry : first;
+
+/* A server-composed block has to fit INSIDE the cap `meta` advertises and gate
+   1 enforces, not beside it — so it displaces the last block rather than
+   extending the answer past MAX_BLOCKS. Only reached when the answer is already
+   missing something: a citation it never rendered, or a citation it never had. */
+const appendWithinCap = (blocks, extra) => [...blocks.slice(0, MAX_BLOCKS - 1), extra];
 
 /* ============================================================
    Handler
@@ -414,7 +492,16 @@ export default async function handler(req, res) {
       const respond = calls.find((c) => c.name === "respond");
 
       if (respond) {
-        answer = { blocks: respond.input?.blocks, id: respond.id, content: response.content };
+        /* The WHOLE tool input, not just `blocks`. `sources` is a REQUIRED
+           top-level property of ANSWER_SCHEMA — schema.js made it required
+           precisely so "what did you read to write this" is a question the
+           model must answer to emit anything at all — and this file used to
+           keep `blocks` and drop it on the floor. Measured over HTTP against
+           the real handler: a respond call carrying `sources: ["profile:hero"]`
+           and no sources BLOCK was scored as having cited nothing, fired the
+           provenance retry, and shipped uncited. The model had answered the
+           question; the transport threw the answer away. */
+        answer = { input: respond.input, id: respond.id, content: response.content };
         break;
       }
 
@@ -460,13 +547,16 @@ export default async function handler(req, res) {
       messages.push({ role: "user", content: results });
     }
 
-    /* ---- The three gates, server-side, before anything is emitted ---- */
-    let verdict = validateAnswer(answer?.blocks ?? [], toolCallsThisTurn);
+    /* ---- The three gates, server-side, before anything is emitted ----
+       `answer.input` is {blocks, sources}; validateAnswer reads BOTH channels
+       and unions them into the claimed set. Passing `answer.blocks` here was
+       what discarded the top-level field. */
+    let verdict = validateAnswer(answer?.input ?? [], toolCallsThisTurn);
     let retried = false;
 
-    /* One retry, then degrade — plan §2. `hasUnsourcedClaim` means prose
-       survived with nothing backing it, which is exactly the shape of a
-       plausible-sounding invention. */
+    /* One retry, then settle — see "The terminal state" above.
+       `hasUnsourcedClaim` means prose survived with nothing backing it, which
+       is exactly the shape of a plausible-sounding invention. */
     if (answer && (verdict.hasUnsourcedClaim || !verdict.blocks.length)) {
       retried = true;
       emit("notice", {
@@ -498,18 +588,49 @@ export default async function handler(req, res) {
       tally(retry.usage);
       turns += 1;
       const again = retry.content.find((b) => b.type === "tool_use" && b.name === "respond");
-      const retryVerdict = validateAnswer(again?.input?.blocks ?? [], toolCallsThisTurn);
-      if (retryVerdict.blocks.length) verdict = retryVerdict;
+      /* RE-RUN ALL THREE GATES on the retry, including `hasUnsourcedClaim`.
+         The shipped test was `if (retryVerdict.blocks.length) verdict = …`,
+         which accepts an answer carrying exactly the defect that triggered the
+         retry — measured at 15 of 40 turns. `betterOf` compares the two
+         verdicts on completeness, so the retry is taken when it helps or ties
+         and refused when it is worse. */
+      verdict = betterOf(verdict, validateAnswer(again?.input ?? [], toolCallsThisTurn));
     }
 
+    /* ---- The terminal state. Three outcomes; see the note above. ---- */
     let blocks = verdict.blocks;
     let degraded = false;
+    let uncited = false;
+
     if (!blocks.length) {
       degraded = true;
       blocks = NOT_ON_FILE();
+    } else if (verdict.sources.length && !blocks.some((b) => b.type === "sources")) {
+      /* The model cited only through the required top-level `sources` field.
+         Those ids are gate-2 resolved and gate-3 proven — `verdict.sources` is
+         the surviving set, not the claimed one — so rendering them is showing
+         the reader provenance that already exists, not manufacturing any. The
+         `sources` BLOCK is what the client renders; without this the citation
+         is validated server-side and then invisible, which is the same loss of
+         provenance in a different coat. */
+      blocks = appendWithinCap(blocks, { type: "sources", chunkIds: verdict.sources });
+    } else if (verdict.hasUnsourcedClaim) {
+      /* Survived the retry still carrying nothing. Ship it — it is probably
+         true — and make the absence visible instead of silent. */
+      uncited = true;
+      blocks = appendWithinCap(blocks, UNCITED_NOTE);
     }
 
     for (const block of blocks) emit("block", block);
+
+    if (uncited) {
+      emit("notice", {
+        kind: "uncited",
+        reason: "prose survived the retry with no chunk id any tool returned this turn",
+        dropped: verdict.dropped,
+        strippedSources: verdict.strippedSources,
+      });
+    }
 
     if (verdict.dropped.length || verdict.strippedSources.length) {
       emit("notice", {
@@ -523,7 +644,12 @@ export default async function handler(req, res) {
       turns,
       retried,
       degraded,
+      /* The third terminal state, on the wire so a client, the eval harness or
+         a log can tell "answered and cited" from "answered and uncorroborated"
+         without re-deriving it from the blocks. */
+      uncited,
       blocks: blocks.length,
+      sources: verdict.sources.length,
       dropped: verdict.dropped.length,
       strippedSources: verdict.strippedSources.length,
       toolCalls: toolCallsThisTurn.length,
