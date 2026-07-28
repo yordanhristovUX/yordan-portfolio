@@ -44,3 +44,22 @@ docs/
 
 # CI configuration. Nothing fetches it.
 .github/
+
+# The behaviour suite and the generators. Same category as the three above:
+# internal engineering material that nothing links to and that was being served
+# as public static files — including test/fixtures/boundary-cases.json, which is
+# a list of deliberately-crafted boundary violations.
+#
+# CHECKED BEFORE EXCLUDING, the way the vectors.json note above demands, because
+# .vercelignore removes a file from the UPLOAD and not merely from serving:
+#   - nothing in api/ or lib/knowledge/ imports, reads or fetches either path at
+#     runtime — every mention of them in those two slices is a comment,
+#   - no page or client script references them (no /test/* or /scripts/* in any
+#     .html or in js/),
+#   - vercel.json sets buildCommand to "", so no script in scripts/ runs on the
+#     platform. `npm run build` and `npm test` are local and CI, from the repo.
+#
+# Anchored with a leading slash: unanchored, `scripts/` would also match
+# design-system/scripts/, which is a separate judgement nobody has made here.
+/test/
+/scripts/

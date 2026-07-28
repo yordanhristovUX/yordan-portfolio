@@ -11,13 +11,24 @@
         0 tool calls.
      2. THE TURN CAP is 3. On the third the `respond` tool is FORCED, so
         worst-case latency is deterministic rather than hopeful.
-     3. search_content IS ENTITY-GATED. Phase 1 measured this: raw BM25
-        abstains on 0 of 11 unanswerable questions and answers "did he
-        work at Google?" with a confident ranked list, because "Google"
-        appears 8× in the corpus (Analytics, Play, AI Studio). The gated
-        arm abstains correctly on 72.7%. A confidently-wrong answer about
-        someone's employment history is the worst thing this system can
-        produce, so the gate ships.
+     3. WHETHER TO ANSWER IS THIS FILE'S DECISION. search_content is NOT
+        entity-gated any more: gate.js moved above the tool in Wave 2, so
+        a gate miss returns the FULL ranking plus a coverage note and
+        never zero results.
+
+            the gate reports COVERAGE · the ranker decides WHAT ·
+            the CALLER decides WHETHER
+
+        This file is that caller, and the whole of its refusal policy is
+        the system prompt's corpus-boundary section — there is no code
+        path here that reads gateMatched, deliberately. Phase 1 is why
+        the signal exists at all: raw BM25 abstains on 0 of 11
+        unanswerable questions and answers "did he work at Google?" with
+        a confident ranked list, because "Google" appears 8× in the
+        corpus (Analytics, Play, AI Studio). What changed is who refuses,
+        not whether refusing matters. A confidently-wrong answer about
+        someone's employment history is still the worst thing this system
+        can produce.
      4. THE THREE GATES (schema → referential → provenance) run HERE,
         server-side, before a single byte reaches the browser. A block
         that fails is dropped, not repaired by the client.
@@ -85,11 +96,45 @@ const MAX_WALL_MS = 35_000;
 
    FROZEN means frozen: no dates, no session ids, no request counters.
    Anything volatile here would sit at the front of the prefix and
-   invalidate everything after it. (Phase 0 measured the prefix at
-   ~2.6-3.1k tokens — under Haiku 4.5's 4096-token minimum cacheable
-   prefix, so it will NOT cache. We are deliberately not padding it to
-   clear the bar; at ~$0.003/turn uncached the entire question is worth
-   fractions of a cent. Recorded rather than quietly dropped.)
+   invalidate everything after it.
+
+   IT CACHES. The old note here said it would not, on the grounds that
+   the system prompt measured ~2.6-3.1k tokens against a 4,096-token
+   minimum, and concluded that padding to clear the bar was not worth it.
+   Both halves were wrong. The cacheable prefix is not `system` alone —
+   it is tools -> system -> messages, in that order — so the tool schemas
+   sit IN FRONT of this string and count toward the same minimum.
+   Measured with client.messages.count_tokens() (free, no completion) on
+   2026-07-28 against claude-haiku-4-5:
+
+       tools  (TOOLS + RESPOND_TOOL)      2,909 tokens   (8,898 chars)
+       system (this prompt)               2,215 tokens   (8,907 chars)
+       ------------------------------------------------
+       cacheable prefix                   5,124 tokens
+
+   It cleared the bar BEFORE this rewrite too — the prompt measured 1,771
+   tokens then, for a 4,680-token prefix. The two design-system tools
+   contribute 1,770 of the 8,898 characters of schema, so the tool half
+   has been carrying the prefix over the line since they landed.
+
+   No padding was ever needed; the prefix cleared the bar on its own and
+   `cache_control` was simply never set, which made the
+   `cache_read_input_tokens: 0` in every `done` event a tautology rather
+   than evidence. The breakpoint is on the LAST system block (see `ask`),
+   because a breakpoint caches everything BEFORE it — tools included.
+
+   WHAT IT SAVES, honestly. A cache write costs 1.25x and a read 0.1x, so
+   this is a loss on a one-turn conversation and a win on every other:
+   the loop makes 2-4 calls with an identical prefix seconds apart, and
+   the read/write ratio inside a single conversation is what pays for it.
+       1 turn   5,124 -> 6,405 token-equivalents   (+25%)
+       2 turns 10,248 -> 6,917                     (-33%)
+       3 turns 15,372 -> 7,429                     (-52%)
+       4 turns 20,496 -> 7,942                     (-61%)  (the retry)
+   The file's own §1 says most questions cost two turns and 45% of turns
+   fire the provenance retry, so the expected value is comfortably
+   positive. Cached tokens are BILLED to the daily budget at face value
+   (see `tally`): under-counting is the one direction that matters.
    ============================================================ */
 function renderManifest(m) {
   const lines = [];
@@ -109,20 +154,37 @@ function renderManifest(m) {
   return lines.join("\n");
 }
 
+/* The tool NAMES are generated from TOOLS and never typed. Enumerating tools in
+   prose is exactly what went stale on mcp.html, and `get_design_system` /
+   `get_component` were invisible to this model for the same reason: they landed
+   in the core, appeared on the MCP surface for free, and nothing here mentioned
+   them. A tool added to lib/knowledge/ is now named to the model automatically,
+   and its own description — which the API sends in the `tools` block — is where
+   the model reads what it returns.
+
+   The numbered notes below are ROUTING POLICY, not description: which tool to
+   prefer over which. They stay hand-written because preference is a judgement,
+   and a tool that gains no note is still fully described to the model. That is
+   the difference between a list going stale and a preference being absent. */
+const toolNames = (tools) => tools.map((t) => t.name).join(", ");
+
 const SYSTEM_PROMPT = `You are the assistant on Yordan Hristov's portfolio site. You answer questions about his work, his experience and the design system this site is built on — and about nothing else.
 
-THE CORPUS BOUNDARY IS ABSOLUTE.
-Everything you may assert lives in the tools below. Below is the complete table of contents of that corpus: every project, every role, every fact. It is exhaustive. If a question asks about something that is not in this manifest and not returned by a tool, the honest and correct answer is that it is not on file — say so plainly in a prose block and stop. Do not infer, do not reason by analogy from a similar-sounding project, and never soften a "no" into a maybe. A confidently wrong answer about someone's employment history is the worst thing you can produce here.
+THE CORPUS BOUNDARY IS ABSOLUTE, AND HOLDING IT IS YOUR JOB.
+Everything you may assert lives in the tools below. Below is the complete table of contents of that corpus: every project, every role, every fact. It is exhaustive. If a question asks about something that is not in this manifest and not in the text a tool actually returned, the honest and correct answer is that it is not on file — say so plainly in a prose block and stop. Do not infer, do not reason by analogy from a similar-sounding project, and never soften a "no" into a maybe. A confidently wrong answer about someone's employment history is the worst thing you can produce here.
+
+No tool will refuse on your behalf. search_content always returns its best-ranked passages — including for a question this corpus knows nothing about — so the fact that something came back is not evidence that the corpus covers the question. What licenses a claim is the TEXT of the passage in front of you, never the fact that a tool returned it.
 
 === CORPUS MANIFEST ===
 ${renderManifest(manifest)}
 === END MANIFEST ===
 
 HOW TO WORK
+The tools you may call are: ${toolNames(TOOLS)}. Each carries its own description — read there what it returns. These notes are about which one to reach for.
 1. Read the manifest first. It usually tells you exactly which project or role holds the answer, so you can go straight to get_project / list_experience and skip searching entirely. Some questions ("what has he shipped?") are answerable from the manifest alone, with no tool call.
 2. get_profile is the ONLY path to location, availability, contact details, education, languages and the skills taxonomy. Those are structured fields; they exist in no prose chunk, so search_content cannot find them. Never search for "where is he based" — call get_profile.
-3. get_system_facts answers questions about this repository, the design system, the token and component counts, and the tooling.
-4. search_content is a last resort, for when the manifest does not tell you which entity holds the material. It is entity-gated: if your query names nothing that exists in this corpus it returns zero results, and that is the corpus telling you the answer is not on file. Do not rephrase and retry to get around it.
+3. get_system_facts answers questions about this repository and the tooling, and gives the design system's headline numbers. For the design system ITSELF — what components exist, what a component is made of, which classes, variants and tokens it uses, what its accessibility contract is — call get_design_system, then get_component for the one you need. get_design_system comes first because it is what lists the component ids. Use them for "how is this built", "what is in the design system", "what does the button component do", and before writing any markup that claims to be on-system.
+4. search_content is a last resort, for when the manifest does not tell you which entity holds the material. It ALWAYS returns a ranking — it never returns nothing — and attaches a coverage verdict: gateMatched names the entity your query matched, or is null when your query names no project, client, role, skill or fact that exists in this corpus. A null there is not a stop sign and not proof of absence, because a question can describe something without naming it. It means the passages beneath it were ranked over the whole corpus and are the closest text, not a claim that they answer you. Judge them on their text: answer from them if they hold the answer, and say the corpus does not cover it if they do not. Do not rephrase and search again — the ranking was over everything, so a second query returns the same passages.
 5. You may call several tools in one turn. You have at most ${MAX_TURNS} turns; on the last one you MUST answer.
 
 HOW TO ANSWER
@@ -135,7 +197,18 @@ Compose an answer of at most ${MAX_BLOCKS} blocks:
 - Then the blocks that carry the evidence: \`project\`, \`experience\`, \`metric\`, \`facts\`, \`tags\`, \`links\`, \`media\`.
 - Close with one \`sources\` block listing the chunk ids that tools ACTUALLY returned to you in this turn. Ids you did not receive are stripped server-side and the answer is weaker for it, so cite what you read and nothing else. A structured read (get_project, get_profile, list_experience, get_system_facts) returns a \`chunkIds\` array — those count.
 
+Some tools return no \`chunkIds\` at all: the design-system tools describe a contract rather than the corpus, and list_projects returns an index. There is no passage to cite for what they told you, so leave it uncited rather than attaching an id you got from somewhere else. A borrowed citation is worse than none — it points the reader at text that does not say what you said.
+
 If the corpus does not cover the question, the whole answer is one \`prose\` block saying so. That is a complete, correct answer, not a failure.`;
+
+/* ONE cache breakpoint, on the last (only) system block. A breakpoint caches
+   everything BEFORE it in the prefix order — tools, then system — so this one
+   covers both, which is why it is here and not on the last tool descriptor.
+   Nothing after it is cacheable: `messages` differs on every request by
+   construction. The measured size and the arithmetic are in the block comment
+   above; the short version is that the prefix is 5.1k tokens, the loop asks
+   2-4 times per conversation, and only the first of those pays for it. */
+const SYSTEM = [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }];
 
 /* ============================================================
    The entity gate
@@ -189,9 +262,13 @@ function summarize(name, result) {
     case "get_system_facts":
       return `${result.designSystem?.tokens} tokens · ${result.designSystem?.components} components`;
     case "search_content":
-      return result.gated
-        ? "gated — no entity matched, 0 results"
-        : `${result.count} chunks (gate: ${result.gateMatched})`;
+      /* `result.gated` used to be a field, and the branch that read it printed
+         "0 results" — a shape searchContent has not been able to return since
+         the gate moved above the tool. Dead since Wave 2, and the trace viewer
+         was the only place that stale contract was still visible to a reader.
+         `ranker` is here because a Voyage outage degrades ranking from 93% to
+         74% hit@3 silently, and this field is the documented tell. */
+      return `${result.count} chunks · ${result.ranker} · gate: ${result.gateMatched ?? "no match"}`;
     default:
       return "";
   }
@@ -444,7 +521,17 @@ export default async function handler(req, res) {
   const client = new Anthropic({ apiKey });
   const messages = history.map((m) => ({ role: m.role, content: m.content }));
   const toolCallsThisTurn = [];
-  const usage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 };
+  const usage = {
+    input_tokens: 0,
+    output_tokens: 0,
+    cache_read_input_tokens: 0,
+    /* Was never tallied, and with a breakpoint set it is where most of the
+       first turn's input now lands: cached tokens are reported in
+       cache_creation/cache_read and are EXCLUDED from input_tokens. Billing
+       input+output alone would have quietly stopped counting ~4.7k tokens a
+       conversation the moment caching started working. */
+    cache_creation_input_tokens: 0,
+  };
   let turns = 0;
 
   const tally = (u) => {
@@ -452,6 +539,7 @@ export default async function handler(req, res) {
     usage.input_tokens += u.input_tokens ?? 0;
     usage.output_tokens += u.output_tokens ?? 0;
     usage.cache_read_input_tokens += u.cache_read_input_tokens ?? 0;
+    usage.cache_creation_input_tokens += u.cache_creation_input_tokens ?? 0;
   };
 
   const ask = (forced) =>
@@ -459,7 +547,7 @@ export default async function handler(req, res) {
       {
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM,
         tools: [...TOOLS, RESPOND_TOOL],
         tool_choice: forced ? { type: "tool", name: "respond" } : { type: "auto" },
         messages,
@@ -677,8 +765,20 @@ export default async function handler(req, res) {
        those tokens were still bought. In `finally` so no early return or throw
        can skip it: under-counting a budget is the one direction that matters.
        Not awaited — the answer is already on the wire and a bookkeeping round
-       trip should not delay `finish()`; recordUsage swallows its own failures. */
-    void recordUsage(usage.input_tokens + usage.output_tokens);
+       trip should not delay `finish()`; recordUsage swallows its own failures.
+
+       ALL FOUR fields. A cached token is not a free token — a write costs 1.25x
+       and a read 0.1x — and the API reports them OUTSIDE input_tokens, so
+       summing input+output after the cache breakpoint landed would have dropped
+       the whole prefix out of the budget. Counted at face value rather than
+       price-weighted: the cap is denominated in tokens, and the cheap direction
+       to be wrong in is over-counting. */
+    void recordUsage(
+      usage.input_tokens +
+        usage.output_tokens +
+        usage.cache_creation_input_tokens +
+        usage.cache_read_input_tokens
+    );
     finish();
   }
 }
