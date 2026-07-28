@@ -1,0 +1,1570 @@
+{
+  "$generatedBy": "evals/groundedness.mjs — manual, billed, never in CI",
+  "$question": "Does the prose follow from the chunks it cites? evals/run.mjs measures the retriever; this measures the answer.",
+  "generatedAt": "2026-07-28T17:56:38.259Z",
+  "endpoint": "http://localhost:3010/api/chat",
+  "answerModel": "claude-haiku-4-5",
+  "judgeModel": "claude-sonnet-4-5",
+  "judgeCaveat": "The judge is a model and nothing here validates it. It is larger than the model under test and sees only the prose and the cited chunk text — never the corpus and never the question's ground truth — so it cannot confirm a claim the answer did not cite. Read the rate as an estimate with the interval attached, and audit the per-claim reasons before quoting it.",
+  "turns": {
+    "requested": 40,
+    "collected": 40,
+    "judged": 38,
+    "unsourceable": 2
+  },
+  "claims": {
+    "n": 40,
+    "supported": 6,
+    "partlySupported": 12,
+    "unsupported": 22,
+    "contradicted": 0,
+    "groundedRate": {
+      "value": 0.15,
+      "lo": 0.0706,
+      "hi": 0.2907
+    },
+    "notGroundedRate": {
+      "value": 0.85,
+      "lo": 0.7093,
+      "hi": 0.9294
+    },
+    "note": "groundedRate counts ONLY fully supported claims. A block with one unsupported assertion in it is not a grounded block."
+  },
+  "unsourceable": {
+    "turns": 2,
+    "note": "Prose with no chunk id any tool called could have licensed. Not a model failure: get_design_system and get_component license nothing deliberately (the component contract is not chunked), and list_experience licenses nothing because retrievedChunkIds never descends into r.experience[]. These turns are excluded from the rates above and counted here instead."
+  },
+  "detail": [
+    {
+      "questionId": "proj-domestina-what",
+      "question": "What was the Domestina project about?",
+      "category": "project",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 6,
+      "citedChunkIds": [
+        "project:domestina#summary",
+        "project:domestina#subtitle",
+        "project:domestina#problem",
+        "project:domestina#approach",
+        "project:domestina#approach-2",
+        "project:domestina#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Domestina was a multi-year, research-led UX engagement on Bulgaria's leading cleaning services marketplace. The challenge was balancing three user types — clients booking services, service providers competing on reputation, and housemaids onboarding — and every design change was grounded in research, not assumption.",
+          "verdict": "supported",
+          "reason": "The subtitle describes it as 'A research-led, multi-year UX engagement on Bulgaria's leading cleaning services marketplace — every design change grounded in evidence, not assumption.' The problem section states 'Three user types... clients booking a service... service providers competing on reputation, and housemaids needing a low-friction onboarding path.'"
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1555,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 133,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "proj-domestina-users",
+      "question": "Who were the three user types on the Domestina marketplace?",
+      "category": "project",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 6,
+      "citedChunkIds": [
+        "project:domestina#problem"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Domestina's marketplace had three distinct user types, each with their own definition of success: clients booking a service and deciding who to trust, service providers competing on reputation, and housemaids needing a frictionless onboarding path.",
+          "verdict": "partly-supported",
+          "reason": "The claim states 'frictionless onboarding path' but the cited text says 'low-friction onboarding path', which are different assertions."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1182,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 94,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "proj-malko-colour",
+      "question": "Why does the Malko Tarnovo app use green for some things and blue for others?",
+      "category": "project",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 7,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Green and blue in the Malko Tarnovo app are not arbitrary — they're a wayfinding system that solves a core design problem: the app serves two opposing audiences. Colour encodes user intent instantly, before a word is read.",
+          "verdict": "unsupported",
+          "reason": "No passages were cited, so the assertions about the Malko Tarnovo app's color system, wayfinding design, opposing audiences, and color encoding user intent cannot be verified from cited text."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1125,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 103,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "proj-greenstreet-ds-problem",
+      "question": "What problem was the Green Street design system built to solve?",
+      "category": "project",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 6,
+      "citedChunkIds": [
+        "project:greenstreet-ds#problem",
+        "project:greenstreet-ds#subtitle"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "The Green Street design system was built to solve a fundamental fragmentation problem: design files, component code, and AI outputs lived in separate worlds, making it impossible for AI tools to generate UI that matched production reality.",
+          "verdict": "partly-supported",
+          "reason": "The text says 'design files, and coded components lived in separate worlds' and 'AI couldn't read the system. Every AI-generated UI drifted from the actual components,' but does not state that the design system 'was built to solve' this problem—only that this was 'the problem' found when brought in to redesign the AI Assistant module."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1292,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 139,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "proj-audit-severity",
+      "question": "How were the accessibility findings documented and prioritised?",
+      "category": "project",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 7,
+      "citedChunkIds": [
+        "project:greenstreet-audit#summary",
+        "project:greenstreet-audit#subtitle",
+        "project:greenstreet-audit#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "The accessibility findings were documented with severity ratings and mapped to product workflows. Every issue instance was catalogued with its WCAG criterion reference, annotated screenshots, recommended fix, and estimated effort — then prioritised by impact on the most-used analytical paths in the product.",
+          "verdict": "supported",
+          "reason": "The cited text states 'Every finding documented with a severity rating (Critical / Major / Minor), WCAG criterion reference, annotated screenshot, recommended fix, and estimated engineering effort — plus a mapping to the platform workflow it affects, so engineering unblocks the most-used analytical paths first.'"
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1336,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 121,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "proj-mindromeda",
+      "question": "What is Mindromeda?",
+      "category": "project",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 1,
+      "citedChunkIds": [
+        "project:mindromeda#summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Mindromeda is a marketplace platform that connects people with licensed therapists and coaches. It shipped live on Google Play and was designed end-to-end by Yordan from information architecture and matching flows through to booking and corporate voucher systems.",
+          "verdict": "unsupported",
+          "reason": "The cited text does not mention 'Yordan' or state that any specific person 'designed end-to-end' the platform."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1158,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 91,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "proj-football",
+      "question": "Tell me about the football analytics platform.",
+      "category": "project",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 1,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Ubistats Football was a research-driven analytics platform project that progressed through discovery, design system creation, UI design, and usability testing. The work resulted in a partnership with the Bulgarian Football Union.",
+          "verdict": "unsupported",
+          "reason": "No cited text was provided to support any of the assertions about Ubistats Football, its nature, phases, or partnership outcome."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1115,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 88,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "proj-tax-usd",
+      "question": "What did he design for the cross-border tax refund service?",
+      "category": "project",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 1,
+      "citedChunkIds": [
+        "project:tax-advice-usd-accounts#summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "He designed the USD bank account feature for a cross-border tax refund service, taking it end to end from proposition to launch.",
+          "verdict": "unsupported",
+          "reason": "The cited text says 'The USD bank account feature... designed end to end from proposition to launch' but does not specify the gender pronoun 'He' or identify who performed the design."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1132,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 93,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "exp-studio-kipo",
+      "question": "What did he do at Studio Kipo?",
+      "category": "experience",
+      "shape": "lookup",
+      "tools": [
+        "list_experience",
+        "get_project",
+        "get_project",
+        "get_project",
+        "get_project"
+      ],
+      "licensableChunkIds": 21,
+      "citedChunkIds": [
+        "experience:studio-kipo#outcome",
+        "project:ubistats-football#summary",
+        "project:spetema#summary",
+        "project:mindromeda#summary",
+        "project:malko-tarnovo#summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "At Studio Kipo, Yordan was the sole designer and introduced design systems as a studio practice — building a white-label token-based system he reused across projects to cut setup time and give developers one consistent source for spacing, colour and type. He shipped four products during his time there.",
+          "verdict": "partly-supported",
+          "reason": "The cited text confirms 'Introduced design systems as studio practice' and 'built a white-label token-based system and reused it across projects, cutting setup time' and 'giving developers one source for spacing, colour, and type.' However, the text does not state Yordan was 'the sole designer' and lists more than four products (Ubistats Football, Spetema, Mindromeda, Malko Tarnovo, plus USD bank account feature, Go Guide, and order management UI)."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1593,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 176,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "exp-before-tech",
+      "question": "What was he doing before he worked in tech?",
+      "category": "experience",
+      "shape": "lookup",
+      "tools": [
+        "list_experience"
+      ],
+      "licensableChunkIds": 5,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Before entering tech and product design in 2018, Yordan spent eleven years as a service designer and team lead at Live to Lift, a coaching practice, where he managed teams, designed recruitment and assessment frameworks, and oversaw client outcomes and business operations.",
+          "verdict": "unsupported",
+          "reason": "No cited text is provided to support any of the factual assertions about Yordan's background, employment history, timeline, or role at Live to Lift."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1126,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 94,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "exp-domestina-now",
+      "question": "Is he still involved with Domestina?",
+      "category": "experience",
+      "shape": "lookup",
+      "tools": [
+        "list_experience"
+      ],
+      "licensableChunkIds": 5,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yes, he is still involved with Domestina. He moved from active design and research work into an advisory role in 2022, consulting on research and flow decisions.",
+          "verdict": "unsupported",
+          "reason": "No passages were cited, so the claims about involvement with Domestina, timing of role change to 2022, and advisory duties cannot be verified."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1107,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 92,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "exp-independent-nft",
+      "question": "What did he do independently with NFTs and generative art?",
+      "category": "experience",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 1,
+      "citedChunkIds": [
+        "project:generative-art-platform#summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "His independent work in this space was a full-scope design for an artist discovery platform serving the NFT community.",
+          "verdict": "unsupported",
+          "reason": "The cited text does not specify that this was 'his independent work' or provide information about the work arrangement."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1117,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 76,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "exp-research-years",
+      "question": "How long has he been doing user research?",
+      "category": "experience",
+      "shape": "temporal",
+      "tools": [
+        "list_experience"
+      ],
+      "licensableChunkIds": 5,
+      "citedChunkIds": [
+        "experience:domestina#outcome",
+        "experience:live-to-lift#outcome",
+        "experience:studio-kipo#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "User research has been a throughline in his career for over 15 years. He held the formal title of UX Researcher & Consultant at Domestina from 2019 onwards, but research methodology — interviews, surveys, outcome analysis, and usability testing — began during his service design role at Live to Lift in 2009.",
+          "verdict": "unsupported",
+          "reason": "The cited passages mention research activities (user interviews, surveys, usability testing, outcome analysis) but do not state the job titles 'UX Researcher & Consultant', the employer 'Domestina' starting in 2019, the role title 'service design role' at Live to Lift, or the year 2009, or that the career spans '15 years'."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1606,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 144,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "skill-ai-tools",
+      "question": "Which AI tools and agent workflows does he actually use?",
+      "category": "skills",
+      "shape": "lookup",
+      "tools": [
+        "search_content",
+        "get_project",
+        "get_project",
+        "get_profile"
+      ],
+      "licensableChunkIds": 36,
+      "citedChunkIds": [
+        "skills:ai-workflows:site",
+        "project:greenstreet-ds#approach",
+        "project:greenstreet-ds#system",
+        "project:portfolio-system#system-2",
+        "profile:cv-summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "He uses Claude Code as the primary agent, guided by custom Claude skills trained on his design system specs. These skills teach Claude to assemble UI from real components without drift. He orchestrates agents with MCP servers and builds agentic engineering workflows into design-to-code pipelines. For exploratory AI work, he also uses Google AI Studio and practices prompt engineering to validate what agents can and cannot reliably do.",
+          "verdict": "partly-supported",
+          "reason": "The cited text confirms 'Claude Code guided by the custom skills' and 'custom Claude skills' that 'teach Claude to read the token structure, assemble the correct native components' and 'generate prototypes faithful to the real system. No drift.' It also confirms 'MCP servers' and 'Google AI Studio' and 'prompt engineering' in the skills list. However, the claim that skills are 'trained on his design system specs' is not stated; the text says skills 'teach Claude to read' but does not describe them as being 'trained.' Additionally, 'as the primary agent' and 'to validate what agents can and cannot reliably do' are not stated in the cited text."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1833,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 219,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "skill-frontend",
+      "question": "Can he write frontend code, and in what?",
+      "category": "skills",
+      "shape": "lookup",
+      "tools": [
+        "get_profile",
+        "list_experience"
+      ],
+      "licensableChunkIds": 25,
+      "citedChunkIds": [
+        "skills:engineering:site",
+        "experience:green-street#outcome",
+        "experience:independent#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yes. He writes production frontend code in HTML, CSS, JavaScript, Vue, and React, and ships it reviewed and merged by engineering. He also works in p5.js and Three.js for creative coding projects.",
+          "verdict": "supported",
+          "reason": "The skills section lists 'HTML, CSS, JavaScript, Vue, React basics' and 'p5.js, Three.js, production PR authorship', and the Green Street outcome states 'Wrote and shipped the responsive navigation for the Analytics platform — reviewed and merged by engineering, live in production', and the independent work mentions 'Creative coding in p5.js and Three.js'."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1462,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 143,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "skill-design-systems",
+      "question": "How deep is his design systems and token architecture knowledge?",
+      "category": "skills",
+      "shape": "lookup",
+      "tools": [
+        "get_project",
+        "get_project",
+        "search_content"
+      ],
+      "licensableChunkIds": 16,
+      "citedChunkIds": [
+        "project:greenstreet-ds#summary",
+        "project:greenstreet-ds#approach",
+        "project:greenstreet-ds#system",
+        "project:portfolio-system#summary",
+        "project:portfolio-system#system",
+        "project:portfolio-system#system-2",
+        "project:portfolio-system#outcome",
+        "skills:design-systems:cv"
+      ],
+      "proseBlocks": 3,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "His design systems knowledge spans from foundational token architecture to applied implementation at scale. He has built two production design systems with distinct philosophies: one for enterprise scale and one as a methodology for AI-ready systems.",
+          "verdict": "supported",
+          "reason": "The passages describe 'repo-first token architecture', 'token-first architecture', and implementation across two projects (Green Street and portfolio system) with different approaches."
+        },
+        {
+          "claim": "At Green Street, he audit-architected a system from scratch with 100% token coverage and 1:1 Figma-to-code parity across ~35 components. Rather than treating tokens as a design-file convenience, he implemented them directly in the frontend component library to enforce semantic naming and eliminate ambiguity. He designed custom Claude skills that taught an AI agent to read the token structure and assemble production-faithful UI—and shipped the resulting navigation code live to users.",
+          "verdict": "supported",
+          "reason": "The passages state 'A full audit of the component landscape', '~35 components', '100% token coverage', '1:1 Figma-to-code parity', 'I implemented the tokens directly in the frontend component library', 'Custom Claude skills... teaches Claude to read the token structure', and 'I authored the complete responsive navigation component... live in production.'"
+        },
+        {
+          "claim": "For this portfolio, he applies a more radical approach: repo-first tokens with a single JSON file as the sole source of truth, flowing one-way into both CSS and Figma (never the reverse). The system is bundled as CSS, AI spec, and Storybook story per component, with governance enforced as code rather than platform. It achieves 0 axe violations and handles dark mode through aliased tokens with zero per-component rules—a structural test of how deeply semantic the token layer actually is.",
+          "verdict": "supported",
+          "reason": "The passages state 'Repo-first tokens. One JSON file is the only place a colour is born', 'Tokens flow one way', 'Figma is an output, never a source', 'Every component is three things. A CSS block, an AI spec... and a Storybook story', 'governance as a 90-line script, not a platform', '0 accessibility violations', 'axe-audited', and 'Dark mode is tokens and zero component rules... the sharpest test a semantic token layer can be put to.'"
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 2376,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 360,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "skill-languages",
+      "question": "What languages does he speak?",
+      "category": "skills",
+      "shape": "lookup",
+      "tools": [
+        "get_profile"
+      ],
+      "licensableChunkIds": 20,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yordan speaks Bulgarian as his native language and English at professional proficiency level.",
+          "verdict": "unsupported",
+          "reason": "No passages were cited, so the claim about Yordan's language abilities cannot be verified from cited text."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1089,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 83,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "skill-education",
+      "question": "Where did he study?",
+      "category": "skills",
+      "shape": "lookup",
+      "tools": [
+        "get_profile"
+      ],
+      "licensableChunkIds": 20,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "He studied UX/UI Design at Telerik Academy and UX Web Design at Software University (SoftUni), and also completed coursework in Applied Mathematics at Sofia University.",
+          "verdict": "unsupported",
+          "reason": "No cited text was provided to support any of the educational claims about Telerik Academy, Software University, or Sofia University."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1110,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 86,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "cross-design-systems-where",
+      "question": "Where has he built design systems, across all his work?",
+      "category": "cross-cutting",
+      "shape": "lookup",
+      "tools": [
+        "list_projects",
+        "list_experience",
+        "get_project",
+        "get_project",
+        "get_project"
+      ],
+      "licensableChunkIds": 24,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 4,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "He has built design systems across three major contexts: a commercial real estate platform where he aligned Figma and production code with AI-generation capabilities; a shipped civic mobile app serving two opposing audiences with semantic colour tokens; and this open-source portfolio system itself—all AI-first, production-ready, and fully documented.",
+          "verdict": "unsupported",
+          "reason": "No cited passages were provided to support any of the factual assertions about design systems, contexts, platforms, or capabilities."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1138,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 85,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "cross-app-stores",
+      "question": "Which of his projects are actually live in the app stores?",
+      "category": "cross-cutting",
+      "shape": "lookup",
+      "tools": [
+        "list_projects"
+      ],
+      "licensableChunkIds": 0,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "unsourceable"
+    },
+    {
+      "questionId": "cross-production-code",
+      "question": "Has he written and shipped production code himself, or only designs?",
+      "category": "cross-cutting",
+      "shape": "lookup",
+      "tools": [
+        "list_experience",
+        "list_projects",
+        "get_project",
+        "get_project"
+      ],
+      "licensableChunkIds": 17,
+      "citedChunkIds": [
+        "experience:green-street#outcome",
+        "project:greenstreet-ds#system",
+        "project:greenstreet-ds#outcome",
+        "project:portfolio-system#context",
+        "project:portfolio-system#system",
+        "experience:independent#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yes, he writes and ships production code. At Green Street, he authored the complete responsive navigation component that is live in production. His independent work includes frontend implementation in JavaScript and creative coding in p5.js and Three.js. His portfolio system itself—this site—is production code: a design system built as open-source repo-first infrastructure with zero build step in the frontend.",
+          "verdict": "partly-supported",
+          "reason": "The Green Street navigation component is confirmed as 'live in production' and 'production frontend code serving real users'. Independent work mentions 'frontend implementation' but not specifically JavaScript. The portfolio system is described as 'public repository' and 'ships automatically' but 'zero build step in the frontend' does not appear in the cited text."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1895,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 133,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "cross-white-label",
+      "question": "Has he built anything white-label or multi-brand?",
+      "category": "cross-cutting",
+      "shape": "lookup",
+      "tools": [
+        "list_projects"
+      ],
+      "licensableChunkIds": 0,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "unsourceable"
+    },
+    {
+      "questionId": "cross-open-source",
+      "question": "Is any of his work open source and inspectable?",
+      "category": "cross-cutting",
+      "shape": "lookup",
+      "tools": [
+        "get_project",
+        "get_system_facts"
+      ],
+      "licensableChunkIds": 12,
+      "citedChunkIds": [
+        "project:portfolio-system#summary",
+        "project:portfolio-system#subtitle",
+        "project:portfolio-system#system",
+        "project:portfolio-system#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yes. The design system and portfolio site itself are fully open source and inspectable. Every token, component, and build rule lives in a public GitHub repository \\ every token, component, and build rule that renders this page is in the same public repo. The Storybook component library and a one-way Figma push both draw from repo-first tokens—so Figma is an output of the system, not its source.",
+          "verdict": "partly-supported",
+          "reason": "The subtitle states 'Every claim on this page is inspectable in the same public repository that renders it' and the summary mentions 'all open source', supporting claims about public repo and open source. The system section confirms 'One-way Figma push' and 'Repo-first tokens', supporting those aspects. However, the text does not explicitly state 'GitHub repository' (only 'public repository'), and does not explicitly state that 'Figma is an output of the system, not its source' in those exact terms."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1607,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 176,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "cross-no-build-step",
+      "question": "Has he shipped anything that runs with no build step at all?",
+      "category": "cross-cutting",
+      "shape": "negation",
+      "tools": [
+        "get_project",
+        "get_project"
+      ],
+      "licensableChunkIds": 7,
+      "citedChunkIds": [
+        "project:portfolio-system#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yes. This portfolio site itself has no build step — it is pure static HTML that renders directly from the repository. The design system loads via two link tags: one for the generated CSS variables and one for the component library. Everything that appears on this page is inspectable and runs with no compilation.",
+          "verdict": "partly-supported",
+          "reason": "The text states 'No build step in the site. Two link tags consume the system' and 'view-source shows everything,' which supports the no-build-step and two-link-tags claims. However, the claim that 'one for the generated CSS variables and one for the component library' is not stated in the cited text, which only says 'Two link tags consume the system' without specifying what each link tag is for."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1298,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 155,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "cross-kipo-app-stores",
+      "question": "Which of the projects from his studio years ended up live on both app stores?",
+      "category": "cross-cutting",
+      "shape": "multi-hop",
+      "tools": [
+        "list_experience",
+        "list_projects"
+      ],
+      "licensableChunkIds": 5,
+      "citedChunkIds": [
+        "experience:studio-kipo#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Two projects from his Studio Kipo years (2023–Dec 2025) shipped live on both iOS and Android: the Malko Tarnovo Municipal App and Mindromeda.",
+          "verdict": "partly-supported",
+          "reason": "The text states 'Malko Tarnovo Municipal App — semantic colour tokens and a dual visual language serving tourists and older residents at once. Live on the App Store and Google Play' and 'Mindromeda — mental health marketplace connecting people to licensed therapists and coaches. Full design and IA: specialist matching by need, session booking, and consumer access alongside corporate vouchers. Live on Google Play.' However, the cited text does not specify the years '2023–Dec 2025' for Studio Kipo, and Mindromeda is only stated to be live on Google Play, not on both iOS and Android (App Store is not mentioned for Mindromeda)."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1400,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 207,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "cross-assistant-accessibility",
+      "question": "At the company where he redesigned an AI Assistant module, what accessibility work did he also do?",
+      "category": "cross-cutting",
+      "shape": "multi-hop",
+      "tools": [
+        "search_content",
+        "get_project",
+        "get_project"
+      ],
+      "licensableChunkIds": 17,
+      "citedChunkIds": [
+        "experience:green-street#outcome",
+        "project:greenstreet-audit#summary",
+        "project:greenstreet-audit#subtitle",
+        "project:greenstreet-audit#context",
+        "project:greenstreet-audit#approach",
+        "project:greenstreet-audit#approach-2",
+        "project:greenstreet-audit#outcome",
+        "project:greenstreet-audit#outcome-2",
+        "project:greenstreet-ds#summary",
+        "project:greenstreet-ds#subtitle",
+        "project:greenstreet-ds#problem",
+        "project:greenstreet-ds#approach",
+        "project:greenstreet-ds#system",
+        "project:greenstreet-ds#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "At Green Street, where he redesigned the AI Assistant module, he also led comprehensive WCAG 2.1 AA accessibility audits of two major product surfaces and embedded accessibility standards into the design system architecture itself.",
+          "verdict": "partly-supported",
+          "reason": "The text states he 'Audited Green Street News and the Analytics & Research Platform against WCAG 2.1 AA' (200+ issues) and redesigned the AI Assistant module, but does not say he 'led' the audits or 'embedded accessibility standards into the design system architecture itself.'"
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 2690,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 129,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "metric-issue-count",
+      "question": "How many accessibility issue instances did he catalogue?",
+      "category": "metric",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 7,
+      "citedChunkIds": [
+        "project:greenstreet-audit#summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yordan catalogued 200+ accessibility issue instances across two Green Street product surfaces — an editorial platform and a data-dense analytics platform. Every finding was documented with severity ratings, WCAG criterion references, annotated screenshots, recommended fixes, and estimated engineering effort.",
+          "verdict": "partly-supported",
+          "reason": "The text confirms '200+ issue instances catalogued with severity ratings' and 'two product surfaces — editorial and data-dense analytics', but does not mention 'WCAG criterion references, annotated screenshots, recommended fixes, and estimated engineering effort'."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1175,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 114,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "metric-component-count",
+      "question": "How many components are in the Green Street Figma library?",
+      "category": "metric",
+      "shape": "lookup",
+      "tools": [
+        "get_project"
+      ],
+      "licensableChunkIds": 6,
+      "citedChunkIds": [
+        "project:greenstreet-ds#summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "The Green Street Figma library contains approximately 35 components, each with 1:1 parity to the coded implementations — meaning every component in Figma maps exactly to a living component in production with the same name, props, and variants.",
+          "verdict": "partly-supported",
+          "reason": "The text states '~35 components at 1:1 Figma-to-code parity' but does not specify that every component has 'the same name, props, and variants' or that they are 'living component[s] in production'."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1176,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 119,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "metric-marathon",
+      "question": "How far has he run?",
+      "category": "metric",
+      "shape": "lookup",
+      "tools": [
+        "get_profile"
+      ],
+      "licensableChunkIds": 20,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "He's run a marathon — 42 km.",
+          "verdict": "unsupported",
+          "reason": "No passages were cited, so the claim about running a marathon cannot be verified from any cited text."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1083,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 73,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "metric-team-size",
+      "question": "How big was the coaching team he managed?",
+      "category": "metric",
+      "shape": "lookup",
+      "tools": [
+        "list_experience"
+      ],
+      "licensableChunkIds": 5,
+      "citedChunkIds": [
+        "experience:live-to-lift#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yordan managed a team of 5–6 coaches during his time at Live to Lift, where he was responsible for recruitment, training, and programme design.",
+          "verdict": "partly-supported",
+          "reason": "The text confirms managing '5–6 coaches', designing 'the recruitment programme', and training 'every new hire', but does not mention anyone named 'Yordan'."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1184,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 104,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "metric-catalogue-vs-components",
+      "question": "Which was bigger — the coffee catalogue or the trading platform's component set?",
+      "category": "metric",
+      "shape": "comparative",
+      "tools": [
+        "get_project",
+        "get_project"
+      ],
+      "licensableChunkIds": 8,
+      "citedChunkIds": [
+        "project:spetema#summary",
+        "project:payment-crypto-stocks#summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "The coffee catalogue was significantly larger. Spetema carried 200+ products across its bilingual site, while the trading platform's component library held 50+ Figma components and variants.",
+          "verdict": "unsupported",
+          "reason": "The claim compares the coffee catalogue size to the trading platform's component library, but the cited texts describe different metrics ('200+ products' vs '50+ Figma components') and do not make any comparison about which was 'significantly larger'."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1196,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 113,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "struct-availability",
+      "question": "Is he available for new work right now?",
+      "category": "structured-only",
+      "shape": "lookup",
+      "tools": [
+        "get_profile"
+      ],
+      "licensableChunkIds": 20,
+      "citedChunkIds": [
+        "profile:cv-summary"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Yes. Yordan is open to new projects right now, and based in Sofia, Bulgaria (Europe/Sofia timezone). You can reach him by email or phone through the contact links below.",
+          "verdict": "unsupported",
+          "reason": "The cited text contains no information about Yordan's name, availability for projects, location (Sofia, Bulgaria), timezone, or contact methods."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1206,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 90,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "struct-timeline-2019",
+      "question": "What was he doing in 2019?",
+      "category": "structured-only",
+      "shape": "temporal",
+      "tools": [
+        "list_experience"
+      ],
+      "licensableChunkIds": 5,
+      "citedChunkIds": [
+        "experience:domestina#outcome",
+        "experience:independent#outcome"
+      ],
+      "proseBlocks": 1,
+      "turnsUsed": 2,
+      "retried": false,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "In 2019, Yordan started at Domestina as UX Researcher & Consultant. He was rebuilding the front page and critical booking flows — work that dropped bounce rate by 40%. He was also freelancing as an independent product designer and frontend developer.",
+          "verdict": "unsupported",
+          "reason": "The cited texts do not mention the year '2019', the name 'Yordan', or that he 'started at Domestina as UX Researcher & Consultant', nor do they state he was 'freelancing as an independent product designer and frontend developer' at the same time."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1292,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 128,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "metric-token-count",
+      "question": "How many tokens and components does this site's own design system have?",
+      "category": "structured-only",
+      "shape": "lookup",
+      "tools": [
+        "get_system_facts"
+      ],
+      "licensableChunkIds": 6,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "This site's design system has 82 tokens carrying 140 values across light, dark and print modes, and is built from 19 components.",
+          "verdict": "unsupported",
+          "reason": "No passages were cited, so the specific numbers '82 tokens', '140 values', and '19 components' cannot be verified from cited text."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1104,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 93,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "gap-qa-cncsys",
+      "question": "What did he do at CNCsys?",
+      "category": "corpus-gap",
+      "shape": "lookup",
+      "tools": [
+        "list_experience"
+      ],
+      "licensableChunkIds": 5,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "He was a Quality Assurance Expert at CNCsys PLC from 2007 to 2009 — his first technical role in manufacturing software QA. No further details are on file.",
+          "verdict": "unsupported",
+          "reason": "No text was cited, so the claims about employment at CNCsys PLC, dates 2007 to 2009, job title, and role description cannot be verified from cited sources."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1115,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 102,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "gap-qa-first-role",
+      "question": "What was his first technical job before he moved into design?",
+      "category": "corpus-gap",
+      "shape": "temporal",
+      "tools": [
+        "list_experience"
+      ],
+      "licensableChunkIds": 5,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "His first technical role was Quality Assurance Expert at CNCsys PLC, where he worked on manufacturing software QA from 2007 to 2009.",
+          "verdict": "unsupported",
+          "reason": "No passages were cited, so the claim about working as Quality Assurance Expert at CNCsys PLC from 2007 to 2009 cannot be verified from cited text."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1108,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 101,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "oob-salary",
+      "question": "What are his salary expectations?",
+      "category": "out-of-corpus",
+      "shape": "lookup",
+      "tools": [
+        "get_profile"
+      ],
+      "licensableChunkIds": 20,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Salary expectations are not on file. Contact him directly through the email or phone number on his profile to discuss compensation.",
+          "verdict": "unsupported",
+          "reason": "No text was cited, so the claims about salary expectations not being on file and contacting via email or phone cannot be verified from any source."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1096,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 90,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "oob-japanese",
+      "question": "Does he speak Japanese?",
+      "category": "out-of-corpus",
+      "shape": "lookup",
+      "tools": [
+        "get_profile"
+      ],
+      "licensableChunkIds": 20,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "Not according to the record on file. His languages are Bulgarian (native) and English (professional proficiency).",
+          "verdict": "unsupported",
+          "reason": "No cited text was provided to support the claim about Bulgarian and English language proficiency."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1094,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 78,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "oob-game-engines",
+      "question": "Has he built anything in Unity or Unreal?",
+      "category": "out-of-corpus",
+      "shape": "adversarial",
+      "tools": [
+        "search_content"
+      ],
+      "licensableChunkIds": 1,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "No — there is no record of work in Unity or Unreal in the corpus. His engineering skills are in web technologies, not game engines.",
+          "verdict": "unsupported",
+          "reason": "No text was cited, so the claim about what is or is not in the corpus cannot be verified."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1102,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 82,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    },
+    {
+      "questionId": "oob-certification",
+      "question": "Does he hold a Nielsen Norman Group certification?",
+      "category": "out-of-corpus",
+      "shape": "lookup",
+      "tools": [
+        "get_profile"
+      ],
+      "licensableChunkIds": 20,
+      "citedChunkIds": [],
+      "proseBlocks": 1,
+      "turnsUsed": 3,
+      "retried": true,
+      "degraded": false,
+      "strippedSources": 0,
+      "outcome": "judged",
+      "verdicts": [
+        {
+          "claim": "That certification is not on file. His education includes courses from Telerik Academy and Software University in UX/UI and web design, but no Nielsen Norman Group certification is listed.",
+          "verdict": "unsupported",
+          "reason": "No cited text was provided to support any of the assertions about certification, education, or courses."
+        }
+      ],
+      "judgeUsage": {
+        "input_tokens": 1109,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 80,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      }
+    }
+  ]
+}
