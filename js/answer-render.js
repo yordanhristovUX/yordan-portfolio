@@ -88,10 +88,14 @@
     const openable = Boolean(p.hasCaseStudy) && typeof window.openCase === "function";
     const out = frag();
 
-    /* `why` is model-authored — one clause on why this project answers
-       the question. It is prose, so it is text, and it sits outside the
-       row rather than replacing the row's own authored summary. */
-    if (b.why) out.appendChild(el("p", "chat__why", b.why));
+    /* There is no `why` here. It was a free-text field on `project` blocks —
+       one model-authored clause rendered as `.chat__why` — and it was
+       removed from the output schema, because a non-`prose` block carrying
+       model prose is the one hole in "the model composes, it does not
+       restate". Gate 1 now REJECTS any project block with a `why`, so this
+       renderer could never have been handed one: the branch that read it
+       was dead code that still looked like a supported feature.
+       See test/schema.test.js §3.1 and evals/run.mjs. */
 
     const list = el("ul", "idx");
     list.setAttribute("role", "list");

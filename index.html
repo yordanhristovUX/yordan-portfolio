@@ -51,9 +51,13 @@
     </nav>
     <div class="bar__status">
       <span class="bar__dot" aria-hidden="true"></span>
-      <span>Available for work — Sofia, <time id="local-time">--:--</time></span>
+      <span>Available for work — Sofia<span class="bar__clock">, <time id="local-time">--:--</time></span></span>
     </div>
-    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: following your system setting. Activate for light.">
+    <!-- Deliberately vaguer than anything js/theme.js produces: the script's
+         name for `auto` states what auto currently RESOLVES to, and static
+         HTML cannot know the visitor's OS. A name that guessed would be
+         wrong half the time. Replaced on the first apply(). -->
+    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
       <span class="theme__lamp" aria-hidden="true"></span>
       <span class="theme__label">Auto</span>
     </button>
@@ -193,11 +197,14 @@
     <!-- living separator -->
     <div class="strip" aria-hidden="true"></div>
 
-    <!-- ============ 03 MORE PROJECTS ============ -->
-    <section class="band sec">
+    <!-- ============ 03 NOTABLE PROJECTS ============
+         A peer of Selected work, not an appendix to it: these are shipped
+         products in their own right, and one of them (Spetema) is a live
+         bilingual catalogue. "More projects" read as an overflow bin. -->
+    <section class="band sec" id="notable">
       <header class="sec__head">
         <span class="sec__no mono">03</span>
-        <h2 class="sec__title t-title">More projects</h2>
+        <h2 class="sec__title t-title">Notable Projects</h2>
       </header>
       <div class="well well--flush">
         <!-- content:more-projects -->
@@ -362,10 +369,32 @@
       </div>
     </section>
 
-    <!-- ============ 07 CONTACT ============ -->
-    <section class="band sec sec--contact" id="contact">
+    <!-- ============ 07 UNEXPECTED FACTS ============
+         The destination for the facts that currently render at the end of
+         Background. Moving them OUT of `content:background` is the content
+         pipeline's emitter change, not a markup edit — so this region is
+         deliberately empty until scripts/build-content.mjs fills it. It has
+         to exist first: applyRegions() writes between the two markers and
+         exits non-zero if it cannot find them.
+
+         Structure and id mirror cv.html's `05 Unexpected facts` exactly,
+         including `#unexpected` — the CV's fact chunks already cite that
+         anchor, so the site's can too without inventing a second name. -->
+    <section class="band sec sec--tint" id="unexpected">
       <header class="sec__head">
         <span class="sec__no mono">07</span>
+        <h2 class="sec__title t-title">Unexpected facts</h2>
+      </header>
+      <div class="well">
+        <!-- content:facts -->
+        <!-- /content:facts -->
+      </div>
+    </section>
+
+    <!-- ============ 08 CONTACT ============ -->
+    <section class="band sec sec--contact" id="contact">
+      <header class="sec__head">
+        <span class="sec__no mono">08</span>
         <h2 class="sec__title t-title">Contact</h2>
       </header>
       <div class="well">
@@ -412,7 +441,10 @@
            panel left the scroller as a descendant rather than a scroll ancestor,
            and Page Down had no target. js/main.js narrows the label per case. -->
       <div class="case__scroll" tabindex="0" role="region" aria-label="Case study">
-        <div class="band case__band">
+        <!-- `.band` only. `.case__band` used to sit here and was dead: no rule
+             in any stylesheet and no JS hook — js/automata.js finds the
+             dialog's rails through `el.closest(".case")`, not through this. -->
+        <div class="band">
           <div class="well case__well">
             <div class="case__head">
               <h2 class="case__title t-display t-display--lg" id="case-title"></h2>

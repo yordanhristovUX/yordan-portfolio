@@ -154,51 +154,39 @@
         );
       });
     });
-
-    /* ---------- Counters ----------
-       Click upward in whole steps — odometer, not tween.
-
-       The zero belongs to the ANIMATION, not to the document. "42km —
-       Marathon finisher" is a fact about a person; if this script never
-       runs, or GSAP 404s, or the ticker is throttled to a stop, the page
-       must still say 42. A page that says he ran 0km is not a degraded
-       page, it is a false one, and false is worse than blank — which is
-       the opposite of what the degradation contract at the top of this
-       file promises. So nothing here ever writes a number the markup did
-       not already assert: the counter is zeroed at the instant it starts
-       counting, and only when a tween is actually going to run.
-
-       (Until scripts/build-content.mjs emits the real figure instead of a
-       literal `0`, the no-motion branch below still has to correct the
-       markup. That assignment is idempotent — it writes exactly what the
-       markup will ship — so it can stay or go once the emitter lands.) */
-    $$("[data-count]").forEach((el) => {
-      const target = +el.dataset.count;
-      if (!Number.isFinite(target)) return;
-      const land = () => { el.textContent = String(target); };
-      onceInView(el, 88, () => {
-        if (RM) { land(); return; }
-        const obj = { v: 0 };
-        /* The zero is never written here. It arrives as the tween's own
-           first frame, which means a ticker that never ticks — a throttled
-           background tab, a GSAP that loaded but stalled — leaves the
-           markup's real figure on screen instead of parking a 0 there for
-           four seconds waiting for the failsafe. Motion may replace the
-           number; its absence may not. */
-        const tw = gsap.to(obj, {
-          v: target, duration: 1.4, ease: "steps(" + Math.min(target, 24) + ")",
-          onUpdate: () => (el.textContent = String(Math.round(obj.v))),
-          onComplete: land,
-        });
-        /* Same failsafe as the intro timeline: a stalled or throttled
-           ticker must never be the reason a fact reads 0. */
-        setTimeout(() => { if (tw.progress() < 1) { tw.progress(1); land(); } }, 4000);
-      });
-    });
-  } else {
-    // No motion: the numbers are the content, so they arrive already counted.
-    $$("[data-count]").forEach((el) => (el.textContent = el.dataset.count));
   }
+
+  /* ---------- The odometer, and why it is gone ----------
+
+     A `[data-count]` loop used to live here: an unexpected fact's numeral
+     clicked upward in whole steps on scroll, with a 4s failsafe for a
+     ticker throttled by a background tab.
+
+     It was the file's showpiece for the degradation contract at the top.
+     The animation wants to start at 0, but "42 km — Marathon finisher" is
+     a claim about a person, and a page that says he ran 0 km is not a
+     degraded page, it is a FALSE one — worse than blank. So the zero was
+     never written by this file: it arrived as the tween's own first frame,
+     which meant a stalled ticker left the markup's real figure on screen
+     instead of parking a 0 there. The no-motion branch wrote the number
+     out directly.
+
+     None of that has a subject any more. The owner removed the numerals
+     from the facts — he wanted them small and tidy rather than headline
+     figures, and his reasoning is quoted verbatim above `factCell()` in
+     scripts/build-content.mjs. So `facts.json` carries no `value`, `unit`
+     or `count`, that emitter writes no `.fact__num`, and no element in
+     this repo carries `data-count`. Verified across index.html, cv.html,
+     mcp.html and evals.html (0 matches each, live), every story, and
+     evals/run.mjs's own `.facts` block, which writes its numbers as text.
+
+     The rule the loop encoded is not gone with it, and is the reason this
+     note is longer than a deletion needs: **progressive enhancement means
+     a script failure yields a static readable page, never a wrong one.**
+     Anything reinstated here must still ship its truth in the markup and
+     let motion only replace it. `design-system/components/fact/spec.md`
+     still documents `data-count` as a live hook; it now documents one
+     nothing produces and nothing consumes. */
 
   /* ---------- Case study page ---------- */
   const overlay = $(".case");

@@ -46,7 +46,10 @@
       <a href="#experience">Experience</a>
       <a href="#skills">Skills</a>
     </nav>
-    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: following your system setting. Activate for light.">
+    <!-- Deliberately vaguer than anything js/theme.js produces — see the note
+         in index.html and components/theme-toggle/spec.md. Replaced on the
+         first apply(). -->
+    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
       <span class="theme__lamp" aria-hidden="true"></span>
       <span class="theme__label">Auto</span>
     </button>
