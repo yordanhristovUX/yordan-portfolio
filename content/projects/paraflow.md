@@ -1,7 +1,7 @@
 ---
 {
   "id": "paraflow",
-  "order": 7,
+  "order": 8,
   "title": "Paraflow",
   "cardType": "Corporate website",
   "hasCaseStudy": false

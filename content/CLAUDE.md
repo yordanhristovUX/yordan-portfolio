@@ -214,8 +214,20 @@ Preserve both sides of each of these; they are the author's, not artefacts.
 | project description | `{#summary}` | `{#subtitle}` |
 | project tags | `indexTags` | `tags` |
 | project client / title | `indexClient` / `indexTitle` | `client` / `title` |
-| the "Power" fact label | "Heaviest lift" | "Heaviest deadlift" (`cv.label`) |
+| ~~the "Power" fact label~~ | ~~"Heaviest lift"~~ | ~~"Heaviest deadlift" (`cv.label`)~~ — **retired, see below** |
 | skills taxonomy | 6 groups, `skills.groups.*.site` | 5 groups, `skills.groups.*.cv` — except `ai-workflows`, whose `text` the owner has promoted to the site verbatim, and `engineering`, which has always shared a `text` and differs only in `term` |
+
+**The "Power" fact divergence is retired, and the reason is worth keeping.** The site said
+"Heaviest lift" where the CV said "Heaviest deadlift" — a real editorial decision, because
+"lift" read better beside "I ship heavy things" and "deadlift" was the precise word a CV
+wants. Both were *captions for a numeral*: the block rendered a large `250` with `kg` beneath
+it, and the label named what the number measured. The owner then removed the numerals — the
+labels are now whole sentences, and his own sentence contains the word "deadlift". So the
+caption had nothing left to caption and the distinction it drew had already been made inside
+the sentence. Both surfaces now read "I can deadlift 250 kg". **This is recorded rather than
+silently deleted because a retired divergence and a forgotten one look identical in a diff**,
+and the next reader of `facts.json` would otherwise have no way to tell whether the two
+surfaces match by decision or by accident.
 
 **"Differently-worded" was never entirely true, and that is the useful part of this row.**
 `engineering` has shared its `text` across both surfaces since the taxonomy was authored;

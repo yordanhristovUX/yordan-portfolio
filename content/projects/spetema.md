@@ -1,7 +1,7 @@
 ---
 {
   "id": "spetema",
-  "order": 9,
+  "order": 1,
   "title": "Spetema",
   "cardType": "Product & Corporate Website",
   "hasCaseStudy": false

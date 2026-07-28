@@ -69,10 +69,10 @@
       }
     ],
     "prose": {
-      "heroLede": "I build AI-ready design systems with 1:1 code parity and architect the AI workflows that connect product, design, and engineering. Working alongside Technical Product Managers and developers, I help eliminate the traditional handoff by designing systems, optimizing processes, and contributing directly to PRDs, prototypes, and production code.",
+      "heroLede": "I build AI-ready design systems with 1:1 code parity and architect the AI workflows that connect product, design, and engineering. Working alongside Technical Product Managers and developers, I help eliminate the traditional handoff by designing systems, optimising processes, and contributing directly to PRDs, prototypes, and production code.",
       "cvSummary": "I build AI-ready design systems: component libraries with 1:1 parity between Figma and code, plus custom Claude skills and MCP setups that let agents assemble UI from the real system without drift. I write and ship the frontend myself, reviewed and merged by engineering. Under the tooling sits seven years of research practice — user interviews, usability testing, and WCAG 2.1 AA auditing.",
       "background": {
-        "prose": "Before tech, I spent eleven years helping build and grow a fitness coaching practice. As the owner's close business partner, I took ownership of many of the systems that defined the business. I led a team of coaches, designed the recruitment and onboarding programme, created the assessment framework used across the practice, conducted hundreds of client interviews, and built a data-driven approach to measuring progress and outcomes.",
+        "prose": "Before tech, I spent eleven years helping build and grow a strength and nutrition coaching practice. As the owner's close business partner, I took ownership of many of the systems that defined the business. I led a team of coaches, designed the recruitment and onboarding programme, created the assessment framework used across the practice, conducted hundreds of client interviews, and built a data-driven approach to measuring progress and outcomes.",
         "statement": "It taught me something design school doesn't: people rarely behave the way they say they will. You have to meet them where they are and design not for what they say, not even what they think they want, but for what they truly need at that moment in their journey.",
         "kicker": "The research habits started there, not in tech. So did these:"
       },
@@ -225,7 +225,7 @@
       "title": "Power",
       "label": "I can deadlift 250 kg",
       "cv": {
-        "label": "Heaviest deadlift."
+        "label": "I can deadlift 250 kg"
       }
     },
     {
@@ -337,7 +337,7 @@
       "id": "greenstreet-ds",
       "index": 2,
       "order": null,
-      "title": "AI-Ready design systems and Agentic workflows",
+      "title": "AI-ready design systems and Agentic workflows",
       "client": "Green Street",
       "indexClient": null,
       "indexTitle": null,
@@ -621,9 +621,29 @@
       ]
     },
     {
-      "id": "ubistats-football",
+      "id": "spetema",
       "index": null,
       "order": 1,
+      "title": "Spetema",
+      "client": null,
+      "indexClient": null,
+      "indexTitle": null,
+      "cardType": "Product & Corporate Website",
+      "hasCaseStudy": false,
+      "tags": [],
+      "accentTag": null,
+      "indexTags": [],
+      "metrics": [],
+      "links": [],
+      "media": [],
+      "summary": "A 200+ product coffee catalogue serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model. Bilingual, live.",
+      "subtitle": "",
+      "sections": []
+    },
+    {
+      "id": "ubistats-football",
+      "index": null,
+      "order": 2,
       "title": "Ubistats Football",
       "client": null,
       "indexClient": null,
@@ -643,7 +663,7 @@
     {
       "id": "mindromeda",
       "index": null,
-      "order": 2,
+      "order": 3,
       "title": "Mindromeda",
       "client": null,
       "indexClient": null,
@@ -663,7 +683,7 @@
     {
       "id": "tax-advice-usd-accounts",
       "index": null,
-      "order": 3,
+      "order": 4,
       "title": "Tax Advice — USD Accounts",
       "client": null,
       "indexClient": null,
@@ -683,7 +703,7 @@
     {
       "id": "painted-auto-parts",
       "index": null,
-      "order": 4,
+      "order": 5,
       "title": "Painted Auto Parts",
       "client": null,
       "indexClient": null,
@@ -703,7 +723,7 @@
     {
       "id": "go-guide-app",
       "index": null,
-      "order": 5,
+      "order": 6,
       "title": "Go Guide App",
       "client": null,
       "indexClient": null,
@@ -723,7 +743,7 @@
     {
       "id": "payment-crypto-stocks",
       "index": null,
-      "order": 6,
+      "order": 7,
       "title": "Payment / Crypto / Stocks",
       "client": null,
       "indexClient": null,
@@ -743,7 +763,7 @@
     {
       "id": "paraflow",
       "index": null,
-      "order": 7,
+      "order": 8,
       "title": "Paraflow",
       "client": null,
       "indexClient": null,
@@ -763,7 +783,7 @@
     {
       "id": "generative-art-platform",
       "index": null,
-      "order": 8,
+      "order": 9,
       "title": "Generative Art Platform",
       "client": null,
       "indexClient": null,
@@ -777,26 +797,6 @@
       "links": [],
       "media": [],
       "summary": "Full-scope design for an artist discovery platform serving the NFT community.",
-      "subtitle": "",
-      "sections": []
-    },
-    {
-      "id": "spetema",
-      "index": null,
-      "order": 9,
-      "title": "Spetema",
-      "client": null,
-      "indexClient": null,
-      "indexTitle": null,
-      "cardType": "Product & Corporate Website",
-      "hasCaseStudy": false,
-      "tags": [],
-      "accentTag": null,
-      "indexTags": [],
-      "metrics": [],
-      "links": [],
-      "media": [],
-      "summary": "A 200+ product coffee catalogue serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model. Bilingual, live.",
       "subtitle": "",
       "sections": []
     }
@@ -2870,7 +2870,7 @@
         "page": "/",
         "anchor": "#work",
         "project": "greenstreet-ds",
-        "label": "Green Street — AI-Ready design systems and Agentic workflows"
+        "label": "Green Street — AI-ready design systems and Agentic workflows"
       },
       "len": 26,
       "tf": {
@@ -2912,7 +2912,7 @@
         "page": "/",
         "anchor": "#work",
         "project": "greenstreet-ds",
-        "label": "Green Street — AI-Ready design systems and Agentic workflows"
+        "label": "Green Street — AI-ready design systems and Agentic workflows"
       },
       "len": 25,
       "tf": {
@@ -2953,7 +2953,7 @@
         "page": "/",
         "anchor": "#work",
         "project": "greenstreet-ds",
-        "label": "Green Street — AI-Ready design systems and Agentic workflows"
+        "label": "Green Street — AI-ready design systems and Agentic workflows"
       },
       "len": 84,
       "tf": {
@@ -3036,7 +3036,7 @@
         "page": "/",
         "anchor": "#work",
         "project": "greenstreet-ds",
-        "label": "Green Street — AI-Ready design systems and Agentic workflows"
+        "label": "Green Street — AI-ready design systems and Agentic workflows"
       },
       "len": 223,
       "tf": {
@@ -3192,7 +3192,7 @@
         "page": "/",
         "anchor": "#work",
         "project": "greenstreet-ds",
-        "label": "Green Street — AI-Ready design systems and Agentic workflows"
+        "label": "Green Street — AI-ready design systems and Agentic workflows"
       },
       "len": 43,
       "tf": {
@@ -3242,7 +3242,7 @@
         "page": "/",
         "anchor": "#work",
         "project": "greenstreet-ds",
-        "label": "Green Street — AI-Ready design systems and Agentic workflows"
+        "label": "Green Street — AI-ready design systems and Agentic workflows"
       },
       "len": 70,
       "tf": {
@@ -5271,16 +5271,18 @@
       "entity": "fact:power",
       "kind": "summary",
       "heading": "Power",
-      "text": "Heaviest deadlift.",
+      "text": "I can deadlift 250 kg",
       "cite": {
         "page": "/cv",
         "anchor": "#unexpected",
         "label": "Power"
       },
-      "len": 3,
+      "len": 5,
       "tf": {
+        "250": 1,
+        "can": 1,
         "deadlift": 1,
-        "heaviest": 1,
+        "kg": 1,
         "power": 1
       }
     },
@@ -5309,7 +5311,7 @@
       "entity": "profile",
       "kind": "summary",
       "heading": "Hero",
-      "text": "I build AI-ready design systems with 1:1 code parity and architect the AI workflows that connect product, design, and engineering. Working alongside Technical Product Managers and developers, I help eliminate the traditional handoff by designing systems, optimizing processes, and contributing directly to PRDs, prototypes, and production code.",
+      "text": "I build AI-ready design systems with 1:1 code parity and architect the AI workflows that connect product, design, and engineering. Working alongside Technical Product Managers and developers, I help eliminate the traditional handoff by designing systems, optimising processes, and contributing directly to PRDs, prototypes, and production code.",
       "cite": {
         "page": "/",
         "anchor": "#top",
@@ -5337,7 +5339,7 @@
         "help": 1,
         "hero": 1,
         "managers": 1,
-        "optimizing": 1,
+        "optimising": 1,
         "parity": 1,
         "prds": 1,
         "processes": 1,
@@ -5433,16 +5435,16 @@
       "entity": "profile",
       "kind": "context",
       "heading": "Background",
-      "text": "Before tech, I spent eleven years helping build and grow a fitness coaching practice. As the owner's close business partner, I took ownership of many of the systems that defined the business. I led a team of coaches, designed the recruitment and onboarding programme, created the assessment framework used across the practice, conducted hundreds of client interviews, and built a data-driven approach to measuring progress and outcomes.",
+      "text": "Before tech, I spent eleven years helping build and grow a strength and nutrition coaching practice. As the owner's close business partner, I took ownership of many of the systems that defined the business. I led a team of coaches, designed the recruitment and onboarding programme, created the assessment framework used across the practice, conducted hundreds of client interviews, and built a data-driven approach to measuring progress and outcomes.",
       "cite": {
         "page": "/",
         "anchor": "#background",
         "label": "Background"
       },
-      "len": 63,
+      "len": 65,
       "tf": {
         "across": 1,
-        "and": 4,
+        "and": 5,
         "approach": 1,
         "as": 1,
         "assessment": 1,
@@ -5462,7 +5464,6 @@
         "designed": 1,
         "driven": 1,
         "eleven": 1,
-        "fitness": 1,
         "framework": 1,
         "grow": 1,
         "helping": 1,
@@ -5471,6 +5472,7 @@
         "led": 1,
         "many": 1,
         "measuring": 1,
+        "nutrition": 1,
         "of": 4,
         "onboarding": 1,
         "outcomes": 1,
@@ -5482,6 +5484,7 @@
         "progress": 1,
         "recruitment": 1,
         "spent": 1,
+        "strength": 1,
         "systems": 1,
         "team": 1,
         "tech": 1,
@@ -5691,10 +5694,10 @@
   ],
   "bm25": {
     "N": 70,
-    "avgdl": 43.4857,
+    "avgdl": 43.5429,
     "df": {
       "50": 1,
-      "250": 1,
+      "250": 2,
       "0-to-1": 1,
       "100%": 3,
       "1:1": 7,
@@ -5839,7 +5842,7 @@
       "bylines": 1,
       "calm": 1,
       "camp": 1,
-      "can": 7,
+      "can": 8,
       "canonical": 2,
       "captions": 1,
       "card": 3,
@@ -6057,7 +6060,6 @@
       "finder": 2,
       "finding": 1,
       "first": 10,
-      "fitness": 1,
       "fix": 1,
       "flat": 2,
       "flow": 2,
@@ -6115,7 +6117,6 @@
       "headers": 1,
       "heading": 1,
       "health": 1,
-      "heaviest": 1,
       "help": 1,
       "helping": 1,
       "here": 1,
@@ -6187,7 +6188,7 @@
       "json": 2,
       "just": 3,
       "keyboard": 2,
-      "kg": 1,
+      "kg": 2,
       "knowledge": 1,
       "knows": 1,
       "label": 5,
@@ -6311,6 +6312,7 @@
       "no": 7,
       "not": 12,
       "now": 1,
+      "nutrition": 1,
       "observations": 1,
       "of": 15,
       "off": 1,
@@ -6325,7 +6327,7 @@
       "open": 2,
       "operability": 1,
       "opposing": 2,
-      "optimizing": 1,
+      "optimising": 1,
       "or": 2,
       "orchestration": 2,
       "order": 2,
@@ -6568,6 +6570,7 @@
       "strandzha": 1,
       "stranger": 1,
       "street": 5,
+      "strength": 1,
       "stronger": 1,
       "structure": 2,
       "structured": 2,
@@ -6761,7 +6764,7 @@
       },
       {
         "id": "greenstreet-ds",
-        "title": "AI-Ready design systems and Agentic workflows",
+        "title": "AI-ready design systems and Agentic workflows",
         "client": "Green Street",
         "tags": [
           "Senior Product Designer",
@@ -6812,6 +6815,13 @@
           "Accessibility"
         ],
         "summary": "Civic app serving tourists and older residents at once. White-label token system. Live on the App Store and Google Play."
+      },
+      {
+        "id": "spetema",
+        "title": "Spetema",
+        "client": null,
+        "tags": [],
+        "summary": "A 200+ product coffee catalogue serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model. Bilingual, live."
       },
       {
         "id": "ubistats-football",
@@ -6868,13 +6878,6 @@
         "client": null,
         "tags": [],
         "summary": "Full-scope design for an artist discovery platform serving the NFT community."
-      },
-      {
-        "id": "spetema",
-        "title": "Spetema",
-        "client": null,
-        "tags": [],
-        "summary": "A 200+ product coffee catalogue serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model. Bilingual, live."
       }
     ],
     "experience": [

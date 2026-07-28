@@ -1,7 +1,7 @@
 ---
 {
   "id": "ubistats-football",
-  "order": 1,
+  "order": 2,
   "title": "Ubistats Football",
   "cardType": "Analytics platform",
   "hasCaseStudy": false

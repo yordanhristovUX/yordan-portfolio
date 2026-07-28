@@ -1,7 +1,7 @@
 ---
 {
   "id": "painted-auto-parts",
-  "order": 4,
+  "order": 5,
   "title": "Painted Auto Parts",
   "cardType": "Internal order system",
   "hasCaseStudy": false

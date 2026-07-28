@@ -1,7 +1,7 @@
 ---
 {
   "id": "generative-art-platform",
-  "order": 8,
+  "order": 9,
   "title": "Generative Art Platform",
   "cardType": "NFT / Web3",
   "hasCaseStudy": false

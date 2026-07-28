@@ -1,7 +1,7 @@
 ---
 {
   "id": "tax-advice-usd-accounts",
-  "order": 3,
+  "order": 4,
   "title": "Tax Advice — USD Accounts",
   "cardType": "Fintech · cross-border",
   "hasCaseStudy": false

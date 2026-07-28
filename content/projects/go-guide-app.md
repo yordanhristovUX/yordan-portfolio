@@ -1,7 +1,7 @@
 ---
 {
   "id": "go-guide-app",
-  "order": 5,
+  "order": 6,
   "title": "Go Guide App",
   "cardType": "Consumer mobile app",
   "hasCaseStudy": false

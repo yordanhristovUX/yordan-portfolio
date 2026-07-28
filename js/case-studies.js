@@ -99,7 +99,7 @@ window.CASE_STUDIES = {
 
   "greenstreet-ds": {
     index: "02 / Green Street",
-    title: "AI-Ready design systems and Agentic workflows",
+    title: "AI-ready design systems and Agentic workflows",
     subtitle:
       "Infrastructure that lets AI generate production-faithful UI: 1:1 Figma-to-code parity, custom Claude skills, and a prototype pipeline for the whole TPM team.",
     meta: ["Senior Product Designer", "Design Systems", "AI Workflows", "Figma-to-code", "WCAG", "Production code"],

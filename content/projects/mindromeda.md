@@ -1,7 +1,7 @@
 ---
 {
   "id": "mindromeda",
-  "order": 2,
+  "order": 3,
   "title": "Mindromeda",
   "cardType": "Marketplace · shipped",
   "hasCaseStudy": false

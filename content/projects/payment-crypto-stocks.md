@@ -1,7 +1,7 @@
 ---
 {
   "id": "payment-crypto-stocks",
-  "order": 6,
+  "order": 7,
   "title": "Payment / Crypto / Stocks",
   "cardType": "Fintech",
   "hasCaseStudy": false
