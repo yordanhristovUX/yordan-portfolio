@@ -55,10 +55,55 @@
   /* ---------- Layout bookkeeping ----------
      Called after every DOM mutation. The rail's own `contain: size`
      stops it from sizing the band; this keeps the dialog rails honest
-     after layout shifts, exactly as js/main.js does on open. */
+     after layout shifts, exactly as js/main.js does on open.
+
+     What it deliberately does NOT do is pin scrollTop to scrollHeight.
+     One answer runs to roughly three screens of a thread that is bounded
+     by design, so "scroll to the bottom" lands the reader on the citation
+     list with the sentence they asked for already scrolled out of sight
+     above. The anchor is the TOP of the newest assistant turn: the reader
+     waited ten seconds for the first line, so the first line is what they
+     get. Everything after it is theirs to scroll to. */
+  let anchor = null;
+  let anchorHeld = false;
+
+  function keepAnchor() {
+    if (!anchor || anchorHeld) return;
+    const delta =
+      anchor.getBoundingClientRect().top -
+      thread.getBoundingClientRect().top -
+      thread.clientTop;
+    if (Math.abs(delta) < 1) return;
+    thread.scrollTop += delta;
+  }
+
   function settle() {
-    thread.scrollTop = thread.scrollHeight;
+    keepAnchor();
     requestAnimationFrame(() => window.rebuildCaseSquares?.());
+  }
+
+  /* The moment the reader scrolls for themselves, they own the viewport
+     for the rest of the turn — an answer that keeps yanking itself back
+     into position while you are reading it is worse than one that sits
+     in the wrong place. */
+  ["wheel", "touchmove", "pointerdown", "keydown"].forEach((type) =>
+    thread.addEventListener(type, () => { anchorHeld = true; }, { passive: true })
+  );
+
+  /* ---------- Busy state ----------
+     `aria-disabled`, never `disabled`. Disabling the focused textarea
+     drops focus to <body>, and re-enabling it does not put focus back —
+     so the reader asks a question, waits, and is silently returned to the
+     top of a ~9000px document with no way to the answer but Tab or
+     scroll. aria-disabled announces the busy state without moving focus;
+     the `busy` guard at the top of ask() is what actually prevents a
+     second submit, and readOnly is what stops typing into a field whose
+     contents are about to be replaced. */
+  function setBusy(on) {
+    busy = on;
+    send.setAttribute("aria-disabled", String(on));
+    input.setAttribute("aria-disabled", String(on));
+    input.readOnly = on;
   }
 
   function reveal(node) {
@@ -104,7 +149,11 @@
     let list = null;
     let count = 0;
 
-    return (event) => {
+    /* `opts.count: false` adds a row without claiming a tool ran — the
+       `meta` frame is budget, not work, and inflating the tool count to
+       describe it would be a new inaccuracy in the one panel whose whole
+       job is being accurate about what happened. */
+    return (event, opts = {}) => {
       if (!wrap) {
         wrap = el("details", "chat__trace");
         const summary = el("summary", "chat__trace-toggle mono", "Tool calls");
@@ -113,9 +162,9 @@
         wrap.appendChild(list);
         body.appendChild(wrap);
       }
-      count += 1;
+      if (opts.count !== false) count += 1;
       wrap.querySelector(".chat__trace-toggle").textContent =
-        count + (count === 1 ? " tool call" : " tool calls");
+        count === 0 ? "Trace" : count + (count === 1 ? " tool call" : " tool calls");
 
       const row = el("li", "chat__trace-row");
       row.appendChild(el("code", "chat__trace-name", event.tool));
@@ -125,7 +174,7 @@
         .join(" · ");
       if (args) row.appendChild(el("span", "chat__trace-args", args));
       if (event.summary) row.appendChild(el("span", "chat__trace-result", "→ " + event.summary));
-      row.appendChild(el("span", "chat__trace-ms mono", event.ms + "ms"));
+      if (event.ms != null) row.appendChild(el("span", "chat__trace-ms mono", event.ms + "ms"));
       list.appendChild(row);
     };
   }
@@ -197,15 +246,19 @@
   /* ---------- Ask ---------- */
   async function ask(question) {
     if (busy) return;
-    busy = true;
-    send.disabled = true;
-    input.disabled = true;
+    setBusy(true);
+    /* Cleared now, not in `finally`: the question is already on screen as
+       the user turn, and a field that empties itself ten seconds later
+       would throw away anything typed in the meantime. */
+    input.value = "";
 
     const user = addTurn("user");
     user.body.appendChild(el("p", "chat__prose", question));
     history.push({ role: "user", content: question });
 
     const assistant = addTurn("assistant");
+    anchor = assistant.turn;
+    anchorHeld = false;
     const state = thinking(assistant.body);
     const trace = traceView(assistant.body);
     settle();
@@ -219,6 +272,19 @@
         window.AnswerRender.load(),
         stream(assistant.body, (name, data) => {
           switch (name) {
+            case "meta":
+              /* The server has emitted this since day one and the spec
+                 documents it as being "for the trace"; the client just
+                 never had a case for it. This is the trace. */
+              trace(
+                {
+                  tool: "meta",
+                  input: { model: data.model, maxTurns: data.maxTurns, maxBlocks: data.maxBlocks },
+                },
+                { count: false }
+              );
+              settle();
+              break;
             case "turn":
               state.say(data.forced ? "Composing the answer…" : "Reading the corpus…");
               break;
@@ -287,10 +353,12 @@
       const prose = [...answer.querySelectorAll(".chat__prose")].map((p) => p.textContent).join("\n\n");
       history.push({ role: "assistant", content: prose || "(no answer on file)" });
 
-      busy = false;
-      send.disabled = false;
-      input.disabled = false;
-      input.value = "";
+      setBusy(false);
+      /* Focus should never have left the composer — that is the point of
+         aria-disabled. If something else took it during the wait, only
+         <body> is worth reclaiming: anywhere else is somewhere the reader
+         chose to be. */
+      if (document.activeElement === document.body) input.focus({ preventScroll: true });
       settle();
     }
   }

@@ -148,6 +148,22 @@
   const scrollBox = $(".case__scroll");
   let lastFocused = null;
 
+  /* The scroller is the element that actually holds the case study —
+     ~2150px of it below the fold — and it is the only thing in the dialog
+     with `overflow-y: auto`. The panel's own overflow is `visible`, so
+     focusing the PANEL leaves the scroller as a descendant of the focused
+     element rather than an ancestor of it, and no key the reader presses
+     has anywhere to go: `<body>` is locked, the trap collects one control,
+     and Page Down does nothing. Making the scroller focusable is what
+     turns the dialog back into something you can read with a keyboard
+     (WCAG 2.1.1). The trap needs no change — it picks the scroller up on
+     its own, because it collects `[tabindex]:not([tabindex="-1"])`.
+
+     `tabindex`, `role` and `aria-label` live in the MARKUP, not here — a
+     keyboard path should not depend on a script having run. This file only
+     narrows the label to the open case's title, which is the one part that
+     is genuinely dynamic. */
+
   function openCase(id) {
     const data = window.CASE_STUDIES[id];
     if (!data) return;
@@ -160,6 +176,7 @@
       .join("");
     $(".case__content").innerHTML = data.content;
     scrollBox.scrollTop = 0;
+    scrollBox.setAttribute("aria-label", data.title + " — case study");
 
     lastFocused = document.activeElement;
     overlay.hidden = false;
@@ -167,13 +184,13 @@
     requestAnimationFrame(() => window.rebuildCaseSquares?.());
 
     if (!HAS_GSAP) {
-      panel.focus({ preventScroll: true });
+      scrollBox.focus({ preventScroll: true });
       return;
     }
     gsap.fromTo($(".case__backdrop"), { opacity: 0 }, { opacity: 1, duration: RM ? 0 : 0.25 });
     gsap.fromTo(panel, { yPercent: 100 }, {
       yPercent: 0, duration: RM ? 0 : 0.5, ease: "power3.out",
-      onComplete: () => panel.focus({ preventScroll: true }),
+      onComplete: () => scrollBox.focus({ preventScroll: true }),
     });
   }
 

@@ -48,11 +48,32 @@ function warnOnce() {
 
 const dayKey = () => `chat:tokens:${new Date().toISOString().slice(0, 10)}`;
 
+/** How long a bookkeeping round trip may take before it is treated as an
+ *  outage. checkBudget() is awaited BEFORE the SSE headers are written, so this
+ *  number is a hard floor on the assistant's time-to-first-byte — every chat
+ *  request pays it whenever Upstash is unwell.
+ *
+ *  Failing open only protects against Upstash saying NO. It does nothing
+ *  against Upstash saying NOTHING: without a deadline, a blackholed connection
+ *  (dropped packets rather than a refused connection) stalls every request in
+ *  front of the first byte, for as long as the platform allows. That is a
+ *  monitoring outage taking the assistant down, which is the exact failure mode
+ *  the fail-open policy exists to prevent — so the timeout is what makes the
+ *  policy true rather than merely stated. 1s is far above a healthy Upstash
+ *  round trip and far below anything a reader would sit through.
+ *
+ *  lib/knowledge/embed.js already had this right with a 2.5s abort on Voyage. */
+const REDIS_TIMEOUT_MS = 1000;
+
 async function redis(command) {
   const res = await fetch(URL_, {
     method: "POST",
     headers: { authorization: `Bearer ${TOKEN}`, "content-type": "application/json" },
     body: JSON.stringify(command),
+    /* An abort throws, which lands in the caller's catch — checkBudget fails
+       OPEN and recordUsage swallows it. The asymmetry is preserved exactly: a
+       timeout is an error, never an overrun. */
+    signal: AbortSignal.timeout(REDIS_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`upstash ${res.status}`);
   return (await res.json())?.result;

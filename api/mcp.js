@@ -41,6 +41,25 @@ const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
 const INTERNAL_ERROR = -32603;
 
+/* ------------------------------------------------------------
+   The request-size ceiling.
+
+   Every legitimate message this endpoint can receive is a JSON-RPC envelope
+   around at most a tool name and a short argument object — the largest real one
+   is a search query, and lib/knowledge clamps that to 1000 characters. 256KB is
+   three orders of magnitude of headroom and still bounds the worst case.
+
+   It is here because the endpoint's whole security argument is that its worst
+   case is COST rather than data, and an unbounded body broke that argument
+   arithmetically: an 8.4MB body came back as a 16.8MB response, because the
+   tool echoed the query and this file serialised the echo twice. At the
+   documented 60 req/min/IP WAF limit that is ~1GB of billed egress per minute
+   from a single IP, on an endpoint with no auth. The clamp in lib/knowledge
+   fixes the amplification; this fixes the ingestion that fed it.
+   ------------------------------------------------------------ */
+const MAX_BODY_BYTES = 256 * 1024;
+const BODY_TOO_LARGE = "E_BODY_TOO_LARGE";
+
 /* ============================================================
    Server instructions
 
@@ -239,10 +258,33 @@ function jsonRpcError(res, status, code, message) {
 /* Vercel parses a JSON body onto req.body and leaves the stream consumed; a
    plain `node --run` server does not. Read it here only when nobody already
    has, so the same file works in both without a body-parser. */
+function tooLarge() {
+  const err = new Error("request body too large");
+  err.code = BODY_TOO_LARGE;
+  return err;
+}
+
 async function readBody(req) {
+  /* Content-Length first, because it is the ONLY signal available on the
+     Vercel path: there the platform has already parsed the body onto req.body
+     and the stream is spent, so the byte loop below never runs. A lying
+     Content-Length is caught by the loop; a truthful one is refused before a
+     single byte is buffered. */
+  const declared = Number(req.headers?.["content-length"]);
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) throw tooLarge();
+
   if (req.body !== undefined && req.body !== null && req.body !== "") return req.body;
+
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let bytes = 0;
+  for await (const chunk of req) {
+    bytes += chunk.length;
+    /* Throwing here abandons the iterator, which is what actually stops the
+       upload: nothing further is read, so memory is bounded at the cap rather
+       than at whatever the client felt like sending. */
+    if (bytes > MAX_BODY_BYTES) throw tooLarge();
+    chunks.push(chunk);
+  }
   if (!chunks.length) return undefined;
   const raw = Buffer.concat(chunks).toString("utf8").trim();
   if (!raw) return undefined;
@@ -291,7 +333,22 @@ export default async function handler(req, res) {
   let body;
   try {
     body = await readBody(req);
-  } catch {
+  } catch (err) {
+    if (err?.code === BODY_TOO_LARGE) {
+      /* Once the response has flushed, drop the socket rather than sit there
+         absorbing the rest of an upload we have already refused. Ordering
+         matters: destroying first would reset the connection and the caller
+         would get a transport error instead of a reason. */
+      res.once("finish", () => req.destroy());
+      jsonRpcError(
+        res,
+        413,
+        INVALID_REQUEST,
+        `Request body exceeds ${MAX_BODY_BYTES} bytes. A JSON-RPC message for this endpoint ` +
+          `carries a tool name and a small argument object; nothing legitimate approaches this.`
+      );
+      return;
+    }
     jsonRpcError(res, 400, PARSE_ERROR, "Request body is not valid JSON.");
     return;
   }

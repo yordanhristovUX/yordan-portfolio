@@ -237,8 +237,15 @@
     const chunks = b.chunkIds.map((id) => corpus.chunk.get(id)).filter(Boolean);
     if (!chunks.length) return null;
 
-    const wrap = el("div", "sources");
-    wrap.appendChild(el("p", "sources__title mono", "Sources"));
+    /* Collapsed, like the tool trace: the citation list can be the single
+       largest element of an answer — ten slugs under a three-paragraph
+       reply — and it is evidence to be checked, not prose to be read. It
+       stays one click away, and the count is on the summary so its size
+       is visible without opening it. */
+    const wrap = el("details", "sources");
+    wrap.appendChild(
+      el("summary", "sources__title mono", chunks.length === 1 ? "1 source" : chunks.length + " sources")
+    );
     const ol = el("ol", "sources__list");
 
     chunks.forEach((c, i) => {
