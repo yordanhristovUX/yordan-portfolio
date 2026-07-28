@@ -51,9 +51,8 @@ auto-deploys — all open source.
 
 ## Subtitle {#subtitle}
 
-The site you are reading runs on its own AI-ready, repo-first design system — open source,
-rendered in Storybook, pushed to Figma, deployed on every commit. The portfolio is the case
-study.
+Every claim on this page is inspectable in the same public repository that renders it. If the
+system were not real, this page could not exist in the shape it does.
 
 ## The idea {#context}
 

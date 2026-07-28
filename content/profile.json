@@ -38,10 +38,10 @@
 
   "profileRows": [
     { "term": "Focus", "value": "AI-ready design systems · platform-scale UX · design-to-code" },
-    { "term": "Currently", "value": "Green Street — commercial real estate analytics (2026–)" },
-    { "term": "Previously", "value": "Studio Kipo — sole designer, all client work (2023–25)" },
-    { "term": "Advising", "value": "Domestina — UX research & flows (2019–)" },
-    { "term": "Before tech", "value": "Live to Lift — service design, team lead (2009–20)" },
+    { "term": "Currently", "value": "Green Street — CRE & infrastructure news, research data and analytics (2026–)" },
+    { "term": "Previously", "value": "Studio Kipo — design, development and SEO studio (2023–25)" },
+    { "term": "Advising", "value": "Domestina — leading marketplace for cleaning services (2019–)" },
+    { "term": "Before tech", "value": "Live to Lift — holistic strength and nutrition club (2009–20)" },
     { "ref": "availability" }
   ],
 

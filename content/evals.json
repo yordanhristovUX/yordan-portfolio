@@ -12,11 +12,11 @@
 
       "**Fusing the two rankings made both worse.** Tools-first with BM25 appended scores {{evals:hybrid.hit3}} hit@3 — below BM25 alone — and abstains on nothing, because the fallback always fires. It inherits the weaker ranking *and* the weaker judgement. That result killed the originally proposed shape, which is the most useful thing this table did.",
 
-      "**What the failure suggested instead.** Stop fusing rankings and split responsibilities: let the name match decide *whether* the corpus covers the question, and let BM25 decide *what* comes back once it does. That arm — `tools-gated` — holds {{evals:tools-gated.hit3}} hit@3 and {{evals:tools-gated.separability}} separability, the best in the table, while keeping the full {{evals:tools-gated.abstain}} abstention rate. Roughly seven points of ranking traded for the entire ability to say “not on file”. It is labelled post-hoc everywhere it appears, because it was written after seeing the first three arms on this same question set; it is a hypothesis this run suggests, not a result this run establishes, and it needs questions written after it to become one.",
+      "**What the failure suggested instead.** Stop fusing rankings and split responsibilities: let the name match decide *whether* the corpus covers the question, and let BM25 decide *what* comes back once it does. That arm — `tools-gated` — holds {{evals:tools-gated.hit3}} hit@3 and {{evals:tools-gated.separability}} separability, tied for best in the table, while raising the abstention rate to {{evals:tools-gated.abstain}}. Roughly seven points of ranking traded for the entire ability to say “not on file”. It is labelled post-hoc everywhere it appears, because it was written after seeing the first three arms on this same question set; it is a hypothesis this run suggests, not a result this run establishes, and it needs questions written after it to become one.",
 
       "**Two holes in the corpus, found by the eval rather than by a reviewer.** Location, availability and contact details live in `content.json` as structured fields and appear in no chunk, so *“where is he based?”* cannot be answered by any search over prose — the only chunk containing the word “Sofia” is the education line, about Sofia University, and BM25 duly returns something else entirely. Separately, the 2007–2009 quality assurance role has no bullet points, so the content build produced no chunk for it at all: the role is in the index and invisible to search, and every arm scores zero on it. Both are why the tool layer reads structured fields directly instead of searching for them.",
 
-      "**One question no arm could answer, and it is the case for embeddings.** *“How far has he run?”* shares no term with *“42 km. Marathon finisher.”* — lexical search returns nothing at all. That is the exact shape of question a semantic retriever exists for. The embeddings arm is built and gated behind an API key rather than run, so this remains an argument rather than a measurement, and the table says so instead of guessing.",
+      "**One question no arm could answer, and it is the case for embeddings.** *“How far has he run?”* shares no term with *“42 km. Marathon finisher.”* — lexical search returns nothing at all. That is the exact shape of question a semantic retriever exists for. The embeddings arm has since been run: it answers this question and wins every retrieval class, at {{evals:embeddings.hit3}} hit@3 against BM25's {{evals:bm25.hit3}}. The argument became a measurement.",
 
       "**The point the corpus statistics make on their own.** The complete table of contents — every project id, title, client, tag and one-line summary, every role and span — is a few thousand characters. It fits in the system prompt. A retriever exists to solve “I cannot enumerate what is in here”; when the whole index fits in the prompt, that problem does not exist, and provisioning a stateful, billed service to solve it anyway is a decision about a résumé rather than about a corpus. That argument survives this table. The claim that structured lookup also *ranks* better did not."
     ],
@@ -34,10 +34,11 @@
       { "token": "{{evals:tools-gated.hit3}}", "source": "arm", "arm": "tools-gated", "metric": "hit3", "format": "pct" },
       { "token": "{{evals:tools-gated.separability}}", "source": "arm", "arm": "tools-gated", "metric": "separability", "format": "num" },
       { "token": "{{evals:tools-gated.abstain}}", "source": "arm", "arm": "tools-gated", "metric": "abstain", "format": "pct" },
+      { "token": "{{evals:embeddings.hit3}}", "source": "arm", "arm": "embeddings", "metric": "hit3", "format": "pct" },
       { "token": "{{evals:abstention.total}}", "source": "questions", "field": "abstention", "format": "int" }
     ],
 
-    "_reviewNote": "Claims in the paragraphs above that NO placeholder can carry, because they are judgements about a table rather than cells of it. They are reproduced verbatim, unaltered, and listed here so the owner decides the wording. An agent must not invent a replacement sentence.",
+    "_reviewNote": "Claims in the paragraphs above that NO placeholder can carry, because they are judgements about a table rather than cells of it. They were reproduced verbatim, unaltered, and listed here so the OWNER decided the wording; each now carries a `resolution` recording the decision he returned and the wording that replaced it. The entries are kept rather than deleted, so a phrase that changed has a reason on file and not only a diff. The rule is unchanged: an agent must not invent a replacement sentence — every replacement below is the owner's own.",
 
     "review": [
       {
@@ -45,21 +46,24 @@
         "phrase": "the best in the table",
         "was": "true of 0.869 separability when three arms were measured",
         "now": "tools-gated separability is 0.920 and gated-embeddings ties it exactly — it is joint best, not best",
-        "cannotInterpolate": "a superlative is a comparison across rows; substituting a number does not fix the word"
+        "cannotInterpolate": "a superlative is a comparison across rows; substituting a number does not fix the word",
+        "resolution": "RESOLVED — owner's wording, applied. The phrase now reads \"tied for best in the table\". The separability figure stays a placeholder; only the qualitative claim moved."
       },
       {
         "paragraph": 4,
         "phrase": "keeping the full … abstention rate",
         "was": "\"the full 72.7%\" — the tools arm's own rate, carried over intact",
         "now": "tools-gated abstains at 90.9%, which is HIGHER than the tools arm's 72.7%, so \"the full\" no longer describes what happened",
-        "cannotInterpolate": "the figure interpolates; the word \"full\" is the claim and it is now wrong in the reader's favour"
+        "cannotInterpolate": "the figure interpolates; the word \"full\" is the claim and it is now wrong in the reader's favour",
+        "resolution": "RESOLVED — owner's wording, applied. The clause now reads \"while raising the abstention rate to {{evals:tools-gated.abstain}}\". The number is still interpolated; only the words around it changed."
       },
       {
         "paragraph": 6,
         "phrase": "The embeddings arm is built and gated behind an API key rather than run, so this remains an argument rather than a measurement, and the table says so instead of guessing.",
         "was": "true when the arm was skipped",
         "now": "the embeddings arm ran: six published metrics, 93.0% hit@3, and it is the page's hero stat",
-        "cannotInterpolate": "the sentence asserts the absence of a measurement that now exists — replacing it is authoring, not interpolation"
+        "cannotInterpolate": "the sentence asserts the absence of a measurement that now exists — replacing it is authoring, not interpolation",
+        "resolution": "RESOLVED — owner's wording, applied. The sentence now reads \"The embeddings arm has since been run: it answers this question and wins every retrieval class, at {{evals:embeddings.hit3}} hit@3 against BM25's {{evals:bm25.hit3}}. The argument became a measurement.\" Both figures are placeholders rather than typed digits, so this sentence cannot drift from the table the next time the eval is re-run — which is the failure it is replacing. `{{evals:embeddings.hit3}}` is the twelfth placeholder and is new with this change."
       }
     ]
   }

@@ -1,5 +1,5 @@
 {
-  "_note": "ONE list of groups. The site shows 6 rows, the CV shows 5 with different terms and a different taxonomy. Both wordings are the author's; neither is derived from the other. `order` fixes the row order per surface; a group without a key for a surface is not rendered there.",
+  "_note": "ONE list of groups. The site shows 6 rows, the CV shows 5 with different terms and a different taxonomy. Both wordings are the author's. Two groups do share a `text` across the surfaces, and the difference between them matters: `ai-workflows` shares one BY THE OWNER'S DECISION (see that group's `_note`), while `engineering` has always shared one and diverges only in `term` (Frontend on the site, Engineering on the CV). Every other row is worded per surface and neither side is derived from the other. `order` fixes the row order per surface; a group without a key for a surface is not rendered there.",
 
   "order": {
     "site": ["design", "research", "accessibility", "ai-workflows", "engineering", "process"],
@@ -40,11 +40,11 @@
     },
 
     "ai-workflows": {
-      "_note": "The site row is the short form of the CV row and both are the author's. `custom skills, MCP servers` is NOT a shortening choice — the site used to read `custom MCP skills`, which conflates two different things (a Claude skill is not an MCP server). The CV row already had it right, so the site row was corrected to the CV's own two terms.",
+      "_note": "The site row and the CV row are now the SAME string, by the owner's decision — not by an agent tidying them together. Two changes, in order. (1) The site row used to read `custom MCP skills`, which conflates two different things: a Claude skill is not an MCP server. The CV row already had it right, so the site row was corrected to the CV's own two terms — a correction, not a shortening choice. (2) The owner then chose to promote the CV row's full wording to the site as well, so the site no longer carries a short form of it. This is the only group whose two surfaces share a `text` BY DECISION — `engineering` also shares one, but that is longstanding and its `term` still differs. The taxonomy itself is untouched: 6 site rows, 5 CV rows, different groupings. If these two ever need to diverge again, both are here, adjacent, and must be edited together.",
 
       "site": {
         "term": "AI workflows",
-        "text": "Claude Code, custom skills, MCP servers, AI-assisted prototyping, design-to-code pipelines"
+        "text": "Claude Code, custom skills, MCP servers, agent orchestration, agentic engineering, design-to-code pipelines, AI-assisted prototyping, prompt engineering, Google AI Studio"
       },
       "cv": {
         "term": "AI workflows",
