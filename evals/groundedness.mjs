@@ -45,15 +45,28 @@
 
    ── THE FOURTH VERDICT, AND WHY IT IS NOT A ZERO ────────────────────────────
 
-   Some tools license no chunk ids at all, on purpose and by accident:
+   Some tools license no chunk ids at all:
 
      · `get_design_system` / `get_component` — deliberately. The component
        contract is not chunked and not in the manifest, so there is nothing
        honest to license; inventing one would be the borrowed-credibility
        failure that removing `project.why` closed.
-     · `list_experience` — a live bug at the time of writing. `retrievedChunkIds`
-       never descends into `r.experience[]`, so the highest-stakes question class
-       in the corpus is structurally unable to cite.
+     · `list_projects` — not deliberately, just a consequence of its shape: the
+       compact record it returns carries no chunkIds array at all.
+
+   `list_experience` USED to be a third case and was the reason this verdict
+   exists. `retrievedChunkIds` read a hard-coded list of three paths and none of
+   them was `r.experience[i].chunkIds`, so the tool licensed 0 of 76 chunks and
+   the highest-stakes question class in the corpus was structurally unable to
+   cite. FIXED — the function now walks the result for chunkId/chunkIds keys, so
+   provenance is a property of the DATA rather than of a path list somebody has
+   to remember to update. That is also why this note is kept rather than
+   deleted: the bug was invisible precisely because the list looked complete.
+
+   Anything written before that fix — including the `unsourceable.note` baked
+   into the committed evals/groundedness.json — still describes list_experience
+   as unable to cite. That file is an artefact of a billed manual run and can
+   only change on a re-run; do not hand-edit it to agree with this comment.
 
    An answer built only from those tools has prose and no possible source. The
    provenance gate fires, the retry burns a turn, and the answer may degrade —
@@ -486,8 +499,11 @@ const report = {
     turns: outcomeCounts.unsourceable ?? 0,
     note:
       "Prose with no chunk id any tool called could have licensed. Not a model failure: get_design_system " +
-      "and get_component license nothing deliberately (the component contract is not chunked), and " +
-      "list_experience licenses nothing because retrievedChunkIds never descends into r.experience[]. " +
+      "and get_component license nothing deliberately (the component contract is not chunked and is not in " +
+      "the corpus), and list_projects licenses nothing because its compact record carries no chunkIds array. " +
+      "list_experience was a third case until retrievedChunkIds stopped reading a hard-coded path list and " +
+      "started walking the result; it now licenses the chunk ids it returns, so any earlier run of this file " +
+      "reports a larger unsourceable count than the same questions would produce today. " +
       "These turns are excluded from the rates above and counted here instead.",
   },
   detail: turns,

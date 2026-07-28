@@ -6,6 +6,13 @@
 `index.html`, `cv.html`, or inside a case-study dialog, its source is a file in this
 directory. Nothing else is a source of copy.
 
+**Two shipped pages are outside that.** `evals.html`'s numbers-bearing regions are written
+by `evals/run.mjs` (from the template in `content/evals.json` — see below), and `mcp.html` is
+hand-authored end to end with no generated region at all. So the install page's copy is the
+one body of prose on this site that nothing regenerates and no gate compares, which is
+exactly why its tool list went stale when two tools were added. If you add a tool, `mcp.html`
+is the file that will not tell you.
+
 ## The one rule
 
 > **Copy is extracted verbatim. Never rewritten, never "improved", never summarised.**
@@ -18,17 +25,31 @@ If a sentence reads awkwardly, **it ships awkward.** If two descriptions of the 
 project differ, **both are preserved** — that is a decision, not an oversight. A project
 carries a `{#summary}` (the index row) *and* a `{#subtitle}` (the case-study header) and
 they genuinely differ; the site says "Heaviest lift" where the CV says "Heaviest deadlift";
-the skills taxonomy is 6 rows on the site and 5 differently-worded rows on the CV. The
-drift problem is solved **structurally** — all variants now live adjacent in one file, so
+the skills taxonomy is 6 rows on the site and 5 on the CV, mostly differently worded — with
+two rows that share a `text` across both surfaces, one of them (`ai-workflows`) because the
+owner decided to promote the CV's wording to the site. The
+drift problem is solved **structurally** — all variants live adjacent in one file, so
 updating one and forgetting the other stops being possible — not editorially. Collapsing
 the wording is the owner's decision to make, not an agent's.
 
 ## What this consumes
 
-`content/system.generated.json` — `{tokens, values, components}`, emitted by
-`design-system/scripts/build.mjs`. Never hand-edited. Prose interpolates it with
-`{{tokens}}`, `{{values}}`, `{{components}}`, so the numbers the site advertises about
-itself have exactly one source.
+Two generated files from the design system, both emitted by
+`design-system/scripts/build.mjs` and neither ever hand-edited:
+
+- `content/system.generated.json` — `{tokens, values, components, light, dark, print}`.
+  Prose interpolates it with `{{tokens}}`, `{{values}}`, `{{components}}` and `{{dark}}`, so
+  the numbers the site advertises about itself have exactly one source.
+- `design-system/dist/components.json` — the derived component contract. This build folds it
+  into `content/dist/content.json` under `designSystem`, **verbatim**, and reformats nothing.
+  It is how the design system reaches the retrieval tools without anything importing it; the
+  two design-system MCP tools read it from there.
+
+`{{dark}}` is the newest of the four and it exists because of a failure, not a plan. The
+dark-theme count was typed as a literal in two places instead of interpolated, so when the
+design system re-aliased its way down to one fewer token nothing flowed, and both the CV and
+a case study shipped a false number for as long as nobody re-read them. If you find yourself
+typing one of these four figures into a sentence, that is the bug reproducing.
 
 ## What this emits
 
@@ -36,17 +57,32 @@ Via `scripts/build-content.mjs`:
 
 - `js/case-studies.js` — `window.CASE_STUDIES`, unchanged API
 - the `<!-- content:NAME -->` regions of `index.html` and `cv.html`
-- `content/dist/content.json` — the retrieval index
+- `content/dist/content.json` — the retrieval index, plus `designSystem` (the component
+  contract, folded in verbatim) and `evalsPage` (the `/evals` prose, shipped with its
+  `{{evals:…}}` placeholders still in it for `evals/run.mjs` to fill)
 - `content/dist/site.jsonld` — schema.org `Person` + `CreativeWork`
 - `llms.txt`
+
+`node scripts/build-content.mjs --check` compares all six against `content/` and fails on a
+byte of drift. It also asserts that no HTML comment on any of the four shipped pages contains
+a nested `<!--`, because comments do not nest and one that does put a paragraph of developer
+prose live on the homepage.
 
 ## File format
 
 ### Structured data — `.json`
 
-`profile.json` · `capabilities.json` · `skills.json` · `education.json` · `facts.json`.
-JSON, not YAML: parsing YAML needs a dependency, and zero-dependency is a property this
-repo advertises in public.
+`profile.json` · `capabilities.json` · `skills.json` · `education.json` · `facts.json` ·
+`evals.json`. JSON, not YAML: parsing YAML needs a dependency, and zero-dependency is a
+property this repo advertises in public.
+
+`evals.json` is the odd one and is worth a sentence. It holds the "Reading the numbers"
+prose for `/evals` as a **template**: the paragraphs are authored here, the figures inside
+them are `{{evals:…}}` placeholders, and this build ships them **unsubstituted** into
+`content.designSystem`'s neighbour `content.evalsPage`. `scripts/build-content.mjs` may not
+read `evals/` — `check-boundaries.mjs` forbids it — so `evals/run.mjs` is what fills them in
+when it writes the page. The direction stays `content/` → `lib/knowledge/` → `evals/`, and
+the prose still cannot advertise a number the runner did not produce.
 
 ### Prose entities — `.md` with JSON frontmatter
 
@@ -116,7 +152,7 @@ Lists are `- ` items; continuation lines indent.
 
 | Placeholder | Effect |
 | --- | --- |
-| `{{tokens}}` `{{values}}` `{{components}}` | the design system's own statistics, from `system.generated.json` |
+| `{{tokens}}` `{{values}}` `{{components}}` `{{dark}}` | the design system's own statistics, from `system.generated.json` — **rendered on the page, elided from chunk text** |
 | `{{year}}` | `<span id="year">…</span>` (footer copyright; site JS fills the real year) |
 | `{{metric:N}}` | the Nth `metrics[]` entry as a `.stat` box, at that point in the body |
 | `{{media:slot}}` | the named media slot as a `.ph` figure (or the SVG file, for `"type": "svg"`) |
@@ -125,6 +161,30 @@ Lists are `- ` items; continuation lines indent.
 
 A media slot named `cover` is emitted automatically at the top of the case study; it needs
 no placeholder.
+
+### The stats placeholders go two ways, and that is the point
+
+A `{{tokens}}`/`{{values}}`/`{{components}}`/`{{dark}}` placeholder is **substituted** into
+everything a reader sees — the page regions, the case studies, `llms.txt`, the non-chunk
+fields of `content.json` — and **elided** from the retrieval chunks, where the placeholder is
+replaced by nothing and the surrounding whitespace collapses.
+
+That decoupling is load-bearing. `scripts/build-vectors.mjs` fingerprints the corpus as a
+digest of the shipped chunk text. While the digits sat inside chunk text, adding one
+component or renaming one token changed that digest, invalidated the committed embedding
+cache, and cost a billed Voyage rebuild *and* a moved eval baseline — a pure design-system
+change reaching all the way into the retrieval evaluation. Eliding the digits makes chunk
+text invariant under a count change, so the digest holds and the published numbers stay
+comparable.
+
+Eliding rather than leaving `{{tokens}}` in place matters too: the placeholder would become a
+BM25 term, would be embedded as noise, and — worst — `search_content` hands `chunk.text` to a
+model, which would then quote *"Dark mode is {{dark}} tokens"* at a reader.
+
+Nothing is lost by losing the digit, because these are structured data rather than prose.
+`get_system_facts` returns `content.system` directly, so *"how many tokens?"* is answered by
+the tool layer — the same argument `/evals` already makes for location and availability,
+which are structured fields that deliberately appear in no chunk.
 
 ## Rules the build asserts
 
@@ -155,7 +215,15 @@ Preserve both sides of each of these; they are the author's, not artefacts.
 | project tags | `indexTags` | `tags` |
 | project client / title | `indexClient` / `indexTitle` | `client` / `title` |
 | the "Power" fact label | "Heaviest lift" | "Heaviest deadlift" (`cv.label`) |
-| skills taxonomy | 6 groups, `skills.groups.*.site` | 5 groups, `skills.groups.*.cv` |
+| skills taxonomy | 6 groups, `skills.groups.*.site` | 5 groups, `skills.groups.*.cv` — except `ai-workflows`, whose `text` the owner has promoted to the site verbatim, and `engineering`, which has always shared a `text` and differs only in `term` |
+
+**"Differently-worded" was never entirely true, and that is the useful part of this row.**
+`engineering` has shared its `text` across both surfaces since the taxonomy was authored;
+nobody noticed, because the sentence sat in a table asserting the opposite. A divergence
+table is only worth having if the absence of a divergence is recorded in it too — otherwise
+the next agent reads "differently-worded", finds two rows that are not, and has to guess
+whether it is looking at a bug or at a decision. Nothing checks this table; it is prose, and
+it is only as true as the last person to read `skills.json` beside it.
 
 ## How to verify in isolation
 

@@ -46,7 +46,12 @@ satisfy two environments.
 | Methods | `POST` only; `OPTIONS` preflight; everything else `405` + a JSON-RPC error |
 | Auth | none, deliberately |
 | Writes | none, structurally |
-| Tools | the six from `lib/knowledge`, each annotated `readOnlyHint: true` |
+| Tools | **whatever `TOOLS` holds** — `MCP_TOOLS` is a `.map()` over it, never a list here. Each is annotated `readOnlyHint: true`. |
+
+**That row is deliberately not a number.** When `get_design_system` and `get_component`
+landed in the core they appeared on this surface without a line of transport code changing,
+which is the property the mapping buys. A count typed here would have been wrong the same
+day, and it was: this file said "six" for as long as there were eight.
 
 **Stateless is a requirement, not a style.** Vercel functions do not persist between
 invocations, so a `Server` and a transport are constructed per request and closed in the same
@@ -66,19 +71,44 @@ JSON-RPC method or a thrown exception is a *protocol* error and gets a JSON-RPC 
 sentence.
 
 **Cold-start descriptions.** The tool descriptions in `lib/knowledge/tools.js` are used
-verbatim; `mcp.js` adds a scope line in front and, for `search_content`, a note behind. Those
-additions exist because the web chat's system prompt carries the corpus manifest and a remote
-client does not — they supply missing *context*, never semantics. Counts inside them are
-interpolated from the corpus rather than typed, for the same reason the site's own statistics
-are generated: a number written by hand goes stale.
+verbatim; `mcp.js` adds a scope line in front and, where there is a real gap, a note behind.
+There are two notes — `search_content` and `get_component` — and both close the *same*
+cold-start gap for different reasons: the web chat's system prompt carries the corpus
+manifest so its model can already see every id, and a remote client cannot; component ids
+are in no manifest on either surface. They supply missing *context*, never semantics. Counts
+inside them are interpolated from the corpus rather than typed, for the same reason the
+site's own statistics are generated: a number written by hand goes stale.
 
-### `api/chat.js` — Phase 3
+The `INSTRUCTIONS` block a cold client reads first is the other place this matters. It
+describes **two** things the server exposes — the corpus and the design-system contract — and
+its per-tool lines are hand-maintained prose. That is the one part of this file a new tool
+does *not* update for free. Adding a tool means adding a line there; nothing enforces it.
 
-Owned by Phase 3. The contract it must hold: it calls `lib/knowledge/` **in process**, never
-through `/api/mcp`. Routing the chat through the MCP endpoint would make the function call
-itself over HTTP once per tool call — an extra hop, a second cold-start path and a
-self-referential dependency, bought to satisfy a purity argument. The Claude API supports
-remote MCP servers natively, so this is a rejected option rather than an unavailable one.
+### `api/chat.js` — the agent loop and the SSE stream
+
+The contract it must hold: it calls `lib/knowledge/` **in process**, never through
+`/api/mcp`. Routing the chat through the MCP endpoint would make the function call itself
+over HTTP once per tool call — an extra hop, a second cold-start path and a self-referential
+dependency, bought to satisfy a purity argument. The Claude API supports remote MCP servers
+natively, so this is a rejected option rather than an unavailable one.
+
+**The one decision this file makes that `lib/knowledge/` does not.** The gate no longer
+filters — `search_content` returns its ranking with a coverage verdict attached — so *whether
+to answer* is this file's call, taken by the system prompt's corpus-boundary section. And
+*what to do with a failed provenance check* is this file's call too. Three terminal states,
+reported on the `done` event:
+
+| State | When | What ships |
+| --- | --- | --- |
+| grounded | blocks survived with sources | the answer |
+| `uncited` | prose survived the retry with nothing backing it | the answer **plus a server-authored caveat block** |
+| `degraded` | nothing survived | the "not on file" block |
+
+The middle one exists because the measured failure is **loss of provenance, not
+fabrication**: degrading those answers would trade correct ones for refusals. The retry
+verdict is compared on completeness, not on `blocks.length` — taking it on length alone is
+the defect `test/chat-retry.test.js` was written against, and that suite drives this file's
+real default export over a socket rather than testing an extracted helper.
 
 ## Spend control — what is code and what is dashboard
 
@@ -144,8 +174,14 @@ claude mcp add --transport http yordan http://localhost:3111
 ```
 
 The bar for "it works": `initialize` returns `serverInfo` and `instructions`; `tools/list`
-returns six tools each carrying `readOnlyHint`; `tools/call` on `get_project` returns the
-project; `tools/call` with a bad id returns `isError: true` and never a stack.
+returns **every entry in `lib/knowledge`'s `TOOLS`, and nothing else**, each carrying
+`readOnlyHint`; `tools/call` on `get_project` returns the project; `tools/call` with a bad id
+returns `isError: true` and never a stack. Compare against the core rather than against a
+remembered count —
+
+```sh
+node -e "import('./lib/knowledge/index.js').then(k => console.log(k.TOOLS.length, k.TOOLS.map(t => t.name).join(' ')))"
+```
 
 Also still true of this slice, and cheap:
 

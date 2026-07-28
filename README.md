@@ -63,8 +63,15 @@ stylesheet — the colour half of which lives in `tokens.json`, not in the page.
 
 ## The MCP server (`api/mcp.js`)
 
-The portfolio is also a **remote MCP server**: six read-only tools over the same content
-index the site is built from, served over streamable HTTP. Add it to Claude Code —
+The portfolio is also a **remote MCP server**: read-only tools over the same content index
+the site is built from, served over streamable HTTP. Six read the portfolio corpus —
+projects, case studies, employment history, profile, repository statistics, search. Two more
+read the **design system's own contract**: `get_design_system` returns the token categories,
+the component index and the rules markup must obey to be on-system, and `get_component`
+returns one component's classes, `__element` and `--variant` suffixes, full selector list and
+the exact tokens its CSS consumes — all extracted from the shipped stylesheet by the design
+system's own build, so the server cannot describe a class that does not exist. Add it to
+Claude Code —
 
 ```sh
 claude mcp add --transport http yordan https://yordan-portfolio.vercel.app/api/mcp

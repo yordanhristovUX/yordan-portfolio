@@ -6,13 +6,20 @@
      05 §3.2 / 03 C3 — a fabricated answer survives all three gates.
                        The gates check IDS; prose is unchecked model text, and
                        prose is what a reader reads.
-     05 §3.3         — an HONEST answer about employment history has its real
-                       citation stripped, because retrievedChunkIds never
-                       descends into r.experience[].
+     05 §3.3         — an HONEST answer about employment history had its real
+                       citation stripped, because retrievedChunkIds read a
+                       hard-coded list of three result paths and
+                       r.experience[i].chunkIds was on none of them. FIXED: the
+                       function walks the result now, so provenance is a
+                       property of the DATA rather than of a path list somebody
+                       has to remember to update.
 
-   So the suite has to assert both "the fabrication is not caught" (a scope
-   test, see the long note below) and "the honest answer IS accepted" (a bug,
-   red until Wave 2).
+   So the suite asserts both "the fabrication is not caught" (a scope test, see
+   the long note below) and "the honest answer IS accepted" — the second pair
+   was written RED against the target contract before the fix existed, so the
+   fix could not be graded against itself. Both are green. They stay, as the
+   regression test for a bug whose defining quality was that the path list
+   looked complete.
    ============================================================ */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -31,10 +38,11 @@ const SUBJECT = content.projects.find((p) => p.hasCaseStudy && (p.sections ?? []
 const withChunks = (e) => (e.chunkIds ?? []).length > 0;
 
 /* ============================================================
-   05 §3.3 — list_experience grants zero provenance. A LIVE BUG.
+   05 §3.3 — list_experience granted zero provenance. FIXED in Wave 2;
+   these two are now the regression test for it.
    ============================================================ */
 
-test("[05 §3.3 · RED until Wave 2] list_experience licenses the chunks it returned", async () => {
+test("[05 §3.3 · regression] list_experience licenses the chunks it returned", async () => {
   const result = await callTool("list_experience", {});
   const calls = [{ name: "list_experience", input: {}, result }];
 
@@ -55,12 +63,13 @@ test("[05 §3.3 · RED until Wave 2] list_experience licenses the chunks it retu
   );
 });
 
-test("[05 §3.3 · RED until Wave 2] a correct, grounded employment answer keeps its citation", async () => {
+test("[05 §3.3 · regression] a correct, grounded employment answer keeps its citation", async () => {
   /* The end-to-end consequence, reproduced verbatim from the audit. This is a
-     TRUE answer, citing a chunk list_experience really just returned. Today the
-     citation is stripped, hasUnsourcedClaim fires, the retry burns a model turn
-     and a repeat degrades the answer to "not on file" — for the highest-stakes
-     question class in the corpus, and the one list_experience exists to serve. */
+     TRUE answer, citing a chunk list_experience really just returned. BEFORE
+     the fix the citation was stripped, hasUnsourcedClaim fired, the retry burnt
+     a model turn and a repeat could degrade the answer to "not on file" — for
+     the highest-stakes question class in the corpus, and the one
+     list_experience exists to serve. */
   const result = await callTool("list_experience", {});
   const calls = [{ name: "list_experience", input: {}, result }];
 

@@ -7,14 +7,15 @@
    of one shape: they avoid corpus vocabulary entirely. The measured failure is
    the natural phrasing, not the exotic one.
 
-   WHAT IS RED HERE AND WHY. Every assertion tagged [C2 · RED until Wave 2] is
-   written against the TARGET contract and fails today on purpose. Wave 2 owns
-   lib/knowledge/ and is adding the discrimination (an IDF floor, a
-   ≥2-matched-terms rule, or a shared-token rule). These tests say what "fixed"
-   has to mean before that code exists, so the fix cannot be graded against
-   itself.
+   WHAT THE `regression` TAG MEANS HERE. Every assertion tagged
+   [C2 · regression] was written against the TARGET contract and failed on
+   purpose before the discrimination existed — an IDF floor, a shared-token
+   rule, a ≥2-matched-terms rule; the shape was Wave 2's to choose. Writing
+   them first is what stopped the fix from being graded against itself. They
+   are green now, and they stay: this is the property that gets tuned away
+   first, because every one of these tokens looks harmless on its own.
 
-   The tests NOT tagged RED are the counterweight, and they matter just as much:
+   The untagged tests are the counterweight, and they matter just as much:
    a gate that refuses everything scores perfectly on abstention and is useless.
    They pin the questions a fix may not break.
    ============================================================ */
@@ -39,7 +40,7 @@ const opens = (q) => gateOpened(entityGate(q));
 const MEASURED_SINGLE_TOKEN_OPENERS =
   "design system product senior research team web site audit app".split(" ");
 
-test("[C2 · RED until Wave 2] no single common corpus token opens the gate alone", () => {
+test("[C2 · regression] no single common corpus token opens the gate alone", () => {
   const stillOpening = MEASURED_SINGLE_TOKEN_OPENERS.filter(opens);
   assert.deepEqual(
     stillOpening,
@@ -54,7 +55,7 @@ test("[C2 · RED until Wave 2] no single common corpus token opens the gate alon
    it cannot be evidence that the corpus covers the query. Nothing here is
    tuned against evals/questions.json; the statistic is a property of the
    corpus, exactly like the IDF the gate already uses. */
-test("[C2 · RED until Wave 2] a token shared by 3+ entity name surfaces cannot open the gate alone", () => {
+test("[C2 · regression] a token shared by 3+ entity name surfaces cannot open the gate alone", () => {
   const df = nameSurfaceDf(buildNameSurfaces(content));
   const shared = [...df].filter(([, n]) => n >= 3).map(([t]) => t);
   assert.ok(shared.length >= 10, "sanity: the corpus should have shared name-surface tokens");
@@ -80,7 +81,7 @@ const FABRICATED_EMPLOYER_QUESTIONS = [
   "tell me about his research at Meta",
 ];
 
-test("[C2 · RED until Wave 2] one word of corpus vocabulary does not defeat the gate", () => {
+test("[C2 · regression] one word of corpus vocabulary does not defeat the gate", () => {
   const opened = FABRICATED_EMPLOYER_QUESTIONS.filter(opens);
   assert.deepEqual(
     opened,
@@ -89,7 +90,7 @@ test("[C2 · RED until Wave 2] one word of corpus vocabulary does not defeat the
   );
 });
 
-test("[C2 · RED until Wave 2] 'did he do design work at Meta' yields no composed-answer path", async () => {
+test("[C2 · regression] 'did he do design work at Meta' yields no composed-answer path", async () => {
   /* The end-to-end consequence, at the surface both api/chat.js and api/mcp.js
      share. The gate opening is not the harm; the harm is real, well-cited
      chunks coming back for a question about an employer he never had, which a

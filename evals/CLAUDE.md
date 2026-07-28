@@ -215,12 +215,20 @@ gates, and nothing measured how often that happens.
   legitimately have cited"* is computed by the shipped provenance function.
 - The judge is a larger model than the one under test and sees **only** the prose and the
   cited chunk text — never the corpus, never the question's ground truth.
-- **`unsourceable` is a fourth verdict, not a zero.** `get_design_system` and `get_component`
-  license no chunk ids deliberately (the component contract is not chunked, and faking a
-  citation would be the borrowed-credibility failure that removing `project.why` closed), and
-  `list_experience` licenses none because of a live bug. An answer built only from those has
-  prose and no possible source; blaming the model for a property of the tool surface would be
-  wrong, so those turns are counted separately and excluded from the headline rate.
+- **`unsourceable` is a fourth verdict, not a zero.** Three tools license no chunk ids:
+  `get_design_system` and `get_component` deliberately (the component contract is not chunked
+  and is not in the corpus, and faking a citation would be the borrowed-credibility failure
+  that removing `project.why` closed), and `list_projects` incidentally — its compact record
+  carries no `chunkIds` array. An answer built only from those has prose and no possible
+  source; blaming the model for a property of the tool surface would be wrong, so those turns
+  are counted separately and excluded from the headline rate.
+- **`list_experience` was a fourth such tool and is not any more.** `retrievedChunkIds` read
+  a hard-coded list of three result paths, and `r.experience[i].chunkIds` was on none of
+  them, so employment history — the highest-stakes question class here — could not cite.
+  It now walks the result instead, and `test/schema.test.js` holds that. **The committed
+  `evals/groundedness.json` still says otherwise**, in its `unsourceable.note` and in its
+  counts, because it is the artefact of a billed manual run and can only change on a re-run.
+  Do not hand-edit it to agree with this file; re-run it, or read it as dated.
 - It **refuses to run when `$CI` is set**. The guard is the mechanism, not a convention.
 
 ```sh

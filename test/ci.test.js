@@ -22,7 +22,8 @@
    ============================================================ */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
 const pkg = JSON.parse(readFileSync(new URL("package.json", root), "utf8"));
@@ -160,26 +161,111 @@ test("the scripts that need a key load .env, and the offline ones do not", () =>
   }
 });
 
-test("engines.node covers the --env-file flag those scripts use", (t) => {
-  /* Reported, not enforced, and deliberately so. `node --env-file` landed in
-     20.6 while `engines` says >=20, so a contributor on 20.0–20.5 gets
-     `bad option: --env-file` from `npm run evals` — which reads as "the eval
-     is broken", not "your Node is too old". The fix is one field in
-     package.json that this suite's owner may not edit, and failing here would
-     put a red gate in front of every commit over a metadata line. A gate
-     people learn to step over is worse than none; a diagnostic in every run
-     is the honest weight for this. */
+test("engines.node covers the --env-file flag those scripts use", () => {
+  /* `node --env-file` landed in 20.6. While `engines` said `>=20`, a contributor
+     on 20.0–20.5 running the documented `npm run evals` got `bad option:
+     --env-file` — which reads as "the eval is broken", not "your Node is too
+     old", and the two send you to completely different files.
+
+     This was a diagnostic for one wave, because the field belonged to another
+     owner and a red gate over a metadata line is a gate people learn to step
+     over. The field is now `>=20.6.0`, so it is an assertion: the failure it
+     describes costs an afternoon and the check costs nothing.
+
+     Derived, not hard-coded. It reads which scripts actually carry --env-file,
+     so adding the flag to a third script re-arms it automatically, and dropping
+     it everywhere retires the floor rather than leaving a number nobody can
+     explain. */
+  const FLAG = { name: "--env-file", major: 20, minor: 6 };
+  const using = Object.entries(pkg.scripts).filter(([, v]) => v.includes(FLAG.name)).map(([k]) => k);
+  assert.ok(using.length, "sanity: something should be loading .env");
+
   const min = String(pkg.engines?.node ?? "").match(/(\d+)(?:\.(\d+))?/);
   const major = Number(min?.[1] ?? 0);
   const minor = Number(min?.[2] ?? 0);
-  const covered = major > 20 || (major === 20 && minor >= 6);
-  const using = Object.entries(pkg.scripts).filter(([, v]) => v.includes("--env-file")).map(([k]) => k);
 
-  if (!covered && using.length) {
-    t.diagnostic(
-      `engines.node is "${pkg.engines?.node}" but ${using.join(", ")} use --env-file, which needs >=20.6. ` +
-        `Bump engines.node to ">=20.6.0".`
-    );
+  assert.ok(
+    major > FLAG.major || (major === FLAG.major && minor >= FLAG.minor),
+    `engines.node is "${pkg.engines?.node}" but ${using.join(", ")} use ${FLAG.name}, which needs ` +
+      `>=${FLAG.major}.${FLAG.minor}. Raise engines.node, or stop using the flag.`
+  );
+});
+
+/* ============================================================
+   Declared dependencies
+
+   Audit m4: "zod is in `dependencies` with zero imports anywhere in the repo —
+   it is a transitive of the MCP SDK, remove it." Half right. Nothing imports
+   it, and it is still not removable, because a root dependency does two jobs
+   and only one of them is "I import this".
+
+     $ npm explain zod
+     zod@3.25.76
+       zod@"^3.25.76" from the root project              ← the only ^3 constraint
+       peerOptional zod@"^3.25.0 || ^4.0.0" from @anthropic-ai/sdk@0.71.2
+       zod@"^3.25 || ^4.0" from @modelcontextprotocol/sdk@1.29.0
+       peer zod@"^3.25.28 || ^4" from zod-to-json-schema@3.25.2
+
+   Every other constraint admits v4. Delete the root line and the next lockfile
+   regeneration resolves zod 4, whose `ZodError.issues` shape is not v3's — and
+   the code that reads that shape is `api/mcp.js`'s sanitiser, whose entire job
+   is stopping validation internals from reaching a public unauthenticated
+   endpoint (`test/tools.test.js` asserts nothing matching /ZodError|zod/ ever
+   escapes). A silent major bump under a sanitiser is not a dependency cleanup.
+
+   It is also the SDK's non-optional peer (`peerDependenciesMeta.zod.optional:
+   false`). npm hoists it either way; pnpm and `--legacy-peer-deps` do not.
+
+   So the rule is not "every dependency must be imported" — it is "every
+   dependency must have a reason, and the reason must be written down". This is
+   where it is written down.
+   ============================================================ */
+const UNIMPORTED_BY_DESIGN = {
+  zod: "a major-version pin, not a library: the only ^3 constraint on a package every other consumer would take at ^4. See the block above before deleting.",
+};
+
+const CODE = /\.(mjs|js|cjs)$/;
+const SKIP = new Set(["node_modules", ".git", "vendor", "generated", "dist", "storybook-static", ".claude", ".vercel"]);
+
+function sources(dir, out = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith(".") || SKIP.has(e.name)) continue;
+    const p = `${dir}/${e.name}`;
+    if (e.isDirectory()) sources(p, out);
+    else if (CODE.test(e.name)) out.push(p);
   }
-  assert.ok(using.length, "sanity: something should be loading .env");
+  return out;
+}
+
+/** Bare specifiers only — a relative path is a file, and `node:` is the runtime. */
+const BARE = /(?:^|[^\w$.])(?:import\s[\s\S]*?from\s*|export\s[\s\S]*?from\s*|import\s*|import\s*\(\s*|require\s*\(\s*)["']([^"'./][^"']*)["']/g;
+
+test("every declared dependency is imported, or carries a written reason not to be", () => {
+  const imported = new Set();
+  for (const file of sources(fileURLToPath(root))) {
+    for (const [, spec] of readFileSync(file, "utf8").matchAll(BARE)) {
+      if (spec.startsWith("node:")) continue;
+      imported.add(spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]);
+    }
+  }
+
+  const declared = Object.keys(pkg.dependencies ?? {});
+  assert.ok(declared.length, "sanity: the project should declare dependencies");
+
+  const unexplained = declared.filter((d) => !imported.has(d) && !UNIMPORTED_BY_DESIGN[d]);
+  assert.deepEqual(
+    unexplained,
+    [],
+    `declared but never imported, and no reason given: ${unexplained.join(", ")}. ` +
+      `Either remove it, or add it to UNIMPORTED_BY_DESIGN with the evidence — a dependency ` +
+      `nobody can justify is one somebody eventually removes for the wrong reason.`
+  );
+
+  /* The other direction, so the note cannot outlive the situation it describes. */
+  const stale = Object.keys(UNIMPORTED_BY_DESIGN).filter((d) => imported.has(d) || !declared.includes(d));
+  assert.deepEqual(
+    stale,
+    [],
+    `UNIMPORTED_BY_DESIGN still explains ${stale.join(", ")}, which is now imported or no longer declared — delete the note.`
+  );
 });

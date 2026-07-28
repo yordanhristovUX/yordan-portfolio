@@ -1,0 +1,156 @@
+{
+  "$doc": [
+    "The negative-test matrix for scripts/check-boundaries.mjs, as data.",
+    "",
+    "Every case is a whole miniature repo: `base` below, plus this case's `files`,",
+    "minus its `remove`. The checker is then run against it as a child process, at",
+    "arm's length, exactly as CI runs it — no import of its internals, so the thing",
+    "under test is the shipped gate rather than a copy of its regexes.",
+    "",
+    "WHY THIS IS JSON AND NOT A .mjs MODULE. The sources below contain deliberate",
+    "boundary violations. check-boundaries.mjs scans every .mjs/.js/.cjs/.ts file in",
+    "the repo and cannot tell a string containing `import \"../lib/x.js\"` from an",
+    "import — so holding these cases in a JavaScript file would fail the very gate",
+    "they exist to test. A .json file is not scanned. That is also the honest",
+    "shape: this is a table, and it reads as one.",
+    "",
+    "`expect.exit` 1 means the case must FAIL the gate; `expect.exit` 0 means it",
+    "must PASS. The passing cases are not filler — a rule that bans css/ or",
+    "design-system/ from js/, or that reads a path out of a comment, breaks the",
+    "pages and the css gate, and nothing else in the repo would notice."
+  ],
+
+  "base": {
+    "design-system/dist/tokens.css": ":root { --x: 1px }\n",
+    "design-system/dist/tokens.flat.json": "{}\n",
+    "design-system/dist/components.json": "{ \"components\": [] }\n",
+    "content/system.generated.json": "{}\n",
+    "content/dist/content.json": "{ \"version\": 1 }\n",
+    "js/main.js": "/* site entry */\nwindow.addEventListener(\"load\", () => {});\n",
+    "lib/knowledge/tools.js": "export const content = {};\n",
+    "api/chat.js": "export default async function handler() {}\n",
+    "evals/run.mjs": "console.log(\"eval\");\n",
+    "scripts/build-content.mjs": "console.log(\"build\");\n"
+  },
+
+  "cases": [
+    {
+      "name": "the clean fixture passes",
+      "form": "control — the baseline every failure below is attributable to",
+      "files": {},
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "static import across a slice: js/ imports lib/knowledge",
+      "form": "static import",
+      "files": {
+        "js/main.js": "/* site entry */\nimport { search } from \"../lib/knowledge/index.js\";\nsearch(\"x\");\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "js/main.js:2",
+        "contains": ["imports \"../lib/knowledge/index.js\"", "never a server slice's source"]
+      }
+    },
+    {
+      "name": "dynamic import across a slice: api/ imports evals/",
+      "form": "dynamic import() — invisible to the old regex, which required a quote after `import`",
+      "files": {
+        "api/chat.js": "export default async function handler(req, res) {\n  const { run } = await import(\"../evals/run.mjs\");\n  return run(req, res);\n}\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "api/chat.js:2",
+        "contains": ["dynamically imports \"../evals/run.mjs\"", "nothing else"]
+      }
+    },
+    {
+      "name": "path read across a slice: evals/ reads api/ through new URL",
+      "form": "readFileSync(new URL(…)) — invisible to the old regex, and the idiom the architecture itself runs on",
+      "files": {
+        "evals/run.mjs": "import { readFileSync } from \"node:fs\";\nconst src = readFileSync(new URL(\"../api/chat.js\", import.meta.url), \"utf8\");\nconsole.log(src.length);\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "evals/run.mjs:2",
+        "contains": ["resolves a path to \"../api/chat.js\"", "never a consumer"]
+      }
+    },
+    {
+      "name": "path read across a slice: lib/knowledge reads content/ source",
+      "form": "fs read of a bare string path",
+      "files": {
+        "lib/knowledge/tools.js": "import { readFileSync } from \"node:fs\";\nconst md = readFileSync(\"../../content/projects/green-street.md\", \"utf8\");\nexport const content = md;\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "lib/knowledge/tools.js:2",
+        "contains": ["reads \"../../content/projects/green-street.md\"", "never content/ source"]
+      }
+    },
+    {
+      "name": "design-system internals, reached dynamically from js/",
+      "form": "dynamic import, second pass",
+      "files": {
+        "js/main.js": "/* site entry */\n/* two blank lines follow */\n\nconst t = await import(\"../design-system/tokens/tokens.json\");\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "js/main.js:4",
+        "contains": ["its internals are private"]
+      }
+    },
+    {
+      "name": "a missing crossing artefact",
+      "form": "artefact existence",
+      "files": {},
+      "remove": ["design-system/dist/components.json"],
+      "expect": {
+        "exit": 1,
+        "contains": ["design-system/dist/components.json is missing"]
+      }
+    },
+
+    {
+      "name": "js/ may POST to /api/chat",
+      "form": "control — fetch is an HTTP call, not a dependency",
+      "files": {
+        "js/chat.js": "const ENDPOINT = \"/api/chat\";\nfetch(ENDPOINT, { method: \"POST\", body: \"{}\" });\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "js/ may read the published corpus and the published stylesheets",
+      "form": "control — banning css/ or design-system/ here would break both pages and scripts/check-css.mjs",
+      "files": {
+        "js/answer-render.js": "const CORPUS_URL = \"content/dist/content.json\";\nfetch(CORPUS_URL).then((r) => r.json());\n",
+        "js/theme.js": "const sheet = new URL(\"../design-system/dist/tokens.css\", import.meta.url);\nconst page = new URL(\"../css/style.css\", import.meta.url);\nconsole.log(sheet, page);\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "lib/knowledge may read content/dist/content.json by path",
+      "form": "control — the crossing the whole architecture is built on",
+      "files": {
+        "lib/knowledge/tools.js": "import { readFileSync } from \"node:fs\";\nexport const content = JSON.parse(\n  readFileSync(new URL(\"../../content/dist/content.json\", import.meta.url), \"utf8\")\n);\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "a banned path quoted in a comment is documentation, not a dependency",
+      "form": "control — false positives are how a gate loses its readers",
+      "files": {
+        "js/main.js": "/* Never import \"../lib/knowledge/index.js\" from here: it is server code. */\n// see also readFileSync(new URL(\"../api/chat.js\", import.meta.url))\nwindow.addEventListener(\"load\", () => {});\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "a bare package specifier is a dependency, not a slice",
+      "form": "control — `import { z } from \"zod\"` must not read as a path",
+      "files": {
+        "api/chat.js": "import Anthropic from \"@anthropic-ai/sdk\";\nimport { readFileSync } from \"node:fs\";\nexport default async function handler() { return [Anthropic, readFileSync]; }\n"
+      },
+      "expect": { "exit": 0 }
+    }
+  ]
+}

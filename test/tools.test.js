@@ -110,7 +110,7 @@ test("callTool tolerates hostile-but-well-typed input", async () => {
   }
 });
 
-test("[NEW · T1 · RED] a JSON-reachable argument must not make a tool throw", async () => {
+test("[T1 · regression lock] a JSON-reachable argument must not make a tool throw", async () => {
   /* FOUND BY THIS SUITE, not by an audit. `String(x)` and `` `…${x}` `` throw
      TypeError("Cannot convert object to primitive value") when x carries an own
      `toString` that is not callable — and `{"id": {"toString": null}}` is
@@ -127,8 +127,10 @@ test("[NEW · T1 · RED] a JSON-reachable argument must not make a tool throw", 
      search_content's `String(query ?? "")` clamp — the second bypasses
      SEARCH_QUERY_MAX_CHARS before it can apply.
 
-     TARGET: coerce defensively, or reject a non-string id/query as a tool
-     error. Owner: retrieval specialist (lib/knowledge/tools.js).
+     FIXED in lib/knowledge/tools.js — coercion is defensive now and a
+     non-string id/query comes back as a tool error. This was written RED,
+     before that code existed, which is the only reason it grades the fix
+     rather than describing it. It stays as the lock.
 
      EXTENDED IN WAVE 5 to the two design-system tools. Both take a
      caller-supplied value and get_component interpolates its id into a
@@ -216,13 +218,13 @@ test("the search limit is clamped to 1..20 in the handler", async () => {
 });
 
 /* ============================================================
-   03 n2 — resolve.link is lax
+   03 n2 — resolve.link was lax
    ============================================================ */
 
-test("[03 n2 · RED until Wave 2] resolve.link rejects malformed link ids", () => {
-  /* All of these resolve to link index 0 today, because Number("") is 0 and
-     Number.isInteger accepts 1e0, 0.0 and -0. Harmless in effect — it renders
-     a real link — but this is a validator, and a validator that accepts
+test("[03 n2 · regression lock] resolve.link rejects malformed link ids", () => {
+  /* Every one of these used to resolve to link index 0, because Number("") is 0
+     and Number.isInteger accepts 1e0, 0.0 and -0. Harmless in effect — it
+     rendered a real link — but this is a validator, and a validator that accepts
      "<id>:" as "<id>:0" is not one. The id form is "<projectId>:<index>". */
   assert.ok(LINKED, "sanity: some project in the corpus must carry links");
   const id = LINKED.id;

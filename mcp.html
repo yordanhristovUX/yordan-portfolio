@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MCP server — Yordan Hristov</title>
-  <meta name="description" content="Install this portfolio as a read-only MCP server and query the work, the CV and the case studies from Claude Desktop, Claude Code or any MCP client. Six tools, no auth, no writes.">
+  <meta name="description" content="Install this portfolio as a read-only MCP server and query the work, the CV, the case studies and the design system's own component contract from Claude Desktop, Claude Code or any MCP client. Eight tools, no auth, no writes.">
   <meta property="og:title" content="MCP server — Yordan Hristov">
-  <meta property="og:description" content="Six read-only tools over a product designer's portfolio corpus, served over streamable HTTP. Add it to Claude Desktop in one JSON block.">
+  <meta property="og:description" content="Eight read-only tools over a product designer's portfolio corpus and the design system it is built on, served over streamable HTTP. Add it to Claude Desktop in one JSON block.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://yordan-portfolio.vercel.app/mcp">
   <meta name="twitter:card" content="summary">
@@ -60,14 +60,22 @@
         <p class="mcp-head__lede t-lead">
           This portfolio is also a remote MCP server. Add one line to your client and your
           Claude — not a chat widget on someone else's website — can read the projects, the
-          case studies, the CV and the design-system statistics directly.
+          case studies, the CV and the design system's own component contract directly.
         </p>
         <div class="mcp-prose">
           <p>
-            It is <strong>read-only, unauthenticated and stateless</strong>. Six tools, no
+            It is <strong>read-only, unauthenticated and stateless</strong>. Eight tools, no
             writes, no sign-up, no key. The interesting part is not that an MCP server exists;
-            it is that these six tools are the <em>same functions</em> the site's own assistant
-            calls in process, so a bug cannot exist on one surface and not the other.
+            it is that these are the <em>same functions</em> the site's own assistant calls in
+            process, so a bug cannot exist on one surface and not the other.
+          </p>
+          <p>
+            Six of them read the corpus. The other two read the design system this page is
+            built from — every class, every <code>__element</code> and <code>--variant</code>
+            suffix, and the exact custom properties each component's CSS consumes, extracted
+            from the shipped stylesheet by the system's own build. Your agent can write markup
+            that is on-system rather than merely plausible, because the server cannot describe
+            a class that does not exist.
           </p>
         </div>
         <div class="link-grid">
@@ -97,7 +105,7 @@
             <span class="chip chip--solid">Read-only</span>
             <span class="chip">No auth</span>
             <span class="chip">Stateless</span>
-            <span class="chip">6 tools</span>
+            <span class="chip">8 tools</span>
           </div>
         </div>
 
@@ -160,7 +168,7 @@
       <header class="sec__head">
         <span class="sec__no mono">02</span>
         <h2 id="tools-title" class="sec__title t-title">The tools</h2>
-        <span class="sec__note">Six, deliberately — every one read-only</span>
+        <span class="sec__note">Six over the corpus, two over the design system — every one read-only</span>
       </header>
       <div class="well">
         <dl class="tools">
@@ -206,9 +214,33 @@
           <div class="tools__row">
             <dt>search_content</dt>
             <dd>
-              Lexical BM25 across every chunk of the corpus, returning ranked passages with their
-              citations. It is keyword search, not semantic — and an empty result means the corpus
-              does not cover the question, which is the answer rather than a failure.
+              Semantic search across every chunk of the corpus, ranked by embedding similarity and
+              falling back to lexical BM25 when the embedding service is unavailable — a
+              <code>ranker</code> field on every response says which one ran. Results come back with
+              their citations, and with a coverage verdict: <code>gateMatched</code> reports whether
+              the query named any project, client, role, skill or fact this corpus actually contains.
+              A null there does not empty the results; it means the passages below are the closest
+              text rather than a claim that they answer the question.
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>get_design_system</dt>
+            <dd>
+              The machine-readable contract for the design system this page is built from: the token
+              categories markup may draw on, an index of every component with what it is composed of,
+              and the rules markup has to obey to be on-system. Derived from the shipped stylesheet by
+              the design system's build, not written by hand. Call it before writing any markup.
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>get_component</dt>
+            <dd>
+              One component's contract: its block names, every class it defines, its
+              <code>__element</code> and <code>--variant</code> suffixes, the full selector list, and
+              the exact custom properties its CSS consumes. Plus one authored sentence stating its
+              accessibility contract and the path to the spec that holds the reasoning — it reports
+              what a component is <em>made of</em> and never describes it, because the description is
+              human-written and belongs in that file.
             </dd>
           </div>
         </dl>
@@ -240,9 +272,11 @@
           <p>
             <strong>The tools are the asset; the protocol is one way to reach them.</strong> They
             live in <code>lib/knowledge/</code> as pure functions over a generated content index —
-            no network, no state, no dependencies. The site's own assistant imports that module and
-            calls it <em>in process</em>. This endpoint imports the same module and exposes the same
-            six functions to anyone. Two consumers, one core.
+            no state, no dependencies, and no network beyond embedding the search query. The site's
+            own assistant imports that module and calls it <em>in process</em>. This endpoint imports
+            the same module and exposes the same functions to anyone; it reads the tool list rather
+            than enumerating it, which is why the two design-system tools appeared here without a
+            line of transport code changing. Two consumers, one core.
           </p>
           <p>
             <strong>The web chat does not call this endpoint, and that is deliberate.</strong>
@@ -296,15 +330,15 @@
           <article class="card card--ruled">
             <h3 class="card__title">A closed corpus</h3>
             <p>
-              One person's work, written by him. Ask it something outside that and it returns
-              nothing — which is the correct answer, not a bug.
+              One person's work, written by him. Ask it something outside that and search still
+              ranks — but it says so, and the honest answer is that the corpus does not cover it.
             </p>
           </article>
           <article class="card card--ruled">
-            <h3 class="card__title">No model, no key</h3>
+            <h3 class="card__title">Spends no inference</h3>
             <p>
-              The server spends no inference. Your own client pays for the reasoning; this endpoint
-              only hands it text.
+              No model runs here. Your own client pays for the reasoning; this endpoint only hands
+              it text — and ranks worse rather than failing if its embedding service is away.
             </p>
           </article>
           <article class="card card--ruled">

@@ -4,6 +4,14 @@ Raw material for a case study. Written during the build, not reconstructed after
 Everything here is traceable to a commit, a measurement, or a failure that actually
 happened. The interesting parts are the places the plan turned out to be wrong.
 
+> **Read this as dated, not as current.** Every figure and every count below describes the
+> state of the repo at the phase it sits under, and several have moved since — Phase 1's six
+> tools are eight, the question set has grown, and one argument recorded here as settled has
+> since been withdrawn (see *"The gate that didn't work"*). Corrections are appended in place
+> rather than edited into the original, because a build log that is quietly updated stops
+> being evidence of anything. For what is true **now**, `ARCHITECTURE.md` and the per-slice
+> `CLAUDE.md` files are the live documents.
+
 **Branch:** `feat/content-pipeline` · 7 commits · not yet merged to `main`.
 
 ---
@@ -135,6 +143,16 @@ readily as term overlap does. So the shipping design is:
 
 > **The entity gate decides *whether*. Embeddings decide *what*.**
 
+> **Correction, appended later.** That is no longer the shipping design. The gate was moved
+> *above* the tool: `search_content` returns its full ranking with a coverage verdict
+> attached (`gateMatched`, `gateScore`, `note`) and refuses nothing. Two measurements forced
+> it — the gate was refusing answerable questions including *"Where is he working at the
+> moment?"*, and collapsed to a boolean inside the tool it discarded the entity it had just
+> identified, so it could only ever refuse and never re-route. The verdict is now a signal
+> the *caller* weighs. Read `lib/knowledge/gate.js`'s header for the current shape, and treat
+> the `tools-gated` and `gated-embeddings` rows below as **counterfactuals** — they price
+> what refusing on a gate miss would cost, and they no longer describe production.
+
 ---
 
 ## The moment the architecture proved itself
@@ -246,6 +264,19 @@ tools-gated   abstain 72.7% → 90.9%   separability 0.869 → 0.920
               hit@3 67.4% (unchanged)
 ```
 
+> **Correction, appended later — the last sentence of that paragraph is wrong, and it is the
+> most instructive error in this log.** "Excluding it added no parameter, so nothing could
+> have been fitted" is a non-sequitur. **Parameter count is not the definition of
+> overfitting.** The exclusion was decided *after* watching `oob-google` fail, and a discrete
+> structural choice selected by observing the evaluation set is test-set fitting whether or
+> not it adds a constant. The principled argument for it is still sound on its own — it was
+> simply constructed after the failure rather than before, and at the time only the first of
+> those two facts got written down. That is exactly how a defence becomes load-bearing
+> without ever being checked: it was true-sounding, it was written in a document nothing
+> gates, and it was quoted onward into two other files. `lib/knowledge/gate.js`'s header and
+> `evals/CLAUDE.md` now carry the concession; `lib/knowledge/CLAUDE.md` carries the list of
+> what *can* honestly be claimed instead.
+
 ### A trap in the same change
 
 Making `search_content` gated would have silently gated the eval's `bm25` arm too, since it
@@ -269,8 +300,15 @@ arm                 hit@3   abstain    sep.
 bm25                74.4%      0.0%   0.837
 tools-gated         67.4%     90.9%   0.920
 embeddings          93.0%      0.0%   0.832
-gated-embeddings    79.1%     90.9%   0.920   ← what actually ships
+gated-embeddings    79.1%     90.9%   0.920   ← what shipped at the time
 ```
+
+> **Correction, appended later.** The arrow was true when it was written and is not now: the
+> gate stopped filtering, so what ships is the **ungated** embeddings ranking with a coverage
+> note attached. `gated-embeddings` is a counterfactual row. The reasoning in the paragraph
+> below — that a deployed configuration appearing in no measurement is the unmeasured claim
+> the suite exists to prevent — is the part that survived, and it is why the ungated arm is
+> still in the table.
 
 The shipped arm beats the old gated arm by **11.7pp with identical abstention**, and gives up
 13.9pp against ungated embeddings to buy refusal. Both gated arms reach **100% on
