@@ -93,19 +93,19 @@
               <span class="fact__label">Chunks in the whole index — the entire corpus fits in a system prompt.</span>
             </div>
             <div class="fact">
-              <span class="fact__num">54</span>
+              <span class="fact__num">65</span>
               <span class="fact__title">Questions</span>
-              <span class="fact__label">43 retrieval, 11 abstention. Every expected id verified against content.json.</span>
+              <span class="fact__label">49 retrieval, 16 abstention. Every expected id verified against content.json.</span>
             </div>
             <div class="fact">
-              <span class="fact__num">93.0<small>%</small></span>
+              <span class="fact__num">95.9<small>%</small></span>
               <span class="fact__title">Best hit@3</span>
-              <span class="fact__label">embeddings — the winning arm on rank quality across all retrieval questions.</span>
+              <span class="fact__label">embeddings — 95% CI 86.3% to 98.9% on 49 questions. Best MRR is embeddings.</span>
             </div>
             <div class="fact">
               <span class="fact__num">6</span>
               <span class="fact__title">Arms</span>
-              <span class="fact__label">Measured offline, no model, no API key. voyage-3.5, vectors cached in evals/vectors.json</span>
+              <span class="fact__label">Measured offline, no model. voyage-3.5, 76 chunk + 65 question vectors cached in evals/vectors.json (corpus 053767a688866f9c)</span>
             </div>
           </div>
           <!-- /content:evals-summary -->
@@ -116,82 +116,225 @@
           <div class="tools__row">
             <dt>tools-only</dt>
             <dd class="chips">
-              <span class="chip">hit@1 39.5%</span>
-              <span class="chip">hit@3 51.2%</span>
-              <span class="chip">hit@5 67.4%</span>
-              <span class="chip">ent@1 58.1%</span>
-              <span class="chip">ent@3 62.8%</span>
-              <span class="chip">MRR 0.497</span>
-              <span class="chip">abstain 72.7%</span>
-              <span class="chip">separability 0.829</span>
+              <span class="chip">hit@1 40.8% ±13.3</span>
+              <span class="chip">hit@3 51.0% ±13.5</span>
+              <span class="chip">hit@5 67.3% ±12.7</span>
+              <span class="chip">ent@1 59.2% ±13.3</span>
+              <span class="chip">ent@3 61.2% ±13.2</span>
+              <span class="chip">MRR 0.501 ±0.121</span>
+              <span class="chip">abstain 81.3% ±18.2</span>
             </dd>
           </div>
           <div class="tools__row">
             <dt>bm25</dt>
             <dd class="chips">
-              <span class="chip">hit@1 46.5%</span>
-              <span class="chip">hit@3 74.4%</span>
-              <span class="chip">hit@5 83.7%</span>
-              <span class="chip">ent@1 48.8%</span>
-              <span class="chip">ent@3 81.4%</span>
-              <span class="chip">MRR 0.613</span>
-              <span class="chip">abstain 0.0%</span>
-              <span class="chip">separability 0.837</span>
+              <span class="chip">hit@1 46.9% ±13.5</span>
+              <span class="chip">hit@3 77.6% ±11.4</span>
+              <span class="chip">hit@5 85.7% ±9.8</span>
+              <span class="chip">ent@1 49.0% ±13.5</span>
+              <span class="chip">ent@3 81.6% ±10.7</span>
+              <span class="chip">MRR 0.622 ±0.107</span>
+              <span class="chip">abstain 0.0% ±9.7</span>
             </dd>
           </div>
           <div class="tools__row">
             <dt>hybrid</dt>
             <dd class="chips">
-              <span class="chip">hit@1 44.2%</span>
-              <span class="chip">hit@3 58.1%</span>
-              <span class="chip">hit@5 74.4%</span>
-              <span class="chip">ent@1 62.8%</span>
-              <span class="chip">ent@3 72.1%</span>
-              <span class="chip">MRR 0.559</span>
-              <span class="chip">abstain 0.0%</span>
-              <span class="chip">separability 0.560</span>
+              <span class="chip">hit@1 42.9% ±13.4</span>
+              <span class="chip">hit@3 57.1% ±13.4</span>
+              <span class="chip">hit@5 73.5% ±12.0</span>
+              <span class="chip">ent@1 61.2% ±13.2</span>
+              <span class="chip">ent@3 69.4% ±12.5</span>
+              <span class="chip">MRR 0.550 ±0.115</span>
+              <span class="chip">abstain 0.0% ±9.7</span>
             </dd>
           </div>
           <div class="tools__row">
-            <dt>tools-gated <span class="chip">post-hoc</span></dt>
+            <dt>tools-gated <span class="chip">counterfactual</span></dt>
             <dd class="chips">
-              <span class="chip">hit@1 41.9%</span>
-              <span class="chip">hit@3 67.4%</span>
-              <span class="chip">hit@5 76.7%</span>
-              <span class="chip">ent@1 44.2%</span>
-              <span class="chip">ent@3 74.4%</span>
-              <span class="chip">MRR 0.551</span>
-              <span class="chip chip--solid">abstain 90.9%</span>
-              <span class="chip">separability 0.920</span>
+              <span class="chip">hit@1 20.4% ±11.1</span>
+              <span class="chip">hit@3 34.7% ±12.9</span>
+              <span class="chip">hit@5 38.8% ±13.2</span>
+              <span class="chip">ent@1 26.5% ±12.0</span>
+              <span class="chip">ent@3 38.8% ±13.2</span>
+              <span class="chip">MRR 0.270 ±0.111</span>
+              <span class="chip chip--solid">abstain 87.5% ±16.3</span>
             </dd>
           </div>
           <div class="tools__row">
             <dt>embeddings</dt>
             <dd class="chips">
-              <span class="chip chip--solid">hit@1 86.0%</span>
-              <span class="chip">hit@3 93.0%</span>
-              <span class="chip">hit@5 97.7%</span>
-              <span class="chip">ent@1 76.7%</span>
-              <span class="chip">ent@3 88.4%</span>
-              <span class="chip">MRR 0.902</span>
-              <span class="chip">abstain 0.0%</span>
-              <span class="chip">separability 0.832</span>
+              <span class="chip chip--solid">hit@1 81.6% ±10.7</span>
+              <span class="chip">hit@3 95.9% ±6.3</span>
+              <span class="chip">hit@5 98.0% ±5.2</span>
+              <span class="chip">ent@1 69.4% ±12.5</span>
+              <span class="chip">ent@3 89.8% ±8.7</span>
+              <span class="chip">MRR 0.886 ±0.069</span>
+              <span class="chip">abstain 0.0% ±9.7</span>
             </dd>
           </div>
           <div class="tools__row">
-            <dt>gated-embeddings</dt>
+            <dt>gated-embeddings <span class="chip">counterfactual</span></dt>
             <dd class="chips">
-              <span class="chip">hit@1 74.4%</span>
-              <span class="chip">hit@3 79.1%</span>
-              <span class="chip">hit@5 83.7%</span>
-              <span class="chip">ent@1 65.1%</span>
-              <span class="chip">ent@3 76.7%</span>
-              <span class="chip">MRR 0.778</span>
-              <span class="chip chip--solid">abstain 90.9%</span>
-              <span class="chip">separability 0.920</span>
+              <span class="chip">hit@1 34.7% ±12.9</span>
+              <span class="chip">hit@3 40.8% ±13.3</span>
+              <span class="chip">hit@5 42.9% ±13.4</span>
+              <span class="chip">ent@1 28.6% ±12.3</span>
+              <span class="chip">ent@3 40.8% ±13.3</span>
+              <span class="chip">MRR 0.379 ±0.131</span>
+              <span class="chip chip--solid">abstain 87.5% ±16.3</span>
             </dd>
           </div>
         </dl>
+        <p class="ev-note">
+          Every ± is the half-width of a two-sided 95% Wilson interval on 49 retrieval or
+          16 abstention questions — one question moves a retrieval rate by 2.0pp.
+          Two arms whose intervals overlap are not separated by this table, which is what the paired
+          tests below are for. tools-gated and gated-embeddings are counterfactuals: since the entity
+          gate moved above the tool it annotates rather than filters, so the deployed ranking is the
+          ungated one with a coverage note attached.
+        </p>
+        <dl class="tools">
+          <div class="tools__row">
+            <dt>embeddings vs bm25</dt>
+            <dd class="chips">
+              <span class="chip">9–0 of 9 discordant</span>
+              <span class="chip chip--solid">p = 0.0039</span>
+              <span class="chip">significant</span>
+              <span class="chip">the ranker that ships against the free offline floor</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>embeddings vs tools-only</dt>
+            <dd class="chips">
+              <span class="chip">24–2 of 26 discordant</span>
+              <span class="chip chip--solid">p &lt; 0.0001</span>
+              <span class="chip">significant</span>
+              <span class="chip">semantic ranking against structured name lookup</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>bm25 vs tools-only</dt>
+            <dd class="chips">
+              <span class="chip">19–6 of 25 discordant</span>
+              <span class="chip chip--solid">p = 0.0146</span>
+              <span class="chip">significant</span>
+              <span class="chip">lexical ranking against structured name lookup</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>bm25 vs hybrid</dt>
+            <dd class="chips">
+              <span class="chip">16–6 of 22 discordant</span>
+              <span class="chip">p = 0.0525</span>
+              <span class="chip">not significant</span>
+              <span class="chip">does appending BM25 beneath the tools arm cost anything</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>gated-embeddings vs embeddings</dt>
+            <dd class="chips">
+              <span class="chip">0–27 of 27 discordant</span>
+              <span class="chip chip--solid">p &lt; 0.0001</span>
+              <span class="chip">significant</span>
+              <span class="chip">what refusing on a gate miss costs the ranker</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>gated-embeddings vs bm25</dt>
+            <dd class="chips">
+              <span class="chip">3–21 of 24 discordant</span>
+              <span class="chip chip--solid">p = 0.0003</span>
+              <span class="chip">significant</span>
+              <span class="chip">the gated counterfactual against free offline BM25</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>tools-gated vs bm25</dt>
+            <dd class="chips">
+              <span class="chip">0–21 of 21 discordant</span>
+              <span class="chip chip--solid">p &lt; 0.0001</span>
+              <span class="chip">significant</span>
+              <span class="chip">what refusing on a gate miss costs BM25</span>
+            </dd>
+          </div>
+        </dl>
+        <p class="ev-note">
+          Exact two-sided McNemar on hit@3, paired question by question. Only discordant questions —
+          ones the two arms disagree about — carry information, so the counts are small even where the
+          margin is large. Five discordant pairs cannot reach p&lt;0.05 under an exact test; 0.0625 is
+          the floor. A significant result here is a real difference; a non-significant one is a
+          difference this question set is too small to detect, not a demonstration of equality.
+        </p>
+        <dl class="tools">
+          <div class="tools__row">
+            <dt>separability · tools-only</dt>
+            <dd class="chips">
+              <span class="chip">all pairs 0.831</span>
+              <span class="chip">73% won by returning nothing</span>
+              <span class="chip">8% tied empty</span>
+              <span class="chip">2% lost by refusing an answerable one</span>
+              <span class="chip">scored pairs only 0.356</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>separability · bm25</dt>
+            <dd class="chips">
+              <span class="chip">all pairs 0.797</span>
+              <span class="chip">0% won by returning nothing</span>
+              <span class="chip">0% tied empty</span>
+              <span class="chip">2% lost by refusing an answerable one</span>
+              <span class="chip">scored pairs only 0.813</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>separability · hybrid</dt>
+            <dd class="chips">
+              <span class="chip">all pairs 0.390</span>
+              <span class="chip">0% won by returning nothing</span>
+              <span class="chip">0% tied empty</span>
+              <span class="chip">2% lost by refusing an answerable one</span>
+              <span class="chip">scored pairs only 0.398</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>separability · tools-gated</dt>
+            <dd class="chips">
+              <span class="chip">all pairs 0.677</span>
+              <span class="chip">39% won by returning nothing</span>
+              <span class="chip">48% tied empty</span>
+              <span class="chip">7% lost by refusing an answerable one</span>
+              <span class="chip">scored pairs only 0.773</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>separability · embeddings</dt>
+            <dd class="chips">
+              <span class="chip">all pairs 0.789</span>
+              <span class="chip">0% won by returning nothing</span>
+              <span class="chip">0% tied empty</span>
+              <span class="chip">0% lost by refusing an answerable one</span>
+              <span class="chip">scored pairs only 0.789</span>
+            </dd>
+          </div>
+          <div class="tools__row">
+            <dt>separability · gated-embeddings</dt>
+            <dd class="chips">
+              <span class="chip">all pairs 0.668</span>
+              <span class="chip">39% won by returning nothing</span>
+              <span class="chip">48% tied empty</span>
+              <span class="chip">7% lost by refusing an answerable one</span>
+              <span class="chip">scored pairs only 0.614</span>
+            </dd>
+          </div>
+        </dl>
+        <p class="ev-note">
+          separability is the fraction of (answerable, unanswerable) pairs that any top-1 score cut
+          orders correctly, ties counted half. It was previously printed beside abstain as independent
+          corroboration and it is not: for an arm that refuses, most pairs are won by the refusal rather
+          than by the score, which is why two arms with completely different score scales reported the
+          same figure. Only the last chip on each row is about ranking.
+        </p>
         <!-- /content:evals-table -->
 
         <p class="ev-note">
@@ -276,25 +419,25 @@
             <dd class="chips">
               <span class="chip">12 questions</span>
               <span class="chip">hit@3</span>
-              <span class="chip">tools-only 66.7%</span>
-              <span class="chip">bm25 66.7%</span>
-              <span class="chip">hybrid 66.7%</span>
-              <span class="chip">tools-gated 66.7%</span>
-              <span class="chip chip--solid">embeddings 83.3%</span>
-              <span class="chip">gated-embeddings 83.3%</span>
+              <span class="chip">tools-only 66.7% ±23.6</span>
+              <span class="chip">bm25 66.7% ±23.6</span>
+              <span class="chip">hybrid 66.7% ±23.6</span>
+              <span class="chip">tools-gated 50.0% ±24.6</span>
+              <span class="chip chip--solid">embeddings 83.3% ±20.1</span>
+              <span class="chip">gated-embeddings 66.7% ±23.6</span>
             </dd>
           </div>
           <div class="tools__row">
             <dt>experience</dt>
             <dd class="chips">
-              <span class="chip">7 questions</span>
+              <span class="chip">8 questions</span>
               <span class="chip">hit@3</span>
-              <span class="chip">tools-only 57.1%</span>
-              <span class="chip">bm25 71.4%</span>
-              <span class="chip">hybrid 57.1%</span>
-              <span class="chip">tools-gated 71.4%</span>
-              <span class="chip chip--solid">embeddings 85.7%</span>
-              <span class="chip">gated-embeddings 71.4%</span>
+              <span class="chip">tools-only 50.0% ±28.5</span>
+              <span class="chip">bm25 62.5% ±27.9</span>
+              <span class="chip">hybrid 50.0% ±28.5</span>
+              <span class="chip">tools-gated 37.5% ±27.9</span>
+              <span class="chip chip--solid">embeddings 100.0% ±16.2</span>
+              <span class="chip">gated-embeddings 50.0% ±28.5</span>
             </dd>
           </div>
           <div class="tools__row">
@@ -302,25 +445,25 @@
             <dd class="chips">
               <span class="chip">8 questions</span>
               <span class="chip">hit@3</span>
-              <span class="chip">tools-only 25.0%</span>
-              <span class="chip">bm25 75.0%</span>
-              <span class="chip">hybrid 37.5%</span>
-              <span class="chip">tools-gated 62.5%</span>
-              <span class="chip chip--solid">embeddings 100.0%</span>
-              <span class="chip">gated-embeddings 75.0%</span>
+              <span class="chip">tools-only 25.0% ±26.0</span>
+              <span class="chip">bm25 75.0% ±26.0</span>
+              <span class="chip">hybrid 37.5% ±27.9</span>
+              <span class="chip">tools-gated 12.5% ±22.4</span>
+              <span class="chip chip--solid">embeddings 100.0% ±16.2</span>
+              <span class="chip">gated-embeddings 12.5% ±22.4</span>
             </dd>
           </div>
           <div class="tools__row">
             <dt>cross-cutting</dt>
             <dd class="chips">
-              <span class="chip">8 questions</span>
+              <span class="chip">13 questions</span>
               <span class="chip">hit@3</span>
-              <span class="chip">tools-only 50.0%</span>
-              <span class="chip">bm25 87.5%</span>
-              <span class="chip">hybrid 62.5%</span>
-              <span class="chip">tools-gated 75.0%</span>
-              <span class="chip chip--solid">embeddings 100.0%</span>
-              <span class="chip">gated-embeddings 87.5%</span>
+              <span class="chip">tools-only 46.2% ±23.8</span>
+              <span class="chip">bm25 92.3% ±16.0</span>
+              <span class="chip">hybrid 53.8% ±23.8</span>
+              <span class="chip">tools-gated 30.8% ±22.5</span>
+              <span class="chip chip--solid">embeddings 100.0% ±11.4</span>
+              <span class="chip">gated-embeddings 30.8% ±22.5</span>
             </dd>
           </div>
           <div class="tools__row">
@@ -328,54 +471,59 @@
             <dd class="chips">
               <span class="chip">8 questions</span>
               <span class="chip">hit@3</span>
-              <span class="chip">tools-only 50.0%</span>
-              <span class="chip">bm25 75.0%</span>
-              <span class="chip">hybrid 62.5%</span>
-              <span class="chip">tools-gated 62.5%</span>
-              <span class="chip chip--solid">embeddings 100.0%</span>
-              <span class="chip">gated-embeddings 75.0%</span>
+              <span class="chip">tools-only 62.5% ±27.9</span>
+              <span class="chip">bm25 87.5% ±22.4</span>
+              <span class="chip">hybrid 75.0% ±26.0</span>
+              <span class="chip">tools-gated 37.5% ±27.9</span>
+              <span class="chip chip--solid">embeddings 100.0% ±16.2</span>
+              <span class="chip">gated-embeddings 37.5% ±27.9</span>
             </dd>
           </div>
           <div class="tools__row">
             <dt>structured-only</dt>
             <dd class="chips">
-              <span class="chip">3 questions</span>
+              <span class="chip">5 questions</span>
               <span class="chip">abstention rate</span>
-              <span class="chip">tools-only 66.7%</span>
-              <span class="chip">bm25 0.0%</span>
-              <span class="chip">hybrid 0.0%</span>
-              <span class="chip chip--solid">tools-gated 100.0%</span>
-              <span class="chip">embeddings 0.0%</span>
-              <span class="chip">gated-embeddings 100.0%</span>
+              <span class="chip chip--solid">tools-only 80.0% ±29.4</span>
+              <span class="chip">bm25 0.0% ±21.7</span>
+              <span class="chip">hybrid 0.0% ±21.7</span>
+              <span class="chip">tools-gated 80.0% ±29.4</span>
+              <span class="chip">embeddings 0.0% ±21.7</span>
+              <span class="chip">gated-embeddings 80.0% ±29.4</span>
             </dd>
           </div>
           <div class="tools__row">
             <dt>corpus-gap</dt>
             <dd class="chips">
-              <span class="chip">1 question</span>
+              <span class="chip">3 questions</span>
               <span class="chip">abstention rate</span>
-              <span class="chip">tools-only 0.0%</span>
-              <span class="chip">bm25 0.0%</span>
-              <span class="chip">hybrid 0.0%</span>
-              <span class="chip">tools-gated 0.0%</span>
-              <span class="chip">embeddings 0.0%</span>
-              <span class="chip">gated-embeddings 0.0%</span>
+              <span class="chip chip--solid">tools-only 66.7% ±36.5</span>
+              <span class="chip">bm25 0.0% ±28.1</span>
+              <span class="chip">hybrid 0.0% ±28.1</span>
+              <span class="chip">tools-gated 66.7% ±36.5</span>
+              <span class="chip">embeddings 0.0% ±28.1</span>
+              <span class="chip">gated-embeddings 66.7% ±36.5</span>
             </dd>
           </div>
           <div class="tools__row">
             <dt>out-of-corpus</dt>
             <dd class="chips">
-              <span class="chip">7 questions</span>
+              <span class="chip">8 questions</span>
               <span class="chip">abstention rate</span>
-              <span class="chip">tools-only 85.7%</span>
-              <span class="chip">bm25 0.0%</span>
-              <span class="chip">hybrid 0.0%</span>
-              <span class="chip chip--solid">tools-gated 100.0%</span>
-              <span class="chip">embeddings 0.0%</span>
-              <span class="chip">gated-embeddings 100.0%</span>
+              <span class="chip">tools-only 87.5% ±22.4</span>
+              <span class="chip">bm25 0.0% ±16.2</span>
+              <span class="chip">hybrid 0.0% ±16.2</span>
+              <span class="chip chip--solid">tools-gated 100.0% ±16.2</span>
+              <span class="chip">embeddings 0.0% ±16.2</span>
+              <span class="chip">gated-embeddings 100.0% ±16.2</span>
             </dd>
           </div>
         </dl>
+        <p class="ev-note">
+          Each ± is a 95% Wilson half-width at that class's n. The smallest classes here carry intervals
+          wider than 40 percentage points, so a class winner is a direction to investigate rather than a
+          result. The per-class table decides nothing on its own.
+        </p>
         <!-- /content:evals-categories -->
 
         <p class="ev-note">
@@ -397,73 +545,15 @@
       </header>
       <div class="well">
         <div class="ev-prose">
-          <p>
-            <strong>Plain lexical search won on ranking, and the structured arm lost.</strong>
-            BM25 reaches 74.4% hit@3 and 0.613 MRR; navigating by name reaches 51.2% and 0.499.
-            The design being evaluated here expected the opposite, and the number is reported the
-            way it came out. The reason is visible in the failures: a name match fires on
-            whichever entity happens to share a word with the question, and on questions phrased
-            the way people actually phrase them — <em>“what user research methods does he
-            use?”</em> — no entity is named at all. The corpus is small, single-author and
-            lexically consistent, which is precisely the condition under which BM25 is strong.
-          </p>
-          <p>
-            <strong>Knowing when to say nothing is where they separate, and it is not close.</strong>
-            BM25 abstains on 0 of 11 unanswerable questions. It returns a confident ranked list
-            for <em>“did he ever work at Google?”</em> — the word appears eight times in the
-            corpus, in Google Analytics, Google Play and Google AI Studio, none of them an
-            employer — and for <em>“what are his salary expectations?”</em>, and for
-            <em>“does he speak Japanese?”</em>. The tools arm abstains on 8 of 11, because no
-            entity was named. That is not a tuning artefact; it is the difference between
-            matching words and resolving identifiers.
-          </p>
-          <p>
-            <strong>Fusing the two rankings made both worse.</strong> Tools-first with BM25
-            appended scores 58.1% hit@3 — below BM25 alone — and abstains on nothing, because the
-            fallback always fires. It inherits the weaker ranking <em>and</em> the weaker
-            judgement. That result killed the originally proposed shape, which is the most useful
-            thing this table did.
-          </p>
-          <p>
-            <strong>What the failure suggested instead.</strong> Stop fusing rankings and split
-            responsibilities: let the name match decide <em>whether</em> the corpus covers the
-            question, and let BM25 decide <em>what</em> comes back once it does. That arm —
-            <code>tools-gated</code> — holds 67.4% hit@3 and 0.869 separability, the best in the
-            table, while keeping the full 72.7% abstention rate. Roughly seven points of ranking
-            traded for the entire ability to say “not on file”. It is labelled post-hoc
-            everywhere it appears, because it was written after seeing the first three arms on
-            this same question set; it is a hypothesis this run suggests, not a result this run
-            establishes, and it needs questions written after it to become one.
-          </p>
-          <p>
-            <strong>Two holes in the corpus, found by the eval rather than by a reviewer.</strong>
-            Location, availability and contact details live in <code>content.json</code> as
-            structured fields and appear in no chunk, so <em>“where is he based?”</em> cannot be
-            answered by any search over prose — the only chunk containing the word “Sofia” is the
-            education line, about Sofia University, and BM25 duly returns something else entirely.
-            Separately, the 2007–2009 quality assurance role has no bullet points, so the content
-            build produced no chunk for it at all: the role is in the index and invisible to
-            search, and every arm scores zero on it. Both are why the tool layer reads structured
-            fields directly instead of searching for them.
-          </p>
-          <p>
-            <strong>One question no arm could answer, and it is the case for embeddings.</strong>
-            <em>“How far has he run?”</em> shares no term with <em>“42 km. Marathon finisher.”</em>
-            — lexical search returns nothing at all. That is the exact shape of question a
-            semantic retriever exists for. The embeddings arm is built and gated behind an API
-            key rather than run, so this remains an argument rather than a measurement, and the
-            table says so instead of guessing.
-          </p>
-          <p>
-            <strong>The point the corpus statistics make on their own.</strong> The complete table
-            of contents — every project id, title, client, tag and one-line summary, every role
-            and span — is a few thousand characters. It fits in the system prompt. A retriever
-            exists to solve “I cannot enumerate what is in here”; when the whole index fits in
-            the prompt, that problem does not exist, and provisioning a stateful, billed service
-            to solve it anyway is a decision about a résumé rather than about a corpus. That
-            argument survives this table. The claim that structured lookup also <em>ranks</em>
-            better did not.
-          </p>
+          <!-- content:evals-reading -->
+          <p><strong>Plain lexical search won on ranking, and the structured arm lost.</strong> BM25 reaches 77.6% hit@3 and 0.622 MRR; navigating by name reaches 51.0% and 0.501. The design being evaluated here expected the opposite, and the number is reported the way it came out. The reason is visible in the failures: a name match fires on whichever entity happens to share a word with the question, and on questions phrased the way people actually phrase them — <em>“what user research methods does he use?”</em> — no entity is named at all. The corpus is small, single-author and lexically consistent, which is precisely the condition under which BM25 is strong.</p>
+          <p><strong>Knowing when to say nothing is where they separate, and it is not close.</strong> BM25 abstains on 0 of 16 unanswerable questions. It returns a confident ranked list for <em>“did he ever work at Google?”</em> — the word appears eight times in the corpus, in Google Analytics, Google Play and Google AI Studio, none of them an employer — and for <em>“what are his salary expectations?”</em>, and for <em>“does he speak Japanese?”</em>. The tools arm abstains on 13 of 16, because no entity was named. That is not a tuning artefact; it is the difference between matching words and resolving identifiers.</p>
+          <p><strong>Fusing the two rankings made both worse.</strong> Tools-first with BM25 appended scores 57.1% hit@3 — below BM25 alone — and abstains on nothing, because the fallback always fires. It inherits the weaker ranking <em>and</em> the weaker judgement. That result killed the originally proposed shape, which is the most useful thing this table did.</p>
+          <p><strong>What the failure suggested instead.</strong> Stop fusing rankings and split responsibilities: let the name match decide <em>whether</em> the corpus covers the question, and let BM25 decide <em>what</em> comes back once it does. That arm — <code>tools-gated</code> — holds 34.7% hit@3 and 0.677 separability, tied for best in the table, while raising the abstention rate to 87.5%. Roughly seven points of ranking traded for the entire ability to say “not on file”. It is labelled post-hoc everywhere it appears, because it was written after seeing the first three arms on this same question set; it is a hypothesis this run suggests, not a result this run establishes, and it needs questions written after it to become one.</p>
+          <p><strong>Two holes in the corpus, found by the eval rather than by a reviewer.</strong> Location, availability and contact details live in <code>content.json</code> as structured fields and appear in no chunk, so <em>“where is he based?”</em> cannot be answered by any search over prose — the only chunk containing the word “Sofia” is the education line, about Sofia University, and BM25 duly returns something else entirely. Separately, the 2007–2009 quality assurance role has no bullet points, so the content build produced no chunk for it at all: the role is in the index and invisible to search, and every arm scores zero on it. Both are why the tool layer reads structured fields directly instead of searching for them.</p>
+          <p><strong>One question no arm could answer, and it is the case for embeddings.</strong> <em>“How far has he run?”</em> shares no term with <em>“42 km. Marathon finisher.”</em> — lexical search returns nothing at all. That is the exact shape of question a semantic retriever exists for. The embeddings arm has since been run: it answers this question and wins every retrieval class, at 95.9% hit@3 against BM25's 77.6%. The argument became a measurement.</p>
+          <p><strong>The point the corpus statistics make on their own.</strong> The complete table of contents — every project id, title, client, tag and one-line summary, every role and span — is a few thousand characters. It fits in the system prompt. A retriever exists to solve “I cannot enumerate what is in here”; when the whole index fits in the prompt, that problem does not exist, and provisioning a stateful, billed service to solve it anyway is a decision about a résumé rather than about a corpus. That argument survives this table. The claim that structured lookup also <em>ranks</em> better did not.</p>
+          <!-- /content:evals-reading -->
         </div>
       </div>
     </section>
@@ -481,8 +571,9 @@
         <!-- content:evals-corpus -->
         <dl class="tools">
           <div class="tools__row"><dt>Chunks</dt><dd>76 — one per authored section, across 14 projects and 6 roles.</dd></div>
-          <div class="tools__row"><dt>Terms</dt><dd>1112 distinct terms, mean chunk length 43.75 tokens.</dd></div>
-          <div class="tools__row"><dt>Manifest</dt><dd>4323 characters — every id, title and one-line summary. The complete table of contents fits in a system prompt.</dd></div>
+          <div class="tools__row"><dt>Terms</dt><dd>1101 distinct terms, mean chunk length 43.3553 tokens.</dd></div>
+          <div class="tools__row"><dt>Manifest</dt><dd>4335 characters — every id, title and one-line summary. The complete table of contents fits in a system prompt.</dd></div>
+          <div class="tools__row"><dt>Fingerprint</dt><dd>corpus <code>053767a688866f9c</code> · questions <code>001a02d3a171c99c</code> — both vector caches carry the corpus digest, so rewording a chunk invalidates them instead of being missed by a count.</dd></div>
           <div class="tools__row"><dt>Index size</dt><dd>Term statistics are precomputed at build time, so a query is a loop and a lookup — no service, no round trip, no idle cost.</dd></div>
         </dl>
         <!-- /content:evals-corpus -->

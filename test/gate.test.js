@@ -122,7 +122,12 @@ test("every out-of-corpus eval question is refused", () => {
   const questions = readJson("evals/questions.json").questions.filter(
     (q) => q.category === "out-of-corpus"
   );
-  assert.equal(questions.length, 7, "sanity: the out-of-corpus class should be non-empty");
+  /* Non-emptiness, not arity. A hard-coded count made this fail the moment the
+     eval gained an eighth out-of-corpus question — for a reason that had nothing
+     to do with the property under test, which is that NONE of them open the gate.
+     Same instinct as `verifyTokeniser` and the test below: derive from the
+     shipped artefact so it grows with the corpus. */
+  assert.ok(questions.length > 0, "sanity: the out-of-corpus class should be non-empty");
   const opened = questions.filter((q) => opens(q.question)).map((q) => q.id);
   assert.deepEqual(opened, [], `out-of-corpus questions opened the gate: ${opened.join(", ")}`);
 });

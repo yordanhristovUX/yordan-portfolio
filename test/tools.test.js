@@ -27,7 +27,20 @@ goOffline();
 
 const { callTool, handlers, resolve, TOOLS, content } = await import("../lib/knowledge/index.js");
 
-const TOOL_NAMES = ["list_projects", "get_project", "list_experience", "get_profile", "get_system_facts", "search_content"];
+/* The published surface, pinned. Typed rather than derived on purpose: the
+   point of this list is that ADDING a tool is a deliberate edit here and not a
+   thing that happens quietly. Wave 5 added the last two — the design system's
+   agent surface, which is what audit 04 §3.5 found missing. */
+const TOOL_NAMES = [
+  "list_projects",
+  "get_project",
+  "list_experience",
+  "get_profile",
+  "get_system_facts",
+  "search_content",
+  "get_design_system",
+  "get_component",
+];
 
 /* Resolved from the corpus, never typed. Project ids are content, not API —
    the self-referential case study is being renamed away from "meta" precisely
@@ -115,17 +128,54 @@ test("[NEW · T1 · RED] a JSON-reachable argument must not make a tool throw", 
      SEARCH_QUERY_MAX_CHARS before it can apply.
 
      TARGET: coerce defensively, or reject a non-string id/query as a tool
-     error. Owner: retrieval specialist (lib/knowledge/tools.js). */
+     error. Owner: retrieval specialist (lib/knowledge/tools.js).
+
+     EXTENDED IN WAVE 5 to the two design-system tools. Both take a
+     caller-supplied value and get_component interpolates its id into a
+     not-found message and its detail into a fallback note — the same two throw
+     sites, in a new file's worth of code. A defect class stays closed only if
+     every tool added after the fix is added to the test that closed it. */
   for (const [name, input] of [
     ["get_project", { id: { toString: null } }],
     ["get_project", { id: { toString: 5 } }],
     ["search_content", { query: { toString: null }, limit: 5 }],
     ["list_projects", { tag: { toString: null }, client: null, hasCaseStudy: null }],
+    ["get_component", { id: { toString: null }, detail: null }],
+    ["get_component", { id: { toString: 5 }, detail: "full" }],
+    ["get_component", { id: "button", detail: { toString: null } }],
+    ["get_component", { id: { valueOf: null, toString: null }, detail: { toString: null } }],
+    ["get_design_system", { anything: { toString: null } }],
   ]) {
     await assert.doesNotReject(
       () => callTool(name, input),
       `callTool("${name}", ${JSON.stringify(input)}) threw on valid JSON`
     );
+  }
+});
+
+test("[NEW · T1] a rejected argument is reported without being touched", async () => {
+  /* doesNotReject above proves nothing THREW. This proves the refusal is also
+     a usable tool error rather than an empty success — the failure mode where
+     a handler swallows a bad argument and returns a result that looks like a
+     lookup which found nothing. */
+  for (const [input, arg, described] of [
+    [{ id: { toString: null }, detail: null }, "id", "object"],
+    [{ id: [1, 2], detail: null }, "id", "array"],
+    [{ id: null, detail: null }, "id", null],
+    [{ id: "button", detail: { toString: null } }, "detail", "object"],
+    [{ id: "button", detail: ["full"] }, "detail", "array"],
+  ]) {
+    const res = await callTool("get_component", input);
+    if (described === null) {
+      /* null id means "" — no such component, so the not_found path, not the
+         invalid_argument one. Both are clean; they are different answers. */
+      assert.equal(res.error, "not_found");
+      continue;
+    }
+    assert.equal(res.error, "invalid_argument", `${arg} was not refused`);
+    assert.equal(res.message, `get_component.${arg} must be a string; received ${described}.`);
+    const serialised = JSON.stringify(res);
+    assert.ok(!/\bstack\b|node_modules|ZodError|zod/i.test(serialised), `leaked internals: ${serialised}`);
   }
 });
 
@@ -227,4 +277,242 @@ test("an unknown project id is a tool error, not a throw", async () => {
   assert.equal(res.error, "not_found");
   assert.ok(Array.isArray(res.available) && res.available.length > 0);
   assert.ok(!/\\|\/|node_modules/.test(res.message), "no path leaked in the message");
+});
+
+/* ============================================================
+   04 §3.4/§3.5 — the design system's agent surface
+
+   Two tiers, and these tests police the seam between them. The MECHANICAL
+   half is generated and folded into content.json, so it needs no test here
+   beyond "the fold happened". The HAND-DECLARED half — `composition` and
+   `rules` in tools.js — is the Astryx residue, and Astryx's actual lesson is
+   that the residue gets a drift test rather than a promise. That is what the
+   first three tests below are.
+   ============================================================ */
+
+const DS = content.designSystem;
+
+test("the design-system contract was folded into the corpus", () => {
+  /* tools.js defaults this key to an empty contract rather than throwing at
+     module init, because a throw there takes down the six corpus tools too —
+     which have nothing to do with the design system. The cost of that choice
+     is that a missing fold would degrade SILENTLY, so it is caught here
+     instead: loud in CI rather than empty on the wire. */
+  assert.ok(DS && Array.isArray(DS.components), "content.json carries no designSystem.components");
+  assert.ok(DS.components.length > 0, "the design-system contract is empty");
+  assert.equal(DS.count, DS.components.length, "designSystem.count disagrees with its own array");
+
+  /* Not chunked and not in the manifest. Both are load-bearing: the manifest
+     rides in the system prompt's frozen prefix and evals/results.json
+     publishes its size, so folding this in would change a published number and
+     force a rebuild that has already been paid for. */
+  assert.ok(!("designSystem" in content.manifest), "the component contract leaked into the manifest");
+  assert.equal(
+    content.chunks.filter((c) => c.entity?.startsWith("component:")).length,
+    0,
+    "the component contract was chunked — it is a derived artefact, not a passage"
+  );
+});
+
+test("[drift] `composition` names exactly the fields a component record carries", async () => {
+  /* The hand-declared half, checked against the generated half. If the
+     design-system build starts emitting a field, this fails until the contract
+     documents it; if it stops emitting one, this fails until the contract
+     drops it. Documentation that cannot go stale without failing CI. */
+  const ds = await callTool("get_design_system", {});
+  const documented = Object.keys(ds.composition).sort();
+
+  for (const c of DS.components) {
+    assert.deepEqual(
+      Object.keys(c).sort(),
+      documented,
+      `component "${c.id}" does not match the documented composition`
+    );
+  }
+
+  /* And `full` actually returns every documented field. */
+  const full = await callTool("get_component", { id: DS.components[0].id, detail: "full" });
+  for (const field of documented) {
+    assert.ok(field in full, `detail "full" omits the documented field "${field}"`);
+  }
+});
+
+test("[drift] every declared rule still holds against the contract", async () => {
+  /* Five rules are typed in tools.js because no selector list implies them.
+     Each one is checked here, so a rule that stops being true fails a test
+     instead of shipping as advice. */
+  const ds = await callTool("get_design_system", {});
+  const rule = (id) => ds.rules.find((r) => r.id === id);
+
+  assert.deepEqual(
+    ds.rules.map((r) => r.id).sort(),
+    ["classes-are-the-api", "judgement-lives-in-the-spec", "suffixes-are-enumerated", "themes-are-token-values", "values-come-from-tokens"],
+    "a rule was added or removed without updating its check"
+  );
+  for (const r of ds.rules) {
+    assert.ok(r.rule?.length > 60, `rule "${r.id}" has no usable text`);
+    assert.ok(r.evidence?.length > 10, `rule "${r.id}" carries no evidence`);
+  }
+
+  /* classes-are-the-api: every class a component claims is backed by a real
+     selector. This is what makes "a class not listed has no rule behind it"
+     the true half of a biconditional rather than half a claim — audit 04 §3.1
+     found four spec-claimed classes with no rule anywhere. */
+  assert.ok(rule("classes-are-the-api"));
+  for (const c of DS.components) {
+    for (const k of c.classes) {
+      assert.ok(c.selectors.some((s) => s.includes(k)), `${c.id} claims "${k}" with no selector behind it`);
+    }
+  }
+
+  /* values-come-from-tokens: every token named is a custom property, and the
+     set the tool reports is exactly the union of the per-component sets. */
+  const union = new Set(DS.components.flatMap((c) => c.tokens));
+  assert.equal(ds.counts.tokensUsedByComponents, union.size);
+  for (const t of union) assert.match(t, /^--[a-z0-9-]+$/, `"${t}" is not a custom property`);
+  assert.ok(
+    ds.counts.tokensUsedByComponents <= ds.counts.tokensDeclared,
+    "components consume more tokens than the system declares"
+  );
+
+  /* suffixes-are-enumerated: an element is __x, a variant is --x, and each one
+     appears on a class the component also lists. A suffix with no class would
+     be a name an agent could type into nothing. */
+  for (const c of DS.components) {
+    for (const e of c.elements) {
+      assert.ok(e.startsWith("__"), `${c.id} element "${e}" is not a __suffix`);
+      assert.ok(c.classes.some((k) => k.includes(e)), `${c.id} element "${e}" is on no class`);
+    }
+    for (const v of c.variants) {
+      assert.ok(v.startsWith("--"), `${c.id} variant "${v}" is not a --suffix`);
+      assert.ok(c.classes.some((k) => k.endsWith(v)), `${c.id} variant "${v}" is on no class`);
+    }
+  }
+
+  /* themes-are-token-values: dark and print exist as VALUES. If either count
+     ever reached zero, the rule telling an agent never to write a
+     prefers-color-scheme query would be describing a system that no longer
+     themes itself that way. */
+  assert.ok(content.system.dark > 0 && content.system.print > 0, "themes are no longer carried as token values");
+  assert.equal(
+    content.system.light + content.system.dark + content.system.print,
+    content.system.values,
+    "the three theme counts no longer account for the published value count"
+  );
+
+  /* judgement-lives-in-the-spec: every component points at the human-written
+     half and carries the one authored sentence. */
+  for (const c of DS.components) {
+    assert.ok(c.spec?.endsWith("spec.md"), `${c.id} has no spec path`);
+    assert.ok(c.story?.length > 0, `${c.id} has no story path`);
+    assert.ok(c.a11y?.length > 20, `${c.id} carries no authored a11y sentence`);
+  }
+});
+
+test("get_design_system indexes every component and types no number", async () => {
+  const ds = await callTool("get_design_system", {});
+  assert.deepEqual(ds.components.map((c) => c.id), DS.components.map((c) => c.id), "the index dropped or reordered a component");
+  assert.equal(ds.counts.components, DS.components.length);
+  assert.equal(ds.$derivedFrom, DS.$derivedFrom, "provenance must name the generator, not this module");
+
+  /* Every token in a category is in the flat set, and no token is in two
+     categories — the grouping is a partition of the names, not a taxonomy. */
+  const flat = ds.tokenCategories.flatMap((c) => c.tokens);
+  assert.equal(new Set(flat).size, flat.length, "a token appears in two categories");
+  assert.equal(flat.length, ds.counts.tokensUsedByComponents);
+  for (const cat of ds.tokenCategories) {
+    assert.equal(cat.count, cat.tokens.length);
+    for (const t of cat.tokens) assert.ok(t.startsWith(`--${cat.prefix}`), `"${t}" is not in category "${cat.prefix}"`);
+  }
+
+  /* The counts in the DESCRIPTION are interpolated from the corpus. A typed
+     number would pass today and go stale on the next component; this fails the
+     moment the description and the corpus disagree. */
+  const tool = TOOLS.find((t) => t.name === "get_design_system");
+  assert.ok(tool.description.includes(String(DS.count)), "the component count is not interpolated into the description");
+  assert.ok(tool.description.includes(String(content.system.tokens)), "the token count is not interpolated into the description");
+});
+
+test("get_component: brief is a strict subset of full and says what it dropped", async () => {
+  const id = DS.components.find((c) => c.classes.length > 3).id;
+  const brief = await callTool("get_component", { id, detail: "brief" });
+  const full = await callTool("get_component", { id, detail: "full" });
+
+  assert.equal(brief.detail, "brief");
+  assert.equal(full.detail, "full");
+
+  /* Both carry the authored sentence and the pointer to the judgement — the
+     two things that must survive compression, because they are the half this
+     contract cannot generate. */
+  for (const res of [brief, full]) {
+    assert.equal(res.a11y, DS.components.find((c) => c.id === id).a11y, "the authored a11y sentence was altered");
+    assert.ok(res.spec?.endsWith("spec.md"), "brief dropped the pointer to the human-written half");
+    assert.ok(res.counts.classes > 0, "counts must say what a full read costs");
+  }
+
+  /* Brief is smaller, and honest about it. */
+  assert.ok(JSON.stringify(brief).length < JSON.stringify(full).length, "brief is not smaller than full");
+  for (const field of brief.omitted.fields) {
+    assert.ok(!(field in brief), `brief lists "${field}" as omitted and returns it anyway`);
+    assert.ok(field in full, `full is missing "${field}"`);
+  }
+
+  /* blockClasses is a mechanical filter over the real class list, not a
+     judgement about which class matters. */
+  assert.deepEqual(
+    brief.blockClasses,
+    full.classes.filter((k) => !k.includes("__") && !k.includes("--")),
+    "blockClasses is not the suffix-free subset of classes"
+  );
+  assert.ok(brief.blockClasses.length > 0, "every component must have at least one block-level class");
+});
+
+test("get_component: null detail means full, and an unknown level says so", async () => {
+  const id = DS.components[0].id;
+  assert.equal((await callTool("get_component", { id, detail: null })).detail, "full");
+  assert.equal((await callTool("get_component", { id })).detail, "full");
+  assert.equal((await callTool("get_component", { id, detail: "BRIEF" })).detail, "brief", "the level is case-insensitive");
+
+  /* A fallback nobody can see is a silent degradation. */
+  const odd = await callTool("get_component", { id, detail: "compact" });
+  assert.equal(odd.detail, "full");
+  assert.match(odd.detailNote, /compact/, "the tool fell back without saying so");
+  assert.equal((await callTool("get_component", { id, detail: "full" })).detailNote, null);
+});
+
+test("an unknown component id is a tool error, not a throw", async () => {
+  const res = await callTool("get_component", { id: "does-not-exist" });
+  assert.equal(res.error, "not_found", "an unknown component must take the same path as an unknown project");
+  assert.deepEqual(res.available, DS.components.map((c) => c.id));
+  assert.ok(!/\\|\/|node_modules/.test(res.message), "no path leaked in the message");
+  assert.ok(!/ZodError|zod|stack/i.test(JSON.stringify(res)), "schema-validator internals leaked");
+});
+
+test("neither design-system tool licenses a chunk id", async () => {
+  /* DELIBERATE, and worth a test because the obvious "fix" is wrong. Gate 3
+     licenses corpus PASSAGES a tool returned this turn. The component contract
+     is a derived artefact and is not in the corpus, so there is nothing to
+     license — and licensing profile or case-study chunks for it would let an
+     answer about CSS classes borrow the credibility of text about something
+     else, which is the exact failure removing `project.why` from schema.js
+     closed. If these tools ever start returning chunkIds, that is a decision
+     someone must make on purpose. */
+  for (const call of [["get_design_system", {}], ["get_component", { id: DS.components[0].id, detail: "full" }]]) {
+    const serialised = JSON.stringify(await callTool(...call));
+    assert.ok(!/"chunkIds?"/.test(serialised), `${call[0]} returned a chunk id`);
+  }
+});
+
+test("get_system_facts points at the contract instead of embedding it", async () => {
+  /* 05 §5, re-checked now that a real design-system surface exists. The tool
+     used to nest a whole get_project; the fix was to point at it by name. The
+     same discipline has to hold for the design system, or the split is undone
+     in a new shape one release later. */
+  const facts = await callTool("get_system_facts", {});
+  assert.equal(facts.designSystem.components, content.system.components);
+  assert.ok(facts.designSystem.contract.includes("get_design_system"), "no pointer to the contract");
+  assert.ok(!("components" in facts.designSystem && Array.isArray(facts.designSystem.components)), "the component array leaked into get_system_facts");
+
+  const bytes = JSON.stringify(facts).length;
+  assert.ok(bytes < 8 * 1024, `get_system_facts grew to ${bytes} bytes — it returns statistics, not payloads`);
 });

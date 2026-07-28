@@ -21,6 +21,20 @@
 
      node --env-file=.env scripts/build-vectors.mjs
      node scripts/build-vectors.mjs --check     # stale? (no key needed)
+
+   THERE IS A SECOND VECTOR CACHE AND THIS SCRIPT DOES NOT TOUCH IT.
+   `evals/vectors.json` holds the eval's own chunk AND question vectors, and it
+   is rebuilt only by `node --env-file=.env evals/run.mjs`. So the obvious
+   workflow after a content edit — rebuild content, run this, run CI — used to
+   leave the eval's cache stale with every gate green, and the published
+   retrieval numbers described a corpus that no longer existed. Both files now
+   carry the same `corpusHash` and both have a `--check` that compares it, so
+   the staleness is loud in either place; but the two commands are still
+   separate and this note is the only thing that says so at the point someone
+   runs one of them.
+
+     node --env-file=.env scripts/build-vectors.mjs   # the RUNTIME ranker's vectors
+     node --env-file=.env evals/run.mjs               # the EVAL's vectors
    ============================================================ */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";

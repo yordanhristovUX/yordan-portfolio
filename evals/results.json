@@ -1,159 +1,1119 @@
 {
   "$schema": "evals/results.schema — see evals/CLAUDE.md",
-  "version": 1,
+  "version": 2,
   "generatedBy": "evals/run.mjs — do not edit",
   "contentVersion": 1,
+  "corpusHash": "053767a688866f9c",
+  "questionsHash": "001a02d3a171c99c",
   "corpus": {
     "chunks": 76,
-    "terms": 1112,
-    "avgdl": 43.75,
+    "terms": 1101,
+    "avgdl": 43.3553,
     "projects": 14,
     "experience": 6,
-    "manifestChars": 4323
+    "manifestChars": 4335
   },
   "questions": {
-    "total": 54,
-    "retrieval": 43,
-    "abstention": 11,
+    "total": 65,
+    "retrieval": 49,
+    "abstention": 16,
     "categories": {
       "project": 12,
-      "experience": 7,
+      "experience": 8,
       "skills": 8,
-      "cross-cutting": 8,
+      "cross-cutting": 13,
       "metric": 8,
-      "structured-only": 3,
-      "corpus-gap": 1,
-      "out-of-corpus": 7
+      "structured-only": 5,
+      "corpus-gap": 3,
+      "out-of-corpus": 8
+    },
+    "shapes": {
+      "lookup": 53,
+      "temporal": 3,
+      "negation": 2,
+      "comparative": 2,
+      "multi-hop": 2,
+      "adversarial": 3
     }
   },
-  "depth": 10,
-  "embeddings": "voyage-3.5, vectors cached in evals/vectors.json",
+  "depth": {
+    "eval": 10,
+    "production": 8
+  },
+  "confidence": {
+    "method": "Wilson score interval, two-sided 95%; normal interval on the mean for MRR",
+    "note": "n=49 retrieval and n=16 abstention questions. One question is 0.0204 of a retrieval rate."
+  },
+  "embeddings": "voyage-3.5, 76 chunk + 65 question vectors cached in evals/vectors.json (corpus 053767a688866f9c)",
   "arms": [
     {
       "arm": "tools-only",
-      "hit1": 0.3953,
-      "hit3": 0.5116,
-      "hit5": 0.6744,
-      "ent1": 0.5814,
-      "ent3": 0.6279,
-      "mrr": 0.4974,
-      "abstain": 0.7273,
-      "separability": 0.8288,
+      "hit1": {
+        "value": 0.4082,
+        "lo": 0.2822,
+        "hi": 0.5475,
+        "half": 0.1327
+      },
+      "hit3": {
+        "value": 0.5102,
+        "lo": 0.3747,
+        "hi": 0.6442,
+        "half": 0.1348
+      },
+      "hit5": {
+        "value": 0.6735,
+        "lo": 0.5338,
+        "hi": 0.7879,
+        "half": 0.1271
+      },
+      "ent1": {
+        "value": 0.5918,
+        "lo": 0.4525,
+        "hi": 0.7178,
+        "half": 0.1327
+      },
+      "ent3": {
+        "value": 0.6122,
+        "lo": 0.4725,
+        "hi": 0.7357,
+        "half": 0.1316
+      },
+      "mrr": {
+        "value": 0.5014,
+        "lo": 0.3801,
+        "hi": 0.6228,
+        "half": 0.1213
+      },
+      "mrrAtProductionDepth": {
+        "value": 0.4994,
+        "lo": 0.3774,
+        "hi": 0.6213,
+        "half": 0.1219
+      },
+      "abstain": {
+        "value": 0.8125,
+        "lo": 0.5699,
+        "hi": 0.9341,
+        "half": 0.1821
+      },
+      "separability": 0.831,
+      "separabilityScored": 0.3561,
+      "separabilityDetail": {
+        "pairs": 784,
+        "emptyDriven": 572,
+        "tied": 65,
+        "scoredPairs": 132,
+        "lostByRefusingAnAnswer": 15
+      },
       "byCategory": {
-        "project": 0.6667,
-        "experience": 0.5714,
-        "skills": 0.25,
-        "cross-cutting": 0.5,
-        "metric": 0.5,
-        "structured-only": 0.6667,
-        "corpus-gap": 0,
-        "out-of-corpus": 0.8571
+        "project": {
+          "score": 0.6667,
+          "n": 12,
+          "half": 0.2356
+        },
+        "experience": {
+          "score": 0.5,
+          "n": 8,
+          "half": 0.2848
+        },
+        "skills": {
+          "score": 0.25,
+          "n": 8,
+          "half": 0.2596
+        },
+        "cross-cutting": {
+          "score": 0.4615,
+          "n": 13,
+          "half": 0.2383
+        },
+        "metric": {
+          "score": 0.625,
+          "n": 8,
+          "half": 0.2787
+        },
+        "structured-only": {
+          "score": 0.8,
+          "n": 5,
+          "half": 0.2941
+        },
+        "corpus-gap": {
+          "score": 0.6667,
+          "n": 3,
+          "half": 0.3654
+        },
+        "out-of-corpus": {
+          "score": 0.875,
+          "n": 8,
+          "half": 0.2242
+        }
+      },
+      "byShape": {
+        "lookup": {
+          "score": 0.5238,
+          "n": 42,
+          "half": 0.1446
+        },
+        "temporal": {
+          "score": 0,
+          "n": 1,
+          "half": 0.3967
+        },
+        "negation": {
+          "score": 0,
+          "n": 2,
+          "half": 0.3288
+        },
+        "comparative": {
+          "score": 0.5,
+          "n": 2,
+          "half": 0.4055
+        },
+        "multi-hop": {
+          "score": 1,
+          "n": 2,
+          "half": 0.3288
+        },
+        "adversarial": {
+          "score": 0.6667,
+          "n": 3,
+          "half": 0.3654
+        }
       }
     },
     {
       "arm": "bm25",
-      "hit1": 0.4651,
-      "hit3": 0.7442,
-      "hit5": 0.8372,
-      "ent1": 0.4884,
-      "ent3": 0.814,
-      "mrr": 0.6127,
-      "abstain": 0,
-      "separability": 0.8372,
+      "hit1": {
+        "value": 0.4694,
+        "lo": 0.337,
+        "hi": 0.6062,
+        "half": 0.1346
+      },
+      "hit3": {
+        "value": 0.7755,
+        "lo": 0.6412,
+        "hi": 0.8698,
+        "half": 0.1143
+      },
+      "hit5": {
+        "value": 0.8571,
+        "lo": 0.7333,
+        "hi": 0.929,
+        "half": 0.0979
+      },
+      "ent1": {
+        "value": 0.4898,
+        "lo": 0.3558,
+        "hi": 0.6253,
+        "half": 0.1348
+      },
+      "ent3": {
+        "value": 0.8163,
+        "lo": 0.6864,
+        "hi": 0.9002,
+        "half": 0.1069
+      },
+      "mrr": {
+        "value": 0.6224,
+        "lo": 0.5153,
+        "hi": 0.7296,
+        "half": 0.1072
+      },
+      "mrrAtProductionDepth": {
+        "value": 0.6204,
+        "lo": 0.5123,
+        "hi": 0.7285,
+        "half": 0.1081
+      },
+      "abstain": {
+        "value": 0,
+        "lo": 0,
+        "hi": 0.1936,
+        "half": 0.0968
+      },
+      "separability": 0.7966,
+      "separabilityScored": 0.8132,
+      "separabilityDetail": {
+        "pairs": 784,
+        "emptyDriven": 0,
+        "tied": 0,
+        "scoredPairs": 768,
+        "lostByRefusingAnAnswer": 16
+      },
       "byCategory": {
-        "project": 0.6667,
-        "experience": 0.7143,
-        "skills": 0.75,
-        "cross-cutting": 0.875,
-        "metric": 0.75,
-        "structured-only": 0,
-        "corpus-gap": 0,
-        "out-of-corpus": 0
+        "project": {
+          "score": 0.6667,
+          "n": 12,
+          "half": 0.2356
+        },
+        "experience": {
+          "score": 0.625,
+          "n": 8,
+          "half": 0.2787
+        },
+        "skills": {
+          "score": 0.75,
+          "n": 8,
+          "half": 0.2596
+        },
+        "cross-cutting": {
+          "score": 0.9231,
+          "n": 13,
+          "half": 0.1597
+        },
+        "metric": {
+          "score": 0.875,
+          "n": 8,
+          "half": 0.2242
+        },
+        "structured-only": {
+          "score": 0,
+          "n": 5,
+          "half": 0.2172
+        },
+        "corpus-gap": {
+          "score": 0,
+          "n": 3,
+          "half": 0.2807
+        },
+        "out-of-corpus": {
+          "score": 0,
+          "n": 8,
+          "half": 0.1622
+        }
+      },
+      "byShape": {
+        "lookup": {
+          "score": 0.7619,
+          "n": 42,
+          "half": 0.1252
+        },
+        "temporal": {
+          "score": 0,
+          "n": 1,
+          "half": 0.3967
+        },
+        "negation": {
+          "score": 1,
+          "n": 2,
+          "half": 0.3288
+        },
+        "comparative": {
+          "score": 1,
+          "n": 2,
+          "half": 0.3288
+        },
+        "multi-hop": {
+          "score": 1,
+          "n": 2,
+          "half": 0.3288
+        },
+        "adversarial": {
+          "score": 0,
+          "n": 3,
+          "half": 0.2807
+        }
       }
     },
     {
       "arm": "hybrid",
-      "hit1": 0.4419,
-      "hit3": 0.5814,
-      "hit5": 0.7442,
-      "ent1": 0.6279,
-      "ent3": 0.7209,
-      "mrr": 0.5594,
-      "abstain": 0,
-      "separability": 0.5603,
+      "hit1": {
+        "value": 0.4286,
+        "lo": 0.3002,
+        "hi": 0.5673,
+        "half": 0.1335
+      },
+      "hit3": {
+        "value": 0.5714,
+        "lo": 0.4327,
+        "hi": 0.6998,
+        "half": 0.1335
+      },
+      "hit5": {
+        "value": 0.7347,
+        "lo": 0.5974,
+        "hi": 0.8379,
+        "half": 0.1203
+      },
+      "ent1": {
+        "value": 0.6122,
+        "lo": 0.4725,
+        "hi": 0.7357,
+        "half": 0.1316
+      },
+      "ent3": {
+        "value": 0.6939,
+        "lo": 0.5547,
+        "hi": 0.8048,
+        "half": 0.1251
+      },
+      "mrr": {
+        "value": 0.5502,
+        "lo": 0.4356,
+        "hi": 0.6649,
+        "half": 0.1147
+      },
+      "mrrAtProductionDepth": {
+        "value": 0.5462,
+        "lo": 0.4301,
+        "hi": 0.6623,
+        "half": 0.1161
+      },
+      "abstain": {
+        "value": 0,
+        "lo": 0,
+        "hi": 0.1936,
+        "half": 0.0968
+      },
+      "separability": 0.3897,
+      "separabilityScored": 0.3978,
+      "separabilityDetail": {
+        "pairs": 784,
+        "emptyDriven": 0,
+        "tied": 0,
+        "scoredPairs": 768,
+        "lostByRefusingAnAnswer": 16
+      },
       "byCategory": {
-        "project": 0.6667,
-        "experience": 0.5714,
-        "skills": 0.375,
-        "cross-cutting": 0.625,
-        "metric": 0.625,
-        "structured-only": 0,
-        "corpus-gap": 0,
-        "out-of-corpus": 0
+        "project": {
+          "score": 0.6667,
+          "n": 12,
+          "half": 0.2356
+        },
+        "experience": {
+          "score": 0.5,
+          "n": 8,
+          "half": 0.2848
+        },
+        "skills": {
+          "score": 0.375,
+          "n": 8,
+          "half": 0.2787
+        },
+        "cross-cutting": {
+          "score": 0.5385,
+          "n": 13,
+          "half": 0.2383
+        },
+        "metric": {
+          "score": 0.75,
+          "n": 8,
+          "half": 0.2596
+        },
+        "structured-only": {
+          "score": 0,
+          "n": 5,
+          "half": 0.2172
+        },
+        "corpus-gap": {
+          "score": 0,
+          "n": 3,
+          "half": 0.2807
+        },
+        "out-of-corpus": {
+          "score": 0,
+          "n": 8,
+          "half": 0.1622
+        }
+      },
+      "byShape": {
+        "lookup": {
+          "score": 0.5952,
+          "n": 42,
+          "half": 0.1423
+        },
+        "temporal": {
+          "score": 0,
+          "n": 1,
+          "half": 0.3967
+        },
+        "negation": {
+          "score": 0,
+          "n": 2,
+          "half": 0.3288
+        },
+        "comparative": {
+          "score": 0.5,
+          "n": 2,
+          "half": 0.4055
+        },
+        "multi-hop": {
+          "score": 1,
+          "n": 2,
+          "half": 0.3288
+        },
+        "adversarial": {
+          "score": 0,
+          "n": 3,
+          "half": 0.2807
+        }
       }
     },
     {
       "arm": "tools-gated",
-      "hit1": 0.4186,
-      "hit3": 0.6744,
-      "hit5": 0.7674,
-      "ent1": 0.4419,
-      "ent3": 0.7442,
-      "mrr": 0.5506,
-      "abstain": 0.9091,
-      "separability": 0.9197,
+      "hit1": {
+        "value": 0.2041,
+        "lo": 0.1148,
+        "hi": 0.3364,
+        "half": 0.1108
+      },
+      "hit3": {
+        "value": 0.3469,
+        "lo": 0.2292,
+        "hi": 0.4869,
+        "half": 0.1288
+      },
+      "hit5": {
+        "value": 0.3878,
+        "lo": 0.2643,
+        "hi": 0.5275,
+        "half": 0.1316
+      },
+      "ent1": {
+        "value": 0.2653,
+        "lo": 0.1621,
+        "hi": 0.4026,
+        "half": 0.1203
+      },
+      "ent3": {
+        "value": 0.3878,
+        "lo": 0.2643,
+        "hi": 0.5275,
+        "half": 0.1316
+      },
+      "mrr": {
+        "value": 0.2697,
+        "lo": 0.1583,
+        "hi": 0.3812,
+        "half": 0.1114
+      },
+      "mrrAtProductionDepth": {
+        "value": 0.2677,
+        "lo": 0.1559,
+        "hi": 0.3794,
+        "half": 0.1118
+      },
+      "abstain": {
+        "value": 0.875,
+        "lo": 0.6398,
+        "hi": 0.965,
+        "half": 0.1626
+      },
+      "separability": 0.6773,
+      "separabilityScored": 0.7727,
+      "separabilityDetail": {
+        "pairs": 784,
+        "emptyDriven": 308,
+        "tied": 378,
+        "scoredPairs": 44,
+        "lostByRefusingAnAnswer": 54
+      },
       "byCategory": {
-        "project": 0.6667,
-        "experience": 0.7143,
-        "skills": 0.625,
-        "cross-cutting": 0.75,
-        "metric": 0.625,
-        "structured-only": 1,
-        "corpus-gap": 0,
-        "out-of-corpus": 1
+        "project": {
+          "score": 0.5,
+          "n": 12,
+          "half": 0.2462
+        },
+        "experience": {
+          "score": 0.375,
+          "n": 8,
+          "half": 0.2787
+        },
+        "skills": {
+          "score": 0.125,
+          "n": 8,
+          "half": 0.2242
+        },
+        "cross-cutting": {
+          "score": 0.3077,
+          "n": 13,
+          "half": 0.2247
+        },
+        "metric": {
+          "score": 0.375,
+          "n": 8,
+          "half": 0.2787
+        },
+        "structured-only": {
+          "score": 0.8,
+          "n": 5,
+          "half": 0.2941
+        },
+        "corpus-gap": {
+          "score": 0.6667,
+          "n": 3,
+          "half": 0.3654
+        },
+        "out-of-corpus": {
+          "score": 1,
+          "n": 8,
+          "half": 0.1622
+        }
+      },
+      "byShape": {
+        "lookup": {
+          "score": 0.3571,
+          "n": 42,
+          "half": 0.1392
+        },
+        "temporal": {
+          "score": 0,
+          "n": 1,
+          "half": 0.3967
+        },
+        "negation": {
+          "score": 0.5,
+          "n": 2,
+          "half": 0.4055
+        },
+        "comparative": {
+          "score": 0,
+          "n": 2,
+          "half": 0.3288
+        },
+        "multi-hop": {
+          "score": 0.5,
+          "n": 2,
+          "half": 0.4055
+        },
+        "adversarial": {
+          "score": 1,
+          "n": 3,
+          "half": 0.2807
+        }
       }
     },
     {
       "arm": "embeddings",
-      "hit1": 0.8605,
-      "hit3": 0.9302,
-      "hit5": 0.9767,
-      "ent1": 0.7674,
-      "ent3": 0.8837,
-      "mrr": 0.9019,
-      "abstain": 0,
-      "separability": 0.8319,
+      "hit1": {
+        "value": 0.8163,
+        "lo": 0.6864,
+        "hi": 0.9002,
+        "half": 0.1069
+      },
+      "hit3": {
+        "value": 0.9592,
+        "lo": 0.8629,
+        "hi": 0.9887,
+        "half": 0.0629
+      },
+      "hit5": {
+        "value": 0.9796,
+        "lo": 0.8931,
+        "hi": 0.9964,
+        "half": 0.0517
+      },
+      "ent1": {
+        "value": 0.6939,
+        "lo": 0.5547,
+        "hi": 0.8048,
+        "half": 0.1251
+      },
+      "ent3": {
+        "value": 0.898,
+        "lo": 0.7824,
+        "hi": 0.9556,
+        "half": 0.0866
+      },
+      "mrr": {
+        "value": 0.8861,
+        "lo": 0.8166,
+        "hi": 0.9555,
+        "half": 0.0695
+      },
+      "mrrAtProductionDepth": {
+        "value": 0.8861,
+        "lo": 0.8166,
+        "hi": 0.9555,
+        "half": 0.0695
+      },
+      "abstain": {
+        "value": 0,
+        "lo": 0,
+        "hi": 0.1936,
+        "half": 0.0968
+      },
+      "separability": 0.7889,
+      "separabilityScored": 0.7889,
+      "separabilityDetail": {
+        "pairs": 784,
+        "emptyDriven": 0,
+        "tied": 0,
+        "scoredPairs": 784,
+        "lostByRefusingAnAnswer": 0
+      },
       "byCategory": {
-        "project": 0.8333,
-        "experience": 0.8571,
-        "skills": 1,
-        "cross-cutting": 1,
-        "metric": 1,
-        "structured-only": 0,
-        "corpus-gap": 0,
-        "out-of-corpus": 0
+        "project": {
+          "score": 0.8333,
+          "n": 12,
+          "half": 0.2005
+        },
+        "experience": {
+          "score": 1,
+          "n": 8,
+          "half": 0.1622
+        },
+        "skills": {
+          "score": 1,
+          "n": 8,
+          "half": 0.1622
+        },
+        "cross-cutting": {
+          "score": 1,
+          "n": 13,
+          "half": 0.114
+        },
+        "metric": {
+          "score": 1,
+          "n": 8,
+          "half": 0.1622
+        },
+        "structured-only": {
+          "score": 0,
+          "n": 5,
+          "half": 0.2172
+        },
+        "corpus-gap": {
+          "score": 0,
+          "n": 3,
+          "half": 0.2807
+        },
+        "out-of-corpus": {
+          "score": 0,
+          "n": 8,
+          "half": 0.1622
+        }
+      },
+      "byShape": {
+        "lookup": {
+          "score": 0.9524,
+          "n": 42,
+          "half": 0.0724
+        },
+        "temporal": {
+          "score": 1,
+          "n": 1,
+          "half": 0.3967
+        },
+        "negation": {
+          "score": 1,
+          "n": 2,
+          "half": 0.3288
+        },
+        "comparative": {
+          "score": 1,
+          "n": 2,
+          "half": 0.3288
+        },
+        "multi-hop": {
+          "score": 1,
+          "n": 2,
+          "half": 0.3288
+        },
+        "adversarial": {
+          "score": 0,
+          "n": 3,
+          "half": 0.2807
+        }
       }
     },
     {
       "arm": "gated-embeddings",
-      "hit1": 0.7442,
-      "hit3": 0.7907,
-      "hit5": 0.8372,
-      "ent1": 0.6512,
-      "ent3": 0.7674,
-      "mrr": 0.7779,
-      "abstain": 0.9091,
-      "separability": 0.9197,
+      "hit1": {
+        "value": 0.3469,
+        "lo": 0.2292,
+        "hi": 0.4869,
+        "half": 0.1288
+      },
+      "hit3": {
+        "value": 0.4082,
+        "lo": 0.2822,
+        "hi": 0.5475,
+        "half": 0.1327
+      },
+      "hit5": {
+        "value": 0.4286,
+        "lo": 0.3002,
+        "hi": 0.5673,
+        "half": 0.1335
+      },
+      "ent1": {
+        "value": 0.2857,
+        "lo": 0.1785,
+        "hi": 0.4241,
+        "half": 0.1228
+      },
+      "ent3": {
+        "value": 0.4082,
+        "lo": 0.2822,
+        "hi": 0.5475,
+        "half": 0.1327
+      },
+      "mrr": {
+        "value": 0.3793,
+        "lo": 0.2482,
+        "hi": 0.5103,
+        "half": 0.131
+      },
+      "mrrAtProductionDepth": {
+        "value": 0.3793,
+        "lo": 0.2482,
+        "hi": 0.5103,
+        "half": 0.131
+      },
+      "abstain": {
+        "value": 0.875,
+        "lo": 0.6398,
+        "hi": 0.965,
+        "half": 0.1626
+      },
+      "separability": 0.6684,
+      "separabilityScored": 0.6136,
+      "separabilityDetail": {
+        "pairs": 784,
+        "emptyDriven": 308,
+        "tied": 378,
+        "scoredPairs": 44,
+        "lostByRefusingAnAnswer": 54
+      },
       "byCategory": {
-        "project": 0.8333,
-        "experience": 0.7143,
-        "skills": 0.75,
-        "cross-cutting": 0.875,
-        "metric": 0.75,
-        "structured-only": 1,
-        "corpus-gap": 0,
-        "out-of-corpus": 1
+        "project": {
+          "score": 0.6667,
+          "n": 12,
+          "half": 0.2356
+        },
+        "experience": {
+          "score": 0.5,
+          "n": 8,
+          "half": 0.2848
+        },
+        "skills": {
+          "score": 0.125,
+          "n": 8,
+          "half": 0.2242
+        },
+        "cross-cutting": {
+          "score": 0.3077,
+          "n": 13,
+          "half": 0.2247
+        },
+        "metric": {
+          "score": 0.375,
+          "n": 8,
+          "half": 0.2787
+        },
+        "structured-only": {
+          "score": 0.8,
+          "n": 5,
+          "half": 0.2941
+        },
+        "corpus-gap": {
+          "score": 0.6667,
+          "n": 3,
+          "half": 0.3654
+        },
+        "out-of-corpus": {
+          "score": 1,
+          "n": 8,
+          "half": 0.1622
+        }
+      },
+      "byShape": {
+        "lookup": {
+          "score": 0.4286,
+          "n": 42,
+          "half": 0.1434
+        },
+        "temporal": {
+          "score": 0,
+          "n": 1,
+          "half": 0.3967
+        },
+        "negation": {
+          "score": 0.5,
+          "n": 2,
+          "half": 0.4055
+        },
+        "comparative": {
+          "score": 0,
+          "n": 2,
+          "half": 0.3288
+        },
+        "multi-hop": {
+          "score": 0.5,
+          "n": 2,
+          "half": 0.4055
+        },
+        "adversarial": {
+          "score": 1,
+          "n": 3,
+          "half": 0.2807
+        }
       }
+    }
+  ],
+  "significance": [
+    {
+      "a": "embeddings",
+      "b": "bm25",
+      "metric": "hit@3",
+      "test": "exact two-sided McNemar",
+      "wins": 9,
+      "losses": 0,
+      "discordant": 9,
+      "p": 0.00391,
+      "significant": true,
+      "note": "the ranker that ships against the free offline floor",
+      "winIds": [
+        "proj-malko-colour",
+        "proj-football",
+        "exp-current",
+        "exp-studio-kipo",
+        "exp-research-years",
+        "skill-frontend",
+        "skill-education",
+        "cross-design-systems-where",
+        "metric-marathon"
+      ],
+      "lossIds": []
+    },
+    {
+      "a": "embeddings",
+      "b": "tools-only",
+      "metric": "hit@3",
+      "test": "exact two-sided McNemar",
+      "wins": 24,
+      "losses": 2,
+      "discordant": 26,
+      "p": 0.0000105,
+      "significant": true,
+      "note": "semantic ranking against structured name lookup",
+      "winIds": [
+        "proj-spetema-ia",
+        "proj-malko-colour",
+        "proj-audit-severity",
+        "proj-meta-pipeline",
+        "exp-current",
+        "exp-domestina-now",
+        "exp-greenstreet-scope",
+        "exp-research-years",
+        "skill-ai-tools",
+        "skill-research-methods",
+        "skill-design-systems",
+        "skill-motion",
+        "skill-languages",
+        "skill-education",
+        "cross-local-government",
+        "cross-conflicting-audiences",
+        "cross-production-code",
+        "cross-white-label",
+        "cross-figma-not-source",
+        "cross-no-build-step",
+        "cross-biggest-improvement",
+        "metric-spetema-products",
+        "metric-marathon",
+        "metric-deadlift"
+      ],
+      "lossIds": [
+        "proj-domestina-what",
+        "proj-mindromeda"
+      ]
+    },
+    {
+      "a": "bm25",
+      "b": "tools-only",
+      "metric": "hit@3",
+      "test": "exact two-sided McNemar",
+      "wins": 19,
+      "losses": 6,
+      "discordant": 25,
+      "p": 0.0146,
+      "significant": true,
+      "note": "lexical ranking against structured name lookup",
+      "winIds": [
+        "proj-spetema-ia",
+        "proj-audit-severity",
+        "proj-meta-pipeline",
+        "exp-domestina-now",
+        "exp-greenstreet-scope",
+        "skill-ai-tools",
+        "skill-research-methods",
+        "skill-design-systems",
+        "skill-motion",
+        "skill-languages",
+        "cross-local-government",
+        "cross-conflicting-audiences",
+        "cross-production-code",
+        "cross-white-label",
+        "cross-figma-not-source",
+        "cross-no-build-step",
+        "cross-biggest-improvement",
+        "metric-spetema-products",
+        "metric-deadlift"
+      ],
+      "lossIds": [
+        "proj-domestina-what",
+        "proj-mindromeda",
+        "proj-football",
+        "exp-studio-kipo",
+        "skill-frontend",
+        "cross-design-systems-where"
+      ]
+    },
+    {
+      "a": "bm25",
+      "b": "hybrid",
+      "metric": "hit@3",
+      "test": "exact two-sided McNemar",
+      "wins": 16,
+      "losses": 6,
+      "discordant": 22,
+      "p": 0.0525,
+      "significant": false,
+      "note": "does appending BM25 beneath the tools arm cost anything",
+      "winIds": [
+        "proj-spetema-ia",
+        "proj-audit-severity",
+        "proj-meta-pipeline",
+        "exp-domestina-now",
+        "exp-greenstreet-scope",
+        "skill-ai-tools",
+        "skill-research-methods",
+        "skill-design-systems",
+        "skill-motion",
+        "cross-conflicting-audiences",
+        "cross-production-code",
+        "cross-white-label",
+        "cross-figma-not-source",
+        "cross-no-build-step",
+        "cross-biggest-improvement",
+        "metric-spetema-products"
+      ],
+      "lossIds": [
+        "proj-domestina-what",
+        "proj-mindromeda",
+        "proj-football",
+        "exp-studio-kipo",
+        "skill-frontend",
+        "cross-design-systems-where"
+      ]
+    },
+    {
+      "a": "gated-embeddings",
+      "b": "embeddings",
+      "metric": "hit@3",
+      "test": "exact two-sided McNemar",
+      "wins": 0,
+      "losses": 27,
+      "discordant": 27,
+      "p": 1.49e-8,
+      "significant": true,
+      "note": "what refusing on a gate miss costs the ranker",
+      "winIds": [],
+      "lossIds": [
+        "proj-audit-severity",
+        "proj-crypto-platform",
+        "exp-current",
+        "exp-before-tech",
+        "exp-team-lead",
+        "exp-research-years",
+        "skill-accessibility",
+        "skill-frontend",
+        "skill-research-methods",
+        "skill-design-systems",
+        "skill-motion",
+        "skill-languages",
+        "skill-education",
+        "cross-local-government",
+        "cross-design-systems-where",
+        "cross-conflicting-audiences",
+        "cross-production-code",
+        "cross-white-label",
+        "cross-open-source",
+        "cross-no-build-step",
+        "cross-biggest-improvement",
+        "cross-assistant-accessibility",
+        "metric-issue-count",
+        "metric-marathon",
+        "metric-deadlift",
+        "metric-team-size",
+        "metric-catalogue-vs-components"
+      ]
+    },
+    {
+      "a": "gated-embeddings",
+      "b": "bm25",
+      "metric": "hit@3",
+      "test": "exact two-sided McNemar",
+      "wins": 3,
+      "losses": 21,
+      "discordant": 24,
+      "p": 0.000277,
+      "significant": true,
+      "note": "the gated counterfactual against free offline BM25",
+      "winIds": [
+        "proj-malko-colour",
+        "proj-football",
+        "exp-studio-kipo"
+      ],
+      "lossIds": [
+        "proj-audit-severity",
+        "proj-crypto-platform",
+        "exp-before-tech",
+        "exp-team-lead",
+        "skill-accessibility",
+        "skill-research-methods",
+        "skill-design-systems",
+        "skill-motion",
+        "skill-languages",
+        "cross-local-government",
+        "cross-conflicting-audiences",
+        "cross-production-code",
+        "cross-white-label",
+        "cross-open-source",
+        "cross-no-build-step",
+        "cross-biggest-improvement",
+        "cross-assistant-accessibility",
+        "metric-issue-count",
+        "metric-deadlift",
+        "metric-team-size",
+        "metric-catalogue-vs-components"
+      ]
+    },
+    {
+      "a": "tools-gated",
+      "b": "bm25",
+      "metric": "hit@3",
+      "test": "exact two-sided McNemar",
+      "wins": 0,
+      "losses": 21,
+      "discordant": 21,
+      "p": 9.54e-7,
+      "significant": true,
+      "note": "what refusing on a gate miss costs BM25",
+      "winIds": [],
+      "lossIds": [
+        "proj-audit-severity",
+        "proj-crypto-platform",
+        "exp-before-tech",
+        "exp-team-lead",
+        "skill-accessibility",
+        "skill-research-methods",
+        "skill-design-systems",
+        "skill-motion",
+        "skill-languages",
+        "cross-local-government",
+        "cross-conflicting-audiences",
+        "cross-production-code",
+        "cross-white-label",
+        "cross-open-source",
+        "cross-no-build-step",
+        "cross-biggest-improvement",
+        "cross-assistant-accessibility",
+        "metric-issue-count",
+        "metric-deadlift",
+        "metric-team-size",
+        "metric-catalogue-vs-components"
+      ]
     }
   ]
 }

@@ -1,63 +1,70 @@
 {
   "$schema": "evals/baseline.schema — see evals/CLAUDE.md",
   "generatedBy": "evals/run.mjs --update-baseline",
-  "note": "Committed floor. run.mjs exits non-zero if any tracked metric falls below these. Raise it deliberately; never lower it to make a build pass.",
+  "note": "Committed floor. run.mjs exits non-zero when a tracked metric falls below these by MORE THAN the 95% sampling margin for that metric at this n — not by more than 0.001, which was finer than the sampling error by three orders of magnitude and fired on one question. Raise it deliberately; never lower it to make a build pass, and record the reason in `reason` below.",
+  "reason": "Full re-cut, not a lowering. Three changes moved every row and none is a retrieval regression. (1) The entity gate was rebuilt in Wave 2 (IDF floor, name/label split, proper-noun test) and MOVED above the tool, so tools-gated and gated-embeddings now refuse 22 of 49 answerable questions where the old gate refused 6: their hit@k falls 30-40pp and their abstention rises to 87.5%. Both are now COUNTERFACTUALS, not the shipped shape. (2) questions.json went to version 2: 54 to 65 questions, 43 to 49 retrieval, 11 to 16 abstention, metric-token-count recategorised to structured-only by owner decision, proj-spetema-ia and metric-deadlift reworded off their target headings, and tools-only name surface corrected to the shipped buildNameSurfaces (it still carried experience.descriptor). No old floor is measured on the same denominator. (3) evals/vectors.json was rebuilt against corpus 053767a688866f9c, the first time it has been fresh: the previous embeddings row (93.0% hit@3) was scored against vectors for chunk text that no longer existed. embeddings RISES to 95.9%. The tolerance is now the 95% sampling margin at this n, not a flat 0.001.",
   "contentVersion": 1,
-  "questions": 54,
+  "corpusHash": "053767a688866f9c",
+  "questionsHash": "001a02d3a171c99c",
+  "questions": 65,
+  "n": {
+    "retrieval": 49,
+    "abstention": 16
+  },
   "arms": {
     "tools-only": {
-      "hit1": 0.3953,
-      "hit3": 0.5116,
-      "hit5": 0.6744,
-      "ent1": 0.5814,
-      "ent3": 0.6279,
-      "mrr": 0.4974,
-      "abstain": 0.7273
+      "hit1": 0.4082,
+      "hit3": 0.5102,
+      "hit5": 0.6735,
+      "ent1": 0.5918,
+      "ent3": 0.6122,
+      "mrr": 0.5014,
+      "abstain": 0.8125
     },
     "bm25": {
-      "hit1": 0.4651,
-      "hit3": 0.7442,
-      "hit5": 0.8372,
-      "ent1": 0.4884,
-      "ent3": 0.814,
-      "mrr": 0.6127,
+      "hit1": 0.4694,
+      "hit3": 0.7755,
+      "hit5": 0.8571,
+      "ent1": 0.4898,
+      "ent3": 0.8163,
+      "mrr": 0.6224,
       "abstain": 0
     },
     "hybrid": {
-      "hit1": 0.4419,
-      "hit3": 0.5814,
-      "hit5": 0.7442,
-      "ent1": 0.6279,
-      "ent3": 0.7209,
-      "mrr": 0.5594,
+      "hit1": 0.4286,
+      "hit3": 0.5714,
+      "hit5": 0.7347,
+      "ent1": 0.6122,
+      "ent3": 0.6939,
+      "mrr": 0.5502,
       "abstain": 0
     },
     "tools-gated": {
-      "hit1": 0.4186,
-      "hit3": 0.6744,
-      "hit5": 0.7674,
-      "ent1": 0.4419,
-      "ent3": 0.7442,
-      "mrr": 0.5506,
-      "abstain": 0.9091
+      "hit1": 0.2041,
+      "hit3": 0.3469,
+      "hit5": 0.3878,
+      "ent1": 0.2653,
+      "ent3": 0.3878,
+      "mrr": 0.2697,
+      "abstain": 0.875
     },
     "embeddings": {
-      "hit1": 0.8605,
-      "hit3": 0.9302,
-      "hit5": 0.9767,
-      "ent1": 0.7674,
-      "ent3": 0.8837,
-      "mrr": 0.9019,
+      "hit1": 0.8163,
+      "hit3": 0.9592,
+      "hit5": 0.9796,
+      "ent1": 0.6939,
+      "ent3": 0.898,
+      "mrr": 0.8861,
       "abstain": 0
     },
     "gated-embeddings": {
-      "hit1": 0.7442,
-      "hit3": 0.7907,
-      "hit5": 0.8372,
-      "ent1": 0.6512,
-      "ent3": 0.7674,
-      "mrr": 0.7779,
-      "abstain": 0.9091
+      "hit1": 0.3469,
+      "hit3": 0.4082,
+      "hit5": 0.4286,
+      "ent1": 0.2857,
+      "ent3": 0.4082,
+      "mrr": 0.3793,
+      "abstain": 0.875
     }
   }
 }

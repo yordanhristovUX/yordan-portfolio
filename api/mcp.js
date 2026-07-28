@@ -8,12 +8,15 @@
    would make the function call itself over HTTP once per tool call — an extra
    hop, a second cold-start path and a self-referential dependency bought
    purely to satisfy a purity argument. What this endpoint adds is that
-   *someone else's* agent can use the same six tools from their own tooling,
+   *someone else's* agent can use the same tools from their own tooling,
    with no chat UI in the middle. See /mcp and ARCHITECTURE.md.
 
-   The six tools are IMPORTED from lib/knowledge, never reimplemented. Both
-   surfaces go through the same `callTool`, so a tool bug cannot exist on one
-   and not the other. Everything below this line is transport and framing.
+   Every tool is IMPORTED from lib/knowledge, never reimplemented, and the list
+   is read from `TOOLS` rather than enumerated here — which is why adding
+   get_design_system and get_component to the core published them on this
+   surface without a line of transport code changing. Both surfaces go through
+   the same `callTool`, so a tool bug cannot exist on one and not the other.
+   Everything below this line is transport and framing.
 
    Stateless by construction: Vercel functions do not persist between
    invocations, so a fresh Server + transport is built per request and torn
@@ -67,22 +70,28 @@ const BODY_TOO_LARGE = "E_BODY_TOO_LARGE";
    before any tool is called: whose data is this, what is it good for, and
    what will it refuse to do.
    ============================================================ */
-const INSTRUCTIONS = `Read-only access to the portfolio, CV and case-study corpus of Yordan Hristov, a Senior Product Designer based in Sofia, Bulgaria.
+const INSTRUCTIONS = `Read-only access to two things: the portfolio, CV and case-study corpus of Yordan Hristov — a Senior Product Designer based in Sofia, Bulgaria — and the machine-readable contract for the design system this site is built from.
 
-Use it to answer questions about his work history, projects, case studies, skills, education, availability and contact details, and about how this site and its design system are built. Everything returned is text he authored himself; nothing is generated at request time.
+Use the first to answer questions about his work history, projects, case studies, skills, education, availability and contact details. Everything it returns is text he authored himself; nothing is generated at request time. Use the second to write markup that is on-system rather than merely plausible: it is derived from the shipped stylesheet by the design system's own build, so it cannot describe a class that does not exist.
 
-Choosing a tool:
+Choosing a tool — the corpus:
 - \`list_projects\` first if you do not yet know what exists — it is the table of contents (${content.projects.length} projects, ${content.projects.filter((p) => p.hasCaseStudy).length} with full case studies).
 - \`get_project\` to read one project in full once you have its id.
 - \`list_experience\` for employment history (${content.experience.length} roles) — org, role, dates, location and bullets.
 - \`get_profile\` for the person: location, availability, contact, skills, education, languages. These are structured fields and are NOT reachable by search.
-- \`get_system_facts\` for questions about this repository, the design system or the site itself.
-- \`search_content\` only when you cannot tell which project or role holds the material. It is lexical BM25, not semantic — favour the words the corpus itself would use.
+- \`get_system_facts\` for the repository's own statistics — the token and component counts, the corpus size, the open-source links.
+- \`search_content\` only when you cannot tell which project or role holds the material. It ranks by embedding similarity and falls back to lexical BM25 if that service is unavailable; the \`ranker\` field says which one ran, and a BM25 near-miss is a ranking failure rather than evidence of absence.
+
+Choosing a tool — the design system:
+- \`get_design_system\` before writing any markup that uses it: ${content.designSystem?.count ?? 0} components, ${content.system.tokens} tokens, the token categories, and the rules markup must obey to be on-system.
+- \`get_component\` for the one you are about to write — its classes, \`__element\` and \`--variant\` suffixes, full selector list and the exact tokens its CSS consumes. \`detail: "brief"\` when scanning, \`"full"\` when writing.
 
 Boundaries worth knowing:
 - Every tool is READ-ONLY. There is no write, no mutation, no side effect, and no state carried between calls.
 - The corpus is closed and single-subject. If it does not cover something, say so rather than inferring — an empty search result means "not on file", not "search harder".
-- Sections within a project are an ordered array and a kind may repeat. Read them in order.`;
+- Sections within a project are an ordered array and a kind may repeat. Read them in order.
+- The design system is a CSS-class system with no component runtime: you compose plain HTML and apply classes. A class the contract does not list has no rule behind it and renders as nothing.
+- The component contract is the MECHANICAL half only. The reasoning, the accessibility rationale and the per-component constraints are human-written in each component's \`spec.md\`, which the tools point at by path and never reproduce. Do not infer a component's purpose from its selector list.`;
 
 /* ============================================================
    Cold-start context, per tool
@@ -113,18 +122,25 @@ const SCOPE = {
   get_profile: "Yordan Hristov himself.",
   get_system_facts: "About this repository rather than the work it presents.",
   search_content: null,
+  get_design_system: "The design system this portfolio is built with, as a contract an agent can build against.",
+  get_component: "One component of that design system.",
 };
 
 /* Behind — the one genuine behavioural difference between the two surfaces.
    The web chat's system prompt carries the corpus manifest, so its model can
    already see every id and title before it calls anything. A remote client
    cannot, and a search tool is the wrong first move when you do not yet know
-   what exists. */
+   what exists. get_component has the same cold-start gap for a different
+   reason: component ids are not in the manifest at all, on either surface. */
 const NOTE = {
   search_content:
     "The corpus is Yordan Hristov's portfolio and CV. This client holds no manifest of it, so call " +
     "list_projects or list_experience first when you need to know what exists; use search only to " +
     "locate material you cannot place. An empty result means the corpus does not cover the question.",
+  get_component:
+    "Component ids are not in any manifest this client holds — call get_design_system first for the " +
+    "list, and for the rules that make the difference between markup that uses these classes and " +
+    "markup that is actually on-system.",
 };
 
 /* Human-readable titles, shown by clients that surface a tool picker. */
@@ -135,6 +151,8 @@ const TITLES = {
   get_profile: "Get profile",
   get_system_facts: "Get system facts",
   search_content: "Search content",
+  get_design_system: "Get design system",
+  get_component: "Get component",
 };
 
 /* ============================================================
@@ -197,11 +215,11 @@ function buildServer() {
     try {
       result = await callTool(name, args ?? {});
     } catch (err) {
-      /* Five of the six tools are pure functions over a loaded object, so this
-         is near-unreachable for them. search_content may embed the query over
-         the network, but embed.js swallows its own failures and falls back to
-         BM25 rather than throwing. If this IS reached, the caller gets the
-         message and never the stack. */
+      /* Every tool but search_content is a pure function over a loaded object,
+         so this is near-unreachable for them. search_content may embed the
+         query over the network, but embed.js swallows its own failures and
+         falls back to BM25 rather than throwing. If this IS reached, the caller
+         gets the message and never the stack. */
       console.error(`[mcp] tool "${name}" threw:`, err);
       return {
         isError: true,

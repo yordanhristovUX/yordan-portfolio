@@ -1,27 +1,46 @@
 #!/usr/bin/env node
 /* ============================================================
-   Retrieval eval — zero dependencies, zero cost, zero API keys.
+   Retrieval eval — zero dependencies, offline, deterministic.
 
-   evals/questions.json  →  a four-arm comparison table
+   evals/questions.json  →  a six-arm comparison table
                          →  evals/results.json
                          →  the <!-- content:evals-* --> regions of evals.html
 
-   `node evals/run.mjs`                  run, print, write the artefacts
-   `node evals/run.mjs --check`          run and fail if any artefact is stale (CI)
+   `node evals/run.mjs`                   run, print, write the artefacts
+   `node evals/run.mjs --check`           run and fail if any artefact is stale (CI)
    `node evals/run.mjs --update-baseline` accept the current numbers as the baseline
 
    SCOPE: this measures the RETRIEVER, not the assistant. hit@k, MRR and
    abstention are properties of retrieval and need no model, so this runs free,
-   offline and in CI on every commit. Answer-level metrics — citation validity
-   in a real answer, turns per answer, latency, cost — need a live model and
-   belong with api/chat.js in Phase 3. Nothing here calls a model API, and the
-   embeddings arm is the one exception that would: it is gated behind
-   VOYAGE_API_KEY and skips cleanly without one rather than being faked.
+   offline and in CI on every commit. Answer-level metrics belong elsewhere:
+   `evals/groundedness.mjs` is the manual, key-gated, never-in-CI pass that
+   measures whether the prose follows from the chunks it cites.
 
-   The gate this is allowed to change: if an arm wins a question class, that
-   arm ships and §1 of the plan is amended rather than defended.
+   WHAT CHANGED IN THIS REVISION, and why each change is here rather than in
+   lib/knowledge/ — this file measures, it does not repair:
+
+     · every published rate now carries a 95% Wilson interval, and the
+       regression gate compares a drop against that interval rather than
+       against a flat 0.001. A gate three orders of magnitude finer than the
+       sampling error fires on one question changing its mind.
+     · exact McNemar on the per-question data measure() has always built and
+       thrown away. Paired tests are the only way to say whether one arm beats
+       another on 49 questions; margins alone cannot.
+     · `separability` is decomposed. For a gated arm most of it is the
+       abstention rate wearing a second name, and it was being printed beside
+       `abstain` as if it were independent corroboration.
+     · the `tools-only` arm now builds its name surface with the SHIPPED
+       buildNameSurfaces() instead of a divergent local copy that still carried
+       experience.descriptor. The published 72.7% abstain was the pre-fix
+       number sitting in the table unremarked.
+     · the eval's own vector cache is fingerprinted by CORPUS HASH, not by
+       chunk count, and `--check` covers it. A count cannot see a reword.
+     · a missing VOYAGE_API_KEY next to a .env file on disk is a mistake, not a
+       choice, and it now says so and exits instead of republishing a table
+       with the embeddings arms quietly deleted from it.
    ============================================================ */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -29,11 +48,15 @@ import {
   callTool,
   search,
   entityGate,
+  buildNameSurfaces,
   tokenize,
   verifyTokeniser,
   validateReferential,
   validateProvenance,
+  vectorsCorpusHash,
+  vectorsStatus,
 } from "../lib/knowledge/index.js";
+import { wilson, meanInterval, mcnemarExact } from "./stats.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -43,7 +66,9 @@ const UPDATE_BASELINE = process.argv.includes("--update-baseline");
 const lf = (s) => s.replace(/\r\n/g, "\n");
 const read = (...p) => readFileSync(join(root, ...p), "utf8");
 
-/** How deep any arm is allowed to look. MRR is 0 past this. */
+/** How deep any arm is allowed to look. MRR is 0 past this. Production returns
+ *  fewer — see SHIP_LIMIT below, which is read out of the shipped tool rather
+ *  than copied from it. */
 const DEPTH = 10;
 
 /* ============================================================
@@ -114,31 +139,129 @@ preflight.push(`tokeniser agreement  (${tok.chunks} chunks, ${tok.terms} terms r
 }
 
 /* ============================================================
+   0c. The corpus fingerprint — and the separator that is not a space
+
+   THE SEPARATOR IS A NUL BYTE. scripts/build-vectors.mjs writes it as an
+   explicit `SEP` constant precisely because a literal one renders as a space in
+   every editor, in `git diff` and in a plain file read: anyone reimplementing
+   the digest from the page would compute a different one, declare a current
+   cache stale, and silently fall back to a worse ranker. This is the third
+   copy of that construction (build-vectors.mjs, lib/knowledge/embed.js, here),
+   and three copies of a hash function across two boundaries that forbid the
+   import is exactly the shape verifyTokeniser exists for. So it gets the same
+   treatment: computed independently, then RECONCILED against the shipped one.
+
+   The reconciliation only works while content/dist/vectors.json is itself
+   current, because that is the only place a corpus digest is published. When it
+   is stale the cross-check cannot run and the preflight says so rather than
+   passing quietly.
+   ============================================================ */
+const CORPUS_SEP = "\u0000"; /* NUL, written as an ESCAPE on purpose — a literal one renders as a space. */
+const CORPUS_TEXTS = content.chunks.map((c) => `${c.heading}. ${c.text}`);
+const sha16 = (s) => createHash("sha256").update(s).digest("hex").slice(0, 16);
+const corpusHash = sha16(CORPUS_TEXTS.join(CORPUS_SEP));
+
+{
+  const shipped = vectorsStatus(content);
+  if (!shipped.stale) {
+    if (vectorsCorpusHash !== corpusHash) {
+      console.error(
+        `✗ corpus fingerprint disagreement — this runner computes ${corpusHash} while\n` +
+          `  content/dist/vectors.json (which lib/knowledge/embed.js just certified as CURRENT)\n` +
+          `  was built for ${vectorsCorpusHash}. The two digests are meant to be the same\n` +
+          `  construction over the same text. Check the separator: it is a NUL byte, not a space.`
+      );
+      process.exit(1);
+    }
+    preflight.push(`corpus fingerprint   (${corpusHash} — agrees with content/dist/vectors.json)`);
+  } else {
+    preflight.push(
+      `corpus fingerprint   (${corpusHash} — NOT cross-checked: content/dist/vectors.json is stale, ${shipped.reason})`
+    );
+  }
+}
+
+/* ============================================================
+   0d. The production search limit, read out of the shipped tool
+
+   audit 05 §2.7: SEARCH_LIMIT_DEFAULT is 8 in production while DEPTH is 10
+   here, so any part of the table that depends on ranks 9 and 10 describes a
+   configuration that does not ship. The constant is not exported, so rather
+   than copy the number — a copy is what goes stale — the runner asks the tool.
+   `searchContent` echoes the limit it actually applied.
+
+   VOYAGE_API_KEY is removed for the duration of the probe so this stays
+   offline: embedRank reads the key at call time and returns null without one,
+   which drops it onto BM25 and makes no network request. The limit is the same
+   either way; the point is that `node evals/run.mjs` never opens a socket
+   outside the embeddings arm.
+   ============================================================ */
+const SHIP_LIMIT = await (async () => {
+  const saved = process.env.VOYAGE_API_KEY;
+  if (saved !== undefined) delete process.env.VOYAGE_API_KEY;
+  try {
+    const probe = await callTool("search_content", { query: "design system" });
+    const n = Number(probe?.limit);
+    return Number.isInteger(n) && n > 0 ? n : DEPTH;
+  } finally {
+    if (saved !== undefined) process.env.VOYAGE_API_KEY = saved;
+  }
+})();
+preflight.push(
+  `production depth     (search_content returns ${SHIP_LIMIT} by default; this suite measures to ${DEPTH})`
+);
+
+/* ============================================================
    1. The question set
    ============================================================ */
-const QUESTIONS = JSON.parse(read("evals", "questions.json")).questions;
+const QUESTION_FILE = JSON.parse(read("evals", "questions.json"));
+const QUESTIONS = QUESTION_FILE.questions;
 
 /* An invented expected id would score a question that nothing can answer, and
    would do it silently. Refuse to run. */
 {
   const validIds = new Set(content.chunks.map((c) => c.id));
   const bad = [];
+  const seen = new Set();
   for (const q of QUESTIONS) {
+    if (seen.has(q.id)) bad.push(`duplicate question id "${q.id}"`);
+    seen.add(q.id);
     for (const id of q.expectedChunkIds) {
       if (!validIds.has(id)) bad.push(`${q.id}: "${id}" is not a chunk id in content.json`);
     }
+    if (q.expects !== undefined && q.expects !== "abstain" && q.expects !== "chunks") {
+      bad.push(`${q.id}: expects "${q.expects}" — only "abstain" or "chunks" are meaningful`);
+    }
   }
   if (bad.length) {
-    console.error(`✗ questions.json references chunk ids that do not exist:\n  - ${bad.join("\n  - ")}`);
+    console.error(`✗ questions.json is not usable:\n  - ${bad.join("\n  - ")}`);
     process.exit(1);
   }
 }
 
-const RETRIEVAL = QUESTIONS.filter((q) => q.expectedChunkIds.length > 0);
-const ABSTAIN = QUESTIONS.filter((q) => q.expectedChunkIds.length === 0);
-preflight.push(
-  `question set         (${QUESTIONS.length} questions — ${RETRIEVAL.length} retrieval, ${ABSTAIN.length} abstention)`
+/* Abstention is normally DERIVED from an empty expectedChunkIds, and `expects`
+   overrides it. The override exists for one question and is printed by name,
+   because a question that scores as abstention while carrying expected chunks
+   is exactly the kind of quiet exception a reader is entitled to see. */
+const isAbstention = (q) =>
+  q.expects ? q.expects === "abstain" : q.expectedChunkIds.length === 0;
+
+const OVERRIDDEN = QUESTIONS.filter(
+  (q) => q.expects && q.expects === "abstain" !== (q.expectedChunkIds.length === 0)
 );
+
+const RETRIEVAL = QUESTIONS.filter((q) => !isAbstention(q));
+const ABSTAIN = QUESTIONS.filter((q) => isAbstention(q));
+preflight.push(
+  `question set         (${QUESTIONS.length} questions — ${RETRIEVAL.length} retrieval, ${ABSTAIN.length} abstention` +
+    (OVERRIDDEN.length ? `; ${OVERRIDDEN.map((q) => q.id).join(", ")} scored by explicit \`expects\`` : "") +
+    `)`
+);
+
+/** Fingerprint of the questions this cache was embedded for. Adding, removing
+ *  or rewording a question must invalidate the question vectors, and a count
+ *  cannot see a reword any more than it can in the corpus. */
+const questionsHash = sha16(QUESTIONS.map((q) => `${q.id}\u0000${q.question}`).join("\u0001"));
 
 /* ============================================================
    2. Arm — tools-only
@@ -148,14 +271,23 @@ preflight.push(
    and one-line summary, so it navigates by name and calls get_project /
    list_experience / get_profile to READ rather than to FIND.
 
-   Matching is over each entity's NAME SURFACE only — ids, titles, clients,
-   tags, role and org names, skill terms, fact titles — never its body. Each
-   matched term contributes its corpus IDF, so "spetema" (df 3) counts and
-   "design" (df 40) barely does. That weighting comes from content.json's own
-   statistics, not from these questions.
+   THE SURFACE IS THE SHIPPED ONE. This arm used to build its own name surfaces
+   inline, and that copy still carried `experience.descriptor` after gate.js
+   dropped it — so the arm's published 72.7% abstain was literally the pre-fix
+   number, sitting in the table unremarked while the page beside it described a
+   gate that excluded the field. gate.js exports buildNameSurfaces "so the eval
+   can construct a gate over a fixture"; not using it was a boundary violation
+   by this repo's own rules. It now uses it, and this arm's abstain moves as a
+   result. The move is a correction, not a regression.
 
-   An entity nobody named scores nothing, so the arm returns nothing. That
-   abstention is a structural property, not a tuned threshold.
+   buildNameSurfaces returns {name, label, terms}. This arm reads `terms`, the
+   union — it is deliberately NOT the gate. The gate applies a name/label split
+   and a floor; this arm is IDF-weighted bag-of-names, which is what makes it a
+   lower bound on structured routing rather than a second copy of `tools-gated`.
+
+   Each matched term contributes its corpus IDF, so "spetema" (df 3) counts and
+   "design" (df 29) barely does. That weighting comes from content.json's own
+   statistics, not from these questions.
    ============================================================ */
 const { N, df } = content.bm25;
 const idf = (t) => Math.log(1 + (N - (df[t] ?? 0) + 0.5) / ((df[t] ?? 0) + 0.5));
@@ -167,40 +299,7 @@ content.chunks.forEach((c, i) => {
   chunksByEntity.get(c.entity).push(i);
 });
 
-const nameSurfaces = [];
-{
-  const add = (entity, parts) =>
-    nameSurfaces.push({ entity, terms: new Set(tokenize(parts.filter(Boolean).join(" "))) });
-
-  for (const p of content.projects) {
-    add(`project:${p.id}`, [
-      p.id.replace(/-/g, " "),
-      p.title,
-      p.client,
-      p.indexTitle,
-      p.indexClient,
-      p.cardType,
-      ...(p.tags ?? []),
-      ...(p.indexTags ?? []),
-    ]);
-  }
-  for (const e of content.experience) {
-    add(`experience:${e.id}`, [e.id.replace(/-/g, " "), e.org, e.role, e.descriptor]);
-  }
-  for (const c of content.capabilities) add(`capability:${c.id}`, [c.id.replace(/-/g, " "), c.title]);
-  for (const [id, g] of Object.entries(content.skills.groups)) {
-    add(`skills:${id}`, [id.replace(/-/g, " "), g.site?.term, g.cv?.term]);
-  }
-  for (const f of content.facts) add(`fact:${f.id}`, [f.id, f.title, f.unit]);
-  add("profile", [
-    content.profile.identity.name,
-    content.profile.identity.role,
-    ...content.profile.identity.disciplines,
-    ...content.education.education.map((e) => `${e.qualification} ${e.institution}`),
-    ...content.education.languages.map((l) => l.language),
-    ...content.profile.rows.map((r) => r.term),
-  ]);
-}
+const nameSurfaces = buildNameSurfaces(content);
 
 function armTools(question) {
   const terms = [...new Set(tokenize(question))];
@@ -226,11 +325,11 @@ function armTools(question) {
    3. Arm — bm25
    ============================================================ */
 function armBm25(question) {
-  /* RAW search, deliberately not callTool("search_content"). The tool is now
-     entity-gated in lib/knowledge/, which is correct for production and would
-     be fatal here: it would make this arm identical to `tools-gated` and the
-     published table would be comparing an arm against itself. This arm's whole
-     job is to be the UNGATED baseline that shows what the gate is worth. */
+  /* RAW search, deliberately not callTool("search_content"). The tool ranks
+     with embeddings when a key and a fresh cache are present, so routing this
+     arm through it would make the lexical baseline a semantic one on some
+     machines and not others. This arm's whole job is to be the free, offline,
+     zero-dependency floor every other arm is measured against. */
   return search(content, question, DEPTH).map((r) => ({
     chunkId: r.chunkId,
     chunkIndex: r.chunkIndex,
@@ -239,29 +338,29 @@ function armBm25(question) {
 }
 
 /* ============================================================
-   3b. Arm — tools-gated  (POST-HOC — read the caveat)
+   3b. Arm — tools-gated  (POST-HOC, and no longer the shipped shape)
 
-   This arm did not exist when the run started. Arms 1–3 showed a clean split:
-   BM25 ranks better, tools-only is the only thing that knows when to say
-   nothing, and concatenating them inherits the weakness of both. The obvious
-   repair is to stop fusing RANKINGS and fuse RESPONSIBILITIES instead — let
-   the manifest decide *whether* the corpus covers the question, and let BM25
-   decide *what* to return once it does.
+   BM25's ranking, refused outright when the entity gate reports no coverage.
 
-   It has no tuned parameter: the gate is "the tools arm matched some entity",
-   the same structural condition arm 1 already uses, and the ranking is BM25
-   untouched.
+   READ THIS BEFORE QUOTING THE ROW. When it was written, `search_content`
+   applied the gate internally and returned nothing on a miss, so this arm
+   described production. It does not any more: gate.js was moved above the tool
+   in Wave 2 and `searchContent` now returns `{gateMatched, gateScore, results}`
+   with the ranking intact on a miss. Nothing in api/chat.js or api/mcp.js
+   filters on it — `summarize()` prints it into a trace string and that is the
+   only consumer.
 
-   It is nonetheless a hypothesis formed after seeing this test set, so it is
-   labelled as such everywhere it is reported. It should be confirmed against
-   questions written after it, not treated as established by the run that
-   suggested it.
+   So this arm, and `gated-embeddings` below, are now COUNTERFACTUALS: they
+   measure what a caller would pay if it chose to refuse on a gate miss. That is
+   worth measuring — it is the decision the system prompt is being trusted to
+   make — but it is not a description of the deployed configuration, and it must
+   not be quoted as one.
+
+   It calls the SHIPPED gate from lib/knowledge/gate.js rather than
+   approximating it with `armTools(...).length`, so the refusal it measures is
+   the real one.
    ============================================================ */
 function armToolsGated(question) {
-  /* Calls the SHIPPED gate from lib/knowledge/gate.js rather than approximating
-     it with `armTools(...).length`. This arm is now a measurement of the thing
-     production actually runs, not of something that resembles it — which is the
-     only way its numbers can be claimed for the deployed system. */
   return entityGate(question) ? armBm25(question) : [];
 }
 
@@ -293,18 +392,26 @@ function armHybrid(question) {
 }
 
 /* ============================================================
-   5. Arm — embeddings (Voyage), gated
+   5. Arm — embeddings (Voyage), cache-gated
 
    Anthropic has no embeddings endpoint; Voyage is the recommended partner.
-   Without VOYAGE_API_KEY this arm SKIPS — it is not faked, and it is not
-   quietly replaced by TF-IDF cosine and relabelled "semantic". Vectors are
-   cached to evals/vectors.json so the corpus is embedded once, at build time,
-   and never again: 76 chunks × 1024 float32 is ~250 KB, which is the whole
-   point being made in §1 about what "vector database" means at this size.
+   The arm runs from the committed cache, and a key is needed only to BUILD
+   that cache. Without either it SKIPS — it is not faked, and it is not quietly
+   replaced by TF-IDF cosine relabelled "semantic".
+
+   FRESHNESS IS BY DIGEST, NOT BY COUNT. The old guard was
+   `cache.chunks.length === chunks.length && cache.questions.length ===
+   questions.length`, which is the exact check scripts/build-vectors.mjs
+   computes a corpusHash to avoid: "comparing a hash rather than a length means
+   rewording a chunk invalidates the cache, which a count would silently miss."
+   It missed one. A corpus rebuild that renamed an entity and reworded its
+   chunks left 76 cached vectors against 76 live chunks, and the arm scored
+   against text that no longer existed while every gate stayed green.
    ============================================================ */
 const VOYAGE_MODEL = "voyage-3.5";
 const VOYAGE_URL = "https://api.voyageai.com/v1/embeddings";
 const VECTORS_PATH = join(here, "vectors.json");
+const ENV_PATH = join(root, ".env");
 
 async function voyageEmbed(texts, inputType, key) {
   const out = [];
@@ -330,25 +437,63 @@ const dot = (a, b) => {
 const norm = (a) => Math.sqrt(dot(a, a));
 const cosine = (a, b) => dot(a, b) / (norm(a) * norm(b) || 1);
 
+/** @returns {{cache:object|null, state:"fresh"|"missing"|"stale", reason:string|null}} */
+function readVectorCache() {
+  if (!existsSync(VECTORS_PATH)) return { cache: null, state: "missing", reason: "evals/vectors.json does not exist" };
+  let c;
+  try {
+    c = JSON.parse(readFileSync(VECTORS_PATH, "utf8"));
+  } catch (e) {
+    return { cache: null, state: "stale", reason: `evals/vectors.json is not valid JSON (${e.message})` };
+  }
+  if (c.model !== VOYAGE_MODEL) {
+    return { cache: null, state: "stale", reason: `built with ${c.model}, this arm expects ${VOYAGE_MODEL}` };
+  }
+  if (c.corpusHash !== corpusHash) {
+    return {
+      cache: null,
+      state: "stale",
+      reason: c.corpusHash
+        ? `built for corpus ${c.corpusHash}, this corpus is ${corpusHash}`
+        : `carries no corpusHash at all — it predates the freshness check and cannot be trusted`,
+    };
+  }
+  if (c.questionsHash !== questionsHash) {
+    return {
+      cache: null,
+      state: "stale",
+      reason: c.questionsHash
+        ? `built for question set ${c.questionsHash}, this set is ${questionsHash}`
+        : `carries no questionsHash at all — it predates the freshness check and cannot be trusted`,
+    };
+  }
+  if (c.chunks?.length !== content.chunks.length || c.questions?.length !== QUESTIONS.length) {
+    return { cache: null, state: "stale", reason: `vector counts disagree with the corpus and question set` };
+  }
+  return { cache: c, state: "fresh", reason: null };
+}
+
 async function buildEmbeddings(key) {
-  const chunkTexts = content.chunks.map((c) => `${c.heading}. ${c.text}`);
   const questionTexts = QUESTIONS.map((q) => q.question);
+  const chunks = await voyageEmbed(CORPUS_TEXTS, "document", key);
+  const questions = await voyageEmbed(questionTexts, "query", key);
+  const cache = {
+    $generatedBy: "evals/run.mjs — do not edit; rebuild with `node --env-file=.env evals/run.mjs`",
+    model: VOYAGE_MODEL,
+    dims: chunks[0]?.length ?? 0,
+    corpusHash,
+    questionsHash,
+    chunkIds: content.chunks.map((c) => c.id),
+    questionIds: QUESTIONS.map((q) => q.id),
+    chunks,
+    questions,
+  };
+  writeFileSync(VECTORS_PATH, JSON.stringify(cache));
+  return cache;
+}
 
-  let cache = null;
-  if (existsSync(VECTORS_PATH)) {
-    const c = JSON.parse(readFileSync(VECTORS_PATH, "utf8"));
-    if (c.model === VOYAGE_MODEL && c.chunks?.length === chunkTexts.length && c.questions?.length === questionTexts.length) {
-      cache = c;
-    }
-  }
-  if (!cache) {
-    const chunks = await voyageEmbed(chunkTexts, "document", key);
-    const questions = await voyageEmbed(questionTexts, "query", key);
-    cache = { model: VOYAGE_MODEL, dims: chunks[0]?.length ?? 0, chunks, questions, questionIds: QUESTIONS.map((q) => q.id) };
-    writeFileSync(VECTORS_PATH, JSON.stringify(cache));
-  }
-  const byQuestionId = new Map((cache.questionIds ?? QUESTIONS.map((q) => q.id)).map((id, i) => [id, cache.questions[i]]));
-
+function rankerFor(cache) {
+  const byQuestionId = new Map(cache.questionIds.map((id, i) => [id, cache.questions[i]]));
   return (question, qid) => {
     const v = byQuestionId.get(qid);
     if (!v) return [];
@@ -360,8 +505,20 @@ async function buildEmbeddings(key) {
 }
 
 /* ============================================================
-   6. Metrics
+   6. Statistics
+
+   Small n is a property of the result, not a footnote. At 49 retrieval
+   questions a headline rate carries a Wilson interval 11–14 percentage points
+   wide; the 16 abstention questions carry ±16–18, and `corpus-gap` at n=3
+   carries ±37. Every rate below is published with its interval so nobody has to
+   compute one to know which differences the table can support.
+
+   The three formulae live in evals/stats.mjs, imported by this file and by
+   evals/groundedness.mjs. They were inline here until the second consumer
+   appeared; see the note at the top of that file about why a second copy was
+   not the answer.
    ============================================================ */
+
 function measure(armName, run) {
   const perQuestion = QUESTIONS.map((q) => {
     const hits = run(q.question, q.id);
@@ -379,7 +536,8 @@ function measure(armName, run) {
     return {
       id: q.id,
       category: q.category,
-      abstention: q.expectedChunkIds.length === 0,
+      shape: q.shape ?? "lookup",
+      abstention: isAbstention(q),
       rank,
       entityRank,
       top1: hits[0]?.score ?? null,
@@ -391,39 +549,86 @@ function measure(armName, run) {
   const retrieval = perQuestion.filter((r) => !r.abstention);
   const abstain = perQuestion.filter((r) => r.abstention);
 
-  const rate = (rows, ok) => (rows.length ? rows.filter(ok).length / rows.length : 0);
-  const hitAt = (k) => rate(retrieval, (r) => r.rank > 0 && r.rank <= k);
-  const entAt = (k) => rate(retrieval, (r) => r.entityRank > 0 && r.entityRank <= k);
-  const mrr = retrieval.length
-    ? retrieval.reduce((s, r) => s + (r.rank > 0 ? 1 / r.rank : 0), 0) / retrieval.length
-    : 0;
+  const count = (rows, ok) => rows.filter(ok).length;
+  const hitAt = (k) => wilson(count(retrieval, (r) => r.rank > 0 && r.rank <= k), retrieval.length);
+  const entAt = (k) => wilson(count(retrieval, (r) => r.entityRank > 0 && r.entityRank <= k), retrieval.length);
+  const rr = retrieval.map((r) => (r.rank > 0 ? 1 / r.rank : 0));
+  const rrShip = retrieval.map((r) => (r.rank > 0 && r.rank <= SHIP_LIMIT ? 1 / r.rank : 0));
 
-  /* Threshold-free separability. "Is there ANY score cut that tells a question
-     the corpus can answer from one it cannot?" — computed as the fraction of
+  /* Threshold-free separability, DECOMPOSED. "Is there ANY score cut that tells
+     a question the corpus can answer from one it cannot?" — the fraction of
      (retrieval, abstention) pairs ordered correctly by top-1 score, ties half.
-     Picking a single threshold instead would mean tuning on the test set. */
+
+     Audit 05 §2.4: for a gated arm most of this is the abstention rate wearing
+     a second name. A pair where the unanswerable side returned NOTHING is won
+     by the refusal, not by the score scale, and `tools-gated` and
+     `gated-embeddings` published an identical 0.920 across BM25 scores of
+     4.70–21.88 and cosines of 0.24–0.59. A statistic invariant to replacing the
+     entire ranker is not measuring the ranker. So the empty-driven part is
+     separated out and the remainder — pairs where BOTH sides produced a score —
+     is reported as the only part that is about ranking at all. */
   let ordered = 0;
   let pairs = 0;
+  let emptyDriven = 0;
+  let tied = 0;
+  let scoredPairs = 0;
+  let scoredOrdered = 0;
+  let lostByRefusingAnAnswer = 0;
   for (const a of retrieval) {
     for (const b of abstain) {
       pairs++;
-      const x = a.top1 ?? -Infinity;
-      const y = b.top1 ?? -Infinity;
-      if (x > y) ordered += 1;
-      else if (x === y) ordered += 0.5;
+      const x = a.top1;
+      const y = b.top1;
+      const bothScored = typeof x === "number" && typeof y === "number";
+      const xv = x ?? -Infinity;
+      const yv = y ?? -Infinity;
+      const win = xv > yv ? 1 : xv === yv ? 0.5 : 0;
+      ordered += win;
+      if (bothScored) {
+        scoredPairs++;
+        scoredOrdered += win;
+      } else if (typeof x === "number" && y === null) {
+        emptyDriven++;
+      } else if (x === null && y === null) {
+        tied++;
+      } else {
+        /* The arm returned nothing for an ANSWERABLE question while returning
+           something for an unanswerable one — a pair it loses outright. The
+           fourth bucket exists so the four shares sum to 100% and nobody has to
+           wonder where the remainder went. */
+        lostByRefusingAnAnswer++;
+      }
     }
   }
 
-  const byCategory = {};
-  for (const r of perQuestion) {
-    const c = (byCategory[r.category] ??= { n: 0, hit3: 0, abstained: 0, abstention: r.abstention });
-    c.n++;
-    if (r.abstention) c.abstained += r.returned === 0 ? 1 : 0;
-    else c.hit3 += r.rank > 0 && r.rank <= 3 ? 1 : 0;
-  }
-  for (const c of Object.values(byCategory)) {
-    c.score = c.abstention ? c.abstained / c.n : c.hit3 / c.n;
-  }
+  const byGroup = (key) => {
+    const out = {};
+    for (const r of perQuestion) {
+      const g = (out[r[key]] ??= { n: 0, nRetrieval: 0, nAbstention: 0, hit3: 0, abstained: 0 });
+      g.n++;
+      if (r.abstention) {
+        g.nAbstention++;
+        g.abstained += r.returned === 0 ? 1 : 0;
+      } else {
+        g.nRetrieval++;
+        g.hit3 += r.rank > 0 && r.rank <= 3 ? 1 : 0;
+      }
+    }
+    for (const g of Object.values(out)) {
+      /* A group is scored on whichever kind of question it is made of. Every
+         group in this set is homogeneous; if one ever is not, `mixed` says so
+         instead of averaging two different things into one cell. */
+      g.mixed = g.nRetrieval > 0 && g.nAbstention > 0;
+      g.abstention = g.nAbstention > 0 && g.nRetrieval === 0;
+      g.score = g.abstention ? g.abstained / g.nAbstention : g.hit3 / (g.nRetrieval || 1);
+      g.interval = g.abstention
+        ? wilson(g.abstained, g.nAbstention)
+        : wilson(g.hit3, g.nRetrieval || 1);
+    }
+    return out;
+  };
+
+  const abstainRate = wilson(count(abstain, (r) => r.returned === 0), abstain.length);
 
   return {
     arm: armName,
@@ -432,12 +637,16 @@ function measure(armName, run) {
     hit5: hitAt(5),
     ent1: entAt(1),
     ent3: entAt(3),
-    mrr,
-    abstain: rate(abstain, (r) => r.returned === 0),
+    mrr: meanInterval(rr),
+    mrrShip: meanInterval(rrShip),
+    abstain: abstainRate,
     separability: pairs ? ordered / pairs : 0,
+    separabilityScored: scoredPairs ? scoredOrdered / scoredPairs : null,
+    separabilityDetail: { pairs, emptyDriven, tied, scoredPairs, lostByRefusingAnAnswer },
     retrievalTop1: range(retrieval.map((r) => r.top1)),
     abstainTop1: range(abstain.map((r) => r.top1)),
-    byCategory,
+    byCategory: byGroup("category"),
+    byShape: byGroup("shape"),
     perQuestion,
   };
 }
@@ -463,48 +672,132 @@ const results = [
   measure("tools-gated", armToolsGated),
 ];
 
-/* The arm runs from the committed vector cache when one is present, and only
-   needs a key to BUILD that cache. Gating on the key alone made the generated
-   artefacts key-dependent: a run with a key wrote five arms, and `--check` in
-   CI — which has no key — then recomputed four and called them stale. The
-   cache is the thing that makes this arm reproducible offline, so the cache is
-   what the gate should ask about. A key is still required if the cache is
-   missing or has gone stale against the corpus. */
-const hasVectorCache = existsSync(VECTORS_PATH);
-let embeddingsNote = hasVectorCache
-  ? "skipped (cached vectors are stale — set VOYAGE_API_KEY to rebuild)"
-  : "skipped (no cached vectors and no VOYAGE_API_KEY)";
-if (process.env.VOYAGE_API_KEY || hasVectorCache) {
-  try {
-    const run = await buildEmbeddings(process.env.VOYAGE_API_KEY);
+/* ---------- the embeddings arms, and the two ways they can be absent ----------
+
+   The arm runs from the committed cache when one is FRESH, and needs a key only
+   to build it. Gating on the key alone made the generated artefacts
+   key-dependent; gating on the cache's mere existence let a stale one through,
+   which is the defect this revision exists to close.
+
+   T3 — a .env file on disk with no VOYAGE_API_KEY in the process is a MISTAKE,
+   not a choice. `node evals/run.mjs` does not load .env; `node --env-file=.env
+   evals/run.mjs` does. Running the first when you meant the second used to
+   print `skipped`, delete two arms from the published table, and republish it
+   with the strongest result in the repo silently missing. It now says so and
+   exits. Where there is no .env at all — CI, a fresh clone — a missing key is a
+   genuine choice and the arm skips as documented. */
+const vectorCache = readVectorCache();
+let embeddingsNote = null;
+let embeddingsSkip = null;
+
+{
+  const key = process.env.VOYAGE_API_KEY;
+  let cache = vectorCache.cache;
+
+  if (!cache) {
+    if (key) {
+      try {
+        cache = await buildEmbeddings(key);
+        console.log(`✓ evals/vectors.json     (rebuilt — ${vectorCache.reason})`);
+      } catch (e) {
+        embeddingsSkip = `failed — ${e.message}`;
+      }
+    } else if (existsSync(ENV_PATH)) {
+      console.error(
+        `✗ VOYAGE_API_KEY is not set in this process, but ${join(root, ".env")} exists.\n` +
+          `  The embeddings and gated-embeddings arms would be dropped and the table republished\n` +
+          `  without them — deleting the strongest measured result in this repo rather than\n` +
+          `  reporting it. Node does not read .env on its own. Run:\n\n` +
+          `      node --env-file=.env evals/run.mjs\n\n` +
+          `  Why the arms cannot run from the cache: ${vectorCache.reason}.\n` +
+          `  If you genuinely mean to run the four free arms only, move .env aside first.`
+      );
+      process.exit(1);
+    } else {
+      embeddingsSkip = `skipped (${vectorCache.reason}; set VOYAGE_API_KEY to build it)`;
+    }
+  }
+
+  if (cache) {
+    const run = rankerFor(cache);
     results.push(measure("embeddings", run));
 
-    /* THE SHIPPED CONFIGURATION. lib/knowledge/ gates with entityGate and ranks
-       with embeddings, so this row — not `embeddings` and not `tools-gated` —
-       is what api/chat.js and api/mcp.js actually do. It was added the moment
-       the two were combined in production, because a deployed configuration
-       that appears in no row of the table is exactly the unmeasured claim this
-       whole suite exists to prevent.
-
-       Expect it to cost recall against ungated `embeddings`: the gate matches
-       entity NAMES, so a question that names nothing ("how far has he run?")
-       is refused before the ranker ever sees it, even when the corpus holds
-       the answer. That trade is the row's whole point — it is what buys the
-       abstention that ungated embeddings does not have. */
+    /* A COUNTERFACTUAL, not the shipped configuration — see the note on
+       `tools-gated`. Since Wave 2 the gate annotates and does not filter, so
+       what ships is the row above this one. This row measures what refusing on
+       a gate miss would cost: the gate matches entity NAMES, so a question that
+       names nothing ("how far has he run?") is refused before the ranker sees
+       it, even when the corpus holds the answer. That trade is the row's whole
+       point, and it is now a trade the caller may decline. */
     results.push(measure("gated-embeddings", (q, qid) => (entityGate(q) ? run(q, qid) : [])));
 
-    embeddingsNote = `${VOYAGE_MODEL}, vectors cached in evals/vectors.json`;
-  } catch (e) {
-    embeddingsNote = `failed — ${e.message}`;
-    console.error(`! embeddings arm ${embeddingsNote}`);
+    embeddingsNote = `${VOYAGE_MODEL}, ${cache.chunks.length} chunk + ${cache.questions.length} question vectors cached in evals/vectors.json (corpus ${cache.corpusHash})`;
+  } else {
+    embeddingsNote = embeddingsSkip;
+    console.error(`! embeddings arm ${embeddingsSkip}`);
   }
 }
+
+const byArm = Object.fromEntries(results.map((r) => [r.arm, r]));
+const has = (arm) => Boolean(byArm[arm]);
+
+/* ---------- paired significance ----------
+
+   The per-question data measure() builds has always been thrown away. These are
+   the comparisons the numbers can actually support, computed on hit@3 over the
+   retrieval questions, one row per question, exact two-sided McNemar.
+
+   Read the `note` on each: an improvement between two arms that do not ship is
+   not a justification for what does. */
+const COMPARISONS = [
+  ["embeddings", "bm25", "the ranker that ships against the free offline floor"],
+  ["embeddings", "tools-only", "semantic ranking against structured name lookup"],
+  ["bm25", "tools-only", "lexical ranking against structured name lookup"],
+  ["bm25", "hybrid", "does appending BM25 beneath the tools arm cost anything"],
+  ["gated-embeddings", "embeddings", "what refusing on a gate miss costs the ranker"],
+  ["gated-embeddings", "bm25", "the gated counterfactual against free offline BM25"],
+  ["tools-gated", "bm25", "what refusing on a gate miss costs BM25"],
+];
+
+const significance = [];
+for (const [a, b, note] of COMPARISONS) {
+  if (!has(a) || !has(b)) continue;
+  const A = byArm[a].perQuestion.filter((r) => !r.abstention);
+  const B = byArm[b].perQuestion.filter((r) => !r.abstention);
+  let wins = 0;
+  let losses = 0;
+  const winIds = [];
+  const lossIds = [];
+  for (let i = 0; i < A.length; i++) {
+    const okA = A[i].rank > 0 && A[i].rank <= 3;
+    const okB = B[i].rank > 0 && B[i].rank <= 3;
+    if (okA && !okB) {
+      wins++;
+      winIds.push(A[i].id);
+    } else if (okB && !okA) {
+      losses++;
+      lossIds.push(A[i].id);
+    }
+  }
+  significance.push({ a, b, note, ...mcnemarExact(wins, losses), winIds, lossIds });
+}
+
+/* `a` and `b` are ARM NAMES on these rows; the McNemar counts are `wins`,
+   `losses` and `discordant`. They were `b` and `c` in the first draft of this
+   file and the spread above silently overwrote the arm name with a number, so
+   the printed table read "embeddings vs 0". Caught by running it; named here so
+   the next person does not reintroduce the collision. */
 
 /* ============================================================
    8. Print
    ============================================================ */
 const pct = (x) => `${(x * 100).toFixed(1)}%`;
 const num = (x) => x.toFixed(3);
+const pp = (x) => `±${(x * 100).toFixed(1)}`;
+/* `p = 0.0000` is not a p-value, it is a rounding artefact reported as certainty.
+   An exact binomial tail is never zero; below the printable resolution it is
+   reported as a bound. */
+const pval = (p) => (p < 0.0001 ? `< 0.0001` : `= ${p.toFixed(4)}`);
 const padEnd = (s, n) => String(s).padEnd(n);
 const padStart = (s, n) => String(s).padStart(n);
 
@@ -512,17 +805,19 @@ for (const line of preflight) console.log(`✓ ${line}`);
 console.log("");
 
 /* 17 wide: "gated-embeddings" is 16 characters and the column must not collide
-   with the numbers beside it. Widen this, not the numbers, when an arm is added. */
+   with the numbers beside it. Widen this, not the numbers, when an arm is added.
+   Each rate column carries its 95% half-width in percentage points beneath the
+   value, because a table printed to 0.1pp against a ±20pp interval invites
+   exactly the reading it cannot support. */
 const COLS = [
-  ["arm", 17, (r) => r.arm],
-  ["hit@1", 7, (r) => pct(r.hit1)],
-  ["hit@3", 7, (r) => pct(r.hit3)],
-  ["hit@5", 7, (r) => pct(r.hit5)],
-  ["MRR", 7, (r) => num(r.mrr)],
-  ["ent@1", 7, (r) => pct(r.ent1)],
-  ["ent@3", 7, (r) => pct(r.ent3)],
-  ["abstain", 8, (r) => pct(r.abstain)],
-  ["sep.", 6, (r) => num(r.separability)],
+  ["arm", 17, (r) => r.arm, () => ""],
+  ["hit@1", 8, (r) => pct(r.hit1.p), (r) => pp(r.hit1.half)],
+  ["hit@3", 8, (r) => pct(r.hit3.p), (r) => pp(r.hit3.half)],
+  ["hit@5", 8, (r) => pct(r.hit5.p), (r) => pp(r.hit5.half)],
+  ["MRR", 8, (r) => num(r.mrr.p), (r) => `±${r.mrr.half.toFixed(3)}`],
+  ["ent@1", 8, (r) => pct(r.ent1.p), (r) => pp(r.ent1.half)],
+  ["ent@3", 8, (r) => pct(r.ent3.p), (r) => pp(r.ent3.half)],
+  ["abstain", 8, (r) => pct(r.abstain.p), (r) => pp(r.abstain.half)],
 ];
 
 const rule = (ch) => console.log(COLS.map(([, w]) => ch.repeat(w)).join(" "));
@@ -530,10 +825,9 @@ console.log(COLS.map(([h, w], i) => (i ? padStart(h, w) : padEnd(h, w))).join(" 
 rule("─");
 for (const r of results) {
   console.log(COLS.map(([, w, f], i) => (i ? padStart(f(r), w) : padEnd(f(r), w))).join(" "));
+  console.log(COLS.map(([, w, , g], i) => (i ? padStart(g(r), w) : padEnd("", w))).join(" "));
 }
-if (!results.some((r) => r.arm === "embeddings")) {
-  console.log(`${padEnd("embeddings", 13)} ${embeddingsNote}`);
-}
+if (!has("embeddings")) console.log(`${padEnd("embeddings", 17)} ${embeddingsNote}`);
 rule("─");
 console.log(
   `  ${RETRIEVAL.length} retrieval questions (hit@k, ent@k, MRR over top ${DEPTH}) · ` +
@@ -541,36 +835,125 @@ console.log(
 );
 console.log(`  hit@k = the right CHUNK in the top k · ent@k = the right ENTITY in the top k`);
 console.log(
-  `  sep. = fraction of (retrieval, abstention) pairs a top-1 score cut orders correctly; 0.5 is chance`
+  `  ± is the 95% Wilson half-width (normal, for MRR). At n=${RETRIEVAL.length} one question is ${(100 / RETRIEVAL.length).toFixed(1)}pp,`
 );
 console.log(
-  `  tools-gated is POST-HOC — it was written after seeing arms 1-3 on this same set. Treat as a hypothesis.`
+  `  so any two arms whose intervals overlap are not separated by this table. Use the paired tests below.`
 );
+console.log(
+  `  tools-gated and gated-embeddings are COUNTERFACTUALS. Since the gate moved above the tool it`
+);
+console.log(
+  `  annotates rather than filters, so what ships is the ungated ranking with a coverage note attached.`
+);
+
+/* MRR at the depth production actually returns. audit 05 §2.7. */
+{
+  const drift = results.filter((r) => Math.abs(r.mrr.p - r.mrrShip.p) > 5e-4);
+  if (SHIP_LIMIT >= DEPTH) {
+    console.log(`  search_content returns ${SHIP_LIMIT} by default, so nothing above describes an unshipped depth.`);
+  } else if (!drift.length) {
+    console.log(
+      `  search_content returns ${SHIP_LIMIT} by default; MRR recomputed at that depth is identical for every arm,`
+    );
+    console.log(`  so ranks ${SHIP_LIMIT + 1}–${DEPTH} contribute nothing and the tail is a difference on paper only.`);
+  } else {
+    console.log(`  search_content returns ${SHIP_LIMIT} by default. MRR truncated to that depth — the shipping number:`);
+    for (const r of drift) {
+      console.log(`    ${padEnd(r.arm, 17)} MRR ${num(r.mrr.p)} at depth ${DEPTH} → ${num(r.mrrShip.p)} at depth ${SHIP_LIMIT}`);
+    }
+  }
+}
+
+/* ---------- paired significance ---------- */
+console.log("");
+console.log(`paired significance — exact two-sided McNemar on hit@3, ${RETRIEVAL.length} retrieval questions`);
+console.log("─".repeat(96));
+for (const s of significance) {
+  const verdict = s.p < 0.05 ? "significant" : s.discordant === 0 ? "identical" : "not significant";
+  console.log(
+    `  ${padEnd(`${s.a} vs ${s.b}`, 36)} ${padStart(`${s.wins}–${s.losses}`, 7)}  n=${padStart(s.discordant, 2)}  ` +
+      `p ${padEnd(pval(s.p), 8)} ${verdict}`
+  );
+  console.log(`  ${padEnd("", 36)} ${s.note}`);
+}
+console.log(
+  `  wins–losses counts only DISCORDANT questions; concordant ones carry no information in a paired test.`
+);
+console.log(`  Five discordant pairs cannot reach p<0.05 under an exact test — 0.0625 is the floor.`);
+
+/* ---------- separability, decomposed ---------- */
+console.log("");
+console.log(`separability — and how much of it is the abstention rate under another name`);
+console.log("─".repeat(96));
+for (const r of results) {
+  const d = r.separabilityDetail;
+  const share = (n) => `${((n / (d.pairs || 1)) * 100).toFixed(0)}%`;
+  console.log(
+    `  ${padEnd(r.arm, 17)} ${num(r.separability)}  of ${d.pairs} pairs: ` +
+      `${share(d.emptyDriven)} won by returning nothing, ${share(d.tied)} tied empty, ` +
+      `${share(d.lostByRefusingAnAnswer)} lost by refusing an answerable one, ` +
+      `${share(d.scoredPairs)} actually scored` +
+      (r.separabilityScored === null ? "" : ` → ${num(r.separabilityScored)} on the scored pairs alone`)
+  );
+}
+console.log(
+  `  Only the last figure is about the RANKER. tools-gated and gated-embeddings agreeing on the first`
+);
+console.log(
+  `  across BM25 scores and cosines is the proof: a statistic invariant to replacing the entire ranker`
+);
+console.log(`  is not measuring the ranker, and it is not independent corroboration of the abstain column.`);
 
 /* Per-category hit@3 — the number that decides whether an arm ships for a
    question class, which is the decision §1 hands to this file. */
 console.log("");
 const cats = [...new Set(QUESTIONS.map((q) => q.category))];
-const CW = 17;
+const CW = 20;
 console.log(padEnd("category", CW) + results.map((r) => padStart(r.arm, 18)).join(""));
 console.log("─".repeat(CW + results.length * 18));
 for (const c of cats) {
-  const isAbstain = QUESTIONS.find((q) => q.category === c).expectedChunkIds.length === 0;
-  const label = `${c}${isAbstain ? " *" : ""}`;
+  const g = results[0].byCategory[c];
+  const label = `${c}${g.abstention ? " *" : ""} (n=${g.abstention ? g.nAbstention : g.nRetrieval})`;
   console.log(
     padEnd(label, CW) +
       results.map((r) => padStart(r.byCategory[c] ? pct(r.byCategory[c].score) : "—", 18)).join("")
   );
+  console.log(
+    padEnd("", CW) +
+      results.map((r) => padStart(r.byCategory[c] ? pp(r.byCategory[c].interval.half) : "", 18)).join("")
+  );
 }
-console.log("─".repeat(CW + results.length * 13));
+console.log("─".repeat(CW + results.length * 18));
 console.log(`  * abstention category — the score is the correct-abstention rate, not hit@3`);
+console.log(`  ± is the 95% Wilson half-width. A cell at n=3 has an interval wider than 50pp; read it as such.`);
+
+/* Per-shape hit@3 — added because the version-1 set was 52/54 plain lookup. */
+console.log("");
+const shapes = [...new Set(QUESTIONS.map((q) => q.shape ?? "lookup"))];
+console.log(padEnd("question shape", CW) + results.map((r) => padStart(r.arm, 18)).join(""));
+console.log("─".repeat(CW + results.length * 18));
+for (const s of shapes) {
+  const g = results[0].byShape[s];
+  /* For a MIXED shape the cell is hit@3 over its retrieval members only, so the
+     n printed beside it is that count and not the shape's total — a cell must
+     never advertise a sample size larger than the one it was computed on. */
+  const label = `${s}${g.mixed ? " †" : g.abstention ? " *" : ""} (n=${g.abstention ? g.nAbstention : g.nRetrieval}${g.mixed ? ` of ${g.n}` : ""})`;
+  console.log(
+    padEnd(label, CW) +
+      results.map((r) => padStart(r.byShape[s] ? pct(r.byShape[s].score) : "—", 18)).join("")
+  );
+}
+console.log("─".repeat(CW + results.length * 18));
+console.log(`  * abstention shape · † mixed shape — the cell is hit@3 over its retrieval members only`);
+console.log(`  Every shape but "lookup" has n ≤ 4. These cells locate a weakness; they do not measure one.`);
 
 console.log("");
 for (const r of results) {
   const a = r.retrievalTop1;
   const b = r.abstainTop1;
   console.log(
-    `  ${padEnd(r.arm, 12)} top-1 score  answerable ${a ? `${a.min.toFixed(2)}–${a.max.toFixed(2)} (med ${a.median.toFixed(2)})` : "n/a"}` +
+    `  ${padEnd(r.arm, 17)} top-1 score  answerable ${a ? `${a.min.toFixed(2)}–${a.max.toFixed(2)} (med ${a.median.toFixed(2)})` : "n/a"}` +
       `   unanswerable ${b ? `${b.min.toFixed(2)}–${b.max.toFixed(2)} (med ${b.median.toFixed(2)})` : "n/a — returned nothing"}`
   );
 }
@@ -578,11 +961,18 @@ for (const r of results) {
 /* ============================================================
    9. Artefacts — results.json and the evals.html regions
    ============================================================ */
+function round(x) {
+  return Number(x.toFixed(4));
+}
+const interval = (i) => ({ value: round(i.p), lo: round(i.lo), hi: round(i.hi), half: round(i.half) });
+
 const summary = {
   $schema: "evals/results.schema — see evals/CLAUDE.md",
-  version: 1,
+  version: 2,
   generatedBy: "evals/run.mjs — do not edit",
   contentVersion: content.version,
+  corpusHash,
+  questionsHash,
   corpus: {
     chunks: content.chunks.length,
     terms: Object.keys(content.bm25.df).length,
@@ -595,40 +985,73 @@ const summary = {
     total: QUESTIONS.length,
     retrieval: RETRIEVAL.length,
     abstention: ABSTAIN.length,
-    categories: Object.fromEntries(
-      cats.map((c) => [c, QUESTIONS.filter((q) => q.category === c).length])
+    categories: Object.fromEntries(cats.map((c) => [c, QUESTIONS.filter((q) => q.category === c).length])),
+    shapes: Object.fromEntries(
+      shapes.map((s) => [s, QUESTIONS.filter((q) => (q.shape ?? "lookup") === s).length])
     ),
   },
-  depth: DEPTH,
+  depth: { eval: DEPTH, production: SHIP_LIMIT },
+  confidence: {
+    method: "Wilson score interval, two-sided 95%; normal interval on the mean for MRR",
+    note: `n=${RETRIEVAL.length} retrieval and n=${ABSTAIN.length} abstention questions. One question is ${round(1 / RETRIEVAL.length)} of a retrieval rate.`,
+  },
   embeddings: embeddingsNote,
   arms: results.map((r) => ({
     arm: r.arm,
-    hit1: round(r.hit1),
-    hit3: round(r.hit3),
-    hit5: round(r.hit5),
-    ent1: round(r.ent1),
-    ent3: round(r.ent3),
-    mrr: round(r.mrr),
-    abstain: round(r.abstain),
+    hit1: interval(r.hit1),
+    hit3: interval(r.hit3),
+    hit5: interval(r.hit5),
+    ent1: interval(r.ent1),
+    ent3: interval(r.ent3),
+    mrr: interval(r.mrr),
+    mrrAtProductionDepth: interval(r.mrrShip),
+    abstain: interval(r.abstain),
     separability: round(r.separability),
-    byCategory: Object.fromEntries(Object.entries(r.byCategory).map(([k, v]) => [k, round(v.score)])),
+    separabilityScored: r.separabilityScored === null ? null : round(r.separabilityScored),
+    separabilityDetail: r.separabilityDetail,
+    byCategory: Object.fromEntries(
+      Object.entries(r.byCategory).map(([k, v]) => [k, { score: round(v.score), n: v.abstention ? v.nAbstention : v.nRetrieval, half: round(v.interval.half) }])
+    ),
+    byShape: Object.fromEntries(
+      Object.entries(r.byShape).map(([k, v]) => [k, { score: round(v.score), n: v.abstention ? v.nAbstention : v.nRetrieval, half: round(v.interval.half) }])
+    ),
+  })),
+  significance: significance.map((s) => ({
+    a: s.a,
+    b: s.b,
+    metric: "hit@3",
+    test: "exact two-sided McNemar",
+    wins: s.wins,
+    losses: s.losses,
+    discordant: s.discordant,
+    /* Three significant figures, not four decimal places: an exact binomial
+       tail of 1.5e-8 rounds to 0 at four places, and a stored `"p": 0` is a
+       claim of certainty no test can make. */
+    p: Number(s.p.toPrecision(3)),
+    significant: s.p < 0.05,
+    note: s.note,
+    winIds: s.winIds,
+    lossIds: s.lossIds,
   })),
 };
-function round(x) {
-  return Number(x.toFixed(4));
-}
 
 /* ---------- evals.html regions ---------- */
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const best = (key) => Math.max(...results.map((r) => r[key]));
+const best = (key) => Math.max(...results.map((r) => r[key].p ?? r[key]));
 
 const summaryRegion = () => {
-  const b = results.reduce((a, r) => (r.mrr > a.mrr ? r : a));
+  const b = results.reduce((a, r) => (r.mrr.p > a.mrr.p ? r : a));
+  const top = results.reduce((a, r) => (r.hit3.p > a.hit3.p ? r : a));
   const cells = [
     [String(content.chunks.length), "", "Corpus", "Chunks in the whole index — the entire corpus fits in a system prompt."],
     [String(QUESTIONS.length), "", "Questions", `${RETRIEVAL.length} retrieval, ${ABSTAIN.length} abstention. Every expected id verified against content.json.`],
-    [pct(best("hit3")).replace("%", ""), "%", "Best hit@3", `${b.arm} — the winning arm on rank quality across all retrieval questions.`],
-    [String(results.length), "", "Arms", `Measured offline, no model, no API key. ${esc(embeddingsNote)}`],
+    [
+      pct(top.hit3.p).replace("%", ""),
+      "%",
+      "Best hit@3",
+      `${esc(top.arm)} — 95% CI ${pct(top.hit3.lo)} to ${pct(top.hit3.hi)} on ${RETRIEVAL.length} questions. Best MRR is ${esc(b.arm)}.`,
+    ],
+    [String(results.length), "", "Arms", `Measured offline, no model. ${esc(embeddingsNote)}`],
   ];
   return [
     `<div class="facts">`,
@@ -643,16 +1066,17 @@ const summaryRegion = () => {
   ];
 };
 
-const metricCell = (label, value, isBest) =>
-  `<span class="chip${isBest ? " chip--solid" : ""}">${esc(label)} ${esc(value)}</span>`;
+const metricCell = (label, value, half, isBest) =>
+  `<span class="chip${isBest ? " chip--solid" : ""}">${esc(label)} ${esc(value)}${half ? ` ${esc(half)}` : ""}</span>`;
 
 /* One `.chip--solid` per row marks the single best value in that column — the
    chip spec allows exactly one emphasised chip per group, so the row can carry
-   at most one leader. Where an arm leads several columns the emphasis would
-   double up, so `--solid` is reserved for the arm's own strongest column. */
+   at most one leader. `separability` is deliberately NOT a column an arm can
+   lead: for a gated arm it is mostly the abstain column restated, and awarding
+   it a win would be counting one fact twice. */
 const solidFor = (r) => {
-  const cols = ["hit1", "hit3", "hit5", "ent1", "ent3", "mrr", "abstain", "separability"];
-  const led = cols.filter((k) => r[k] === best(k) && r[k] > 0);
+  const cols = ["hit1", "hit3", "hit5", "ent1", "ent3", "mrr", "abstain"];
+  const led = cols.filter((k) => r[k].p === best(k) && r[k].p > 0);
   return led[0] ?? null;
 };
 
@@ -660,39 +1084,107 @@ const tableRegion = () => {
   const out = [`<dl class="tools">`];
   for (const r of results) {
     const solid = solidFor(r);
+    const counterfactual = r.arm === "tools-gated" || r.arm === "gated-embeddings";
     out.push(
       `  <div class="tools__row">`,
-      `    <dt>${esc(r.arm)}${r.arm === "tools-gated" ? ` <span class="chip">post-hoc</span>` : ""}</dt>`,
+      `    <dt>${esc(r.arm)}${counterfactual ? ` <span class="chip">counterfactual</span>` : ""}</dt>`,
       `    <dd class="chips">`,
-      `      ${metricCell("hit@1", pct(r.hit1), solid === "hit1")}`,
-      `      ${metricCell("hit@3", pct(r.hit3), solid === "hit3")}`,
-      `      ${metricCell("hit@5", pct(r.hit5), solid === "hit5")}`,
-      `      ${metricCell("ent@1", pct(r.ent1), solid === "ent1")}`,
-      `      ${metricCell("ent@3", pct(r.ent3), solid === "ent3")}`,
-      `      ${metricCell("MRR", num(r.mrr), solid === "mrr")}`,
-      `      ${metricCell("abstain", pct(r.abstain), solid === "abstain")}`,
-      `      ${metricCell("separability", num(r.separability), solid === "separability")}`,
+      `      ${metricCell("hit@1", pct(r.hit1.p), pp(r.hit1.half), solid === "hit1")}`,
+      `      ${metricCell("hit@3", pct(r.hit3.p), pp(r.hit3.half), solid === "hit3")}`,
+      `      ${metricCell("hit@5", pct(r.hit5.p), pp(r.hit5.half), solid === "hit5")}`,
+      `      ${metricCell("ent@1", pct(r.ent1.p), pp(r.ent1.half), solid === "ent1")}`,
+      `      ${metricCell("ent@3", pct(r.ent3.p), pp(r.ent3.half), solid === "ent3")}`,
+      `      ${metricCell("MRR", num(r.mrr.p), `±${r.mrr.half.toFixed(3)}`, solid === "mrr")}`,
+      `      ${metricCell("abstain", pct(r.abstain.p), pp(r.abstain.half), solid === "abstain")}`,
       `    </dd>`,
       `  </div>`
     );
   }
-  if (!results.some((r) => r.arm === "embeddings")) {
+  if (!has("embeddings")) {
     out.push(
       `  <div class="tools__row">`,
       `    <dt>embeddings</dt>`,
-      `    <dd>${esc(embeddingsNote)} — the arm is implemented and gated, never faked. Anthropic has no embeddings endpoint; Voyage is the partner model.</dd>`,
+      `    <dd>${esc(embeddingsNote)} — the arm is implemented and cache-gated, never faked. Anthropic has no embeddings endpoint; Voyage is the partner model.</dd>`,
       `  </div>`
     );
   }
   out.push(`</dl>`);
+
+  out.push(
+    `<p class="ev-note">`,
+    `  Every ± is the half-width of a two-sided 95% Wilson interval on ${RETRIEVAL.length} retrieval or`,
+    `  ${ABSTAIN.length} abstention questions — one question moves a retrieval rate by ${(100 / RETRIEVAL.length).toFixed(1)}pp.`,
+    `  Two arms whose intervals overlap are not separated by this table, which is what the paired`,
+    `  tests below are for. tools-gated and gated-embeddings are counterfactuals: since the entity`,
+    `  gate moved above the tool it annotates rather than filters, so the deployed ranking is the`,
+    `  ungated one with a coverage note attached.`,
+    `</p>`
+  );
+
+  if (significance.length) {
+    out.push(`<dl class="tools">`);
+    for (const s of significance) {
+      const verdict = s.p < 0.05 ? "significant" : "not significant";
+      out.push(
+        `  <div class="tools__row">`,
+        `    <dt>${esc(s.a)} vs ${esc(s.b)}</dt>`,
+        `    <dd class="chips">`,
+        `      <span class="chip">${s.wins}–${s.losses} of ${s.discordant} discordant</span>`,
+        `      <span class="chip${s.p < 0.05 ? " chip--solid" : ""}">p ${esc(pval(s.p))}</span>`,
+        `      <span class="chip">${esc(verdict)}</span>`,
+        `      <span class="chip">${esc(s.note)}</span>`,
+        `    </dd>`,
+        `  </div>`
+      );
+    }
+    out.push(`</dl>`);
+    out.push(
+      `<p class="ev-note">`,
+      `  Exact two-sided McNemar on hit@3, paired question by question. Only discordant questions —`,
+      `  ones the two arms disagree about — carry information, so the counts are small even where the`,
+      `  margin is large. Five discordant pairs cannot reach p&lt;0.05 under an exact test; 0.0625 is`,
+      `  the floor. A significant result here is a real difference; a non-significant one is a`,
+      `  difference this question set is too small to detect, not a demonstration of equality.`,
+      `</p>`
+    );
+  }
+
+  out.push(`<dl class="tools">`);
+  for (const r of results) {
+    const d = r.separabilityDetail;
+    const share = (n) => `${((n / (d.pairs || 1)) * 100).toFixed(0)}%`;
+    out.push(
+      `  <div class="tools__row">`,
+      `    <dt>separability · ${esc(r.arm)}</dt>`,
+      `    <dd class="chips">`,
+      `      <span class="chip">all pairs ${num(r.separability)}</span>`,
+      `      <span class="chip">${share(d.emptyDriven)} won by returning nothing</span>`,
+      `      <span class="chip">${share(d.tied)} tied empty</span>`,
+      `      <span class="chip">${share(d.lostByRefusingAnAnswer)} lost by refusing an answerable one</span>`,
+      `      <span class="chip">${r.separabilityScored === null ? "no scored pairs" : `scored pairs only ${num(r.separabilityScored)}`}</span>`,
+      `    </dd>`,
+      `  </div>`
+    );
+  }
+  out.push(`</dl>`);
+  out.push(
+    `<p class="ev-note">`,
+    `  separability is the fraction of (answerable, unanswerable) pairs that any top-1 score cut`,
+    `  orders correctly, ties counted half. It was previously printed beside abstain as independent`,
+    `  corroboration and it is not: for an arm that refuses, most pairs are won by the refusal rather`,
+    `  than by the score, which is why two arms with completely different score scales reported the`,
+    `  same figure. Only the last chip on each row is about ranking.`,
+    `</p>`
+  );
+
   return out;
 };
 
 const categoryRegion = () => {
   const out = [`<dl class="tools">`];
   for (const c of cats) {
-    const isAbstain = QUESTIONS.find((q) => q.category === c).expectedChunkIds.length === 0;
-    const n = QUESTIONS.filter((q) => q.category === c).length;
+    const g0 = results[0].byCategory[c];
+    const n = g0.abstention ? g0.nAbstention : g0.nRetrieval;
     const top = Math.max(...results.map((r) => r.byCategory[c]?.score ?? 0));
     /* At most one `--solid` chip per group (chip spec): the FIRST arm to reach
        the top score wears it, not every arm tied at the top. */
@@ -702,15 +1194,23 @@ const categoryRegion = () => {
       `    <dt>${esc(c)}</dt>`,
       `    <dd class="chips">`,
       `      <span class="chip">${n} ${n === 1 ? "question" : "questions"}</span>`,
-      `      <span class="chip">${isAbstain ? "abstention rate" : "hit@3"}</span>`,
+      `      <span class="chip">${g0.abstention ? "abstention rate" : "hit@3"}</span>`,
       ...results.map(
-        (r) => `      ${metricCell(r.arm, pct(r.byCategory[c]?.score ?? 0), r.arm === leader)}`
+        (r) =>
+          `      ${metricCell(r.arm, pct(r.byCategory[c]?.score ?? 0), pp(r.byCategory[c]?.interval.half ?? 0), r.arm === leader)}`
       ),
       `    </dd>`,
       `  </div>`
     );
   }
   out.push(`</dl>`);
+  out.push(
+    `<p class="ev-note">`,
+    `  Each ± is a 95% Wilson half-width at that class's n. The smallest classes here carry intervals`,
+    `  wider than 40 percentage points, so a class winner is a direction to investigate rather than a`,
+    `  result. The per-class table decides nothing on its own.`,
+    `</p>`
+  );
   return out;
 };
 
@@ -719,9 +1219,90 @@ const corpusRegion = () => [
   `  <div class="tools__row"><dt>Chunks</dt><dd>${content.chunks.length} — one per authored section, across ${content.projects.length} projects and ${content.experience.length} roles.</dd></div>`,
   `  <div class="tools__row"><dt>Terms</dt><dd>${Object.keys(content.bm25.df).length} distinct terms, mean chunk length ${content.bm25.avgdl} tokens.</dd></div>`,
   `  <div class="tools__row"><dt>Manifest</dt><dd>${JSON.stringify(content.manifest).length} characters — every id, title and one-line summary. The complete table of contents fits in a system prompt.</dd></div>`,
+  `  <div class="tools__row"><dt>Fingerprint</dt><dd>corpus <code>${corpusHash}</code> · questions <code>${questionsHash}</code> — both vector caches carry the corpus digest, so rewording a chunk invalidates them instead of being missed by a count.</dd></div>`,
   `  <div class="tools__row"><dt>Index size</dt><dd>Term statistics are precomputed at build time, so a query is a loop and a lookup — no service, no round trip, no idle cost.</dd></div>`,
   `</dl>`,
 ];
+
+/* ---------- the reading region: content-authored prose, eval-supplied numbers ----------
+
+   content/evals.json holds seven paragraphs with twelve declared {{evals:…}}
+   placeholders, compiled into content.json as a non-chunked `evalsPage` field.
+   scripts/build-content.mjs may not read evals/ (check-boundaries.mjs), so it
+   ships the prose as a TEMPLATE and this runner — which has both the content
+   and the numbers it just produced — substitutes.
+
+   Three failures are all build failures, because the defect this replaces was a
+   paragraph of hand-typed figures drifting from the table directly above it:
+     · a declared token that never appears in the prose
+     · a {{…}} token surviving substitution
+     · a placeholder naming an arm that did not run
+   The last is the important one. It means the page cannot advertise prose about
+   the embeddings arm on a run where the embeddings arm was skipped. */
+const readingRegion = () => {
+  const src = content.evalsPage?.reading;
+  if (!src?.html?.length || !src?.placeholders?.length) {
+    console.error(
+      `✗ content.json has no evalsPage.reading — the prose for evals.html section 04 is authored in\n` +
+        `  content/evals.json and compiled by scripts/build-content.mjs. Run that build first.`
+    );
+    process.exit(1);
+  }
+
+  const fmt = (spec) => {
+    if (spec.source === "questions") {
+      const v = summary.questions[spec.field];
+      if (typeof v !== "number") throw new Error(`questions.${spec.field} is not a number`);
+      return String(v);
+    }
+    const arm = byArm[spec.arm];
+    if (!arm) {
+      throw new Error(
+        `arm "${spec.arm}" did not run, so ${spec.token} cannot be filled. ` +
+          `The page must not carry prose about an arm this run did not measure.`
+      );
+    }
+    const metric = arm[spec.metric];
+    const value = typeof metric === "number" ? metric : metric?.p;
+    if (typeof value !== "number") throw new Error(`${spec.arm}.${spec.metric} is not a number`);
+    switch (spec.format) {
+      case "pct":
+        return pct(value);
+      case "num":
+        return num(value);
+      case "abstained":
+        return String(Math.round(value * ABSTAIN.length));
+      case "int":
+        return String(Math.round(value));
+      default:
+        throw new Error(`unknown placeholder format "${spec.format}" on ${spec.token}`);
+    }
+  };
+
+  let html = src.html.join("\n");
+  const problems = [];
+  for (const spec of src.placeholders) {
+    if (!html.includes(spec.token)) {
+      problems.push(`${spec.token} is declared in content/evals.json but appears in no paragraph`);
+      continue;
+    }
+    try {
+      html = html.split(spec.token).join(fmt(spec));
+    } catch (e) {
+      problems.push(`${spec.token}: ${e.message}`);
+    }
+  }
+  const left = html.match(/\{\{[^}]*\}\}/g);
+  if (left) problems.push(`unfilled placeholder(s) survived substitution: ${[...new Set(left)].join(", ")}`);
+  if (problems.length) {
+    console.error(
+      `✗ evals.html reading region could not be built:\n  - ${problems.join("\n  - ")}\n` +
+        `  An unfilled placeholder rendering literally on the page is the defect this substitution exists to end.`
+    );
+    process.exit(1);
+  }
+  return html.split("\n");
+};
 
 function applyRegions(html, regions) {
   let out = lf(html);
@@ -747,25 +1328,52 @@ function applyRegions(html, regions) {
   return out;
 }
 
+const REGIONS = {
+  "evals-summary": summaryRegion(),
+  "evals-table": tableRegion(),
+  "evals-categories": categoryRegion(),
+  "evals-reading": readingRegion(),
+  "evals-corpus": corpusRegion(),
+};
+
 const outputs = [
   ["evals/results.json", JSON.stringify(summary, null, 2) + "\n"],
-  [
-    "evals.html",
-    applyRegions(read("evals.html"), {
-      "evals-summary": summaryRegion(),
-      "evals-table": tableRegion(),
-      "evals-categories": categoryRegion(),
-      "evals-corpus": corpusRegion(),
-    }),
-  ],
+  ["evals.html", applyRegions(read("evals.html"), REGIONS)],
 ];
 
 /* ============================================================
    10. Baseline — a regression is a failed build, not a footnote
+
+   THE TOLERANCE IS THE SAMPLING ERROR, not 0.001. The old gate fired when a
+   metric fell 0.001 below its floor: three orders of magnitude finer than the
+   interval around the number it was guarding, so a single question changing its
+   mind failed the build and got triaged as content drift by the slice contract's
+   own list. A gate nobody believes is a gate somebody lowers.
+
+   A drop must now exceed the 95% half-width of the metric — the WIDER of the
+   half-widths at the baseline value and at the current one, so the rule does not
+   depend on which side of the comparison you stand. It is still a committed
+   FLOOR and it is still raised or lowered deliberately, with the reason on file;
+   what changed is that it now fires on evidence rather than on noise.
+
+   What this does NOT protect against: a slow slide of one question per commit,
+   each inside the margin. That is the cost of the trade and it is stated here
+   rather than discovered later. The defence is that the baseline is re-cut
+   deliberately, and every re-cut records why.
    ============================================================ */
 const BASELINE_PATH = join(here, "baseline.json");
 const TRACKED = ["hit1", "hit3", "hit5", "ent1", "ent3", "mrr", "abstain"];
-const TOLERANCE = 0.001;
+const TOLERANCE_FLOOR = 0.001; // still the floor, for the degenerate n=0 case
+
+/** The margin below the baseline that counts as noise for this metric. */
+function marginFor(r, k, baselineValue) {
+  const n = r[k].n ?? 0;
+  if (!n) return TOLERANCE_FLOOR;
+  if (k === "mrr") return Math.max(r.mrr.half, TOLERANCE_FLOOR);
+  const atCurrent = r[k].half;
+  const atBaseline = wilson(Math.round(baselineValue * n), n).half;
+  return Math.max(atCurrent, atBaseline, TOLERANCE_FLOOR);
+}
 
 console.log("");
 if (UPDATE_BASELINE) {
@@ -775,11 +1383,19 @@ if (UPDATE_BASELINE) {
       {
         $schema: "evals/baseline.schema — see evals/CLAUDE.md",
         generatedBy: "evals/run.mjs --update-baseline",
-        note: "Committed floor. run.mjs exits non-zero if any tracked metric falls below these. Raise it deliberately; never lower it to make a build pass.",
+        note:
+          "Committed floor. run.mjs exits non-zero when a tracked metric falls below these by MORE THAN " +
+          "the 95% sampling margin for that metric at this n — not by more than 0.001, which was finer " +
+          "than the sampling error by three orders of magnitude and fired on one question. Raise it " +
+          "deliberately; never lower it to make a build pass, and record the reason in `reason` below.",
+        reason: readBaselineReason(),
         contentVersion: content.version,
+        corpusHash,
+        questionsHash,
         questions: QUESTIONS.length,
+        n: { retrieval: RETRIEVAL.length, abstention: ABSTAIN.length },
         arms: Object.fromEntries(
-          results.map((r) => [r.arm, Object.fromEntries(TRACKED.map((k) => [k, round(r[k])]))])
+          results.map((r) => [r.arm, Object.fromEntries(TRACKED.map((k) => [k, round(r[k].p)]))])
         ),
       },
       null,
@@ -789,19 +1405,47 @@ if (UPDATE_BASELINE) {
   console.log(`✓ evals/baseline.json    (updated — ${results.length} arms)`);
 }
 
+/** The reason a baseline was re-cut survives the re-cut. `--update-baseline`
+ *  carries the previous file's `reason` forward unless `--reason "…"` supplies a
+ *  new one, so re-baselining cannot silently erase why the last one moved. */
+function readBaselineReason() {
+  const flag = process.argv.indexOf("--reason");
+  if (flag !== -1 && process.argv[flag + 1]) return process.argv[flag + 1];
+  try {
+    return JSON.parse(readFileSync(BASELINE_PATH, "utf8")).reason ?? "(not recorded)";
+  } catch {
+    return "(not recorded)";
+  }
+}
+
 let regressed = [];
 if (existsSync(BASELINE_PATH)) {
   const baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+  const missing = results.filter((r) => !baseline.arms?.[r.arm]).map((r) => r.arm);
+  const vanished = Object.keys(baseline.arms ?? {}).filter((a) => !has(a));
   for (const r of results) {
     const b = baseline.arms?.[r.arm];
     if (!b) continue;
     for (const k of TRACKED) {
-      if (typeof b[k] === "number" && r[k] < b[k] - TOLERANCE) {
-        regressed.push(`${r.arm}.${k}: ${num(r[k])} < baseline ${num(b[k])}`);
+      if (typeof b[k] !== "number") continue;
+      const margin = marginFor(r, k, b[k]);
+      if (r[k].p < b[k] - margin) {
+        regressed.push(
+          `${r.arm}.${k}: ${num(r[k].p)} < baseline ${num(b[k])} by more than the ${num(margin)} sampling margin`
+        );
       }
     }
   }
-  if (!regressed.length) console.log(`✓ baseline               (no regression across ${TRACKED.length} tracked metrics)`);
+  /* An arm that stops being measured is not a passing build. Deleting a row is
+     the cheapest way to make a table look better. */
+  for (const a of vanished) regressed.push(`arm "${a}" is in the baseline and did not run`);
+  if (!regressed.length) {
+    console.log(
+      `✓ baseline               (no regression beyond sampling error across ${TRACKED.length} tracked metrics × ${results.length} arms` +
+        (missing.length ? `; ${missing.join(", ")} not yet in the baseline` : "") +
+        `)`
+    );
+  }
 } else if (!UPDATE_BASELINE) {
   console.log(`! evals/baseline.json is missing — run \`node evals/run.mjs --update-baseline\` to write it`);
 }
@@ -814,18 +1458,31 @@ if (CHECK) {
     const path = join(root, rel);
     return !existsSync(path) || lf(readFileSync(path, "utf8")) !== lf(want);
   });
-  if (stale.length) {
+
+  /* evals/vectors.json is a generated, committed artefact and was not covered
+     here — `--check` reported "2 up to date" while the third could be a corpus
+     old. It cannot be regenerated for a byte comparison without a key, so it is
+     checked the way build-vectors.mjs checks its own: by digest. */
+  const vectorProblem =
+    vectorCache.state === "fresh"
+      ? null
+      : `evals/vectors.json — ${vectorCache.reason}`;
+
+  if (stale.length || vectorProblem) {
     console.error(
-      `✗ eval artefacts are stale:\n  - ${stale.map(([r]) => r).join("\n  - ")}\n` +
-        `  These regions are GENERATED. Run: node evals/run.mjs`
+      `✗ eval artefacts are stale:\n  - ${[...stale.map(([r]) => r), ...(vectorProblem ? [vectorProblem] : [])].join("\n  - ")}\n` +
+        `  The generated regions are rebuilt by: node evals/run.mjs\n` +
+        `  A stale vector cache needs a key:     node --env-file=.env evals/run.mjs`
     );
     process.exit(1);
   }
-  console.log(`✓ eval artefacts         (${outputs.length} up to date)`);
+  console.log(
+    `✓ eval artefacts         (3 up to date: results.json, evals.html, vectors.json @ corpus ${corpusHash})`
+  );
 } else {
   for (const [rel, text] of outputs) writeFileSync(join(root, rel), lf(text));
-  console.log(`✓ evals/results.json     (${results.length} arms)`);
-  console.log(`✓ evals.html             (4 regions)`);
+  console.log(`✓ evals/results.json     (${results.length} arms, ${significance.length} paired tests)`);
+  console.log(`✓ evals.html             (${Object.keys(REGIONS).length} regions)`);
 }
 
 if (regressed.length) {
