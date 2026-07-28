@@ -1,3 +1,12 @@
+---
+{
+  "id": "chat",
+  "status": "stable",
+  "since": "phase-3",
+  "a11y": "Thread is role=log aria-live=polite; the composer keeps focus while busy (aria-disabled + readOnly, never the disabled attribute)."
+}
+---
+
 # Chat
 
 The assistant surface: a turn list, a composer, a streaming state, and a collapsible tool
@@ -94,10 +103,11 @@ removed when it ends:
 | `.chat__why` | One model-authored clause annotating a project row |
 | `.chat__metric` | Wraps a `.stat` plus its label inline |
 | `.chat__state` + `.chat__cell` | Streaming indicator — four cells from the automata's vocabulary |
-| `.chat__trace` / `--toggle` / `--list` / `--row` | Collapsible tool trace (`<details>`, closed by default) |
+| `.chat__trace` / `--toggle` / `--list` / `--row` | Collapsible tool trace (`<details>`). **Open while the answer streams, collapsed on completion** |
 | `.chat__form` / `.chat__input` / `.chat__send` | Composer. Textarea + Button — no new button styles |
 | `.chat__suggest` | Seed questions. Buttons, not Chips (chips are display-only) |
 | `.chat__error` | Structured failure text. Never a stack trace |
+| `.chat__note` | A neutral notice — "Stopped.", or a deadline reached with partial content already on screen. **Not** an error and never styled as one |
 
 ## The thread must not size the band
 
@@ -107,7 +117,7 @@ height (`components/skeleton/spec.md` — the documented failure is a 420 px ban
 side**: the well would grow without bound, the row would follow, and the rails would rebuild
 against a height that keeps moving.
 
-So `.chat__thread` carries `max-height: min(30rem, 60vh)` and `overflow-y: auto`. The band is
+So `.chat__thread` carries `max-height: min(46rem, 75vh)` and `overflow-y: auto`. The band is
 exactly as tall on message 20 as on message 1, and the page's node count stays flat because
 no rail is ever rebuilt taller. `stories/chat.stories.js` has a 20-message story that exists
 purely to keep this honest — if that story makes the band grow, the regression is back.
@@ -152,8 +162,19 @@ There is no streaming JSON parser here and there must never be one.
   breaks the line.
 - `.chat__trace` is a native `<details>`: keyboard-operable and announced as a disclosure
   with no ARIA of its own.
-- Input and submit are disabled while a request is in flight, so the busy state is real
-  rather than advisory.
+- **Nothing is ever `disabled` while a request is in flight.** Disabling the focused
+  textarea drops focus to `<body>`, and re-enabling it does not put focus back — the reader
+  asks a question, waits, and is silently returned to the top of a ~9000px document. So the
+  composer carries `aria-disabled` + `readOnly` instead: it keeps focus, announces the busy
+  state, and the guard in `js/chat.js` is what actually prevents a second submit.
+  `.chat__input[aria-disabled="true"]` is the visible half of that, and matters *more* than
+  a `:disabled` style would, because the field still looks focusable.
+- The submit button is not disabled either — while a request is in flight it becomes a
+  **Stop** control. A ten-second wait with no way out is the real defect, and the control
+  that is already focused and already the primary action is the cheapest honest place to put
+  the way out: no new markup, no new tab stop.
+- A stop or a cut-off renders `.chat__note`, never `.chat__error`. A user-initiated Stop is
+  not a failure and must not be announced or styled as one.
 
 ## AI notes
 

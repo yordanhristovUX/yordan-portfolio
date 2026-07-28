@@ -1,3 +1,12 @@
+---
+{
+  "id": "source",
+  "status": "stable",
+  "since": "phase-3",
+  "a11y": "Real <ol>/<li>; the ordinal is content inside the item, not a CSS counter a screen reader would skip."
+}
+---
+
 # Source (citations)
 
 A numbered list of the passages an answer was actually built from. Each entry links to the

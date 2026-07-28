@@ -11,7 +11,7 @@ export const InnerPage = {
             <button class="btn btn--small">Close ✕</button>
           </div>
           <div class="case__scroll">
-            <div class="band case__band">
+            <div class="band">
               <div class="well case__well">
                 <div class="case__head">
                   <h2 class="case__title t-display t-display--lg">Municipal Mobile App</h2>

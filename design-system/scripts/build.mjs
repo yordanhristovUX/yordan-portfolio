@@ -190,6 +190,213 @@ writeFileSync(
 );
 console.log(`✓ ../content/system.generated.json (${tokenCount} tokens, ${valueCount} values, ${components.length} components)`);
 
+/* ============================================================
+   The component tier — derived contract + spec cross-check.
+
+   The token tier above is generated, so a claim about a token cannot be
+   true and unenforced at the same time. Everything below exists because
+   the component tier had no such property: `spec.md` was hand-typed prose
+   that nothing verified, and four classes named in canonical HTML that
+   agents are told to copy verbatim had no CSS rule anywhere.
+
+   Two tiers, deliberately:
+
+     DERIVED — selectors, elements, variants and the consumed token set,
+     read straight out of css/components.css. Emitted as
+     dist/components.json, the machine-readable counterpart to
+     dist/tokens.flat.json.
+
+     DECLARED — the residue a parser cannot reach: which component a CSS
+     block belongs to (`@component` on the banner), and each spec's JSON
+     frontmatter (id / status / since / a11y). Hand-written, and therefore
+     drift-tested below rather than trusted.
+
+   What is NOT generated: the prose. The a11y rationale, the AI notes and
+   the `contain: size` feedback-loop explanation in skeleton/spec.md are
+   irreducible judgement and stay in spec.md where a human wrote them.
+   ============================================================ */
+
+const STATUSES = ["stable", "experimental", "deprecated"];
+/* `since` names the BUILD-LOG.md phase a component first shipped in.
+   "initial" is the design system that predates the content pipeline
+   ("What existed before"). Anything else must be a phase recorded there. */
+const PHASES = ["initial", "phase-0", "phase-1", "phase-2", "phase-3"];
+
+const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
+const uniq = (a) => [...new Set(a)].sort();
+
+/* ---------- components.css → banner-delimited blocks ----------
+   The file is banner-organised, and each banner's first line carries
+   `@component <id>` — the one fact about this file no parser can derive
+   ("Row — definition (skills)" is the `row` component; "Facts" is `fact`).
+   `@component none` marks a block that belongs to no single component
+   (the foundation reset, the reduced-motion block). */
+const componentsCssPath = join(root, "css", "components.css");
+const componentsCss = readFileSync(componentsCssPath, "utf8");
+
+const BANNER = /^\/\* =+ (.+?) =+ @component (\S+)/gm;
+const blocks = [];
+{
+  const marks = [];
+  for (const m of componentsCss.matchAll(BANNER)) {
+    marks.push({ title: m[1].trim(), owner: m[2], start: m.index });
+  }
+  marks.forEach((mk, i) => {
+    const end = i + 1 < marks.length ? marks[i + 1].start : componentsCss.length;
+    blocks.push({ ...mk, body: componentsCss.slice(mk.start, end) });
+  });
+}
+
+/* Selector preludes, brace-walked rather than regexed: a regex cannot tell
+   `@media (…) {` from a rule, and would happily report `50%` inside
+   @keyframes as a selector. */
+function selectorsIn(text) {
+  const src = stripComments(text);
+  const out = [];
+  const stack = [];
+  let buf = "";
+  for (const ch of src) {
+    if (ch === "{") {
+      const prelude = buf.trim();
+      buf = "";
+      if (prelude.startsWith("@")) {
+        stack.push(prelude.startsWith("@keyframes") ? "keyframes" : "at");
+      } else {
+        if (stack[stack.length - 1] !== "keyframes") {
+          prelude.split(",").forEach((s) => s.trim() && out.push(s.trim().replace(/\s+/g, " ")));
+        }
+        stack.push("rule");
+      }
+    } else if (ch === "}") {
+      stack.pop();
+      buf = "";
+    } else {
+      buf += ch;
+    }
+  }
+  return out;
+}
+
+const CLASS_IN_SELECTOR = /\.(-?[_a-zA-Z][\w-]*)/g;
+const VAR_USE = /var\(\s*(--[a-z0-9-]+)/gi;
+
+for (const b of blocks) {
+  b.selectors = selectorsIn(b.body);
+  b.classes = uniq(b.selectors.flatMap((s) => [...s.matchAll(CLASS_IN_SELECTOR)].map((m) => "." + m[1])));
+  b.tokens = uniq([...stripComments(b.body).matchAll(VAR_USE)].map((m) => m[1]));
+}
+
+/** Every class with at least one rule anywhere in components.css. */
+const definedClasses = new Set(blocks.flatMap((b) => b.classes));
+
+/** What the foundation blocks apply to everything (`body`, `.mono`, the focus ring). */
+const foundationTokens = new Set(blocks.filter((b) => b.owner === "none").flatMap((b) => b.tokens));
+
+/* ---------- spec.md → frontmatter + claimed classes + declared tokens ----------
+   "Claimed" is exactly what design-system/README.md tells an agent to copy:
+   the class attributes of the canonical HTML, plus any `.class` written in
+   backticks in the prose. The negative lookbehind is what keeps `main.js`,
+   `tokens.json` and `0.78rem` out of the class list. */
+const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/;
+const HTML_FENCE = /```html\r?\n([\s\S]*?)```/g;
+const CLASS_ATTR = /class="([^"]*)"/g;
+const BACKTICKED = /`([^`\n]+)`/g;
+const CLASS_IN_PROSE = /(?<![\w.])\.([a-z][a-z0-9_-]*)/g;
+
+function readSpec(id) {
+  const path = join(compDir, id, "spec.md");
+  const text = readFileSync(path, "utf8");
+
+  let front = null;
+  let frontError = null;
+  const fm = text.match(FRONTMATTER);
+  if (fm) {
+    try {
+      front = JSON.parse(fm[1]);
+    } catch (e) {
+      frontError = e.message;
+    }
+  }
+
+  const claimed = new Set();
+  for (const fence of text.matchAll(HTML_FENCE)) {
+    for (const attr of fence[1].matchAll(CLASS_ATTR)) {
+      attr[1].split(/\s+/).forEach((c) => c && claimed.add("." + c));
+    }
+  }
+  for (const span of text.matchAll(BACKTICKED)) {
+    for (const m of span[1].matchAll(CLASS_IN_PROSE)) claimed.add("." + m[1]);
+  }
+
+  /* Only a backticked span that is EXACTLY a token counts as a declaration.
+     A bare regex for `--x` also matches the modifier half of `.sec--tint`,
+     which would report `--tint` as an undeclared token forever. */
+  const tokenSection = (text.split(/^## +Tokens *$/m)[1] ?? "").split(/^## /m)[0];
+  const declaredTokens = uniq(
+    [...tokenSection.matchAll(BACKTICKED)].map((m) => m[1]).filter((s) => /^--[a-z0-9-]+$/.test(s))
+  );
+
+  return { path, text, front, frontError, claimed: [...claimed].sort(), declaredTokens };
+}
+
+const specs = Object.fromEntries(components.map((id) => [id, readSpec(id)]));
+
+/* ---------- dist/components.json ----------
+   The derived contract dist/tokens.flat.json has had all along and the
+   component tier has not: what an agent may branch on instead of parsing
+   19 markdown files of inconsistent shape. */
+const owned = (id) => blocks.filter((b) => b.owner === id);
+const suffixes = (classes, sep) =>
+  uniq(
+    classes
+      .map((c) => {
+        const i = c.indexOf(sep, 1);
+        return i === -1 ? null : c.slice(i);
+      })
+      .filter(Boolean)
+  );
+
+const componentContract = components.map((id) => {
+  const mine = owned(id);
+  const classes = uniq(mine.flatMap((b) => b.classes));
+  const s = specs[id];
+  return {
+    id,
+    status: s.front?.status ?? null,
+    since: s.front?.since ?? null,
+    a11y: s.front?.a11y ?? null,
+    spec: `components/${id}/spec.md`,
+    story: `stories/${id}.stories.js`,
+    blocks: mine.map((b) => b.title),
+    classes,
+    elements: suffixes(classes, "__"),
+    variants: suffixes(classes, "--"),
+    selectors: uniq(mine.flatMap((b) => b.selectors)),
+    tokens: uniq(mine.flatMap((b) => b.tokens)),
+  };
+});
+
+writeFileSync(
+  join(root, "dist", "components.json"),
+  JSON.stringify(
+    {
+      $generatedBy: "design-system/scripts/build.mjs — do not edit",
+      $doc:
+        "Derived component contract. selectors/classes/elements/variants/tokens are parsed out of css/components.css and are true by construction. status/since/a11y are DECLARED in each spec.md's JSON frontmatter and drift-tested by `build.mjs --check`. The prose — a11y rationale, AI notes, the contain:size explanation — is deliberately not here; it lives in spec.md because it is judgement, not fact.",
+      $derivedFrom: ["css/components.css", "components/*/spec.md (frontmatter only)"],
+      count: componentContract.length,
+      components: componentContract,
+    },
+    null,
+    2
+  ) + "\n"
+);
+console.log(
+  `✓ dist/components.json   (${componentContract.length} components, ` +
+    `${uniq(componentContract.flatMap((c) => c.classes)).length} classes, ` +
+    `${blocks.length} css blocks)`
+);
+
 /* ---------- coverage gate: every component = spec.md + story ---------- */
 if (CHECK) {
   const problems = [];
@@ -244,4 +451,93 @@ if (CHECK) {
     process.exit(1);
   }
   console.log(`✓ counts check           (${tokenCount} tokens, ${valueCount} values, ${components.length} components — as advertised)`);
+
+  /* ---------- contract gate: spec.md must be TRUE, not merely present ----------
+     The coverage gate above checks that a spec and a story EXIST. It never
+     checked that they were true, and they were not: four classes named in
+     canonical HTML had no rule anywhere, and several `## Tokens` lists had
+     drifted from the CSS beside them. design-system/README.md tells agents
+     the canonical HTML "is not an example — it is THE pattern. Copy it," so
+     a class named there that means nothing is a defect, not a nit.
+
+     Three assertions, in the order a failure is easiest to act on:
+       1. the `@component` markers are complete and resolve  (DECLARED tier)
+       2. every spec carries valid JSON frontmatter           (DECLARED tier)
+       3. spec ↔ CSS agree on classes and tokens             (the cross-check)
+
+     Direction matters on tokens. Consumed-but-undeclared is a FAILURE: the
+     spec is lying about what the component costs. Declared-but-unconsumed is
+     a WARNING only, because a component can legitimately name a token it gets
+     through a utility class in its markup (`source` wears `--font-mono` via
+     `.mono`) rather than through its own block. */
+  const broken = [];
+  const warnings = [];
+
+  /* 1. @component markers */
+  const bannerCount = (componentsCss.match(/^\/\* =+ .+? =+/gm) ?? []).length;
+  if (bannerCount !== blocks.length) {
+    broken.push(
+      `css/components.css: ${bannerCount - blocks.length} banner(s) carry no \`@component <id>\` marker. ` +
+        `Every banner needs one; use \`@component none\` for a block that belongs to no single component.`
+    );
+  }
+  const knownOwners = new Set([...components, "none"]);
+  for (const b of blocks) {
+    if (!knownOwners.has(b.owner)) {
+      broken.push(`css/components.css: block "${b.title}" is marked \`@component ${b.owner}\`, which is not a directory under components/`);
+    }
+  }
+  for (const id of components) {
+    if (!owned(id).length) broken.push(`components/${id}/ is claimed by no CSS block — no banner in components.css says \`@component ${id}\``);
+  }
+
+  /* 2. spec frontmatter */
+  for (const id of components) {
+    const s = specs[id];
+    const where = `components/${id}/spec.md`;
+    if (s.frontError) { broken.push(`${where}: frontmatter is not valid JSON — ${s.frontError}`); continue; }
+    if (!s.front) { broken.push(`${where}: no JSON frontmatter. Needs a \`---\` block with { id, status, since, a11y }, matching the content/*.md convention.`); continue; }
+    if (s.front.id !== id) broken.push(`${where}: frontmatter id is "${s.front.id}", directory is "${id}"`);
+    if (!STATUSES.includes(s.front.status)) broken.push(`${where}: status "${s.front.status}" is not one of ${STATUSES.join(" | ")}`);
+    if (!PHASES.includes(s.front.since)) broken.push(`${where}: since "${s.front.since}" is not one of ${PHASES.join(" | ")}`);
+    if (typeof s.front.a11y !== "string" || !s.front.a11y.trim()) broken.push(`${where}: a11y must be a non-empty one-line string`);
+  }
+
+  /* 3. the cross-check */
+  for (const id of components) {
+    const s = specs[id];
+    const where = `components/${id}/spec.md`;
+
+    for (const cls of s.claimed) {
+      if (!definedClasses.has(cls)) {
+        broken.push(`${where} claims \`${cls}\` but no rule in css/components.css defines it — define the rule or drop the class from the spec`);
+      }
+    }
+
+    const consumed = uniq(owned(id).flatMap((b) => b.tokens));
+    const declared = new Set(s.declaredTokens);
+    for (const t of consumed) {
+      if (!declared.has(t)) broken.push(`${where}: its CSS consumes \`${t}\` and the \`## Tokens\` list omits it`);
+    }
+    /* A component may legitimately name a token it inherits from the
+       foundation rather than sets itself — `source` wears `--font-mono`
+       through the `.mono` utility, `typography` documents `--font-body`
+       which `body` applies. Those are not drift. A token in neither its own
+       block nor the foundation is. */
+    for (const t of s.declaredTokens) {
+      if (!consumed.includes(t) && !foundationTokens.has(t)) {
+        warnings.push(`${where}: \`## Tokens\` lists \`${t}\`, which neither its own CSS block nor the foundation consumes`);
+      }
+    }
+  }
+
+  if (broken.length) {
+    console.error(`✗ contract check failed — spec.md and components.css disagree:\n  - ${broken.join("\n  - ")}`);
+    process.exit(1);
+  }
+  if (warnings.length) {
+    console.warn(`! contract warnings (not fatal):\n  - ${warnings.join("\n  - ")}`);
+  }
+  const claimedTotal = components.reduce((n, id) => n + specs[id].claimed.length, 0);
+  console.log(`✓ contract check         (${claimedTotal} spec-claimed classes all defined, ${blocks.length} css blocks owned, token lists match)`);
 }

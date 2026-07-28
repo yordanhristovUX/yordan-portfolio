@@ -1,3 +1,12 @@
+---
+{
+  "id": "card",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Titles are <h3> inside a section headed by <h2> — the heading order is the contract."
+}
+---
+
 # Card
 
 Bordered content cell for grids of parallel items (capabilities, project summaries).

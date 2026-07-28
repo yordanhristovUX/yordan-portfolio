@@ -1,3 +1,12 @@
+---
+{
+  "id": "entry",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Role is <h3> under the section <h2>; bullet glyphs are ::before so the list is still announced as a list."
+}
+---
+
 # Entry
 
 A dated record: role, organisation, time span, and what happened. Used for the CV's

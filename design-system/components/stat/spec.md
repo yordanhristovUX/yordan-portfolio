@@ -1,3 +1,12 @@
+---
+{
+  "id": "stat",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "A framed number inside prose — it adds no semantics, so the sentence around it has to still read correctly."
+}
+---
+
 # Stat
 
 A single framed headline number inside prose (case-study outcomes). The loud sibling of

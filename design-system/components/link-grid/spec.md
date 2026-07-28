@@ -1,3 +1,12 @@
+---
+{
+  "id": "link-grid",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "External links carry target=_blank rel=noopener and a trailing arrow; labels name the destination, never 'click here'."
+}
+---
+
 # Link grid
 
 Bordered grid of equal-weight links (contact channels). Cells flex-fill the row and

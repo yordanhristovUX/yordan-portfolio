@@ -5,9 +5,18 @@
    Uses ONLY semantic tokens from dist/tokens.css — raw palette
    values are forbidden outside tokens/tokens.json.
    Load order: dist/tokens.css → this file → page stylesheet.
+
+   EVERY banner below carries `@component <id>` on its first line.
+   That marker is the one fact about this file a parser cannot derive:
+   "Row — definition (skills)" is the `row` component and "Facts" is the
+   `fact` component, and no amount of slugifying gets there. scripts/build.mjs
+   reads it to (a) emit dist/components.json and (b) run the spec↔CSS gate,
+   and it fails the build if a marker names a component that does not exist
+   or if a component directory is claimed by no block. Cross-cutting blocks
+   that belong to no single component say `@component none`.
    ============================================================ */
 
-/* ============ Foundation ============ */
+/* ============ Foundation ============ @component none */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* Hands the theme to the browser's own furniture — scrollbars, form
@@ -38,7 +47,7 @@ em { font-style: normal; }
 
 body.is-locked { overflow: hidden; }
 
-/* ============ Typography scale ============
+/* ============ Typography scale ============ @component typography
    One voice per level; components and pages compose these instead
    of declaring their own font stacks. */
 .t-display {
@@ -91,7 +100,7 @@ body.is-locked { overflow: hidden; }
   color: var(--chrome-label-strong);
 }
 
-/* ============ Skeleton ============
+/* ============ Skeleton ============ @component skeleton
    The page is a 24-square sheet (12 on small screens): 2-square
    rails / 20-square solid-paper well. Squares are real .sq divs
    sized by the same fr tracks as the layout — grid lines are inset
@@ -155,7 +164,7 @@ body.is-locked { overflow: hidden; }
   box-shadow: inset 0 1px 0 var(--chrome-border), inset 0 -1px 0 var(--chrome-border);
 }
 
-/* ============ Nav (floating bar) ============ */
+/* ============ Nav (floating bar) ============ @component nav */
 .bar {
   position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
   z-index: 100;
@@ -175,6 +184,15 @@ body.is-locked { overflow: hidden; }
   font-weight: 600; color: var(--content-primary);
   box-shadow: inset -1px 0 0 var(--chrome-border);
   white-space: nowrap;
+
+  /* The bar is `width: max-content` under a `max-width`, so when its segments
+     do not fit, the box stops growing and the segments simply spill out of the
+     right-hand end — taking the theme toggle off-screen with them. This is the
+     rule that decides WHICH segment gives way: `min-width: 0` lets the
+     identity shrink below its own text, so the name is clipped before a
+     control is lost. It never binds while the bar fits. */
+  min-width: 0;
+  overflow: hidden;
 }
 .bar__nav { display: flex; align-items: stretch; }
 .bar__nav a {
@@ -210,12 +228,18 @@ body.is-locked { overflow: hidden; }
 }
 @keyframes blink { 50% { opacity: 0.25; } }
 @media (max-width: 980px) { .bar__status { display: none; } .bar__nav a:last-child { box-shadow: none; } }
+/* Identity + three links + the toggle have to fit inside `calc(100vw - 1.5rem)`.
+   At the previous paddings they did not: on a 375px viewport the bar's content
+   measured 367px inside a 351px box and the toggle ran to x=379 — roughly an
+   eighth of the control off the right edge of the screen, silently, because a
+   fixed element's overflow does not extend the document. These paddings bring
+   the content to ~341px. Measured at 375px; keep the slack when editing. */
 @media (max-width: 480px) {
-  .bar__id { padding: 0.8rem 0.9rem; }
-  .bar__nav a { padding: 0 0.7rem; }
+  .bar__id { padding: 0.8rem 0.7rem; }
+  .bar__nav a { padding: 0 0.55rem; }
 }
 
-/* ============ Theme toggle ============
+/* ============ Theme toggle ============ @component theme-toggle
    Lives in the nav bar and inherits its mono/size, so it reads as one more
    segment of the instrument rather than a widget stuck onto it. Three states
    cycle: auto → light → dark. The label is the CURRENT state, not the next
@@ -244,11 +268,11 @@ body.is-locked { overflow: hidden; }
 .theme__label { min-width: 3.2em; text-align: left; } /* AUTO/LIGHT/DARK must not shift the bar */
 
 @media (max-width: 480px) {
-  .theme { padding: 0 0.7rem; }
+  .theme { padding: 0 0.55rem; } /* see the .bar 480px block: the row has to fit */
   .theme__label { display: none; } /* the lamp alone; aria-label still speaks */
 }
 
-/* ============ Section head ============ */
+/* ============ Section head ============ @component section-head */
 .sec { border-top: var(--rule-strong); }
 .sec__head {
   display: grid;
@@ -263,12 +287,19 @@ body.is-locked { overflow: hidden; }
   font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em;
   color: var(--accent);
 }
+/* The middle track of the head grid. Typography comes from `.t-title` beside
+   it — this rule exists because the CELL needs something the utility cannot
+   give it: a grid item's automatic minimum is min-content, and one long
+   unbreakable title in Archivo at 2.9rem is wider than the sheet, so the
+   `1fr` track would blow past its share and push `.sec__note` off the band.
+   `min-width: 0` lets the track shrink and the title wrap instead. */
+.sec__title { min-width: 0; }
 .sec__note { font-size: 0.8rem; color: var(--chrome-label); align-self: center; }
 @media (max-width: 640px) { .sec__note { display: none; } }
 
 .sec--tint .well { background: var(--surface-raised); }
 
-/* ============ Button ============ */
+/* ============ Button ============ @component button */
 .btn {
   display: inline-block;
   font-family: var(--font-mono);
@@ -285,7 +316,7 @@ body.is-locked { overflow: hidden; }
 .btn--solid:hover { background: var(--action-hover); }
 .btn--small { padding: 0.35rem 0.6rem; font-size: 0.72rem; }
 
-/* ============ Chip ============ */
+/* ============ Chip ============ @component chip */
 .chip {
   display: inline-block;
   font-family: var(--font-mono);
@@ -298,7 +329,7 @@ body.is-locked { overflow: hidden; }
 .chip--solid { background: var(--primary); border-color: var(--primary); color: var(--content-inverse); }
 .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 
-/* ============ Card ============ */
+/* ============ Card ============ @component card */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -347,7 +378,7 @@ body.is-locked { overflow: hidden; }
   .card:last-child { border-bottom: 0 !important; }
 }
 
-/* ============ Row — project (work index) ============ */
+/* ============ Row — project (work index) ============ @component row */
 .idx { list-style: none; }
 .idx__row {
   display: grid;
@@ -401,7 +432,7 @@ body.is-locked { overflow: hidden; }
   .idx__go { display: none; }
 }
 
-/* ============ Entry — a dated record ============
+/* ============ Entry — a dated record ============ @component entry
    Experience, education, anything with a role / org / span and a list of
    what happened. The span sits in its own column on wide screens so the
    dates form a readable edge you can scan without reading the roles. */
@@ -454,7 +485,12 @@ body.is-locked { overflow: hidden; }
   .entry__span { grid-column: 1; grid-row: auto; text-align: left; }
 }
 
-/* ============ Row — definition (skills) ============ */
+/* ============ Row — definition (skills) ============ @component row */
+/* The block root. A `<dl>` stacks its rows in normal flow anyway, so the
+   visual result is identical — but grid makes the wrapper the thing that
+   owns the stack, which is what `.tools__row` is a row OF. Without a rule
+   here the class shipped on four pages meant nothing at all. */
+.tools { display: grid; }
 .tools__row {
   display: grid;
   grid-template-columns: minmax(9rem, 14rem) 1fr;
@@ -473,7 +509,7 @@ body.is-locked { overflow: hidden; }
 .tools__row dd { font-size: 0.95rem; }
 @media (max-width: 620px) { .tools__row { grid-template-columns: 1fr; gap: 0.3rem; } }
 
-/* ============ Profile (definition list) ============ */
+/* ============ Profile (definition list) ============ @component profile */
 .profile {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -500,7 +536,7 @@ body.is-locked { overflow: hidden; }
   .profile > div:nth-child(odd) { padding-right: 0; }
 }
 
-/* ============ Facts ============ */
+/* ============ Facts ============ @component fact */
 .facts {
   display: flex; flex-wrap: wrap; gap: 0;
   border: var(--rule-strong);
@@ -533,7 +569,7 @@ body.is-locked { overflow: hidden; }
   .fact:last-child { border-bottom: 0; }
 }
 
-/* ============ Media slot ============
+/* ============ Media slot ============ @component media
    Drop an <img> inside a .ph and the frame styling steps aside. */
 .ph {
   aspect-ratio: 16 / 9;
@@ -562,7 +598,7 @@ body.is-locked { overflow: hidden; }
 .ph-grid .ph { margin: 0; }
 @media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }
 
-/* ============ Stat ============ */
+/* ============ Stat ============ @component stat */
 .stat {
   display: inline-block;
   font-family: var(--font-display); font-weight: 900;
@@ -574,7 +610,7 @@ body.is-locked { overflow: hidden; }
   margin: 0.5rem 1.5rem 1rem 0;
 }
 
-/* ============ Link grid ============ */
+/* ============ Link grid ============ @component link-grid */
 .link-grid {
   display: flex; flex-wrap: wrap;
   border: var(--rule);
@@ -592,7 +628,7 @@ body.is-locked { overflow: hidden; }
 }
 .link-grid a:hover { background: var(--primary); color: var(--content-inverse); }
 
-/* ============ Footer ============ */
+/* ============ Footer ============ @component footer */
 .foot {
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 2rem;
   padding: 1rem clamp(1.25rem, 3vw, 2.5rem);
@@ -602,7 +638,7 @@ body.is-locked { overflow: hidden; }
   font-size: 0.7rem; letter-spacing: 0.06em;
 }
 
-/* ============ Dialog (inner page) ============ */
+/* ============ Dialog (inner page) ============ @component dialog */
 .case { position: fixed; inset: 0; z-index: 500; }
 .case[hidden] { display: none; }
 .case__backdrop {
@@ -626,6 +662,16 @@ body.is-locked { overflow: hidden; }
   font-family: var(--font-mono);
   font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em;
   color: var(--chrome-label-strong);
+}
+/* Left segment of the bar, written by js/main.js on open ("Case study 03 /
+   Client"). The bar is a flex row with a Close button at the far end, and the
+   button must never be squeezed or pushed to a second line by a long client
+   name — so the index is the segment that gives way. */
+.case__index {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .case__scroll { overflow-y: auto; overscroll-behavior: contain; flex: 1; }
 .case__well { padding-bottom: clamp(3rem, 8vh, 5rem); }
@@ -660,7 +706,7 @@ body.is-locked { overflow: hidden; }
 }
 .case__content li strong { color: var(--content-primary); font-weight: 600; }
 
-/* ============ Chat ============
+/* ============ Chat ============ @component chat
    The assistant surface: turn list, composer, streaming state and a
    collapsible tool trace. Lives inside a `.band`/`.well` like any other
    section — it is a section of the page, not a widget floating over it.
@@ -726,6 +772,19 @@ body.is-locked { overflow: hidden; }
   max-width: 44rem;
 }
 
+/* A neutral notice: "Stopped.", or a deadline reached with partial content
+   already on screen. Deliberately NOT the error's framed box. An error is
+   framed because something went wrong and the frame is the alarm; a note is
+   the surface reporting what it did, and a reader who pressed Stop must not
+   be shown their own decision dressed as a failure. So: label colour, no
+   frame, no border — chrome, at the weight of chrome. */
+.chat__note {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--chrome-label);
+  max-width: 44rem;
+}
+
 /* ---- Streaming state ----
    Four squares from the same vocabulary as the skeleton's automata, so
    "thinking" reads as this site rather than as a generic spinner. */
@@ -747,7 +806,11 @@ body.is-locked { overflow: hidden; }
 @keyframes chat-life { 50% { opacity: 0.15; } }
 
 /* ---- Tool trace ----
-   Collapsed by default: it is evidence, not narration. */
+   Open while the answer streams, collapsed the moment it completes. The
+   trace is evidence, not narration — but evidence arriving live is the
+   only thing on screen during the wait, so it earns the space until there
+   is an answer to give it back to. Collapsing on completion is also what
+   keeps it out of the log's single completion announcement. */
 .chat__trace {
   background: var(--chrome-bg);
   box-shadow: inset 0 0 0 1px var(--chrome-border);
@@ -796,7 +859,12 @@ body.is-locked { overflow: hidden; }
 }
 .chat__input::placeholder { color: var(--chrome-label); }
 .chat__input:focus-visible { border-color: var(--accent); }
-.chat__input:disabled { color: var(--content-muted); }
+/* Busy, not disabled. js/chat.js sets `aria-disabled` + `readOnly` and never
+   the `disabled` attribute: disabling the focused textarea drops focus to
+   <body> and re-enabling it does not put focus back, which strands the reader
+   at the top of a very long document. Because the field now KEEPS focus while
+   it is inert, the state needs a visible colour more than it did before. */
+.chat__input[aria-disabled="true"] { color: var(--content-muted); }
 
 .chat__status { font-size: 0.8rem; color: var(--chrome-label); }
 
@@ -810,7 +878,7 @@ body.is-locked { overflow: hidden; }
   .chat__trace-ms { margin-left: 0; }
 }
 
-/* ============ Source (citations) ============
+/* ============ Source (citations) ============ @component source
    Every claim traced to the passage it came from. An id reaches this
    list only after the provenance gate has confirmed a tool actually
    returned it this turn, so the list is a record, not a bibliography. */
@@ -854,7 +922,7 @@ body.is-locked { overflow: hidden; }
   min-width: 0;
 }
 
-/* ============ Reduced motion ============ */
+/* ============ Reduced motion ============ @component none */
 @media (prefers-reduced-motion: reduce) {
   .sq { transition: none; }
   .bar__dot { animation: none; }

@@ -14,7 +14,11 @@
    (~36 s, phase-offset per region) down to near-invisible.
    ============================================================ */
 (() => {
-  const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* Reduce-motion is re-read on change, exactly as the two inks below are
+     re-read on `themechange`. Both are settings the reader can flip while
+     the page is open; only one of them was being listened to. */
+  const RMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let RM = RMQ.matches;
   const MOBILE = window.matchMedia("(max-width: 760px)");
 
   /* The two inks are read from the design system rather than restated here:
@@ -251,15 +255,40 @@
     }, 200);
   });
 
-  if (RM) {
-    // A settled generation, then stillness. Clicks still seed and render.
-    all.forEach((r) => { for (let i = 0; i < 5; i++) r.step(); r.render(0.25); });
-    return;
-  }
+  /* ---- Run, or stand still ----
+     Under reduce-motion the rails are not animated at all: the loop is
+     cancelled rather than left spinning on a no-op branch, and the grid is
+     frozen at a settled opacity. Clicks still seed and still render, so the
+     squares remain something you can touch — stillness, not deadness.
+
+     Flipping the OS setting mid-visit starts or stops the loop in place.
+     The generation on screen is kept either way: turning motion back on
+     resumes the life that was already there rather than reseeding it. */
+  let rafId = 0;
 
   function loop(now) {
     if (!document.hidden) all.forEach((r) => r.frame(now));
-    requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(loop);
   }
-  requestAnimationFrame(loop);
+
+  function applyMotion({ initial = false } = {}) {
+    if (RM) {
+      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      // On first load, settle a few generations so stillness is a pattern
+      // rather than the random seed. On a later flip, freeze what is there.
+      all.forEach((r) => {
+        if (initial) for (let i = 0; i < 5; i++) r.step();
+        r.render(0.25);
+      });
+      return;
+    }
+    if (!rafId) rafId = requestAnimationFrame(loop);
+  }
+
+  applyMotion({ initial: true });
+
+  RMQ.addEventListener("change", (e) => {
+    RM = e.matches;
+    applyMotion();
+  });
 })();

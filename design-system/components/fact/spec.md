@@ -1,3 +1,12 @@
+---
+{
+  "id": "fact",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "All three parts are required — a number with no label is unreadable; the counter degrades to plain text without JS or with reduced motion."
+}
+---
+
 # Fact
 
 Framed stat cells: big display number, mono title, one-line meaning. Facts must carry a
@@ -17,8 +26,9 @@ message — never decorative numbers.
 
 ## Tokens
 
-`--font-display`, `--font-mono`, `--content-primary`, `--content-muted`,
-`--chrome-label-strong`, `--rule`, `--rule-strong`, `--surface-page`
+`--font-display`, `--font-mono`, `--content-primary`, `--content-body`,
+`--content-muted`, `--chrome-label-strong`, `--rule`, `--rule-strong`,
+`--surface-page`
 
 ## Behaviour
 

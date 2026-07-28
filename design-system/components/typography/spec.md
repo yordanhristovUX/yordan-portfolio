@@ -1,3 +1,12 @@
+---
+{
+  "id": "typography",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Display levels are uppercased by CSS, so source text stays normal case and is announced as words rather than letters."
+}
+---
+
 # Typography scale
 
 One voice per level. Components and pages compose these utilities instead of declaring

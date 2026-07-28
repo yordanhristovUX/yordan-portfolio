@@ -1,3 +1,12 @@
+---
+{
+  "id": "skeleton",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Rails and strips are decoration: js/automata.js sets aria-hidden on every one, and content never goes in them."
+}
+---
+
 # Skeleton (sheet / band / rail / well / strip / square)
 
 The page's structural system: a 24-square-wide sheet (12 under 760px). Every band splits
@@ -55,6 +64,43 @@ row, the rail fills it, and the squares stay a consequence rather than a cause.
 
 The rule for anything added to a band: **content lives in the well.** If a new element
 belongs to the band directly, it must be able to size itself without consulting the rails.
+
+### What it costs
+
+`contain: size` is not the fix for the automata. It is the **mitigation for a cost this
+design chose to accept**, and the honest framing matters: without it the cost is unbounded,
+with it the cost is merely large.
+
+Measured on `index.html` at 1280px, on a clean load:
+
+| | |
+| --- | --- |
+| `.sq` divs in the document | **508** |
+| Total elements in the document | 862 |
+| Share of the DOM that is decoration | **58.9%** |
+| Cells simulated per generation | **2,176** (4.3× the visible ones) |
+| Per-square declaration | `transition: background-color 0.3s linear` |
+
+The simulation is deliberately wider than the picture — rails run 6 hidden columns under the
+paper and strips run 10 rows to show 2 — so patterns drift in from off-stage instead of
+appearing out of nothing at the edge. That is the reason the ratio is 4.3 and not 1, and it
+is a design decision, not an accident.
+
+So: three fifths of this page's nodes exist to render a cellular automaton nobody asked for,
+each one carrying a colour transition, with Conway's Life stepping continuously behind them.
+The engine buys that back where it can — regions pause when scrolled off-screen, the sim
+arrays are typed and flat, and repaints are `background-color` only, which stays off the
+layout path. It is affordable. It is not free, and a page that inherits this skeleton
+inherits the bill.
+
+Two consequences worth stating for anyone extending the system:
+
+- **Any per-element cost you add to `.sq` is multiplied by ~500.** A box-shadow, a filter, a
+  second transition property, an event listener per square — none of those are local
+  changes. The engine already delegates its clicks to the region for exactly this reason.
+- **The node count is a function of band height.** Making a band taller makes squares, and a
+  band that sizes itself from its rails makes them without limit. That is the feedback loop
+  above, and it is why `contain: size` is load-bearing rather than tidy.
 
 ## Tokens
 

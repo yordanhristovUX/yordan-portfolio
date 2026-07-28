@@ -1,3 +1,12 @@
+---
+{
+  "id": "section-head",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Always an <h2>; the note is hidden under 640px, so it may never carry essential information."
+}
+---
+
 # Section head
 
 Full-width chrome band opening every numbered section: accent number, display title,
@@ -18,8 +27,8 @@ Parent section: `<section class="band sec">` (adds the strong top rule);
 
 ## Tokens
 
-`--chrome-bg`, `--accent`, `--chrome-label`, `--rule`, `--rule-strong`, `--pad`
-(title typography from `.t-title`)
+`--chrome-bg`, `--accent`, `--chrome-label`, `--surface-raised` (`.sec--tint`), `--rule`,
+`--rule-strong`, `--pad` (title typography from `.t-title`)
 
 ## A11y
 

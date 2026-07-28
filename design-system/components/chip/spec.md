@@ -1,3 +1,12 @@
+---
+{
+  "id": "chip",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Display-only <span>. Anything that responds to a click is a Button instead."
+}
+---
+
 # Chip
 
 Small bordered mono label for metadata: project tags, case-study meta, statuses.

@@ -1,3 +1,12 @@
+---
+{
+  "id": "profile",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Real <dl>/<dt>/<dd> semantics, each pair wrapped in a <div> for the grid."
+}
+---
+
 # Profile
 
 Compact mono definition list for scannable key facts (hero: Focus / Currently / Previously /

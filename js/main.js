@@ -11,7 +11,26 @@
    motion blocks (clock, case studies, focus handling) runs either way.
    ============================================================ */
 (() => {
-  const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* prefers-reduced-motion is a LIVE setting, not a load-time constant.
+     This codebase already mandates re-reading themed colour on every
+     `themechange` (js/automata.js); a reader who turns "reduce motion" on
+     halfway down the page has made the same kind of change, and it is the
+     worse one to ignore — a colour preference is taste, this one is often
+     a symptom. So RM is re-read on the media query's own change event, and
+     every duration below is resolved at the moment its tween is built.
+
+     What CANNOT be re-decided is the `js` class. It is what makes
+     css/style.css hide [data-reveal]/[data-rise] so they can be animated
+     IN — i.e. a promise that a script will reveal this page's content.
+     Adding it later would hide content that is already on screen and make
+     it wait for a scroll. So it stays a one-time load decision, and reduce
+     turning on afterwards is handled the other way: finish what is in
+     flight, and build everything later at duration 0. */
+  const RMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let RM = RMQ.matches;
+
+  /** Duration resolved per tween, not per page load — that is the point. */
+  const dur = (s) => (RM ? 0 : s);
 
   const HAS_GSAP = typeof gsap !== "undefined" && typeof SplitText !== "undefined";
 
@@ -19,13 +38,23 @@
     console.warn("[portfolio] GSAP unavailable — rendering without motion.");
   }
 
-  // The one condition that governs whether anything moves.
+  // Whether motion is WIRED UP at all. Load-time by necessity, see above.
   const MOTION = HAS_GSAP && !RM;
 
   if (MOTION) {
     document.documentElement.classList.add("js");
     gsap.registerPlugin(SplitText);
   }
+
+  RMQ.addEventListener("change", (e) => {
+    RM = e.matches;
+    if (!RM || !HAS_GSAP) return;
+    /* Reduce turned ON mid-visit: nothing may be left mid-move. Finish
+       every tween running right now; everything built after this moment
+       picks up dur() === 0 on its own, including the reveals that have not
+       been scrolled to yet. */
+    gsap.globalTimeline.getChildren(true, true, true).forEach((t) => t.progress(1));
+  });
 
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
@@ -69,12 +98,12 @@
   if (MOTION) {
     const intro = gsap.timeline();
     intro
-      .from(".hero__role", { opacity: 0, duration: 0.4, ease: "steps(4)" })
+      .from(".hero__role", { opacity: 0, duration: dur(0.4), ease: "steps(4)" })
       .to(".hero [data-rise]", {
-        y: 0, yPercent: 0, duration: 0.9, ease: "power3.out", stagger: 0.12,
+        y: 0, yPercent: 0, duration: dur(0.9), ease: "power3.out", stagger: dur(0.12),
       }, "-=0.1")
       .from(".hero__body, .profile", {
-        opacity: 0, y: 16, duration: 0.7, ease: "power2.out", stagger: 0.12,
+        opacity: 0, y: 16, duration: dur(0.7), ease: "power2.out", stagger: dur(0.12),
       }, "-=0.4");
 
     // Failsafe: if rAF is throttled (background tab), settle the page immediately
@@ -82,7 +111,7 @@
 
     // The contact headline rises when scrolled to (CSS pre-sets the offset)
     onceInView($(".tx__big"), 88, () =>
-      gsap.to(".tx__big[data-rise]", { y: 0, yPercent: 0, duration: 0.9, ease: "power3.out" })
+      gsap.to(".tx__big[data-rise]", { y: 0, yPercent: 0, duration: dur(0.9), ease: "power3.out" })
     );
   }
 
@@ -93,7 +122,7 @@
   if (MOTION) {
     $$("[data-reveal]").forEach((el) =>
       onceInView(el, 88, () =>
-        gsap.to(el, { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" })
+        gsap.to(el, { opacity: 1, y: 0, duration: dur(0.7), ease: "power2.out" })
       )
     );
 
@@ -101,7 +130,7 @@
     $$(".idx__row").forEach((el) => {
       gsap.set(el, { opacity: 0 });
       onceInView(el, 92, () =>
-        gsap.to(el, { opacity: 1, duration: 0.45, ease: "steps(5)" })
+        gsap.to(el, { opacity: 1, duration: dur(0.45), ease: "steps(5)" })
       );
     });
 
@@ -111,7 +140,7 @@
         const split = new SplitText(el, { type: "lines", mask: "lines" });
         gsap.set(split.lines, { yPercent: 110 });
         onceInView(el, 90, () =>
-          gsap.to(split.lines, { yPercent: 0, duration: 0.7, ease: "power3.out" })
+          gsap.to(split.lines, { yPercent: 0, duration: dur(0.7), ease: "power3.out" })
         );
       });
 
@@ -120,22 +149,51 @@
         gsap.set(split.lines, { opacity: 0.12, y: 10 });
         onceInView(el, 82, () =>
           gsap.to(split.lines, {
-            opacity: 1, y: 0, duration: 0.55, ease: "power2.out", stagger: 0.09,
+            opacity: 1, y: 0, duration: dur(0.55), ease: "power2.out", stagger: dur(0.09),
           })
         );
       });
     });
 
-    // Counters click upward in whole steps — odometer, not tween
+    /* ---------- Counters ----------
+       Click upward in whole steps — odometer, not tween.
+
+       The zero belongs to the ANIMATION, not to the document. "42km —
+       Marathon finisher" is a fact about a person; if this script never
+       runs, or GSAP 404s, or the ticker is throttled to a stop, the page
+       must still say 42. A page that says he ran 0km is not a degraded
+       page, it is a false one, and false is worse than blank — which is
+       the opposite of what the degradation contract at the top of this
+       file promises. So nothing here ever writes a number the markup did
+       not already assert: the counter is zeroed at the instant it starts
+       counting, and only when a tween is actually going to run.
+
+       (Until scripts/build-content.mjs emits the real figure instead of a
+       literal `0`, the no-motion branch below still has to correct the
+       markup. That assignment is idempotent — it writes exactly what the
+       markup will ship — so it can stay or go once the emitter lands.) */
     $$("[data-count]").forEach((el) => {
       const target = +el.dataset.count;
-      const obj = { v: 0 };
-      onceInView(el, 88, () =>
-        gsap.to(obj, {
+      if (!Number.isFinite(target)) return;
+      const land = () => { el.textContent = String(target); };
+      onceInView(el, 88, () => {
+        if (RM) { land(); return; }
+        const obj = { v: 0 };
+        /* The zero is never written here. It arrives as the tween's own
+           first frame, which means a ticker that never ticks — a throttled
+           background tab, a GSAP that loaded but stalled — leaves the
+           markup's real figure on screen instead of parking a 0 there for
+           four seconds waiting for the failsafe. Motion may replace the
+           number; its absence may not. */
+        const tw = gsap.to(obj, {
           v: target, duration: 1.4, ease: "steps(" + Math.min(target, 24) + ")",
-          onUpdate: () => (el.textContent = Math.round(obj.v)),
-        })
-      );
+          onUpdate: () => (el.textContent = String(Math.round(obj.v))),
+          onComplete: land,
+        });
+        /* Same failsafe as the intro timeline: a stalled or throttled
+           ticker must never be the reason a fact reads 0. */
+        setTimeout(() => { if (tw.progress() < 1) { tw.progress(1); land(); } }, 4000);
+      });
     });
   } else {
     // No motion: the numbers are the content, so they arrive already counted.
@@ -187,9 +245,9 @@
       scrollBox.focus({ preventScroll: true });
       return;
     }
-    gsap.fromTo($(".case__backdrop"), { opacity: 0 }, { opacity: 1, duration: RM ? 0 : 0.25 });
+    gsap.fromTo($(".case__backdrop"), { opacity: 0 }, { opacity: 1, duration: dur(0.25) });
     gsap.fromTo(panel, { yPercent: 100 }, {
-      yPercent: 0, duration: RM ? 0 : 0.5, ease: "power3.out",
+      yPercent: 0, duration: dur(0.5), ease: "power3.out",
       onComplete: () => scrollBox.focus({ preventScroll: true }),
     });
   }
@@ -203,9 +261,9 @@
 
     if (!HAS_GSAP) { dismiss(); return; }
 
-    gsap.to($(".case__backdrop"), { opacity: 0, duration: RM ? 0 : 0.2 });
+    gsap.to($(".case__backdrop"), { opacity: 0, duration: dur(0.2) });
     gsap.to(panel, {
-      yPercent: 100, duration: RM ? 0 : 0.4, ease: "power2.in",
+      yPercent: 100, duration: dur(0.4), ease: "power2.in",
       onComplete: dismiss,
     });
   }

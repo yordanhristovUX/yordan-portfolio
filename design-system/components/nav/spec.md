@@ -1,3 +1,12 @@
+---
+{
+  "id": "nav",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "<nav aria-label=\"Primary\">; the status dot is aria-hidden and hover states hold AA contrast."
+}
+---
+
 # Nav (floating bar)
 
 Compact chrome bar lying on the sheet: fixed, top-centered, max-content width, inset-shadow
@@ -41,7 +50,8 @@ for page-level actions, never for navigation — that is what `.bar__nav` is for
 ## Tokens
 
 `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`, `--chrome-label`,
-`--chrome-label-strong`, `--content-primary`, `--primary`, `--accent` (dot), `--font-mono`
+`--chrome-label-strong`, `--content-primary`, `--content-inverse`, `--primary`,
+`--accent` (dot), `--shadow-drop` (the offset drop shadow), `--font-mono`
 
 ## Behaviour
 

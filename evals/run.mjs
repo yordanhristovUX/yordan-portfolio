@@ -73,8 +73,13 @@ preflight.push(`tokeniser agreement  (${tok.chunks} chunks, ${tok.terms} terms r
 
   const refs = validateReferential([
     { type: "prose", text: "ok" },
-    { type: "project", id: realProject, why: "real" },
-    { type: "project", id: "no-such-project", why: "invented" },
+    /* No `why` here: it was a free-text field on `project` blocks and it was
+       REMOVED, because it was model-authored prose that nothing validated
+       sitting in the same file that claims prose is the only model-authored
+       text. The schema is `additionalProperties: false`, so passing it now
+       fails checkShape and this fixture would test the wrong gate. */
+    { type: "project", id: realProject },
+    { type: "project", id: "no-such-project" },
     { type: "metric", projectId: realProject, metricIndex: 99 },
     { type: "sources", chunkIds: [realChunk, "project:nope#summary"] },
   ]);

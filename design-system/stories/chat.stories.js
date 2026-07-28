@@ -142,7 +142,12 @@ export const Streaming = {
         <ol class="chat__trace-list">
           <li class="chat__trace-row">
             <code class="chat__trace-name">get_system_facts</code>
-            <span class="chat__trace-result">&rarr; 59 tokens &middot; 19 components</span>
+            <!-- Deliberately not the live counts. This is a mock trace whose job is to
+                 show the SHAPE of a tool result; the demo does not depend on the numbers
+                 being real, and hand-typed figures here would go stale the first time a
+                 token lands. The real numbers have one source
+                 (content/system.generated.json) and this is not it. -->
+            <span class="chat__trace-result">&rarr; token, value and component counts</span>
             <span class="chat__trace-ms mono">1ms</span>
           </li>
         </ol>
@@ -188,6 +193,29 @@ export const Unavailable = {
           "assistant",
           `<p class="chat__error">The assistant is not configured on this deployment. Everything else on
       this page works &mdash; the case studies, the CV, and the eval results are all static.</p>`
+        )
+    ),
+};
+
+/* ---------- 5b. Stopped ----------
+   The distinction this story exists to hold: a cancel is NOT the failure
+   above it. Open this and Unavailable side by side — the note must read as
+   chrome reporting what happened, the error as an alarm. A reader who
+   pressed Stop being shown their own decision in an error box is the
+   regression, and it is a visual one, so only a story catches it. */
+export const Stopped = {
+  name: "Stopped (neutral notice, not an error)",
+  render: () =>
+    shell(
+      turn("user", `<p class="chat__prose">What has he shipped?</p>`) +
+        turn(
+          "assistant",
+          `
+      <div class="chat__answer">
+        <p class="chat__prose">Across the record the shipped work splits into three kinds &mdash; a design
+        system in production, two live consumer products, and this site itself.</p>
+      </div>
+      <p class="chat__note mono">Stopped. What had arrived is above.</p>`
         )
     ),
 };

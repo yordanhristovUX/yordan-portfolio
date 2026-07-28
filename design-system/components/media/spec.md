@@ -1,3 +1,12 @@
+---
+{
+  "id": "media",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Every real <img> needs meaningful alt text describing the content, never 'screenshot'."
+}
+---
+
 # Media slot
 
 Labelled placeholder frame for project imagery. Drop a real `<img>` inside and the dashed

@@ -1,3 +1,12 @@
+---
+{
+  "id": "row",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Project rows are <button>s; .idx__go is aria-hidden because the whole row is the target."
+}
+---
+
 # Row
 
 Full-width list rows. Two members of the family:
@@ -32,8 +41,9 @@ Full-width list rows. Two members of the family:
 
 ## Tokens
 
-`--font-display`, `--font-mono`, `--content-primary`, `--content-muted`, `--chrome-label`,
-`--surface-raised`, `--primary`, `--rule`, `--pad`
+`--font-display`, `--font-mono`, `--content-primary`, `--content-muted`,
+`--content-inverse`, `--chrome-label`, `--chrome-border-strong`, `--surface-raised`,
+`--primary`, `--rule`, `--pad`
 
 ## A11y
 

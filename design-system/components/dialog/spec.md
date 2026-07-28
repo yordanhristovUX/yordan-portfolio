@@ -1,3 +1,12 @@
+---
+{
+  "id": "dialog",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "role=dialog aria-modal=true labelled by its title; the focus trap and focus restore are mandatory."
+}
+---
+
 # Dialog (inner page)
 
 Case studies open as a full inner page on the same skeleton: chrome bar (index + close),
@@ -14,7 +23,7 @@ scrollable band with rails and a solid content well. Slides up; backdrop veils t
       <button class="btn btn--small" data-case-close aria-label="Close case study">Close ✕</button>
     </div>
     <div class="case__scroll">
-      <div class="band case__band">
+      <div class="band">
         <div class="well case__well">
           <div class="case__head">
             <h2 class="case__title t-display t-display--lg" id="case-title">Title</h2>
@@ -29,10 +38,28 @@ scrollable band with rails and a solid content well. Slides up; backdrop veils t
 </div>
 ```
 
+## Elements
+
+| Class | Role |
+| --- | --- |
+| `.case` | Fixed full-viewport layer. `hidden` when closed |
+| `.case__backdrop` | The scrim. Any `[data-case-close]` closes |
+| `.case__panel` | The sheet: 90rem, paper, hairline edges. `tabindex="-1"` so it can take focus |
+| `.case__bar` | Chrome bar: index on the left, Close on the right |
+| `.case__index` | Written by `js/main.js` on open. Truncates rather than squeezing the Close button |
+| `.case__scroll` | The one scroll container; `overscroll-behavior: contain` |
+| `.case__well` / `.case__head` / `.case__title` / `.case__subtitle` / `.case__meta` | Header stack inside the band's well |
+| `.case__content` | Injected case-study body: `h3` / `p` / `ul` plus Media, Stat, Button |
+
+The band inside the dialog is a plain `.band` and gets its rails for free, like any band
+on the page. There is no dialog-specific band class: `js/automata.js` decides which region
+list a rail belongs to with `el.closest(".case")`, not with a class on the band.
+
 ## Tokens
 
-`--surface-page`, `--chrome-bg`, `--chrome-border`, `--rule`, `--rule-strong`, `--pad`,
-content typography tokens
+`--surface-page`, `--chrome-bg`, `--chrome-border`, `--chrome-label-strong`,
+`--content-primary`, `--primary`, `--scrim` (the backdrop), `--font-display`, `--font-mono`,
+`--rule`, `--rule-strong`, `--pad`
 
 ## Behaviour (site JS contract — js/main.js)
 

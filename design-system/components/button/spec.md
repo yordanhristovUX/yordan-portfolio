@@ -1,3 +1,12 @@
+---
+{
+  "id": "button",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "Use <a> to navigate and <button> to act; the global :focus-visible ring is never suppressed."
+}
+---
+
 # Button
 
 Rectangular mono-type action. Outline by default; solid ink for the primary action of a view.

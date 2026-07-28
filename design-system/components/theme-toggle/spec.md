@@ -1,3 +1,12 @@
+---
+{
+  "id": "theme-toggle",
+  "status": "stable",
+  "since": "initial",
+  "a11y": "A real <button> with three states, so no aria-pressed; the aria-label carries the current state and what activating does."
+}
+---
+
 # Theme toggle
 
 Tri-state theme control. Sits in the nav bar as one more segment of the instrument, and

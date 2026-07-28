@@ -24,9 +24,11 @@
     } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }
   </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,700..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Fonts are vendored, not fetched - see css/fonts/README.md. Archivo's
+       wdth axis IS the display voice: with the CDN blocked it fell back to
+       Arial Black, which has no wdth axis, and every font-variation-settings
+       call in components.css silently did nothing. -->
+  <link rel="stylesheet" href="css/fonts/fonts.css">
   <!-- Design system first (tokens, then components), page styles last -->
   <link rel="stylesheet" href="design-system/dist/tokens.css">
   <link rel="stylesheet" href="design-system/css/components.css">

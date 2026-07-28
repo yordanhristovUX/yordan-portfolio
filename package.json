@@ -9,6 +9,7 @@
     "tokens": "node design-system/scripts/build.mjs --check",
     "content": "node scripts/build-content.mjs",
     "check": "node design-system/scripts/build.mjs --check && node scripts/build-content.mjs --check && node scripts/check-boundaries.mjs",
+    "test": "node --test",
     "evals": "node evals/run.mjs",
     "serve": "npx --yes serve . -l 3000 --no-clipboard"
   },
