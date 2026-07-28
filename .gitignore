@@ -18,6 +18,18 @@ design-system/storybook-static/
 generated/
 generated.zip
 
+# Audit findings. Deliberately NOT committed, and this entry is the enforcement
+# rather than a note asking someone to remember. They carry working reproduction
+# steps against this deployment — the /api/mcp amplification, the prototype-chain
+# probes, and a constructed answer that passes all three hallucination gates — so
+# publishing them arms an attacker faster than it informs a reader. The audit
+# PROMPTS (01-*.md, 02-*.md, 03-*.md) stay tracked; only the findings are private.
+# .vercelignore separately keeps all of docs/ off the deployed site.
+docs/audits/*.findings.md
+docs/audits/*-findings.md
+docs/audits/04-ai-readable-design-system.md
+docs/audits/05-ai-engineering-findings.md
+
 # Environment & noise
 .env
 .env.*

@@ -59,6 +59,21 @@ const MAX_QUESTION_CHARS = 1000;
 const MAX_HISTORY_MESSAGES = 12;  // 6 exchanges; the manifest carries the rest
 const HEARTBEAT_MS = 10_000;
 
+/* The loop's own wall clock, checked at the top of every turn.
+   maxDuration is the platform's ceiling and a bad budget: it is what a HANG
+   costs, not what work costs. Three Haiku turns plus a retry is ~10-20s, so a
+   run past this is not a slow answer, it is something stuck — and the cost of
+   being stuck is paid by the reader waiting and by the function-seconds bill.
+
+   It gates whether a NEW turn may START, so the true worst case is this plus
+   one turn in flight. Measured against a 25s-per-turn upstream the loop stopped
+   after two turns and still delivered a `done` at 50s. 35s keeps that worst
+   case under the 60s maxDuration in vercel.json with room for a slow turn, so
+   the loop stops ITSELF and emits an answer rather than being cut off
+   mid-stream by the platform — a truncated SSE stream is the one failure the
+   client cannot render. */
+const MAX_WALL_MS = 35_000;
+
 /* ============================================================
    The frozen system prompt
 
@@ -179,7 +194,12 @@ function summarize(name, result) {
 /* ============================================================
    SSE
    ============================================================ */
+/* The raw writer. Defensive about the socket because a destroyed one still
+   ACCEPTS res.write() — it fails asynchronously and emits 'error' on the
+   ServerResponse, which nothing here listens for. The per-request `closed`
+   guard in the handler is the authoritative check; this is the backstop. */
 const send = (res, event, data) => {
+  if (res.writableEnded || res.destroyed) return;
   res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 };
 
@@ -241,7 +261,20 @@ export default async function handler(req, res) {
   if (body === undefined || typeof body === "string") {
     try {
       body = typeof body === "string" ? JSON.parse(body) : JSON.parse(await readBody(req));
-    } catch {
+    } catch (err) {
+      if (err?.code === "E_BODY_TOO_LARGE") {
+        /* Drop the socket once the answer is out, rather than sitting there
+           absorbing the rest of an upload already refused. Destroying first
+           would reset the connection and the caller would get a transport
+           error instead of a reason. */
+        res.once("finish", () => req.destroy());
+        return fail(
+          res,
+          413,
+          "bad_request",
+          `That message is too large. A question is capped at ${MAX_QUESTION_CHARS} characters.`
+        );
+      }
       body = null;
     }
   }
@@ -256,10 +289,9 @@ export default async function handler(req, res) {
     .filter((m) => (m?.role === "user" || m?.role === "assistant") && typeof m.content === "string")
     .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_QUESTION_CHARS) }));
 
-  if (!history.length || history[0].role !== "user") {
-    // The API requires the first message to be a user turn.
-    while (history.length && history[0].role !== "user") history.shift();
-  }
+  // The API requires the first message to be a user turn.
+  while (history.length && history[0].role !== "user") history.shift();
+
   if (!history.length) {
     return fail(res, 400, "bad_request", "The first message must be from the user.");
   }
@@ -285,20 +317,51 @@ export default async function handler(req, res) {
   /* Trace events double as the keep-alive, so first byte lands ~1 s in
      regardless of how long the loop runs. The heartbeat covers the gap
      before the first tool call. */
-  const beat = setInterval(() => res.write(": ping\n\n"), HEARTBEAT_MS);
-  let closed = false;
+  let closed = false;    // the reader is gone: stop writing AND stop spending
+  let finished = false;  // we ended the response ourselves
+
+  const beat = setInterval(() => {
+    if (!closed && !res.writableEnded && !res.destroyed) res.write(": ping\n\n");
+  }, HEARTBEAT_MS);
+
+  /* The client hanging up must stop the SPENDING, not just the writing. The
+     agent loop was previously unaffected by a disconnect: it kept calling the
+     model, and every send() after that wrote to a destroyed socket. The signal
+     goes into client.messages.create so an in-flight call is CANCELLED, not
+     merely ignored when it returns.
+
+     Listen on `res`, not on `req`. An IncomingMessage emits 'close' when the
+     REQUEST completes — which for a POST is as soon as the body has been read,
+     several hundred milliseconds before any of this runs. Registering there
+     meant the handler was either attached too late to ever fire or fired
+     immediately for the wrong reason; measured, it never fired at all and the
+     loop ran all three turns after the reader had left. `res` 'close' is the
+     one that means the socket went away, and `writableEnded` separates a
+     premature close from our own res.end(). */
+  const ac = new AbortController();
+
   const finish = () => {
-    if (closed) return;
-    closed = true;
+    if (finished) return;
+    finished = true;
     clearInterval(beat);
-    res.end();
+    if (!res.writableEnded) res.end();
   };
-  req.on?.("close", () => {
+
+  res.on("close", () => {
     clearInterval(beat);
-    closed = true;
+    if (!res.writableEnded) {
+      closed = true;
+      ac.abort();
+    }
   });
 
-  send(res, "meta", { model: MODEL, maxTurns: MAX_TURNS, maxBlocks: MAX_BLOCKS });
+  /** Every SSE write goes through here, so one flag stops all of them. */
+  const emit = (event, data) => {
+    if (closed) return;
+    send(res, event, data);
+  };
+
+  emit("meta", { model: MODEL, maxTurns: MAX_TURNS, maxBlocks: MAX_BLOCKS });
 
   const client = new Anthropic({ apiKey });
   const messages = history.map((m) => ({ role: m.role, content: m.content }));
@@ -314,22 +377,35 @@ export default async function handler(req, res) {
   };
 
   const ask = (forced) =>
-    client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
-      tools: [...TOOLS, RESPOND_TOOL],
-      tool_choice: forced ? { type: "tool", name: "respond" } : { type: "auto" },
-      messages,
-    });
+    client.messages.create(
+      {
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        system: SYSTEM_PROMPT,
+        tools: [...TOOLS, RESPOND_TOOL],
+        tool_choice: forced ? { type: "tool", name: "respond" } : { type: "auto" },
+        messages,
+      },
+      /* Cancels the HTTP request to Anthropic when the reader hangs up. */
+      { signal: ac.signal }
+    );
+
+  const startedAt = Date.now();
 
   try {
     let answer = null;
 
     while (turns < MAX_TURNS && !answer) {
+      /* Two ways to stop that are not "the model finished": the reader left,
+         or the loop has run long enough that something is wrong. Both break
+         rather than throw, so whatever survived validation is still emitted
+         and `finally` still bills what was actually spent. */
+      if (closed || ac.signal.aborted) break;
+      if (Date.now() - startedAt > MAX_WALL_MS) break;
+
       turns += 1;
       const forced = turns === MAX_TURNS;
-      send(res, "turn", { turn: turns, forced });
+      emit("turn", { turn: turns, forced });
 
       const response = await ask(forced);
       tally(response.usage);
@@ -367,7 +443,7 @@ export default async function handler(req, res) {
 
         /* Emitted the MOMENT the tool runs — this is the trace viewer's
            feed and the connection's keep-alive at the same time. */
-        send(res, "trace", {
+        emit("trace", {
           turn: turns,
           tool: call.name,
           input: call.input ?? {},
@@ -393,7 +469,7 @@ export default async function handler(req, res) {
        plausible-sounding invention. */
     if (answer && (verdict.hasUnsourcedClaim || !verdict.blocks.length)) {
       retried = true;
-      send(res, "notice", {
+      emit("notice", {
         kind: "retry",
         reason: verdict.blocks.length ? "prose survived with no surviving sources" : "no block survived validation",
         dropped: verdict.dropped,
@@ -433,17 +509,17 @@ export default async function handler(req, res) {
       blocks = NOT_ON_FILE();
     }
 
-    for (const block of blocks) send(res, "block", block);
+    for (const block of blocks) emit("block", block);
 
     if (verdict.dropped.length || verdict.strippedSources.length) {
-      send(res, "notice", {
+      emit("notice", {
         kind: "gates",
         dropped: verdict.dropped,
         strippedSources: verdict.strippedSources,
       });
     }
 
-    send(res, "done", {
+    emit("done", {
       turns,
       retried,
       degraded,
@@ -458,7 +534,10 @@ export default async function handler(req, res) {
        is useful; its internals are not. */
     const status = err?.status ?? err?.statusCode ?? null;
     const kind = status === 429 ? "rate_limited" : status === 401 || status === 403 ? "no_api_key" : "upstream";
-    send(res, "error", {
+    /* An abort we caused ourselves is not an upstream failure and has nobody
+       left to tell: `emit` is already a no-op once `closed` is set, so this
+       classification only ever reaches a reader who is still connected. */
+    emit("error", {
       kind,
       status,
       message:
@@ -466,7 +545,7 @@ export default async function handler(req, res) {
           ? "The assistant is busy right now. Try again in a moment — the case studies and the CV are all static and unaffected."
           : "The assistant could not complete that. Nothing else on this page depends on it.",
     });
-    send(res, "done", { turns, blocks: 0, error: kind, usage });
+    emit("done", { turns, blocks: 0, error: kind, usage });
   } finally {
     /* Bill what was actually spent, including a run that errored mid-way —
        those tokens were still bought. In `finally` so no early return or throw
@@ -481,14 +560,30 @@ export default async function handler(req, res) {
 /* ============================================================
    Helpers
    ============================================================ */
+const MAX_BODY_BYTES = 64_000;
+
+/* Rejecting the promise ends the AWAIT, not the UPLOAD. The 'data' listener
+   stayed attached and kept concatenating, so a 10MB body was still received in
+   full into memory long after the caller had given up on it — the cap bounded
+   the waiting and nothing else. Detaching the listener is what actually stops
+   the read; the socket is dropped later, by the caller, once the 413 has
+   flushed. (api/mcp.js caps at 256KB — a bigger number because it carries a
+   whole JSON-RPC envelope, the same shape of fix.) */
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
     req.setEncoding?.("utf8");
-    req.on("data", (c) => {
+    const onData = (c) => {
       data += c;
-      if (data.length > 64_000) reject(new Error("body too large"));
-    });
+      if (data.length > MAX_BODY_BYTES) {
+        req.removeListener("data", onData);
+        req.pause();
+        const err = new Error("body too large");
+        err.code = "E_BODY_TOO_LARGE";
+        reject(err);
+      }
+    };
+    req.on("data", onData);
     req.on("end", () => resolve(data));
     req.on("error", reject);
   });

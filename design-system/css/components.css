@@ -678,7 +678,7 @@ body.is-locked { overflow: hidden; }
 .chat__thread {
   display: grid;
   gap: 0;
-  max-height: min(30rem, 60vh);
+  max-height: min(46rem, 75vh);
   overflow-y: auto;
   overscroll-behavior: contain;
   border-top: var(--rule);

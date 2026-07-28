@@ -1,0 +1,46 @@
+# What does NOT get uploaded to Vercel.
+#
+# outputDirectory is "." — every file in this repo that reaches the deployment
+# is publicly fetchable. So this file is a security boundary as much as a size
+# one: anything listed here is both un-served and un-uploaded.
+
+# ------------------------------------------------------------------
+# READ THIS BEFORE ADDING content/dist/vectors.json
+#
+# It is 967 KB, it is read server-side only, and excluding it looks like free
+# money. It is not. lib/knowledge/embed.js loads it with
+#
+#     new URL("../../content/dist/vectors.json", import.meta.url)
+#
+# and .vercelignore removes a file from the UPLOAD, not merely from static
+# serving — so the serverless function loses it too, and functions.includeFiles
+# cannot bring back a file that was never uploaded. The two mechanisms are in
+# conflict by construction; there is no "exclude from serving, keep for the
+# function" setting while outputDirectory is ".".
+#
+# The failure is silent and total: `cache` becomes null, embedRank() returns
+# null, and EVERY search falls back to BM25 — 93% -> 74% hit@3 — with no error,
+# no log line and no change in status code. The only visible tell is `ranker`
+# flipping from "embeddings" to "bm25" in a search_content result.
+#
+# Do not exclude it without a post-deploy smoke test asserting
+# ranker === "embeddings" against the real deployment. Losing the ranker
+# silently is far worse than serving 967 KB.
+# ------------------------------------------------------------------
+
+# The eval harness's embedding cache: 1.65 MB, and the largest single file in
+# the repo. Read by evals/run.mjs alone (evals/run.mjs:302) — a local and CI
+# harness that never runs on Vercel. No function imports it, no page fetches
+# it; evals.html only names it in prose. Nothing server-side can miss it.
+evals/vectors.json
+
+# Internal engineering documents. These enumerate this deployment's own
+# vulnerabilities with reproduction steps, and were being served as public
+# static files at /docs/audits/*. Nothing links to them.
+docs/
+
+# Agent definitions and slice contracts — repository tooling, not the site.
+.claude/
+
+# CI configuration. Nothing fetches it.
+.github/

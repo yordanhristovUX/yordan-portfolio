@@ -132,7 +132,7 @@
             <button class="idx__row" data-project="greenstreet-ds">
               <span class="idx__no mono">01</span>
               <span class="idx__main">
-                <span class="idx__name">Green Street <em>— AI-Ready Design System</em></span>
+                <h3 class="idx__name">Green Street <em>— AI-Ready Design System</em></h3>
                 <span class="idx__desc">~35 components at 1:1 Figma-to-code parity, 100% token coverage, custom Claude skills, and a prototype pipeline the whole TPM team uses. Production navigation shipped.</span>
               </span>
               <span class="idx__tags"><span class="chip">Design system</span><span class="chip">AI</span><span class="chip">Production code</span></span>
@@ -143,7 +143,7 @@
             <button class="idx__row" data-project="greenstreet-audit">
               <span class="idx__no mono">02</span>
               <span class="idx__main">
-                <span class="idx__name">Green Street <em>— UX &amp; Accessibility Audits</em></span>
+                <h3 class="idx__name">Green Street <em>— UX &amp; Accessibility Audits</em></h3>
                 <span class="idx__desc">WCAG 2.1 AA audits of two product surfaces — editorial and data-dense analytics. 200+ issue instances catalogued with severity ratings and a prioritised remediation roadmap.</span>
               </span>
               <span class="idx__tags"><span class="chip">Accessibility</span><span class="chip">Audit</span><span class="chip">WCAG AA</span></span>
@@ -154,7 +154,7 @@
             <button class="idx__row" data-project="malko-tarnovo">
               <span class="idx__no mono">03</span>
               <span class="idx__main">
-                <span class="idx__name">Malko Tarnovo <em>— Municipal Mobile App</em></span>
+                <h3 class="idx__name">Malko Tarnovo <em>— Municipal Mobile App</em></h3>
                 <span class="idx__desc">Civic app serving tourists and older residents at once. White-label token system. Live on the App Store and Google Play.</span>
               </span>
               <span class="idx__tags"><span class="chip">Shipped</span><span class="chip">iOS &amp; Android</span><span class="chip">Tokens</span></span>
@@ -165,7 +165,7 @@
             <button class="idx__row" data-project="domestina">
               <span class="idx__no mono">04</span>
               <span class="idx__main">
-                <span class="idx__name">Domestina <em>— Cleaning Marketplace</em></span>
+                <h3 class="idx__name">Domestina <em>— Cleaning Marketplace</em></h3>
                 <span class="idx__desc">Multi-year, research-led UX. Front page, flows, onboarding, loyalty — bounce rate down 40%, retention up.</span>
               </span>
               <span class="idx__tags"><span class="chip">Research</span><span class="chip">Data-driven</span><span class="chip">−40% bounce</span></span>
@@ -176,7 +176,7 @@
             <button class="idx__row" data-project="spetema">
               <span class="idx__no mono">05</span>
               <span class="idx__main">
-                <span class="idx__name">Spetema <em>— Product &amp; Corporate Site</em></span>
+                <h3 class="idx__name">Spetema <em>— Product &amp; Corporate Site</em></h3>
                 <span class="idx__desc">A 200+ product coffee catalogue serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model. Bilingual, live.</span>
               </span>
               <span class="idx__tags"><span class="chip">IA</span><span class="chip">Motion</span><span class="chip">Live</span></span>
@@ -187,7 +187,7 @@
             <button class="idx__row" data-project="meta">
               <span class="idx__no mono">06</span>
               <span class="idx__main">
-                <span class="idx__name">This Site <em>— Portfolio as a Product</em></span>
+                <h3 class="idx__name">This Site <em>— Portfolio as a Product</em></h3>
                 <span class="idx__desc">An AI-ready design system that ships itself: repo-first tokens, Storybook, one-way Figma push, auto-deploys — all open source.</span>
               </span>
               <span class="idx__tags"><span class="chip">Design system</span><span class="chip">AI-first</span><span class="chip chip--solid">Open source</span></span>
@@ -331,10 +331,15 @@
     <div class="strip" aria-hidden="true"></div>
 
     <!-- ============ 06 ASK ============
-         Hand-authored: this section has no <!-- content:… --> region because
-         none of its words come from content/. The prose the assistant emits
-         is model-authored; everything else it renders is resolved from
-         content/dist/content.json at runtime by js/answer-render.js. -->
+         Hand-authored: this section has no content: region because none of its
+         words come from content/. The prose the assistant emits is
+         model-authored; everything else it renders is resolved from
+         content/dist/content.json at runtime by js/answer-render.js.
+
+         Do not write a content: region marker in here as literal markup —
+         HTML comments do not nest, so the parser would close this comment at
+         that inner delimiter and render the rest of this note as body text on
+         the homepage. That shipped to production once. -->
     <section class="band sec" id="ask">
       <header class="sec__head">
         <span class="sec__no mono">06</span>
@@ -405,7 +410,13 @@
         <span class="case__index"></span>
         <button class="btn btn--small" data-case-close aria-label="Close case study">Close ✕</button>
       </div>
-      <div class="case__scroll">
+      <!-- tabindex/role/aria-label are STATIC, not set by JS: this is the element
+           that holds the case study (~2150px of it below the fold) and the only
+           one in the dialog with overflow-y:auto. Without them the dialog was a
+           WCAG 2.1.1 failure — the panel's overflow is visible, so focusing the
+           panel left the scroller as a descendant rather than a scroll ancestor,
+           and Page Down had no target. js/main.js narrows the label per case. -->
+      <div class="case__scroll" tabindex="0" role="region" aria-label="Case study">
         <div class="band case__band">
           <div class="well case__well">
             <div class="case__head">

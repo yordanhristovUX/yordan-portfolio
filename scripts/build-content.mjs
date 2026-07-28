@@ -522,9 +522,15 @@ function workIndexRegion() {
       `    <button class="idx__row" data-project="${escAttr(p.id)}">`,
       `      <span class="idx__no mono">${String(p.index).padStart(2, "0")}</span>`,
       `      <span class="idx__main">`,
-      `        <span class="idx__name">${inline(p.indexClient ?? p.client)} <em>— ${inline(
+      /* A heading, not a span: these six are the page's flagship work, and the
+         eight lesser cards below already carry <h3>. With a span here the
+         heading outline listed the side projects and none of the case studies —
+         the document's own priority, inverted. Styled entirely by .idx__name,
+         so the element name is free: the foundation reset zeroes the UA margin
+         and the class already pins font-family/size/weight/line-height/colour. */
+      `        <h3 class="idx__name">${inline(p.indexClient ?? p.client)} <em>— ${inline(
         p.indexTitle ?? p.title
-      )}</em></span>`,
+      )}</em></h3>`,
       `        <span class="idx__desc">${inline(section(p, "summary").blocks[0].text)}</span>`,
       `      </span>`,
       `      <span class="idx__tags">${chips}</span>`,
@@ -1078,7 +1084,42 @@ if (CHECK) {
     );
     process.exit(1);
   }
+  /* ---------- nested-comment gate ----------
+     HTML comments do not nest. A `<!--` inside a comment body means the parser
+     already closed the comment at the first inner `-->`, and everything after
+     it renders as visible text. This shipped: a hand-authored note explaining
+     why a section has no region wrapped a literal `<!-- content:… -->` marker,
+     and a paragraph of developer prose was live on the homepage above the Ask
+     section. It survives review because the source reads as one comment. It is
+     one regex to assert, so it is asserted. */
+  const PAGES = ["index.html", "cv.html", "mcp.html", "evals.html"];
+  const nested = [];
+  for (const rel of PAGES) {
+    const path = join(root, rel);
+    if (!existsSync(path)) {
+      nested.push(`${rel} is missing — it is a shipped page and must exist`);
+      continue;
+    }
+    const text = lf(readFileSync(path, "utf8"));
+    for (const m of text.matchAll(/<!--([\s\S]*?)-->/g)) {
+      if (!m[1].includes("<!--")) continue;
+      const line = text.slice(0, m.index).split("\n").length;
+      nested.push(`${rel}:${line} — comment body contains a nested "<!--"`);
+    }
+  }
+  if (nested.length) {
+    console.error(
+      `✗ nested comment check failed:\n  - ${nested.join("\n  - ")}\n` +
+        `  HTML comments do not nest: the parser ends the comment at the FIRST\n` +
+        `  "-->", so the rest of it renders as visible text on the page. To talk\n` +
+        `  about a marker inside a comment, break the sequence — write it as\n` +
+        `  "content:NAME" without the angle brackets.`
+    );
+    process.exit(1);
+  }
+
   console.log(`✓ content check          (${outputs.length} generated files up to date)`);
+  console.log(`✓ nested comment check   (${PAGES.length} pages, no comment contains "<!--")`);
 } else {
   for (const [rel, text] of outputs) writeFileSync(join(root, rel), lf(text));
   console.log(`✓ js/case-studies.js     (${caseStudies.length} case studies)`);
