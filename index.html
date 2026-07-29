@@ -102,6 +102,18 @@
         </dl>
         <!-- /content:profile -->
       </div>
+      <!-- The terminator closes the plate on a lattice line. Last child of the
+           band, always: it is auto-placed, and the rails span its row via
+           `.band:has(> .term)`. Its height is CSS's one-cell base plus the
+           shortfall js/automata.js measures into --term-slack, which is why it
+           is the only element here whose height is nobody's content.
+           design-system/components/terminator/spec.md.
+
+           The hero is the one band that proves the mechanism rather than just
+           using it: no .sec__head, so its rail starts at the sheet's own phase
+           0, and a terminator is therefore the only thing between it and a
+           whole number of rows. Measured 40.605 rows before, 42.000 after. -->
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- living separator -->
@@ -131,6 +143,7 @@
         </div>
         <!-- /content:capabilities -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- ============ 02 SELECTED WORK ============ -->
@@ -201,6 +214,7 @@
         </ul>
         <!-- /content:work-index -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- living separator -->
@@ -266,6 +280,7 @@
         </div>
         <!-- /content:more-projects -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- ============ 04 BACKGROUND ============ -->
@@ -280,6 +295,7 @@
         <p class="t-statement notes__statement" data-lines>It taught me something design school doesn't: people rarely behave the way they say they will. You have to meet them where they are and design not for what they say, not even what they think they want, but for what they truly need at that moment in their journey.</p>
         <!-- /content:background -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- ============ 05 SKILLS ============ -->
@@ -318,6 +334,7 @@
         </dl>
         <!-- /content:skills -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- living separator -->
@@ -361,6 +378,7 @@
         </div>
         <!-- /content:facts -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- ============ 07 CONTACT ============ -->
@@ -386,6 +404,16 @@
         </div>
         <!-- /content:contact -->
       </div>
+      <!-- Contact gets one too, and the "it reads as the end of the document"
+           objection in the terminator spec is about the FULL-WIDTH variant that
+           was tried and rejected. This one is `grid-column: 2` — the well's own
+           column — so the rails run past it on both sides and it closes a plate,
+           not the page. Two reasons to keep it: the spec's own rule that a
+           terminator on some content bands and not others is a rhythm nobody
+           chose, and the fact that this is the last plate, so without it the
+           sheet's bottom edge is the one place the graph paper is still cut
+           mid-cell. -->
+      <div class="term" aria-hidden="true"></div>
     </section>
 
   </main>
@@ -425,6 +453,13 @@
             </div>
             <div class="case__content"></div>
           </div>
+          <!-- The dialog's band is its OWN lattice root (it is not inside a
+               .sheet), so its rails start at phase 0 and a terminator is the
+               only thing between this plate and a whole number of rows — the
+               same argument as the hero's, one scroller down. Without it the
+               scroller's last row of graph paper is cut mid-cell.
+               js/automata.js settles it from rebuildCaseSquares(). -->
+          <div class="term" aria-hidden="true"></div>
         </div>
       </div>
     </div>

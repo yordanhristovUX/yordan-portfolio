@@ -75,6 +75,12 @@
           </p>
         </div>
       </div>
+      <!-- Closes the plate on a lattice line: one cell of CSS base plus the
+           shortfall js/automata.js measures into --term-slack. Last child of
+           the band, always — it is auto-placed and the rails span its row.
+           css/evals.css already hides it in print.
+           design-system/components/terminator/spec.md -->
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <div class="strip" aria-hidden="true"></div>
@@ -347,6 +353,7 @@
           question from an unanswerable one; 0.5 is chance
         </p>
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <div class="strip" aria-hidden="true"></div>
@@ -403,6 +410,7 @@
           </p>
         </div>
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <div class="strip" aria-hidden="true"></div>
@@ -535,6 +543,7 @@
           out-of-corpus · not in the corpus at all
         </p>
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <div class="strip" aria-hidden="true"></div>
@@ -559,6 +568,7 @@
           <!-- /content:evals-reading -->
         </div>
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <div class="strip" aria-hidden="true"></div>
@@ -585,6 +595,7 @@
           Reproduce · node evals/run.mjs — no API key, no network, no dependencies
         </p>
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
   </main>

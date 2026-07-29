@@ -77,6 +77,12 @@
         <p class="cv-summary t-lead">I build <strong>AI-ready design systems</strong>: component libraries with 1:1 parity between Figma and code, plus custom Claude skills and MCP setups that let agents assemble UI from the real system without drift. I write and ship the frontend myself, reviewed and merged by engineering. Under the tooling sits seven years of research practice — user interviews, usability testing, and WCAG 2.1 AA auditing.</p>
         <!-- /content:cv-head -->
       </div>
+      <!-- Closes the plate on a lattice line: one cell of CSS base plus the
+           shortfall js/automata.js measures into --term-slack. Last child of
+           the band, always — it is auto-placed and the rails span its row.
+           `display: none` in css/cv.css's print block, so the printed CV is
+           unchanged. design-system/components/terminator/spec.md -->
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- living separator -->
@@ -102,6 +108,7 @@
         <p class="print-only mono">github.com/yordanhristovUX/yordan-portfolio · yordan-design-system.vercel.app</p>
         <!-- /content:open-source -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- ============ 02 EXPERIENCE ============ -->
@@ -178,6 +185,7 @@
         </article>
         <!-- /content:experience -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- living separator -->
@@ -215,6 +223,7 @@
         </dl>
         <!-- /content:skills -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- ============ 04 EDUCATION ============ -->
@@ -237,6 +246,7 @@
         </dl>
         <!-- /content:education -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
     <!-- ============ 05 UNEXPECTED ============ -->
@@ -263,6 +273,7 @@
         </div>
         <!-- /content:facts -->
       </div>
+      <div class="term" aria-hidden="true"></div>
     </section>
 
   </main>

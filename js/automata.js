@@ -21,11 +21,28 @@
    there. All three describe the same design; only the 492 is measured
    on the same layout as the canvas figures it is compared against.
 
-   THE LATTICE IS NOT DECLARED HERE. It is `--space-6`, resolved once
-   by the graph paper's `background-size` on `.rail` / `.strip`, and
-   read back from the computed style below. Restating 24 in this file
-   would let the gradient and the canvas disagree about where a cell
-   starts, and they are drawn on top of each other.
+   THE LATTICE IS NOT DECLARED HERE, AND NEITHER IS ITS ORIGIN. The
+   step is `--space-6`, resolved once by the graph paper's
+   `background-size` on the LATTICE ROOT — `.sheet`, or a `.band` that
+   is not inside one — and read back from the computed style below.
+   Restating 24 in this file would let the gradient and the canvas
+   disagree about where a cell starts, and they are drawn on top of
+   each other.
+
+   The origin is the root's too, which is the half that used to be
+   wrong. Cell (0,0) is the root's top-left corner, not the region's,
+   so every region draws its first row and column at MINUS its own
+   phase — see `build()`. Twenty-one regions used to mean twenty-one
+   grids: measured on index.html at 1280px the first six down the sheet
+   started their cells at 0 · 14.53 · 22.33 · 17.48 · 12.31 · 20.11 px
+   past a line. Taking both numbers from one element is what makes a
+   cell boundary in a rail the same line as a cell boundary in the
+   strip below it.
+
+   `.rail, .strip` still carry a bare `background-size` in
+   components.css. It was a bridge for the read this file no longer
+   makes, it has no reader left, and it is the design system's to
+   delete.
 
    WHAT THE CANVAS BUYS AND WHAT IT COSTS. 845 elements become 374 and
    decoration falls from 60.7% of the document to 11.2%. Cells per
@@ -155,6 +172,91 @@
     return null;
   }
 
+  /* ---- The lattice root, for both of the numbers a region needs ----------
+     `.sheet` is the page's; a `.band` that is NOT inside one is its own — that
+     is the case dialog, whose band lives in its own scroller and therefore has
+     to draw its own graph paper. The `?? el` tail is a degradation rather than
+     a case that exists: a region with neither ancestor reads its own box, gets
+     phase 0, and draws the grid it drew before any of this. */
+  const latticeRootOf = (el) => el.closest(".sheet") ?? el.closest(".band") ?? el;
+
+  /* ---- THE TERMINATOR PASS: the vertical half of the lattice --------------
+     A rail's height is its band's height, which is however much text the well
+     holds, so its last row is a fraction of a cell. Measured on index.html at
+     1280px the eight rails ran 40.605 · 13.454 · 39.785 · 32.051 · 29.850 ·
+     15.503 · 7.839 · 25.097 rows — not one of them whole, and every one of them
+     a half square showing where a section stops.
+
+     The `.term` is the only element in a plate whose height is nobody's
+     content, so it is where the remainder goes. It has a one-cell base in
+     components.css and a `--term-slack` hole; this writes the hole.
+
+     WRITE `--term-slack`, NEVER `height`. The base then stays in the
+     stylesheet, `0px` is a real reset rather than a removeProperty that has to
+     guess what CSS wanted, and — the reason it matters beyond tidiness — a
+     renderer that never runs leaves a valid 24px terminator on the page rather
+     than a broken one. A script failure has to degrade to the static page, not
+     to a wrong one.
+
+     FOUR THINGS, each of which cost a round of measuring somewhere:
+
+     · RESET EVERY TERMINATOR BEFORE MEASURING ANY OF THEM. A band's position is
+       the sum of everything above it, so a reset interleaved with the
+       measurements measures a page that is half adjusted.
+
+     · MEASURE AGAINST THE ROOT, NOT AGAINST THE RAIL'S OWN HEIGHT. Those are
+       the same number only while every band above happens to be in step.
+       Measuring from the root's top makes it true by construction, and it is
+       what drives the strips to phase 0 all the way down the sheet.
+
+     · THE GUARD IS TWO-SIDED AND THAT IS NOT PARANOIA. Layout is subpixel —
+       Chrome's LayoutUnit is 1/64px — so a plain `short > 0` leaves bands 0.02px
+       out, which reads back as a bottom phase of 23.98 rather than 0. A plate
+       0.02px short of a line and a plate 0.02px past one are both ON it;
+       adding 23.98px to the second would move it a whole cell for a rounding
+       artefact. At EPS = 0.05 the residual is 1/1200 of a cell.
+
+     · IT CANNOT PING-PONG, and the reset is why. Every run resets to the base
+       first, so each pass is a pure function of the un-slacked layout rather
+       than an adjustment to the last one — there is no carried value for a
+       second run to grow or alternate. Run it twice and the second pass writes
+       the same pixels as the first.
+
+     One pass, not an iteration: `getBoundingClientRect()` flushes layout, so
+     walking the bands in document order measures band N with every band above
+     it already settled. */
+  const TERM_EPS = 0.05;
+
+  /* "This phase is a real remainder, not a rounding artefact." Both ends of the
+     range mean the same thing — 0.02 short of a line and 0.02 past one are both
+     ON it — so every test of a phase in this file goes through here. */
+  const offLattice = (phase, cell) => phase > TERM_EPS && phase < cell - TERM_EPS;
+
+  function settleTerminators(scope) {
+    const plates = [];
+    for (const band of scope.querySelectorAll(".band")) {
+      const term = band.querySelector(":scope > .term");
+      const rail = band.querySelector(":scope > .rail--l");
+      if (!term || !rail) continue;          // no terminator, or a band with no well
+      term.style.setProperty("--term-slack", "0px");
+      plates.push({ band, term, rail });
+    }
+    for (const { band, term, rail } of plates) {
+      /* `closest` matches self, so for a band this resolves to its .sheet if it
+         has one and to the band itself if it does not — the dialog's case. */
+      const root = latticeRootOf(band);
+      const cell = parseFloat(getComputedStyle(root).backgroundSize);
+      const box = rail.getBoundingClientRect();
+      /* A zero box is survivable and expected: every region is `display: none`
+         on paper and the dialog's band has no layout until it opens. Leaving
+         the slack at its reset 0px is the right answer in both. */
+      if (!(cell > 0) || !(box.height > 0)) continue;
+      const drop = box.bottom - root.getBoundingClientRect().top;
+      const short = (cell - (((drop % cell) + cell) % cell)) % cell;
+      if (offLattice(short, cell)) term.style.setProperty("--term-slack", short + "px");
+    }
+  }
+
   /* Collected ONCE per rebuild pass, not once per region: 21 regions × 9 wells
      would be 189 ancestor walks and 189 layout reads for an answer that is the
      same every time. */
@@ -209,16 +311,33 @@
     build(walls) {
       this.ready = false;
       const el = this.el;
-      const cs = getComputedStyle(el);
-      const cell = parseFloat(cs.backgroundSize);      // the lattice, declared in CSS
+      /* BOTH NUMBERS COME FROM THE ROOT. The step used to be read off the
+         region's own `background-size` and the origin was implicitly the
+         region's own corner, which is the same mistake twice: it made this
+         region's grid a grid, rather than a window onto the page's one grid.
+         A rail and the strip below it were then in step only by luck. */
+      const root = latticeRootOf(el);
+      const cell = parseFloat(getComputedStyle(root).backgroundSize);
       const box = el.getBoundingClientRect();
       const w = box.width;
       const h = box.height;
       if (!(cell > 0) || !(w > 0) || !(h > 0) || !this.ctx) return;
 
+      /* How far this region's corner sits past the last lattice line. Drawing
+         starts at MINUS this, so a cell boundary in a rail is the same line as
+         a cell boundary in the strip below it — the sheet is one continuous
+         space of squares rather than twenty-one adjacent ones. `phaseX` is 0
+         for every region at every width (the columns snap); `phaseY` is what
+         the band above ended on, and the terminator drives most of it to 0. */
+      const rr = root.getBoundingClientRect();
+      const phaseX = (((box.left - rr.left) % cell) + cell) % cell;
+      const phaseY = (((box.top - rr.top) % cell) + cell) % cell;
+
       this.cell = cell;
       this.w = w;
       this.h = h;
+      this.phaseX = phaseX;
+      this.phaseY = phaseY;
 
       /* The bitmap is device pixels, the box stays authoritative. Clamped at 2
          on purpose: the ink is axis-aligned rectangles on an integer lattice,
@@ -233,9 +352,14 @@
 
       /* `ceil`, not `floor`: the trailing cell is clipped by the region's
          `overflow: hidden`, which is what graph paper does at the edge of a
-         sheet. Half a cell of life at the bottom of a rail is correct. */
-      const cols = Math.max(1, Math.ceil(w / cell));
-      const rows = Math.max(1, Math.ceil(h / cell));
+         sheet. Half a cell of life at the bottom of a rail is correct.
+
+         The phase is added before the ceiling because the grid now starts
+         OUTSIDE the box, at -phase, so covering the box takes one more cell
+         whenever the region does not begin on a line. Both partial cells, the
+         leading one and the trailing one, are clipped the same way. */
+      const cols = Math.max(1, Math.ceil((w + phaseX) / cell));
+      const rows = Math.max(1, Math.ceil((h + phaseY) / cell));
       this.cols = cols;
       this.rows = rows;
 
@@ -290,7 +414,10 @@
     }
 
     markWalls(box, walls) {
-      const { cell, cols, rows } = this;
+      /* The phase terms are the whole of what changed here: a rect maps onto
+         cells against the ROOT's grid now, so an offset that used to be zero by
+         construction has to be carried explicitly. */
+      const { cell, cols, rows, phaseX, phaseY } = this;
       const inset = cell * WALL_INSET;
       const mine = fixedRootOf(this.el);
       let masked = 0;
@@ -300,10 +427,10 @@
         const r = wall.rect;
         if (Math.min(box.right, r.right) - Math.max(box.left, r.left) <= inset) continue;
         if (Math.min(box.bottom, r.bottom) - Math.max(box.top, r.top) <= inset) continue;
-        const c0 = Math.max(0, Math.floor((r.left - box.left + inset) / cell));
-        const c1 = Math.min(cols - 1, Math.ceil((r.right - box.left - inset) / cell) - 1);
-        const r0 = Math.max(0, Math.floor((r.top - box.top + inset) / cell));
-        const r1 = Math.min(rows - 1, Math.ceil((r.bottom - box.top - inset) / cell) - 1);
+        const c0 = Math.max(0, Math.floor((r.left - box.left + phaseX + inset) / cell));
+        const c1 = Math.min(cols - 1, Math.ceil((r.right - box.left + phaseX - inset) / cell) - 1);
+        const r0 = Math.max(0, Math.floor((r.top - box.top + phaseY + inset) / cell));
+        const r1 = Math.min(rows - 1, Math.ceil((r.bottom - box.top + phaseY - inset) / cell) - 1);
         for (let vy = r0; vy <= r1; vy++) {
           for (let vx = c0; vx <= c1; vx++) {
             const si = this.vis[vy * cols + vx];
@@ -320,13 +447,14 @@
     }
 
     /* Pointer -> cell. The canvas is the region's box with the same origin, so
-       this is a division and nothing else — no element to hit-test, because
-       there is no element. */
+       this is a division and the phase — no element to hit-test, because there
+       is no element. The phase has to be here as well as in `render`, or the
+       cell you light on hover is not the cell under the cursor. */
     cellAt(e) {
       if (!this.ready) return -1;
       const box = this.el.getBoundingClientRect();
-      const vx = Math.floor((e.clientX - box.left) / this.cell);
-      const vy = Math.floor((e.clientY - box.top) / this.cell);
+      const vx = Math.floor((e.clientX - box.left + this.phaseX) / this.cell);
+      const vy = Math.floor((e.clientY - box.top + this.phaseY) / this.cell);
       if (vx < 0 || vy < 0 || vx >= this.cols || vy >= this.rows) return -1;
       return vy * this.cols + vx;
     }
@@ -427,7 +555,13 @@
        The fill is inset 1px from the cell's leading edges, which is where the
        graph paper draws its rules. So the gradient's lines are never painted
        over — the cell sits INSIDE its square rather than on top of it — and
-       the translucency does the rest wherever a line and a cell do meet. */
+       the translucency does the rest wherever a line and a cell do meet.
+
+       And the leading edges are the ROOT'S, which is what `-phase` buys: the
+       square a cell is drawn inside is the same square the gradient drew, so
+       the 1px inset lands on the same 1px rule it was measured against. Drawn
+       from the region's own corner instead, the inset would sit a few pixels
+       off the line everywhere the region does not start on one. */
     render(breath) {
       this.lastBreath = breath;
       const ctx = this.ctx;
@@ -443,7 +577,8 @@
         styles[AGE_STEPS + v] = `rgba(${palette.accent}, ${(0.1 + v * 0.045).toFixed(4)})`;
       }
 
-      const { a, age, blue, vis, cellBucket, order, bCount, bStart, bCur, cols, cell } = this;
+      const { a, age, blue, vis, cellBucket, order, bCount, bStart, bCur, cols, cell,
+              phaseX, phaseY } = this;
       const n = vis.length;
       bCount.fill(0);
 
@@ -468,18 +603,20 @@
       }
 
       const size = cell - 1;
+      const x0 = 1 - phaseX;   // cell 0's leading edge + the graph paper's rule
+      const y0 = 1 - phaseY;
       for (let k = 0; k < BUCKETS; k++) {
         if (!bCount[k]) continue;
         ctx.fillStyle = styles[k];
         for (let j = bStart[k]; j < bStart[k + 1]; j++) {
           const i = order[j];
-          ctx.fillRect((i % cols) * cell + 1, ((i / cols) | 0) * cell + 1, size, size);
+          ctx.fillRect((i % cols) * cell + x0, ((i / cols) | 0) * cell + y0, size, size);
         }
       }
 
       if (this.hover >= 0 && this.hover < n) {
         ctx.fillStyle = `rgba(${palette.accent}, ${HOVER_ALPHA})`;
-        ctx.fillRect((this.hover % cols) * cell + 1, ((this.hover / cols) | 0) * cell + 1, size, size);
+        ctx.fillRect((this.hover % cols) * cell + x0, ((this.hover / cols) | 0) * cell + y0, size, size);
       }
     }
 
@@ -509,6 +646,13 @@
   }
 
   injectRails(document);
+  /* ORDER, AND IT IS THE ONE ORDERING IN THIS FILE THAT IS NOT NEGOTIABLE.
+     The rails have to exist before the terminators can be measured against
+     them, and the terminators have to settle before any canvas is sized —
+     the slack moves the rails, so a bitmap built first is a bitmap built for
+     a height that is about to change. Nothing is drawn yet at this point:
+     the Region constructors below are what build the canvases. */
+  settleTerminators(document);
 
   const pageRegions = [];
   const caseRegions = [];
@@ -518,13 +662,23 @@
   });
   const all = [...pageRegions, ...caseRegions];
 
-  function rebuild(regions) {
+  /* The dialog's band is its own lattice root, so its slack is independent of
+     the page's and the two settle separately. Null on the three pages that
+     ship no case dialog, where `caseRegions` is empty anyway. */
+  const caseEl = document.querySelector(".case");
+
+  /* ONE REBUILD PATH, sequenced once, rather than a second listener that also
+     wants to know when layout moved: settle the slack, THEN read the walls it
+     just moved, THEN size the bitmaps. Every trigger below goes through here. */
+  function rebuild(regions, scope) {
+    if (!regions.length) return;
+    settleTerminators(scope);
     const walls = collectWalls();
     regions.forEach((r) => r.build(walls));
   }
 
   // The case page lays out only when opened — rebuild its cells then.
-  window.rebuildCaseSquares = () => rebuild(caseRegions);
+  window.rebuildCaseSquares = () => rebuild(caseRegions, caseEl ?? document);
 
   /* ---- Run only what's on screen ---- */
   const io = new IntersectionObserver((entries) => {
@@ -535,8 +689,10 @@
   });
   all.forEach((r) => io.observe(r.el));
 
-  // Webfonts change section heights — rebuild rails once they settle.
-  document.fonts?.ready.then(() => rebuild(pageRegions));
+  /* Webfonts change section heights, so they change every plate's remainder
+     too — this is a re-settle as much as a rebuild, and it goes through the
+     same path rather than getting a terminator pass of its own. */
+  document.fonts?.ready.then(() => rebuild(pageRegions, document));
 
   // Both inks belong to the theme. Re-read them and repaint the generation
   // that is already on screen — the life goes on, it just changes colour.
@@ -545,12 +701,17 @@
     all.forEach((r) => r.render(r.lastBreath));
   });
 
+  /* Debounced, and the debounce is now doing two jobs: it coalesces a drag into
+     one rebuild, and it means the terminator pass runs after the resize has
+     stopped rather than during it. The pass cannot ping-pong either way — it
+     resets to the base before every measurement, so a run is a pure function of
+     the un-slacked layout and there is no carried value to oscillate. */
   let resizeT;
   window.addEventListener("resize", () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
-      rebuild(pageRegions);
-      if (!document.querySelector(".case")?.hidden) rebuild(caseRegions);
+      rebuild(pageRegions, document);
+      if (caseEl && !caseEl.hidden) rebuild(caseRegions, caseEl);
     }, 200);
   });
 
@@ -601,6 +762,19 @@
       regions: all.length,
       built: live.length,
       lattice: live[0]?.cell ?? null,
+      /* The two the lattice is actually gated on. `offPhaseX` is 0 at every
+         width — that is what the column snapping bought — and `offPhaseY` is
+         the count of regions the terminator could not drive onto a line,
+         which is one per `.sec__head` and nothing else. Reported rather than
+         asserted, so a regression is a number instead of a look.
+
+         TWO-SIDED, for the same reason the terminator's own guard is: a region
+         0.016px PAST a line reads back as a phase of 23.984, and counting that
+         as off-lattice would report a rounding artefact as a defect. Measured
+         at 375px, where the work band lands there. */
+      offPhaseX: live.filter((r) => offLattice(r.phaseX, r.cell)).length,
+      offPhaseY: live.filter((r) => offLattice(r.phaseY, r.cell)).length,
+      terminators: document.querySelectorAll(".term").length,
       cellsPerGeneration: sum((r) => r.simC * r.simR),
       visibleCells: sum((r) => r.cols * r.rows),
       maskedByWalls: sum((r) => r.masked),
