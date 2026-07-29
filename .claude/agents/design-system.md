@@ -36,8 +36,18 @@ You own `design-system/` and `css/`.
   `prefers-color-scheme` to `components.css` or a page stylesheet.
 - **Print colour is also tokens** — a `print` value beside `dark`. A page stylesheet's
   `@media print` block may contain layout only, never a colour.
-- **`.rail { contain: size }` is load-bearing.** Without it the squares feed back into the row
-  height and the page runs to tens of thousands of nodes. See `components/skeleton/spec.md`.
+- **The well sizes the band; a rail never does.** This used to be `.rail { contain: size }`, and
+  that declaration is **gone** — deleted deliberately in `00a47a1`. Do not restore it. A rail's
+  only child is now an absolutely-positioned canvas, so its in-flow content is empty and its
+  intrinsic height is zero whatever the automata does; the feedback loop that once took a 420px
+  band to 36,000px is unbuildable rather than prevented. **The rule survives the property**: if
+  anything is ever put *in flow* inside a rail, the loop is available again, and that is now
+  caught by review rather than by a declaration. See `components/skeleton/spec.md`.
+- **`--space-6` is the automata's lattice as well as a spacing step**, and it is the one token
+  whose two audiences do not know about each other. A rail's simulated cell count goes as
+  1/cell², so lowering it for padding reasons has a quadratic cost in a canvas.
+  `scripts/check-css.mjs` rule 6 reads this token directly and holds a floor at `1.25rem` — so a
+  change here can fail a gate that is not your build. That coupling is deliberate.
 - **Every component is three things:** CSS block + `spec.md` + story. The build fails otherwise.
 - The canonical HTML in each `spec.md` is not an example, it is THE pattern — so a class named
   there that has no CSS rule is a defect, not a nit.

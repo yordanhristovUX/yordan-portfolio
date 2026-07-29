@@ -23,9 +23,13 @@ You own `api/` and the deploy configuration.
 
 ## Files you may read but never write
 
-- `lib/knowledge/**` — **one documented exception**: you may add a `query` length clamp at the
-  top of `searchContent` in `lib/knowledge/tools.js`, because the cap must hold for both
-  surfaces and the retrieval agent is working in parallel. Nothing else in that file.
+- `lib/knowledge/**` — no exceptions. There **used** to be one: a licence to add a `query` length
+  clamp at the top of `searchContent` in `lib/knowledge/tools.js`, granted because the cap had to
+  hold on both surfaces while the retrieval agent worked in parallel. That clamp has landed —
+  `SEARCH_QUERY_MAX_CHARS = 1000` at `lib/knowledge/tools.js:473`, with two regression tests
+  locking it — so the licence is revoked. It was scoped to one change in one wave, and a
+  standing permission to write another slice's file is how the boundary this repo gates in CI
+  erodes. If a cap belongs in `lib/knowledge/`, report it.
 
 ## Hard rules
 
@@ -38,10 +42,16 @@ You own `api/` and the deploy configuration.
 ## Your exit gate
 
 ```sh
-node -e "import('./api/mcp.js').then(m => console.assert(typeof m.default === 'function'))"
-node -e "import('./api/chat.js').then(m => console.assert(typeof m.default === 'function'))"
+node -e "import('./api/mcp.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('mcp ok') })"
+node -e "import('./api/chat.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('chat ok') })"
 npm test
 ```
+
+**Those two lines used to use `console.assert`, which in Node logs and returns — it does not
+throw and does not set an exit code.** Measured: `node -e "console.assert(false)"` exits **0**. So
+the first two thirds of this gate could not fail, on either surface, however broken the handler
+was. Use the `process.exit(1)` form above; it is what `npm run check` runs, so your gate and CI's
+now agree.
 
 Plus: probe the real handler over HTTP for every change you make to input handling. An audit
 found `constructor`, `hasOwnProperty` and `toString` all behaving differently from the

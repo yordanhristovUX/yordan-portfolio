@@ -34,8 +34,11 @@ other, because it is the one that publishes numbers about itself.
 - **Never lower the baseline silently.** Raise or lower it deliberately, with the reason recorded.
 - **Import the shipped code, do not reimplement it.** The gate the eval measures must be the gate
   that ships — use the exported constructors rather than a lookalike built inside the runner.
-- **Small n is a property of the result, not a footnote.** 43 questions carry ±16–27pp Wilson
-  intervals. A table printed to 0.1pp with a ±0.001 regression gate must say so.
+- **Small n is a property of the result, not a footnote.** A table printed to 0.1pp with a ±0.001
+  regression gate must say so. Read the current n and the current Wilson half-widths off
+  `evals/results.json` rather than from any figure written here or in a doc — this line used to
+  quote "43 questions, ±16–27pp" and the set has since moved, which is the drift the rule is
+  about. No charter, brief or document should carry that number as a literal.
 - Report a comparison the shipped configuration actually makes. An improvement between two arms
   that do not ship is not a justification for what does.
 

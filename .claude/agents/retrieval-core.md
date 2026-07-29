@@ -36,13 +36,21 @@ exists. Do not read other slices' source to do your job — read the *schema* of
 
 ```sh
 node -e "import('./lib/knowledge/index.js').then(k => console.log(k.verifyTokeniser(k.content)))"
-node evals/run.mjs
+node --env-file=.env evals/run.mjs
 node scripts/check-boundaries.mjs
 npm test
 ```
 
-All four must pass before you report done. If `evals/run.mjs` shows a regression, that is a
-*result to report*, not a number to suppress — the eval specialist re-baselines, not you.
+All four must pass before you report done. If the eval shows a regression, that is a *result to
+report*, not a number to suppress — the eval specialist re-baselines, not you.
+
+**The `--env-file=.env` is not optional and not decoration.** Node does not read `.env` on its
+own, the keys live there, and `node evals/run.mjs` without the flag does not fail — it prints
+`skipped` for both embeddings arms and republishes the table without them. That means silently
+losing the only arm that scores 81.6% hit@1, and reading the remaining table as if it were the
+whole picture. `evals/run.mjs` says so at its own line 683; `evals/CLAUDE.md` calls the
+`--env-file` form the only one that can rebuild the vector cache. `npm run evals` is the same
+command if you prefer the wrapper.
 
 ## What you must not do
 
