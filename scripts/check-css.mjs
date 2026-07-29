@@ -48,11 +48,15 @@
       submit is exempt: it is the primary action of its own surface
       and the chat spec canonises it as `.btn.btn--solid.chat__send`.
 
-   6. A ceiling on the automata's visible column counts. The squares
-      are real divs — 496 of them, ~58.5% of index.html's nodes — and
-      js/automata.js derives everything else from `vc`. This is the
-      one change class in the repo with a quadratic blast radius and
-      no check; see the block at the bottom for the arithmetic.
+   6. A floor on the automata's lattice step, and a ceiling on its
+      off-stage padding. The squares are not divs any more, so there
+      is no node weight left to bound — but a rail's SIMULATED cell
+      count goes as 1/cell², and `--space-6` is both the lattice and
+      the top step of the component spacing ramp. So a change made for
+      a chip's padding has a quadratic cost in a canvas on the other
+      side of the repo, which is the one change class here whose blast
+      radius nobody would predict from reading the diff. See the block
+      at the bottom for the arithmetic.
 
    NOT CHECKED, DELIBERATELY: literal spacing. `mm` in cv.css's print
    block is a physical fact about a sheet of A4, not a step on a
@@ -269,82 +273,205 @@ for (const file of HTML_PAGES) {
   }
 }
 
-/* ============ 6. the automata's DOM budget ============
-   A static stylesheet check cannot count DOM nodes: every `.sq` is created
-   by js/automata.js at runtime, so it appears in no shipped artefact. What
-   IS static is the input the node count is a function of, and that function
-   is not linear.
+/* ============ 6. the automata's simulation budget ============
+   This rule replaces a ceiling on `vc`, the automata's visible column count.
+   That constant no longer exists, and neither does the thing it was standing
+   in for. The squares were 508 real divs, 58.9% of index.html's nodes, and
+   `vc` was a usable proxy for that node weight. They are one canvas per
+   region now, so the proxy has nothing left to proxy — but the simulation
+   did not get smaller, it got FINER, and its two inputs are still static.
 
-     rail    size = clientWidth / vc
-             vr   = floor(clientHeight / size) = floor(clientHeight·vc / clientWidth)
-             nodes = vc · vr = vc² · (clientHeight / clientWidth)
+   WHAT THE COST IS A FUNCTION OF, from js/automata.js `build()`:
 
-   Raising a rail's visible column count from 2 to 4 does not double the
-   rails, it QUADRUPLES them — the squares get narrower, so more of them fit
-   down the band as well as across it. The strip is linear (`vr` is pinned at
-   2), so its ceiling is looser.
+     cell = the lattice step, read off the lattice root's background-size,
+            which is --space-6 and nothing else
+     cols = ceil((width  + phaseX) / cell)
+     rows = ceil((height + phaseY) / cell)
 
-   Measured today: 496 `.sq` divs on index.html, 58.5% of the document, at
-   rail vc = 2 and strip vc = 24. The ceilings below leave one step of
-   headroom each and exist so that a one-character edit cannot silently
-   triple the page. If you need to pass one, that is a decision worth making
-   on purpose: raise the number here, in the same commit, with the new node
-   count measured. */
+     rail    simC = cols + HIDDEN,  simR = max(rows, MIN_SIM)
+     strip   simC = cols,           simR = rows + HIDDEN
+
+   Substituting what the CSS makes those widths (components/skeleton/spec.md):
+
+     rail    width  = round(down, band/12, cell)     →  cols = band/(12·cell)
+             height = the band row, set by the well  →  rows = bandHeight/cell
+             cells  = (band/(12·cell) + HIDDEN) · bandHeight/cell     ∝ 1/cell²
+
+     strip   width  = the sheet, a whole number of cells → cols = sheet/cell
+             height = calc(var(--space-6) * 4)            → rows = 4, ALWAYS
+             cells  = sheet/cell · (4 + HIDDEN)                       ∝ 1/cell
+
+   So a rail is quadratic in 1/cell and a strip is linear — the same split the
+   old rule had, for a completely different reason. The strip is linear because
+   its height is a stated multiple of the cell, so shrinking the cell shrinks
+   the strip too; only its width survives the division. The rail's height is
+   its content's, which does not shrink, so both of its terms move.
+
+   Per sim cell the engine holds six Uint8Arrays (a, b, age, blue, blueB,
+   wall) and per VISIBLE cell one Int32Array entry — 6 bytes and 4 bytes. The
+   cost is arithmetic and backing store, both linear in the cell counts above,
+   which is why bounding the two inputs bounds the whole thing without this
+   gate needing to run a browser. It cannot run one: every cell is created at
+   runtime and appears in no shipped artefact.
+
+   No total is quoted here on purpose. A total needs band heights, which are
+   the content's and move whenever a word is added; the two proportionalities
+   above are arithmetic and cannot be falsified by a re-measure. That is the
+   distinction this programme learned the expensive way.
+
+   WHY A FLOOR ON --space-6 IS THE HIGHER-VALUE HALF. It has two audiences.
+   It is the lattice, and it is the top step of the fixed 4px spacing ramp for
+   space INSIDE a component — the token's own $doc says so. Nothing about
+   tightening a chip's padding suggests you are also about to quadruple a
+   simulation in a canvas, and the old rule could not have caught it: `vc` was
+   read by the automata alone. This one guards a token whose two readers have
+   no reason to know about each other. */
 const AUTOMATA = join(root, "js", "automata.js");
-const VC = /const\s+vc\s*=\s*MOBILE\.matches\s*\?\s*(\d+)\s*:\s*(\d+)\s*;/g;
-/* `measured` is the value that produced the 496-node baseline in the comment
-   above. It is stated rather than read back, so the failure message keeps
-   quoting the number the measurement was taken at even while the file in
-   front of it says something else. */
-const CEILINGS = {
-  rail: { max: 3, measured: 2, growth: "quadratically (vc² — narrower squares also stack deeper)" },
-  strip: { max: 32, measured: 24, growth: "linearly (the strip is pinned to 2 visible rows)" },
-};
-const vcFound = { rail: null, strip: null };
+const TOKENS = join(root, "design-system", "tokens", "tokens.json");
+
+/* Both bounds are one deliberate step from where the repo sits, so that a
+   one-character edit cannot pass but a considered change is still available:
+   raise the number here, in the same commit, with the arithmetic redone.
+
+   LATTICE_FLOOR_REM — 1.25rem is `space-5`, the next step DOWN the same ramp.
+   1.5 → 1.25 costs every rail ×(1.5/1.25)² = 1.44. One halving, 1.5 → 0.75,
+   costs ×4. A floor rather than a window because the risk is one-directional:
+   a bigger cell is strictly cheaper.
+
+   HIDDEN_MAX — off-stage padding is pure cost; it appears in no picture. Its
+   share of a rail's simulation is HIDDEN/(cols + HIDDEN), and a rail's
+   visible columns are 1 / 2 / 3 / 4 / 5 at 375 / 768 / 1024 / 1280 / 1440+
+   (the measured table in components/skeleton/spec.md). At HIDDEN = 4 that
+   share is 4/8 = 50% at 1280 and 4/9 = 44% at 1440. At 5 it is 5/9 = 56% at
+   1280 — past half at the commonest desktop width, which is precisely the
+   regression that took this constant from 6 down to 3. So 4 is the largest
+   value that keeps off-stage at or below half on desktop, and 3, the value in
+   the file, is the geometric floor derived in automata.js above it: a
+   glider's bounding box is 3×3, and at 2 the off-stage band cannot hold one
+   without it touching both visible edges at once.
+
+   WHAT THIS RULE DELIBERATELY DOES NOT BOUND, said out loud because a gate's
+   silence reads as permission and permission is invisible in review:
+
+   · The strip's `* 4` height multiple in components.css. It is linear, and it
+     is a stated beat between sections rather than a derived quantity.
+   · The reader's root font size. The lattice is rem, so a 12px root shrinks
+     it and raises the cost — not gateable, and a second reason to hold
+     headroom instead of sitting on the bound.
+   · MIN_SIM. It is a torus-correctness floor (a grid under 3 makes a cell its
+     own neighbour twice), not a cost knob. */
+const LATTICE_FLOOR_REM = 1.25;
+const HIDDEN_MAX = 4;
+const ROOT_PX = 16;   // nothing in the repo sets html { font-size }, so this is the browser default
+
+let latticeRem = null;
+let hidden = null;
+
+/* Fail loudly rather than pass silently, in every branch below. A gate that
+   quietly stops finding the thing it guards is worse than no gate: it reports
+   success forever. That is not hypothetical here — this rule's predecessor
+   went red the day the constants it read were deleted, which is the only
+   reason the budget got re-derived instead of disappearing. */
+if (!existsSync(TOKENS)) {
+  problems.push(`design-system/tokens/tokens.json is missing — rule 6 cannot read the lattice step. Update scripts/check-css.mjs.`);
+} else {
+  let space6;
+  try {
+    const t = JSON.parse(readFileSync(TOKENS, "utf8"));
+    space6 = t?.space?.["space-6"];
+  } catch (e) {
+    problems.push(`design-system/tokens/tokens.json did not parse (${e.message}) — rule 6 cannot read the lattice step.`);
+  }
+  /* A token is either a bare string or an object with a `value` — the same
+     two shapes build.mjs accepts, so this reads whichever one it grows into. */
+  const v = typeof space6 === "string" ? space6 : space6?.value;
+  const m = typeof v === "string" ? v.match(/^([\d.]+)rem$/) : null;
+  if (!m) {
+    problems.push(
+      `rule 6 could not read \`space.space-6\` from design-system/tokens/tokens.json as a rem value ` +
+        `(got ${JSON.stringify(space6 ?? null)}). That token IS the automata's lattice — the graph paper's ` +
+        `background-size, the rail width's rounding step, the strip's height and the engine's cell are all it. ` +
+        `If it moved or changed units, re-derive the simulation budget and update rule 6 in scripts/check-css.mjs ` +
+        `rather than deleting it.`
+    );
+  } else {
+    latticeRem = Number(m[1]);
+    if (latticeRem < LATTICE_FLOOR_REM) {
+      const factor = ((1.5 / latticeRem) ** 2).toFixed(2);
+      problems.push(
+        `design-system/tokens/tokens.json  \`space-6: ${v}\` is below the lattice floor of ${LATTICE_FLOOR_REM}rem. ` +
+          `--space-6 is the automata's cell, and a rail's simulated cell count goes as 1/cell² — so this is ` +
+          `${factor}× the simulation in every rail on every page that ships a sheet, against the 1.5rem this ` +
+          `bound was derived at. It is also the top step of the component spacing ramp, which is how a padding ` +
+          `change reaches a canvas. If the new step is deliberate, redo the arithmetic in the rule-6 block of ` +
+          `scripts/check-css.mjs and move the floor in the same commit — this bound is arithmetic, not taste.`
+      );
+    }
+  }
+}
 
 if (!existsSync(AUTOMATA)) {
   problems.push(`js/automata.js is missing — rule 6 has nothing to measure. Update scripts/check-css.mjs.`);
 } else {
   const raw = readFileSync(AUTOMATA, "utf8");
   const src = blankComments(raw);
-  const hits = [...src.matchAll(VC)];
-  for (const m of hits) {
-    /* The two declarations are told apart by what the `return` beside each one
-       reaches for, not by their order in the file: the rail's geometry adds
-       HIDDEN_COLS to its sim width, the strip's uses STRIP_SIM_ROWS. */
-    const after = src.slice(m.index, m.index + 240);
-    const kind = after.includes("HIDDEN_COLS") ? "rail" : after.includes("STRIP_SIM_ROWS") ? "strip" : null;
-    if (!kind || vcFound[kind] !== null) continue;
-    vcFound[kind] = { mobile: Number(m[1]), desktop: Number(m[2]), index: m.index };
-  }
-
-  if (!vcFound.rail || !vcFound.strip) {
-    /* Fail loudly rather than pass silently. A gate that quietly stops finding
-       the thing it guards is worse than no gate: it reports success forever. */
+  const hits = [...src.matchAll(/const\s+HIDDEN\s*=\s*(\d+)\s*;/g)];
+  if (hits.length !== 1) {
     problems.push(
-      `js/automata.js: rule 6 could not find both visible-column constants ` +
-        `(found ${hits.length} \`const vc = MOBILE.matches ? n : m\`; rail=${Boolean(vcFound.rail)} strip=${Boolean(vcFound.strip)}). ` +
-        `The geometry was refactored — re-derive the DOM budget and update rule 6 in scripts/check-css.mjs rather than deleting it.`
+      `js/automata.js: rule 6 expected exactly one \`const HIDDEN = n;\` and found ${hits.length}. ` +
+        `That constant is the automata's off-stage padding — the part of the simulation that appears in no ` +
+        `picture — and it is the only unbounded cost input left besides the lattice step. The engine was ` +
+        `refactored: re-derive the simulation budget and update rule 6 in scripts/check-css.mjs rather than ` +
+        `deleting it.`
     );
   } else {
-    for (const [kind, { max, measured, growth }] of Object.entries(CEILINGS)) {
-      const { mobile, desktop, index } = vcFound[kind];
-      const worst = Math.max(mobile, desktop);
-      if (worst > max) {
-        const impact =
-          kind === "rail"
-            ? `going from ${measured} to ${worst} is not ${(worst / measured).toFixed(1)}× the squares, ` +
-              `it is ${((worst / measured) ** 2).toFixed(1)}×`
-            : `going from ${measured} to ${worst} puts ${(worst / measured).toFixed(1)}× the divs in every strip`;
+    hidden = Number(hits[0][1]);
+
+    /* AND THE COST MODEL ITSELF, not just its two numbers. Bounding `HIDDEN`
+       bounds the simulation only while `HIDDEN` is the whole off-stage term.
+       If the engine grows a second one — separate padding for rails and
+       strips, say — this rule would keep passing with half its input
+       unguarded, which is the silent-rot failure the branch above exists to
+       prevent and would walk straight past. So: every identifier the sim
+       dimensions are built from must be one this rule knows about. Adding a
+       term is completely legitimate; doing it without re-deriving the budget
+       is not, and this is what makes the difference visible. */
+    const SIM_TERMS = new Set(["cols", "rows", "HIDDEN", "MIN_SIM", "Math", "max", "this", "simC", "simR"]);
+    /* Four, and the number is the shape rather than a tally: two dimensions
+       (simC, simR) for each of the two region kinds (rail, strip). An exact
+       count is what catches a PARTIAL rename — three surviving assignments
+       would satisfy "some exist" while the fourth quietly left the model. */
+    const SIM_ASSIGNMENTS = 4;
+    const simExprs = [...src.matchAll(/this\.(simC|simR)\s*=\s*([^;]+);/g)];
+    if (simExprs.length !== SIM_ASSIGNMENTS) {
+      problems.push(
+        `js/automata.js: rule 6 expected ${SIM_ASSIGNMENTS} \`this.simC =\` / \`this.simR =\` assignments — two ` +
+          `dimensions for each of the two region kinds — and found ${simExprs.length}, so it can no longer confirm ` +
+          `what the simulation's dimensions are built from. The geometry was refactored: re-derive the budget and ` +
+          `update rule 6 in scripts/check-css.mjs rather than deleting it.`
+      );
+    }
+    for (const [, which, expr] of simExprs) {
+      for (const id of expr.match(/[A-Za-z_$][\w$]*/g) ?? []) {
+        if (SIM_TERMS.has(id)) continue;
         problems.push(
-          `${at(AUTOMATA, raw, index)}  ${kind} visible columns = ${worst}, ceiling ${max}. ` +
-            `Every square is a real div and the ${kind} node count grows ${growth} — so ${impact}. ` +
-            `The baseline this ceiling was set against: 496 \`.sq\` divs on index.html, 58.5% of the document, ` +
-            `at rail vc=${CEILINGS.rail.measured} / strip vc=${CEILINGS.strip.measured}. ` +
-            `If the new number is deliberate, raise the ceiling in scripts/check-css.mjs in the same commit and ` +
-            `record the node count you measured — this ceiling is arithmetic, not taste.`
+          `js/automata.js  \`this.${which} = ${expr.trim()}\` brings in \`${id}\`, which rule 6's cost model does ` +
+            `not know about. The simulated cell count is what this rule bounds, and it bounds it by bounding the ` +
+            `lattice step and the off-stage padding — a third term means that arithmetic is now incomplete. ` +
+            `Re-derive it in the rule-6 block of scripts/check-css.mjs and add \`${id}\` to SIM_TERMS in the same ` +
+            `commit.`
         );
       }
+    }
+
+    if (hidden > HIDDEN_MAX) {
+      problems.push(
+        `${at(AUTOMATA, raw, hits[0].index)}  off-stage padding HIDDEN = ${hidden}, ceiling ${HIDDEN_MAX}. ` +
+          `A rail is ${hidden + 4} simulated columns at 1280px of which ${hidden} are off-stage — ` +
+          `${((hidden / (hidden + 4)) * 100).toFixed(0)}% of the work, drawn nowhere. This constant was 6 and ` +
+          `came down to 3 for exactly that reason. If it needs to go back up, raise the ceiling in the rule-6 ` +
+          `block of scripts/check-css.mjs in the same commit, with the share recomputed.`
+      );
     }
   }
 }
@@ -359,6 +486,6 @@ console.log(
     `${HTML_PAGES.length} pages · ${sizedDecls} font-size declarations, all tokens · ` +
     `0 colour literals · 0 prefers-color-scheme · skeleton clean · ` +
     `${solidCounts.map(([f, n]) => `${f.replace(/\.html$/, "")}:${n}`).join(" ")} solid buttons · ` +
-    `automata vc rail ${vcFound.rail.desktop}/${vcFound.rail.mobile} ≤ ${CEILINGS.rail.max}, ` +
-    `strip ${vcFound.strip.desktop}/${vcFound.strip.mobile} ≤ ${CEILINGS.strip.max})`
+    `automata lattice ${latticeRem}rem (${latticeRem * ROOT_PX}px) ≥ ${LATTICE_FLOOR_REM}rem, ` +
+    `off-stage ${hidden} ≤ ${HIDDEN_MAX})`
 );
