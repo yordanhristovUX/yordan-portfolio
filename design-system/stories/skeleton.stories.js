@@ -28,8 +28,17 @@ export default { title: "Skeleton/Band, rails & strips" };
 const rootOf = (el) => el.closest(".sheet") ?? el.closest(".band");
 
 /* The lattice, from the one place it exists as a resolved length. The graph
-   paper's tile IS the cell, so a story cannot drift from the stylesheet. */
-const cellOf = (el) => parseFloat(getComputedStyle(rootOf(el) ?? el).backgroundSize) || 0;
+   paper's tile IS the cell, so a story cannot drift from the stylesheet.
+
+   The ROOT is the only source. This used to fall back to the region itself
+   (`rootOf(el) ?? el`), which worked while `.rail, .strip` carried a bare
+   `background-size` as a bridge; that declaration is gone, so reading a region
+   now yields NaN and the fallback would silently mean "cell = 0". Degrading to
+   0 when there is no root is the same contract `phaseOf` below already has. */
+const cellOf = (el) => {
+  const root = rootOf(el);
+  return root ? parseFloat(getComputedStyle(root).backgroundSize) || 0 : 0;
+};
 
 /* A region's offset into the root's grid. Zero horizontally on a snapped
    sheet; vertically it is whatever the band above ended on, which is what the

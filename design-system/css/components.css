@@ -327,31 +327,23 @@ body.is-locked { overflow: hidden; }
   }
 }
 
-/* ---- THE STEP, KEPT WHERE THE ENGINE HAS ALWAYS READ IT ----
-   `background-size` with no background-image draws nothing; it is a declared
-   length and nothing else. It stays on the regions because js/automata.js reads
-   the lattice as `parseFloat(getComputedStyle(region).backgroundSize)`, and
-   moving the graph paper out from under it would make that NaN and take every
-   canvas on the page down with it. Same token, so the region and the root
-   cannot disagree about the step.
+/* ---- A REGION CARRIES NO BACKGROUND OF ITS OWN, AND THAT IS THE DESIGN ----
+   `.rail` and `.strip` used to declare `background-size: var(--space-6)` with
+   no background-image. It drew nothing; it was a bridge, there so the engine's
+   read of the region's own computed `background-size` would not go NaN while
+   the lattice moved to the root. The condition this file set for its removal —
+   "once the engine takes BOTH the step and the origin from the root" — is met:
+   js/automata.js resolves `latticeRootOf(el)` and reads the step from the
+   root's computed `background-size` and the phase from the root's client rect.
+   Nothing reads a region's. So it is gone.
 
-   The step is only half of what the renderer now needs. The ORIGIN is the
-   lattice root's, and the phase between them is a DOM read, not a declaration:
-
-     const root  = region.closest(".sheet") ?? region.closest(".band");
-     const cell  = parseFloat(getComputedStyle(root).backgroundSize);
-     const rr    = root.getBoundingClientRect();
-     const br    = region.getBoundingClientRect();
-     const phaseX = (((br.left - rr.left) % cell) + cell) % cell;
-     const phaseY = (((br.top  - rr.top ) % cell) + cell) % cell;
-
-   Once the engine takes BOTH from the root, this declaration has no reader left
-   and should go with the same commit. Until then the cells keep their 24px step
-   and lose only their vertical phase, which is a page that still breathes
-   rather than a page with no automata on it at all. */
-.rail, .strip {
-  background-size: var(--space-6) var(--space-6);
-}
+   What replaces it is the rule, which outlives the declaration: a region is a
+   transparent WINDOW onto the one lattice, so a background on it is a second
+   grid, and a second grid is the bug this design removed. If a region needs to
+   hide the lattice it takes paper (`background-color: var(--surface-page)`),
+   which is what `.well` and `.term` do. `.term` keeps a `background-size`
+   because it has a real `background-image` to tile — its diagonal — and that
+   one is load-bearing, not a bridge. */
 
 /* ONE CANVAS PER REGION, and it is the region's box exactly.
    `position: absolute` is the load-bearing word: it takes the canvas out of

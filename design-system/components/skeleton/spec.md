@@ -220,12 +220,17 @@ const row0 = Math.floor((box.top  - r.top  + phaseY) / cell);
 snapping bought. `phaseY` is whatever the band above happened to end on, and driving it to
 `0` is the terminator's job.
 
-**The step is still readable from the region.** `.rail, .strip` keep
-`background-size: var(--space-6)` with no `background-image`: it draws nothing, it is a
-declared length, and it is there so the engine's existing read of a region's computed
-`background-size` does not become `NaN` and take every canvas on the page down at once. Same
-token as the root's, so the two cannot disagree. Once the engine takes both the step and the
-phase from the root, that declaration has no reader left and should go in the same commit.
+**The step is read from the root, and only from the root.** `.rail, .strip` used to keep a
+bare `background-size: var(--space-6)` with no `background-image` — a bridge that drew
+nothing, declared so the engine's older read of a *region's* computed `background-size` could
+not go `NaN` and take every canvas down at once. The condition for retiring it was "once the
+engine takes both the step and the phase from the root", and that is now the case:
+`js/automata.js` resolves the lattice root and reads the step from its computed
+`background-size` and the phase from its client rect. **The declaration is gone.** A region
+carries no background of its own, which is the rule stated positively: a region is a
+transparent window onto the one lattice, and a background on it would be a second grid.
+`.term` still carries a `background-size` and that one is load-bearing — it tiles a real
+`background-image`, its diagonal.
 
 That is what makes **content into walls** expressible: the engine can take any element's
 rect — a well, the floating bar that lies over the sheet, the drawer — mark the cells it
