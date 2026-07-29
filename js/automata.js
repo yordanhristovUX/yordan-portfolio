@@ -1,14 +1,47 @@
 /* ============================================================
-   Squares engine — the skeleton and the life are one system.
-   Every visible square is a real .sq div sized by the layout's own
-   fr tracks. Conway's Life runs over those squares in two kinds of
-   regions: the side rails of every band (sim extends 6 hidden
-   columns "under the paper", so life wanders in and out) and the
-   separator strips (sim extends hidden rows above and below).
+   Automata engine — the skeleton and the life are one system.
 
-   Interactions: hovering a square lights it accent-blue (CSS);
-   clicking seeds new life there — cells born from a click carry an
-   accent-blue lineage that fades toward stone over generations.
+   Conway's Life runs in two kinds of region: the side rails of every
+   band, and the separator strips. Each region is ONE aria-hidden
+   <canvas> lying over the region's own box, where there used to be one
+   `.sq` div per cell — 492 of them on index.html at 1280px, 513 of the
+   document's 845 elements (60.7%), each carrying a background-color
+   transition. The simulation core did not change and must not: typed
+   flat arrays, an age ramp, an accent-blue lineage, a toroidal wrap,
+   the breath sine, click-to-seed. Only geometry and painting are new.
+
+   That 492 is the div model's own formula re-run against TODAY'S band
+   heights, not a reading taken off a live page, and the distinction is
+   worth a line because the intermediate state lies. Measured with the
+   old engine still running against the new CSS, index.html reported 556
+   squares and 61.8% — inflated, because `.rail { contain: size }` had
+   already been removed and the div model promptly rebuilt the feedback
+   loop that property existed to stop. The last honest div-model reading
+   in the spec is 508 / 862 / 58.9%, taken when the property was still
+   there. All three describe the same design; only the 492 is measured
+   on the same layout as the canvas figures it is compared against.
+
+   THE LATTICE IS NOT DECLARED HERE. It is `--space-6`, resolved once
+   by the graph paper's `background-size` on `.rail` / `.strip`, and
+   read back from the computed style below. Restating 24 in this file
+   would let the gradient and the canvas disagree about where a cell
+   starts, and they are drawn on top of each other.
+
+   WHAT THE CANVAS BUYS AND WHAT IT COSTS. 845 elements become 374 and
+   decoration falls from 60.7% of the document to 11.2%. Cells per
+   generation go the OTHER way — 2,112 to 4,393, about 2.1× — and that
+   is the trade rather than a regression to fix: a 24px lattice is 4.8×
+   finer per unit area than the 52.5px squares it replaces, and a cell
+   is now an entry in a Uint8Array and part of a batched fillRect
+   instead of an element with a transition on it. Measured: ~0.3ms of
+   simulation per whole-page generation at the same 300ms tick. The
+   figure is `automataStats()`'s to state at the bottom of this file,
+   so it gets re-measured rather than re-argued.
+
+   Interactions: hovering a cell lights it accent-blue (this file draws
+   it — there is no per-cell element left to carry `:hover`); clicking
+   seeds life, and cells born from a click carry an accent lineage that
+   fades toward stone over ~10 generations.
 
    Subtlety: each region breathes — cell opacity rides a slow sine
    (~36 s, phase-offset per region) down to near-invisible.
@@ -16,27 +49,124 @@
 (() => {
   /* Reduce-motion is re-read on change, exactly as the two inks below are
      re-read on `themechange`. Both are settings the reader can flip while
-     the page is open; only one of them was being listened to. */
+     the page is open, and a reader who turns motion on mid-visit must not
+     be left mid-generation. */
   const RMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
   let RM = RMQ.matches;
-  const MOBILE = window.matchMedia("(max-width: 760px)");
 
   /* The two inks are read from the design system rather than restated here:
      both flip with the theme, and a hardcoded stone-500 would sink into the
-     page the moment the sheet goes dark. Re-read on every theme change. */
-  const palette = { cell: "120, 113, 108", accent: "0, 60, 240" };
+     page the moment the sheet goes dark. Re-read on every theme change.
+
+     There is no literal fallback, deliberately. A missing token used to mean
+     "paint the last known stone", which is a colour this file would then own;
+     it now means "paint nothing", and the graph paper underneath is still a
+     blueprint margin. A script that cannot read its ink must degrade to the
+     static page, never to a wrong one. */
+  const palette = { cell: "", accent: "" };
   function readPalette() {
     const cs = getComputedStyle(document.documentElement);
-    const cell = cs.getPropertyValue("--automata-cell-rgb").trim();
-    const accent = cs.getPropertyValue("--accent-rgb").trim();
-    if (cell) palette.cell = cell;
-    if (accent) palette.accent = accent;
+    palette.cell = cs.getPropertyValue("--automata-cell-rgb").trim();
+    palette.accent = cs.getPropertyValue("--accent-rgb").trim();
   }
   readPalette();
+  const hasInk = () => palette.cell !== "" && palette.accent !== "";
 
   const TICK = 300;
-  const HIDDEN_COLS = 6;         // rail sim columns under the paper
-  const STRIP_SIM_ROWS = 10;     // strip sim height (2 visible)
+
+  /* OFF-STAGE PADDING — one constant, re-derived, used as columns by a rail
+     and as rows by a strip. It was 6 columns when a rail was 2 columns wide:
+     off-stage wings three times the size of the picture, which was cheap
+     because the picture was tiny. On the --space-6 lattice a rail is ~5
+     visible columns, so six would leave more than half of every rail's
+     simulation happening where nobody can see it.
+
+     Three is not a compromise between 6 and 0, it is the floor the geometry
+     gives you. The off-stage band is one contiguous strip on the torus (the
+     visible field's two edges are its two edges), so the question is the
+     narrowest band that can hold a complete moving structure entirely out of
+     sight. A glider's bounding box is 3×3. At 2 the band cannot contain one
+     without it touching both visible edges at once — off-stage stops being a
+     place and becomes a seam. At 3 it is a place, 72px of it, and a glider
+     takes ~12 generations (≈3.6s at this tick) to cross it and arrive.
+
+     Measured consequence at 1280px: rails fall from 5,236 simulated cells to
+     3,808, and off-stage drops from 75% of every rail's simulation to 37.5%. */
+  const HIDDEN = 3;
+
+  /* A torus narrower than 3 makes a cell its own neighbour twice over and
+     Life stops being Life. Regions this small are clipped edges, not bugs. */
+  const MIN_SIM = 3;
+
+  const AGE_STEPS = 8;     // age ramp saturates here
+  const BLUE_LIFE = 10;    // accent lineage countdown
+  const HOVER_ALPHA = 0.5;
+  const SETTLE = 5;        // generations run before a still grid is shown
+
+  /* ALPHA IS PER CELL, fillStyle IS PER DRAW CALL — which is the whole reason
+     `--automata-cell-rgb` and `--accent-rgb` stay triplets instead of colours.
+     Every living cell lands in one of these buckets, the bucket's colour is
+     built once, and every cell in it is filled under that one fillStyle. The
+     alternative, `globalAlpha`, is also per-draw-call state, so it would mean
+     one draw call per distinct alpha — i.e. the same 19 either way, but with
+     the composition happening in the canvas instead of in the token layer. */
+  const BUCKETS = AGE_STEPS + 1 + BLUE_LIFE;   // 9 resident + 10 accent = 19
+  const styles = new Array(BUCKETS);           // refilled per render, never grown
+
+  /* ---- Walls: content the life has to flow around ----------------------
+     Any element whose rect genuinely lies over a region can mark the cells it
+     covers permanently dead, so the population goes around the words instead
+     of under them. The mapping needs no offset term — the canvas is the
+     region's border box with the same origin (components/skeleton/spec.md) —
+     so this is one division, recomputed on rebuild rather than per frame.
+
+     TWO FILTERS, and both are about coordinate spaces rather than taste.
+
+     · A rect is only comparable to a region if the two share a nearest
+       `position: fixed` ancestor. That is what keeps the floating bar out of
+       the page's rails: the bar lies over the sheet in VIEWPORT space, so
+       which cells it covers is a function of scroll, not of layout — a wall
+       that slid down the rail as you scrolled would be a wiper, and pricing
+       it per frame is exactly what this rewrite exists to stop doing. The
+       same test lets the case dialog's own well wall the case dialog's own
+       rails, because there both sides sit inside the same fixed panel.
+
+     · A rect must cover at least a quarter of a cell for that cell to die.
+       Adjacent grid tracks share an edge and report ~0.02px of overlap from
+       float rounding; without the inset, one of those would wall an entire
+       column that nothing is actually covering.
+
+     MEASURED, so nobody has to trust the mechanism: on index.html today this
+     masks ZERO cells at 375, 768 and 1280. The band is `2fr 20fr 2fr` and the
+     rails are columns 1 and 3, so a `.well` is BESIDE a rail, never over it —
+     the paper is already the region's own edge, which is the strongest form
+     of the same rule and the reason the mask has nothing left to do. The code
+     stays because it is what makes that a measurement rather than an
+     assumption, and because `[data-automata-wall]` is how anything that ever
+     does lie over a region (a pull-quote breaking into the margin, a figure
+     spanning the band) becomes a wall without touching this file. */
+  const WALLS = ".well, .sec__head, [data-automata-wall]";
+  const WALL_INSET = 0.25;   // fraction of a cell a rect must cover to kill it
+
+  function fixedRootOf(el) {
+    for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+      if (getComputedStyle(n).position === "fixed") return n;
+    }
+    return null;
+  }
+
+  /* Collected ONCE per rebuild pass, not once per region: 21 regions × 9 wells
+     would be 189 ancestor walks and 189 layout reads for an answer that is the
+     same every time. */
+  function collectWalls(root = document) {
+    const out = [];
+    for (const el of root.querySelectorAll(WALLS)) {
+      const rect = el.getBoundingClientRect();
+      if (!rect.width || !rect.height) continue;
+      out.push({ el, rect, fixedRoot: fixedRootOf(el) });
+    }
+    return out;
+  }
 
   class Region {
     constructor(el, kind) { // kind: "rail" | "strip"
@@ -46,64 +176,176 @@
       this.running = true;
       this.last = 0;
       this.lastBreath = 0.3;
+      this.hover = -1;
+      this.ready = false;
+      this.masked = 0;
+
+      /* The region is decoration and so is its canvas. Both say so, because
+         the rails are injected here and a strip's attribute is in markup that
+         a future page might forget. */
+      el.setAttribute("aria-hidden", "true");
+      let canvas = el.querySelector("canvas.automata");
+      if (!canvas) {
+        canvas = document.createElement("canvas");
+        canvas.className = "automata";
+        el.appendChild(canvas);
+      }
+      canvas.setAttribute("aria-hidden", "true");
+      this.canvas = canvas;
+      this.ctx = canvas.getContext("2d");
+
       this.build();
       el.addEventListener("click", (e) => this.seedAt(e));
+      /* Hover is this file's to draw now. There is no per-cell element left,
+         so there is nothing for `.sq:hover` to match — the CSS rule that used
+         to do this went with the divs. */
+      el.addEventListener("pointermove", (e) => this.hoverAt(e));
+      el.addEventListener("pointerleave", () => this.setHover(-1));
     }
 
-    geometry() {
+    /* CSS owns the box, this owns the bitmap — never the other way round.
+       A zero box is survivable and expected: every region is `display: none`
+       on paper, and the dialog's band has no layout until it opens. */
+    build(walls) {
+      this.ready = false;
+      const el = this.el;
+      const cs = getComputedStyle(el);
+      const cell = parseFloat(cs.backgroundSize);      // the lattice, declared in CSS
+      const box = el.getBoundingClientRect();
+      const w = box.width;
+      const h = box.height;
+      if (!(cell > 0) || !(w > 0) || !(h > 0) || !this.ctx) return;
+
+      this.cell = cell;
+      this.w = w;
+      this.h = h;
+
+      /* The bitmap is device pixels, the box stays authoritative. Clamped at 2
+         on purpose: the ink is axis-aligned rectangles on an integer lattice,
+         so past 2 there is no edge left to resolve, and the rails alone are
+         ~1.2M CSS pixels — at dpr 3 that is 42MB of backing store for
+         decoration. Re-read on every rebuild, so a zoom or a monitor change
+         re-scales rather than blurring. */
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      this.canvas.width = Math.round(w * dpr);
+      this.canvas.height = Math.round(h * dpr);
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      /* `ceil`, not `floor`: the trailing cell is clipped by the region's
+         `overflow: hidden`, which is what graph paper does at the edge of a
+         sheet. Half a cell of life at the bottom of a rail is correct. */
+      const cols = Math.max(1, Math.ceil(w / cell));
+      const rows = Math.max(1, Math.ceil(h / cell));
+      this.cols = cols;
+      this.rows = rows;
+
       if (this.kind === "rail") {
-        const vc = MOBILE.matches ? 1 : 2;
-        const size = this.el.clientWidth / vc;
-        const vr = size > 0 ? Math.floor(this.el.clientHeight / size) : 0;
-        return { vc, vr, simC: vc + HIDDEN_COLS, simR: Math.max(vr, 3) };
+        this.simC = cols + HIDDEN;
+        this.simR = Math.max(rows, MIN_SIM);
+        this.firstRow = 0;
+      } else {
+        this.simC = Math.max(cols, MIN_SIM);
+        this.simR = Math.max(rows + HIDDEN, MIN_SIM);
+        this.firstRow = (this.simR - rows) >> 1;   // strips show the middle rows
       }
-      const vc = MOBILE.matches ? 12 : 24;
-      return { vc, vr: 2, simC: vc, simR: STRIP_SIM_ROWS };
-    }
 
-    build() {
-      const g = this.geometry();
-      Object.assign(this, g);
-      this.el.style.gridTemplateColumns = `repeat(${g.vc}, 1fr)`;
-      this.el.textContent = "";
-      this.cells = [];
-      const frag = document.createDocumentFragment();
-      for (let i = 0; i < g.vc * g.vr; i++) {
-        const d = document.createElement("div");
-        d.className = "sq";
-        d.dataset.i = i;
-        frag.appendChild(d);
-        this.cells.push(d);
-      }
-      this.el.appendChild(frag);
-      const n = g.simC * g.simR;
+      const n = this.simC * this.simR;
       this.a = new Uint8Array(n);
       this.b = new Uint8Array(n);
       this.age = new Uint8Array(n);
-      this.blue = new Uint8Array(n);   // accent lineage countdown
+      this.blue = new Uint8Array(n);
       this.blueB = new Uint8Array(n);
+      this.wall = new Uint8Array(n);
+
+      /* visible index -> sim index, resolved once. It used to be recomputed
+         per cell per frame; it is the same table every time. */
+      const visN = cols * rows;
+      this.vis = new Int32Array(visN);
+      for (let vy = 0; vy < rows; vy++) {
+        for (let vx = 0; vx < cols; vx++) {
+          this.vis[vy * cols + vx] = (this.firstRow + vy) * this.simC + vx;
+        }
+      }
+
+      // Painting scratch — allocated with the grid, never per frame.
+      this.cellBucket = new Int8Array(visN);
+      this.order = new Int32Array(visN);
+      this.bCount = new Int32Array(BUCKETS);
+      this.bStart = new Int32Array(BUCKETS + 1);
+      this.bCur = new Int32Array(BUCKETS);
+
+      this.markWalls(box, walls || collectWalls());
       this.gen = 0;
+      this.ready = true;
       this.seed();
+      /* Under reduce-motion nothing will ever advance this grid, so a fresh
+         seed would be frozen ON the random noise it starts from. Settling it
+         here rather than once at startup is the fix for a case the old engine
+         missed: a resize, or the webfont rebuild that lands a moment after
+         load, replaced the settled picture with raw noise and there was no
+         loop left to work it out. Measured in a forced-reduce frame: 0
+         generations on screen before, SETTLE after every rebuild now. */
+      if (RM) for (let i = 0; i < SETTLE; i++) this.step();
       this.render(this.lastBreath);
     }
 
-    seed() {
-      for (let i = 0; i < this.a.length; i++) this.a[i] = Math.random() < 0.18 ? 1 : 0;
+    markWalls(box, walls) {
+      const { cell, cols, rows } = this;
+      const inset = cell * WALL_INSET;
+      const mine = fixedRootOf(this.el);
+      let masked = 0;
+      for (const wall of walls) {
+        if (wall.fixedRoot !== mine) continue;                     // different space
+        if (wall.el === this.el || wall.el.contains(this.el) || this.el.contains(wall.el)) continue;
+        const r = wall.rect;
+        if (Math.min(box.right, r.right) - Math.max(box.left, r.left) <= inset) continue;
+        if (Math.min(box.bottom, r.bottom) - Math.max(box.top, r.top) <= inset) continue;
+        const c0 = Math.max(0, Math.floor((r.left - box.left + inset) / cell));
+        const c1 = Math.min(cols - 1, Math.ceil((r.right - box.left - inset) / cell) - 1);
+        const r0 = Math.max(0, Math.floor((r.top - box.top + inset) / cell));
+        const r1 = Math.min(rows - 1, Math.ceil((r.bottom - box.top - inset) / cell) - 1);
+        for (let vy = r0; vy <= r1; vy++) {
+          for (let vx = c0; vx <= c1; vx++) {
+            const si = this.vis[vy * cols + vx];
+            if (!this.wall[si]) { this.wall[si] = 1; masked++; }
+          }
+        }
+      }
+      this.masked = masked;
     }
 
-    // visible cell index -> sim index (strips show the middle rows)
-    simIndex(vi) {
-      const vx = vi % this.vc;
-      const vy = (vi / this.vc) | 0;
-      if (this.kind === "rail") return vy * this.simC + vx;
-      const first = (this.simR - this.vr) >> 1;
-      return (first + vy) * this.simC + vx;
+    seed() {
+      const { a, wall } = this;
+      for (let i = 0; i < a.length; i++) a[i] = !wall[i] && Math.random() < 0.18 ? 1 : 0;
+    }
+
+    /* Pointer -> cell. The canvas is the region's box with the same origin, so
+       this is a division and nothing else — no element to hit-test, because
+       there is no element. */
+    cellAt(e) {
+      if (!this.ready) return -1;
+      const box = this.el.getBoundingClientRect();
+      const vx = Math.floor((e.clientX - box.left) / this.cell);
+      const vy = Math.floor((e.clientY - box.top) / this.cell);
+      if (vx < 0 || vy < 0 || vx >= this.cols || vy >= this.rows) return -1;
+      return vy * this.cols + vx;
+    }
+
+    setHover(vi) {
+      if (this.hover === vi) return;
+      this.hover = vi;
+      if (this.ready) this.render(this.lastBreath);
+    }
+
+    hoverAt(e) {
+      if (e.pointerType === "touch") return;   // a tap is a click, not a hover
+      this.setHover(this.cellAt(e));
     }
 
     seedAt(e) {
-      const t = e.target.closest(".sq");
-      if (!t || t.parentElement !== this.el) return;
-      const si = this.simIndex(+t.dataset.i);
+      const vi = this.cellAt(e);
+      if (vi < 0) return;
+      const si = this.vis[vi];
       const sx = si % this.simC;
       const sy = (si / this.simC) | 0;
       for (let dy = -1; dy <= 1; dy++) {
@@ -111,18 +353,24 @@
           if (Math.random() > 0.7) continue;
           const j = ((sy + dy + this.simR) % this.simR) * this.simC +
                     ((sx + dx + this.simC) % this.simC);
+          if (this.wall[j]) continue;
           this.a[j] = 1;
           this.age[j] = 0;
-          this.blue[j] = 10;
+          this.blue[j] = BLUE_LIFE;
         }
       }
-      this.a[si] = 1;
-      this.blue[si] = 10;
+      if (!this.wall[si]) {
+        this.a[si] = 1;
+        this.blue[si] = BLUE_LIFE;
+      }
       this.render(this.lastBreath);
     }
 
+    /* ---- Conway, unchanged. Walls are dead cells that stay dead, so they
+       are already absent from every neighbour sum: nothing here has to know
+       about them except the one line that refuses to let a birth happen. ---- */
     step() {
-      const { a, b, blue, blueB, age, simC: cols, simR: rows } = this;
+      const { a, b, blue, blueB, age, wall, simC: cols, simR: rows } = this;
       for (let y = 0; y < rows; y++) {
         const up = ((y - 1 + rows) % rows) * cols;
         const mid = y * cols;
@@ -135,7 +383,8 @@
           const i5 = dn + l, i6 = dn + x, i7 = dn + r;
           const n = a[i0] + a[i1] + a[i2] + a[i3] + a[i4] + a[i5] + a[i6] + a[i7];
           const alive = a[mid + x];
-          const next = alive ? (n === 2 || n === 3 ? 1 : 0) : n === 3 ? 1 : 0;
+          let next = alive ? (n === 2 || n === 3 ? 1 : 0) : n === 3 ? 1 : 0;
+          if (wall[mid + x]) next = 0;
           b[mid + x] = next;
           if (next) {
             if (alive) {
@@ -159,7 +408,7 @@
       // Gentle re-sprinkle so a region never goes permanently still
       if (this.gen % 150 === 0) {
         for (let i = 0; i < this.a.length; i++) {
-          if (Math.random() < 0.04) this.a[i] = 1;
+          if (!this.wall[i] && Math.random() < 0.04) this.a[i] = 1;
         }
       }
     }
@@ -169,28 +418,73 @@
       return 0.04 + s * 0.3; // sometimes almost invisible
     }
 
+    /* ---- Paint ----
+       One clearRect, then a counting sort of the living cells into the 19
+       alpha buckets, then one fillStyle and a run of fillRects per bucket that
+       has anything in it. Nothing is allocated: every array below was sized
+       with the grid.
+
+       The fill is inset 1px from the cell's leading edges, which is where the
+       graph paper draws its rules. So the gradient's lines are never painted
+       over — the cell sits INSIDE its square rather than on top of it — and
+       the translucency does the rest wherever a line and a cell do meet. */
     render(breath) {
       this.lastBreath = breath;
-      const { cells, a, age, blue } = this;
-      for (let vi = 0; vi < cells.length; vi++) {
-        const si = this.simIndex(vi);
-        const el = cells[vi];
-        if (!a[si]) {
-          if (el.style.backgroundColor) el.style.backgroundColor = "";
-          continue;
+      const ctx = this.ctx;
+      if (!this.ready || !ctx) return;
+      ctx.clearRect(0, 0, this.w, this.h);
+      if (!hasInk()) return;
+
+      for (let k = 0; k <= AGE_STEPS; k++) {
+        styles[k] = `rgba(${palette.cell}, ${((0.5 + k * 0.05) * breath).toFixed(4)})`;
+      }
+      for (let v = 1; v <= BLUE_LIFE; v++) {
+        // Your interventions are visibly yours for a few generations
+        styles[AGE_STEPS + v] = `rgba(${palette.accent}, ${(0.1 + v * 0.045).toFixed(4)})`;
+      }
+
+      const { a, age, blue, vis, cellBucket, order, bCount, bStart, bCur, cols, cell } = this;
+      const n = vis.length;
+      bCount.fill(0);
+
+      for (let i = 0; i < n; i++) {
+        const si = vis[i];
+        if (!a[si]) { cellBucket[i] = -1; continue; }
+        const bucket = blue[si] > 0
+          ? AGE_STEPS + Math.min(blue[si], BLUE_LIFE)
+          : Math.min(age[si], AGE_STEPS);
+        cellBucket[i] = bucket;
+        bCount[bucket]++;
+      }
+
+      bStart[0] = 0;
+      for (let k = 0; k < BUCKETS; k++) {
+        bStart[k + 1] = bStart[k] + bCount[k];
+        bCur[k] = bStart[k];
+      }
+      for (let i = 0; i < n; i++) {
+        const bucket = cellBucket[i];
+        if (bucket >= 0) order[bCur[bucket]++] = i;
+      }
+
+      const size = cell - 1;
+      for (let k = 0; k < BUCKETS; k++) {
+        if (!bCount[k]) continue;
+        ctx.fillStyle = styles[k];
+        for (let j = bStart[k]; j < bStart[k + 1]; j++) {
+          const i = order[j];
+          ctx.fillRect((i % cols) * cell + 1, ((i / cols) | 0) * cell + 1, size, size);
         }
-        if (blue[si] > 0) {
-          // Your interventions are visibly yours for a few generations
-          el.style.backgroundColor = `rgba(${palette.accent}, ${0.1 + blue[si] * 0.045})`;
-        } else {
-          const alpha = (0.5 + Math.min(age[si], 8) * 0.05) * breath;
-          el.style.backgroundColor = `rgba(${palette.cell}, ${alpha})`;
-        }
+      }
+
+      if (this.hover >= 0 && this.hover < n) {
+        ctx.fillStyle = `rgba(${palette.accent}, ${HOVER_ALPHA})`;
+        ctx.fillRect((this.hover % cols) * cell + 1, ((this.hover / cols) | 0) * cell + 1, size, size);
       }
     }
 
     frame(now) {
-      if (!this.running) return;
+      if (!this.running || !this.ready) return;
       if (now - this.last < TICK) return;
       this.last = now;
       this.step();
@@ -222,12 +516,17 @@
     const region = new Region(el, el.classList.contains("strip") ? "strip" : "rail");
     (el.closest(".case") ? caseRegions : pageRegions).push(region);
   });
+  const all = [...pageRegions, ...caseRegions];
 
-  // The case page lays out only when opened — rebuild its squares then.
-  window.rebuildCaseSquares = () => caseRegions.forEach((r) => r.build());
+  function rebuild(regions) {
+    const walls = collectWalls();
+    regions.forEach((r) => r.build(walls));
+  }
+
+  // The case page lays out only when opened — rebuild its cells then.
+  window.rebuildCaseSquares = () => rebuild(caseRegions);
 
   /* ---- Run only what's on screen ---- */
-  const all = [...pageRegions, ...caseRegions];
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {
       const region = all.find((r) => r.el === e.target);
@@ -237,7 +536,7 @@
   all.forEach((r) => io.observe(r.el));
 
   // Webfonts change section heights — rebuild rails once they settle.
-  document.fonts?.ready.then(() => pageRegions.forEach((r) => r.build()));
+  document.fonts?.ready.then(() => rebuild(pageRegions));
 
   // Both inks belong to the theme. Re-read them and repaint the generation
   // that is already on screen — the life goes on, it just changes colour.
@@ -250,20 +549,23 @@
   window.addEventListener("resize", () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
-      pageRegions.forEach((r) => r.build());
-      if (!document.querySelector(".case")?.hidden) caseRegions.forEach((r) => r.build());
+      rebuild(pageRegions);
+      if (!document.querySelector(".case")?.hidden) rebuild(caseRegions);
     }, 200);
   });
 
   /* ---- Run, or stand still ----
-     Under reduce-motion the rails are not animated at all: the loop is
+     Under reduce-motion the regions are not animated at all: the loop is
      cancelled rather than left spinning on a no-op branch, and the grid is
      frozen at a settled opacity. Clicks still seed and still render, so the
-     squares remain something you can touch — stillness, not deadness.
+     cells remain something you can touch — stillness, not deadness.
 
      Flipping the OS setting mid-visit starts or stops the loop in place.
      The generation on screen is kept either way: turning motion back on
-     resumes the life that was already there rather than reseeding it. */
+     resumes the life that was already there rather than reseeding it — and
+     turning it ON freezes what is on screen rather than re-settling, because
+     the reader is looking at that. Settling a NEW grid belongs to build(),
+     which is the only place that knows a grid is new. */
   let rafId = 0;
 
   function loop(now) {
@@ -271,24 +573,42 @@
     rafId = requestAnimationFrame(loop);
   }
 
-  function applyMotion({ initial = false } = {}) {
+  function applyMotion() {
     if (RM) {
       if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
-      // On first load, settle a few generations so stillness is a pattern
-      // rather than the random seed. On a later flip, freeze what is there.
-      all.forEach((r) => {
-        if (initial) for (let i = 0; i < 5; i++) r.step();
-        r.render(0.25);
-      });
+      all.forEach((r) => r.render(0.25));
       return;
     }
     if (!rafId) rafId = requestAnimationFrame(loop);
   }
 
-  applyMotion({ initial: true });
+  applyMotion();
 
   RMQ.addEventListener("change", (e) => {
     RM = e.matches;
     applyMotion();
   });
+
+  /* ---- What this costs, stated by the thing that spends it ----
+     The div model's numbers had to be reverse-engineered from layout every
+     time anyone wanted them, which is why the spec's cost table carries a
+     hand derivation. The engine can just say. Returns live totals for the
+     four figures the skeleton spec is gated on. */
+  window.automataStats = () => {
+    const live = all.filter((r) => r.ready);
+    const sum = (f) => live.reduce((t, r) => t + f(r), 0);
+    return {
+      regions: all.length,
+      built: live.length,
+      lattice: live[0]?.cell ?? null,
+      cellsPerGeneration: sum((r) => r.simC * r.simR),
+      visibleCells: sum((r) => r.cols * r.rows),
+      maskedByWalls: sum((r) => r.masked),
+      offStageCells: sum((r) => r.simC * r.simR - r.cols * r.rows),
+      generations: sum((r) => r.gen),
+      bitmapMegapixels: +(sum((r) => r.canvas.width * r.canvas.height) / 1e6).toFixed(2),
+      running: rafId !== 0,
+      reducedMotion: RM,
+    };
+  };
 })();

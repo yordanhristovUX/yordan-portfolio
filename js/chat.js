@@ -11,11 +11,14 @@
 
    Three invariants worth stating out loud:
 
-     · `.rail { contain: size }` is load-bearing. A growing message list
-       inside a band must never feed back into rail height — see
-       design-system/components/skeleton/spec.md. The thread additionally
-       scrolls inside its own bounded box (css/style.css), so the band's
-       height is constant no matter how long the conversation gets, and
+     · A growing message list inside a band must never feed back into
+       rail height. That used to be held off by `.rail { contain: size }`;
+       the rail's only child is now an absolutely-positioned canvas, so
+       the loop is unbuildable rather than merely prevented — see
+       design-system/components/skeleton/spec.md. The half that is still
+       THIS file's is the other direction: the thread scrolls inside its
+       own bounded box (css/style.css), so the band's height is constant
+       no matter how long the conversation gets, and
        `window.rebuildCaseSquares?.()` is called after DOM mutation the
        same way js/main.js does.
      · Motion follows the page: the HAS_GSAP guard and
@@ -105,9 +108,11 @@
   const announce = (text) => { if (status) status.textContent = text; };
 
   /* ---------- Layout bookkeeping ----------
-     Called after every DOM mutation. The rail's own `contain: size`
-     stops it from sizing the band; this keeps the dialog rails honest
-     after layout shifts, exactly as js/main.js does on open.
+     Called after every DOM mutation. A rail cannot size the band — its
+     only child is an out-of-flow canvas — so this is not defending the
+     band; it re-measures the dialog's regions so their bitmaps match the
+     boxes a layout shift just gave them, exactly as js/main.js does on
+     open.
 
      What it deliberately does NOT do is pin scrollTop to scrollHeight.
      One answer runs to roughly three screens of a thread that is bounded
