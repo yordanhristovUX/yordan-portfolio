@@ -572,7 +572,10 @@ function cardGrid(items, cardClass, extraAttr, typeOf) {
     const type = typeOf?.(it);
     if (type) out.push(`    <span class="card__type">${inline(type)}</span>`);
     out.push(`    <h3 class="card__title">${inline(it.title)}</h3>`);
-    out.push(`    <p>${inline(it.body)}</p>`);
+    /* On a reveal card the body is the thing hover uncovers, so it is marked
+       rather than left a bare <p>. Everywhere else a card's body is just its
+       body and stays exactly as it was. */
+    out.push(it.media ? `    <p class="card__note">${inline(it.body)}</p>` : `    <p>${inline(it.body)}</p>`);
     out.push(`  </article>`);
   }
   out.push(`</div>`);
@@ -614,7 +617,7 @@ const moreProjectsRegion = () =>
       cardType: p.cardType,
       media: notablePlate(p.id),
     })),
-    "card",
+    "card card--reveal",
     " data-reveal",
     (p) => p.cardType
   );
