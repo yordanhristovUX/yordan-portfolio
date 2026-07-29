@@ -552,6 +552,23 @@ function cardGrid(items, cardClass, extraAttr, typeOf) {
   const out = [`<div class="card-grid">`];
   for (const it of items) {
     out.push(`  <article class="${cardClass}"${extraAttr}>`);
+    /* The plate, when the project has one. `alt=""` and aria-hidden because the
+       card's own title says everything the image does — an alt repeating it
+       makes a screen reader read every project twice, and these are decorative
+       placeholders besides. `loading="lazy"` on all nine: they sit well below
+       the fold and none of them is the LCP element.
+
+       WIDTH AND HEIGHT ARE THE PLATE'S OWN, not the rendered size. They are
+       there so the row reserves its space before the file arrives; the CSS
+       aspect-ratio then governs what is actually drawn, so a real photograph
+       at another size drops in without touching this. */
+    if (it.media) {
+      out.push(
+        `    <span class="card__media">` +
+          `<img src="${escAttr(it.media)}" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async">` +
+          `</span>`
+      );
+    }
     const type = typeOf?.(it);
     if (type) out.push(`    <span class="card__type">${inline(type)}</span>`);
     out.push(`    <h3 class="card__title">${inline(it.title)}</h3>`);
@@ -580,9 +597,23 @@ const capabilitiesRegion = () =>
    moment it has text in it. An absent one is an empty string and produces no
    chunk, so nine empty fields cost nothing and nothing has to change when the
    first one is written. */
+/* The plate path is derived from the id rather than authored, so nine cards do
+   not need nine lines of frontmatter to say the same thing. `scripts/
+   make-placeholders.mjs` writes the placeholders to exactly these paths, and
+   replacing one with a real file is the whole migration — no schema change, no
+   build change, no id to keep in step. A project with no file at that path
+   simply shows a card with no plate, which is what an <img> with a missing
+   source degrades to inside a fixed-ratio window. */
+const notablePlate = (id) => `content/assets/notable/${id}.svg`;
+
 const moreProjectsRegion = () =>
   cardGrid(
-    cardProjects.map((p) => ({ title: p.title, body: section(p, "summary").blocks[0].text, cardType: p.cardType })),
+    cardProjects.map((p) => ({
+      title: p.title,
+      body: section(p, "summary").blocks[0].text,
+      cardType: p.cardType,
+      media: notablePlate(p.id),
+    })),
     "card",
     " data-reveal",
     (p) => p.cardType

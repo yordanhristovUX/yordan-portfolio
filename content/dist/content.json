@@ -983,10 +983,12 @@
           ".card",
           ".card--ruled",
           ".card-grid",
+          ".card__media",
           ".card__title",
           ".card__type"
         ],
         "elements": [
+          "__media",
           "__title",
           "__type"
         ],
@@ -998,6 +1000,8 @@
           ".card p",
           ".card--ruled .card__title",
           ".card-grid",
+          ".card:focus-within .card__media img",
+          ".card:hover .card__media img",
           ".card:last-child",
           ".card:nth-child(2n)",
           ".card:nth-child(3n)",
@@ -1005,10 +1009,14 @@
           ".card:nth-last-child(-n+2):nth-child(2n+1) ~ .card",
           ".card:nth-last-child(-n+3):nth-child(3n+1)",
           ".card:nth-last-child(-n+3):nth-child(3n+1) ~ .card",
+          ".card__media",
+          ".card__media img",
           ".card__title",
           ".card__type"
         ],
         "tokens": [
+          "--chrome-border",
+          "--chrome-grid",
           "--chrome-label",
           "--content-primary",
           "--font-display",
@@ -1017,6 +1025,7 @@
           "--primary",
           "--rule",
           "--space-3",
+          "--space-4",
           "--space-flow",
           "--text-2xs",
           "--text-md",

@@ -17,6 +17,12 @@ One card component serves every card grid on the site — do not invent section-
 ```html
 <div class="card-grid">
   <article class="card">
+    <!-- optional. alt="" + aria-hidden: the title below says everything the
+         image does, and an alt repeating it reads every project twice. -->
+    <span class="card__media">
+      <img src="content/assets/notable/spetema.svg" alt="" aria-hidden="true"
+           width="640" height="400" loading="lazy" decoding="async">
+    </span>
     <span class="card__type">Fintech</span>
     <h3 class="card__title">Payment / Crypto / Stocks</h3>
     <p>Full IA for a unified platform…</p>
@@ -41,8 +47,14 @@ every card on the final row drop the rules that would otherwise trail into empty
 
 ## Tokens
 
-`--chrome-label`, `--content-primary`, `--font-display`, `--font-mono`, `--primary`, `--rule`,
-`--text-2xs`, `--text-md`, `--text-sub`, `--pad`, `--space-3`, `--space-flow`
+`--chrome-border`, `--chrome-grid`, `--chrome-label`, `--content-primary`, `--font-display`,
+`--font-mono`, `--primary`, `--rule`, `--text-2xs`, `--text-md`, `--text-sub`, `--pad`,
+`--space-3`, `--space-4`, `--space-flow`
+
+`--chrome-grid` is the ground under `.card__media` and `--chrome-border` its hairline. The
+tint is invisible while the plates are the generated placeholders — those *are* graph paper —
+and becomes the ground a real photograph sits on, so the window still reads as part of the
+sheet rather than as a hole in it.
 
 ## A11y
 

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="Placeholder plate for Ubistats Football">
+  <title>Ubistats Football — placeholder</title>
+  <defs>
+    <pattern id="g" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#64748b" stroke-opacity="0.16" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="400" fill="none"/>
+  <rect width="640" height="400" fill="url(#g)"/>
+  <path d="M0 168 L640 312" stroke="#94a3b8" stroke-opacity="0.5" stroke-width="1" fill="none"/>
+  <text x="320" y="200" text-anchor="middle" dominant-baseline="central"
+        font-family="Archivo, Arial Black, sans-serif" font-weight="900" font-size="96"
+        fill="#94a3b8" fill-opacity="0.55" letter-spacing="-2">UF</text>
+</svg>
