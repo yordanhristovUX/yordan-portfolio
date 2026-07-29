@@ -73,9 +73,23 @@ was the first free one.
    first" and has seen it; verdict pending.
 2. **The head fix.** Three CSS declarations, no token changed, delivers phase 0 at every width.
    Owner chose to hold it and land with the ramp. **It is independent and could ship alone.**
-3. **The hero floor.** `2.5rem` may still overflow the well at a true 320px — this pane clamps
-   at 353 and the two measurements disagree. Needs a real 320px check. If it overflows, the fix
-   is `2.25rem` and nothing else in the proposal changes.
+3. ~~**The hero floor.**~~ **ANSWERED — `2.5rem` fits. The `2.25rem` fallback is not needed.**
+   Settled by arithmetic rather than by a viewport, because the pane will not go below ~353px.
+   Archivo was confirmed loaded, `HRISTOV` (the longer of the two lines) was measured by glyph
+   advance with the `-0.02em` letter-spacing included, and the width chain was reproduced from
+   the CSS and validated against the live 1280px layout — it predicts sheet 1248, rail 96 and
+   979.2px of content, all three exact, and predicts the 360px sheet at 375px that
+   `skeleton/spec.md`'s measured table independently reports.
+
+   | hero floor | `HRISTOV` | vs 224px (320px, no scrollbar) | vs 200px (320px + scrollbar) |
+   |---|---|---|---|
+   | `3rem` (today) | 233.5px | **overflows** | **overflows** |
+   | `2.5rem` (proposed) | 194.6px | fits, 29.4px spare | fits, 5.4px spare |
+   | `2.25rem` (fallback) | 175.1px | fits, 48.9px spare | fits, 24.9px spare |
+
+   The one caveat: in a 320px *desktop* window a scrollbar takes 15px and the margin falls to
+   5.4px, under 3%. Real 320px devices have no persistent scrollbar. If you want comfort rather
+   than a fit, `2.25rem` buys 25px — but the proposal as written is sound.
 4. **`theme-color`.** The `<meta>` tags key on `prefers-color-scheme` while the site keys on
    `[data-theme]` — pin light on a dark OS and the browser chrome is wrong. Only a JS-written
    value fully fixes it, which brushes the no-flash head-script rule.
@@ -90,8 +104,8 @@ was the first free one.
 |---|---|
 | 24 | Design-system MCP tools cannot satisfy the provenance gate — needs a second provenance kind, not a fake chunk id |
 | 26 | The retry instruction pushes design-system answers toward a false "not on file" |
-| 29 | **BM25 has no stopword list** — the owner's new Background statement is BM25's top-1 for six of sixteen misses, because `where`/`moment`/`say` score as rare terms. Must NOT be tuned against `questions.json`. |
-| 30 | `/evals` ¶4 has broken three times — remove the claim *shape* (a cross-row superlative), not the value |
+| ~~29~~ | ~~BM25 has no stopword list~~ — **done, `16ec209`.** NLTK English list, external and fixed before measurement. bm25 hit@3 67.3 → 83.7, hit@1 49.0 → 57.1, MRR 0.627 → 0.706; the Background statement's 9 wrong top-1s fall to 1; abstain 0.0 → 43.8%. Nothing billed — `corpusHash` is over chunk *text*, so both vector caches stayed valid. Baseline re-cut with `--reason` so the gain is protected. |
+| 30 | **BLOCKED ON THE OWNER, and it grew.** `/evals` now carries **five** false claims, recorded in `content/evals.json`'s `review` array with the arithmetic rather than rewritten — that file's rule is that an agent must not author replacement prose. Two were caused by item 29 (¶2's "salary expectations" and "speak Japanese" examples now *abstain*, illustrating the opposite of the sentence's point; ¶4's "roughly seven points" is now 49, and "the entire ability to say not on file" is false because BM25 abstains on its own). Three predate it (¶4's "tied for best in the table" — the superlative, now also wrong because `evals/CLAUDE.md` bars separability from lead-able columns; ¶2's "appears eight times" — `google` occurs 10 times across 9 chunks). **Each needs the owner's own words.** |
 | ~~31~~ | ~~Replace `check-css` rule 6~~ — **done, `98882fa`.** It bounds a floor on `--space-6` (a rail's simulated cells go as 1/cell²) and a ceiling on `HIDDEN`, plus an assertion that the cost *model* still has four sim assignments from a known term set. Nine mutation cases verified. |
 | ~~32~~ | ~~Gate that tokens obey their own documented system~~ — **done, `2142dbf`.** See below; it found four bad contrast figures and the handover's framing of it was overstated. |
 | — | W6 numbers pass (docs citing measured figures, held until content settles) |
