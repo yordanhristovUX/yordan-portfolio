@@ -64,6 +64,38 @@
         "now": "the embeddings arm ran: six published metrics, 93.0% hit@3, and it is the page's hero stat",
         "cannotInterpolate": "the sentence asserts the absence of a measurement that now exists — replacing it is authoring, not interpolation",
         "resolution": "RESOLVED — owner's wording, applied. The sentence now reads \"The embeddings arm has since been run: it answers this question and wins every retrieval class, at {{evals:embeddings.hit3}} hit@3 against BM25's {{evals:bm25.hit3}}. The argument became a measurement.\" Both figures are placeholders rather than typed digits, so this sentence cannot drift from the table the next time the eval is re-run — which is the failure it is replacing. `{{evals:embeddings.hit3}}` is the twelfth placeholder and is new with this change."
+      },
+      {
+        "paragraph": 4,
+        "phrase": "tied for best in the table",
+        "was": "the owner's replacement for \"the best in the table\", correct when tools-gated and gated-embeddings both measured 0.920 separability",
+        "now": "OPEN. This is the third time this one clause has been falsified, and it is now wrong for a second, independent reason: evals/CLAUDE.md excludes separability from the columns an arm is allowed to lead, because awarding it a win counts the abstention rate twice. So there is no longer a defensible reading of \"best\" on this metric at all.",
+        "cannotInterpolate": "a superlative is a comparison across rows; substituting a number does not fix the word, which is why correcting the value three times has not stopped it breaking",
+        "resolution": "OPEN — needs the owner. Tracked as item 30, whose instruction is to remove the claim SHAPE rather than correct the value again. An agent must not author the replacement (see _reviewNote), so the clause is left standing and reported. The minimal change consistent with item 30 is deletion of the four words, which asserts nothing new."
+      },
+      {
+        "paragraph": 4,
+        "phrase": "Roughly seven points of ranking traded for the entire ability to say “not on file”.",
+        "was": "true when tools-gated held 30.6% hit@3 against BM25's 37.4% and BM25 abstained on nothing",
+        "now": "OPEN, and wrong twice over. BM25 gained a stopword list, so it now holds 83.7% hit@3 against tools-gated's 34.7% — the trade is 49 points, not seven. And BM25 now abstains on 43.8% of the unanswerable questions by itself, because a query made only of function words yields no scoring term, so tools-gated no longer confers \"the entire ability\" to abstain.",
+        "cannotInterpolate": "\"seven points\" is a difference between two cells and \"the entire ability\" is a claim about one arm having none of a capability; neither is a metric this file can carry as a placeholder without a new formatter",
+        "resolution": "OPEN — needs the owner. Both figures exist as placeholders already ({{evals:tools-gated.hit3}} and {{evals:bm25.hit3}}), so a wording that states the two numbers instead of their difference would be re-run-proof — but choosing that wording is authoring, not interpolation."
+      },
+      {
+        "paragraph": 2,
+        "phrase": "and for “what are his salary expectations?”, and for “does he speak Japanese?”",
+        "was": "true when BM25 had no stopword list and scored on any query term at all",
+        "now": "OPEN. Both questions now tokenise to content words only — [salary, expectations] and [speak, japanese] — none of which appears in the corpus, so BM25 returns NOTHING for both. They are now examples of the opposite of what the sentence uses them for. The third example survives: “did he ever work at Google?” still returns eight results, because `google` is genuinely in the corpus nine times.",
+        "cannotInterpolate": "the sentence names specific questions and asserts a behaviour for them; no placeholder can carry a worked example",
+        "resolution": "OPEN — needs the owner. Caused by the stopword list, which is a retrieval improvement (+16pp hit@3) that made two of this paragraph's three illustrations obsolete. Reported rather than rewritten. Whichever examples replace them should be chosen from the seven questions BM25 still answers confidently, which evals/results.json lists."
+      },
+      {
+        "paragraph": 2,
+        "phrase": "the word appears eight times in the corpus, in Google Analytics, Google Play and Google AI Studio, none of them an employer",
+        "was": "presumably true when written",
+        "now": "OPEN, and independent of the stopword change: `google` occurs 10 times across 9 chunks (df=9). The reasoning is untouched — none of the occurrences is an employer — only the count is stale.",
+        "cannotInterpolate": "a corpus term frequency is interpolatable in principle, but there is no placeholder source for one today; adding a `term` source would make this class of claim safe permanently",
+        "resolution": "OPEN — needs the owner for the wording, though this one is a plain figure correction rather than a judgement. Worth noting as the argument for a `{{evals:term.google.count}}`-style placeholder source: this is the only figure in the prose that no gate can currently reach."
       }
     ]
   }

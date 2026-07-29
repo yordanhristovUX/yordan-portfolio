@@ -824,6 +824,38 @@ function educationRegion() {
    `tokens.json`, `build.mjs`, `case-studies.js`, `spec.md`. */
 const EDGE_PUNCT = /^[.,;:!?"'’“”()[\]—–…·]+|[.,;:!?"'’“”()[\]—–…·]+$/g;
 
+/* STOPWORDS — duplicated character-for-character from lib/knowledge/search.js,
+   which carries the full reasoning. The short version: with N=70 chunks a term
+   appearing in ONE chunk earns the maximum idf this corpus can award, so
+   `where`, `moment`, `say` and `does` were scoring as the rarest terms in the
+   index — and three of them live only in the owner's Background statement,
+   which is how that passage won nine of twenty-six top-1 misses.
+
+   The list is NLTK's English stopword list (Bird, Klein & Loper), minus the
+   single characters the length filter already drops. External and fixed before
+   the effect was measured, because `lib/knowledge/CLAUDE.md` forbids making a
+   structural choice by watching the eval set.
+
+   These are removed from the INDEX, not only from the query: leaving them in
+   would keep `len` and `avgdl` counting words no query can match, so length
+   normalisation would penalise the chunks with the most function words. The two
+   copies cannot be imported across the slice boundary, so `verifyTokeniser()`
+   proves they agree by recomputing the entire shipped index. Change one and you
+   must change the other, in the same commit. */
+const STOPWORDS = new Set(
+  `i me my myself we our ours ourselves you your yours yourself yourselves he him his himself
+   she her hers herself it its itself they them their theirs themselves what which who whom
+   this that these those am is are was were be been being have has had having do does did
+   doing an the and but if or because as until while of at by for with about against between
+   into through during before after above below to from up down in out on off over under
+   again further then once here there when where why how all any both each few more most
+   other some such no nor not only own same so than too very can will just don should now
+   ll re ve ain aren couldn didn doesn hadn hasn haven isn ma mightn mustn needn shan
+   shouldn wasn weren won wouldn`
+    .split(/\s+/)
+    .filter(Boolean)
+);
+
 const tokenize = (s) =>
   s
     .toLowerCase()
@@ -840,7 +872,7 @@ const tokenize = (s) =>
       // measurement and stays whole.
       return t.includes("-") && !/[.\d]/.test(t) ? t.split("-") : [t];
     })
-    .filter((t) => t.length > 1 && t.length < 32);
+    .filter((t) => t.length > 1 && t.length < 32 && !STOPWORDS.has(t));
 
 const chunks = [];
 /* Section kinds repeat within a single entity — the audit carries two

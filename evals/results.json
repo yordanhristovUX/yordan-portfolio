@@ -7,8 +7,8 @@
   "questionsHash": "001a02d3a171c99c",
   "corpus": {
     "chunks": 70,
-    "terms": 1048,
-    "avgdl": 43.5429,
+    "terms": 967,
+    "avgdl": 32.7143,
     "projects": 14,
     "experience": 6,
     "manifestChars": 4246
@@ -67,10 +67,10 @@
         "half": 0.1316
       },
       "ent1": {
-        "value": 0.551,
-        "lo": 0.4132,
-        "hi": 0.6815,
-        "half": 0.1342
+        "value": 0.5306,
+        "lo": 0.3938,
+        "hi": 0.663,
+        "half": 0.1346
       },
       "ent3": {
         "value": 0.5714,
@@ -96,14 +96,14 @@
         "hi": 0.9341,
         "half": 0.1821
       },
-      "separability": 0.8221,
-      "separabilityScored": 0.303,
+      "separability": 0.8342,
+      "separabilityScored": 0.4341,
       "separabilityDetail": {
         "pairs": 784,
-        "emptyDriven": 572,
-        "tied": 65,
-        "scoredPairs": 132,
-        "lostByRefusingAnAnswer": 15
+        "emptyDriven": 559,
+        "tied": 78,
+        "scoredPairs": 129,
+        "lostByRefusingAnAnswer": 18
       },
       "byCategory": {
         "project": {
@@ -183,16 +183,16 @@
     {
       "arm": "bm25",
       "hit1": {
-        "value": 0.4898,
-        "lo": 0.3558,
-        "hi": 0.6253,
-        "half": 0.1348
+        "value": 0.5714,
+        "lo": 0.4327,
+        "hi": 0.6998,
+        "half": 0.1335
       },
       "hit3": {
-        "value": 0.6735,
-        "lo": 0.5338,
-        "hi": 0.7879,
-        "half": 0.1271
+        "value": 0.8367,
+        "lo": 0.7096,
+        "hi": 0.9149,
+        "half": 0.1026
       },
       "hit5": {
         "value": 0.8776,
@@ -201,64 +201,64 @@
         "half": 0.0925
       },
       "ent1": {
-        "value": 0.551,
-        "lo": 0.4132,
-        "hi": 0.6815,
-        "half": 0.1342
+        "value": 0.5714,
+        "lo": 0.4327,
+        "hi": 0.6998,
+        "half": 0.1335
       },
       "ent3": {
-        "value": 0.7551,
-        "lo": 0.6191,
-        "hi": 0.854,
-        "half": 0.1174
+        "value": 0.7959,
+        "lo": 0.6636,
+        "hi": 0.8852,
+        "half": 0.1108
       },
       "mrr": {
-        "value": 0.6274,
-        "lo": 0.5182,
-        "hi": 0.7366,
-        "half": 0.1092
+        "value": 0.7056,
+        "lo": 0.6021,
+        "hi": 0.8091,
+        "half": 0.1035
       },
       "mrrAtProductionDepth": {
-        "value": 0.6274,
-        "lo": 0.5182,
-        "hi": 0.7366,
-        "half": 0.1092
+        "value": 0.7056,
+        "lo": 0.6021,
+        "hi": 0.8091,
+        "half": 0.1035
       },
       "abstain": {
-        "value": 0,
-        "lo": 0,
-        "hi": 0.1936,
-        "half": 0.0968
+        "value": 0.4375,
+        "lo": 0.231,
+        "hi": 0.6682,
+        "half": 0.2186
       },
-      "separability": 0.7564,
-      "separabilityScored": 0.7721,
+      "separability": 0.8393,
+      "separabilityScored": 0.7862,
       "separabilityDetail": {
         "pairs": 784,
-        "emptyDriven": 0,
-        "tied": 0,
-        "scoredPairs": 768,
-        "lostByRefusingAnAnswer": 16
+        "emptyDriven": 322,
+        "tied": 21,
+        "scoredPairs": 414,
+        "lostByRefusingAnAnswer": 27
       },
       "byCategory": {
         "project": {
-          "score": 0.5833,
+          "score": 0.8333,
           "n": 12,
-          "half": 0.2436
+          "half": 0.2005
         },
         "experience": {
-          "score": 0.625,
+          "score": 0.875,
           "n": 8,
-          "half": 0.2787
+          "half": 0.2242
         },
         "skills": {
-          "score": 0.625,
+          "score": 0.75,
           "n": 8,
-          "half": 0.2787
+          "half": 0.2596
         },
         "cross-cutting": {
-          "score": 0.7692,
+          "score": 0.9231,
           "n": 13,
-          "half": 0.2104
+          "half": 0.1597
         },
         "metric": {
           "score": 0.75,
@@ -266,26 +266,26 @@
           "half": 0.2596
         },
         "structured-only": {
-          "score": 0,
+          "score": 0.4,
           "n": 5,
-          "half": 0.2172
+          "half": 0.3258
         },
         "corpus-gap": {
-          "score": 0,
+          "score": 0.3333,
           "n": 3,
-          "half": 0.2807
+          "half": 0.3654
         },
         "out-of-corpus": {
-          "score": 0,
+          "score": 0.5,
           "n": 8,
-          "half": 0.1622
+          "half": 0.2848
         }
       },
       "byShape": {
         "lookup": {
-          "score": 0.6905,
+          "score": 0.8333,
           "n": 42,
-          "half": 0.1348
+          "half": 0.1114
         },
         "temporal": {
           "score": 0,
@@ -293,9 +293,9 @@
           "half": 0.3967
         },
         "negation": {
-          "score": 0.5,
+          "score": 1,
           "n": 2,
-          "half": 0.4055
+          "half": 0.3288
         },
         "comparative": {
           "score": 1,
@@ -303,9 +303,9 @@
           "half": 0.3288
         },
         "multi-hop": {
-          "score": 0.5,
+          "score": 1,
           "n": 2,
-          "half": 0.4055
+          "half": 0.3288
         },
         "adversarial": {
           "score": 0,
@@ -317,16 +317,16 @@
     {
       "arm": "hybrid",
       "hit1": {
-        "value": 0.4286,
-        "lo": 0.3002,
-        "hi": 0.5673,
-        "half": 0.1335
+        "value": 0.4694,
+        "lo": 0.337,
+        "hi": 0.6062,
+        "half": 0.1346
       },
       "hit3": {
-        "value": 0.551,
-        "lo": 0.4132,
-        "hi": 0.6815,
-        "half": 0.1342
+        "value": 0.5714,
+        "lo": 0.4327,
+        "hi": 0.6998,
+        "half": 0.1335
       },
       "hit5": {
         "value": 0.7143,
@@ -335,10 +335,10 @@
         "half": 0.1228
       },
       "ent1": {
-        "value": 0.6122,
-        "lo": 0.4725,
-        "hi": 0.7357,
-        "half": 0.1316
+        "value": 0.5918,
+        "lo": 0.4525,
+        "hi": 0.7178,
+        "half": 0.1327
       },
       "ent3": {
         "value": 0.6531,
@@ -347,31 +347,31 @@
         "half": 0.1288
       },
       "mrr": {
-        "value": 0.5404,
-        "lo": 0.4237,
-        "hi": 0.6571,
-        "half": 0.1167
+        "value": 0.5663,
+        "lo": 0.4476,
+        "hi": 0.685,
+        "half": 0.1187
       },
       "mrrAtProductionDepth": {
-        "value": 0.5361,
-        "lo": 0.418,
-        "hi": 0.6543,
-        "half": 0.1181
+        "value": 0.562,
+        "lo": 0.4418,
+        "hi": 0.6822,
+        "half": 0.1202
       },
       "abstain": {
-        "value": 0,
-        "lo": 0,
-        "hi": 0.1936,
-        "half": 0.0968
+        "value": 0.4375,
+        "lo": 0.231,
+        "hi": 0.6682,
+        "half": 0.2186
       },
-      "separability": 0.3355,
-      "separabilityScored": 0.3424,
+      "separability": 0.6875,
+      "separabilityScored": 0.4799,
       "separabilityDetail": {
         "pairs": 784,
-        "emptyDriven": 0,
-        "tied": 0,
-        "scoredPairs": 768,
-        "lostByRefusingAnAnswer": 16
+        "emptyDriven": 329,
+        "tied": 14,
+        "scoredPairs": 423,
+        "lostByRefusingAnAnswer": 18
       },
       "byCategory": {
         "project": {
@@ -380,9 +380,9 @@
           "half": 0.2217
         },
         "experience": {
-          "score": 0.5,
+          "score": 0.625,
           "n": 8,
-          "half": 0.2848
+          "half": 0.2787
         },
         "skills": {
           "score": 0.375,
@@ -390,29 +390,29 @@
           "half": 0.2787
         },
         "cross-cutting": {
-          "score": 0.4615,
+          "score": 0.5385,
           "n": 13,
           "half": 0.2383
         },
         "metric": {
-          "score": 0.625,
+          "score": 0.5,
           "n": 8,
-          "half": 0.2787
+          "half": 0.2848
         },
         "structured-only": {
-          "score": 0,
+          "score": 0.4,
           "n": 5,
-          "half": 0.2172
+          "half": 0.3258
         },
         "corpus-gap": {
-          "score": 0,
+          "score": 0.3333,
           "n": 3,
-          "half": 0.2807
+          "half": 0.3654
         },
         "out-of-corpus": {
-          "score": 0,
+          "score": 0.5,
           "n": 8,
-          "half": 0.1622
+          "half": 0.2848
         }
       },
       "byShape": {
@@ -432,9 +432,9 @@
           "half": 0.3288
         },
         "comparative": {
-          "score": 0,
+          "score": 0.5,
           "n": 2,
-          "half": 0.3288
+          "half": 0.4055
         },
         "multi-hop": {
           "score": 1,
@@ -457,66 +457,66 @@
         "half": 0.1108
       },
       "hit3": {
-        "value": 0.3061,
-        "lo": 0.1952,
-        "hi": 0.4453,
-        "half": 0.1251
+        "value": 0.3469,
+        "lo": 0.2292,
+        "hi": 0.4869,
+        "half": 0.1288
       },
       "hit5": {
-        "value": 0.4082,
-        "lo": 0.2822,
-        "hi": 0.5475,
-        "half": 0.1327
+        "value": 0.3469,
+        "lo": 0.2292,
+        "hi": 0.4869,
+        "half": 0.1288
       },
       "ent1": {
-        "value": 0.2653,
-        "lo": 0.1621,
-        "hi": 0.4026,
-        "half": 0.1203
+        "value": 0.2449,
+        "lo": 0.146,
+        "hi": 0.3809,
+        "half": 0.1174
       },
       "ent3": {
-        "value": 0.3673,
-        "lo": 0.2467,
-        "hi": 0.5073,
-        "half": 0.1303
+        "value": 0.3469,
+        "lo": 0.2292,
+        "hi": 0.4869,
+        "half": 0.1288
       },
       "mrr": {
-        "value": 0.2753,
-        "lo": 0.1642,
-        "hi": 0.3865,
-        "half": 0.1111
+        "value": 0.2653,
+        "lo": 0.1518,
+        "hi": 0.3788,
+        "half": 0.1135
       },
       "mrrAtProductionDepth": {
-        "value": 0.2753,
-        "lo": 0.1642,
-        "hi": 0.3865,
-        "half": 0.1111
+        "value": 0.2653,
+        "lo": 0.1518,
+        "hi": 0.3788,
+        "half": 0.1135
       },
       "abstain": {
-        "value": 0.875,
-        "lo": 0.6398,
-        "hi": 0.965,
-        "half": 0.1626
+        "value": 0.9375,
+        "lo": 0.7167,
+        "hi": 0.9889,
+        "half": 0.1361
       },
-      "separability": 0.6735,
-      "separabilityScored": 0.5217,
+      "separability": 0.662,
+      "separabilityScored": 0.4737,
       "separabilityDetail": {
         "pairs": 784,
-        "emptyDriven": 322,
-        "tied": 364,
-        "scoredPairs": 46,
-        "lostByRefusingAnAnswer": 52
+        "emptyDriven": 285,
+        "tied": 450,
+        "scoredPairs": 19,
+        "lostByRefusingAnAnswer": 30
       },
       "byCategory": {
         "project": {
-          "score": 0.4167,
+          "score": 0.6667,
           "n": 12,
-          "half": 0.2436
+          "half": 0.2356
         },
         "experience": {
-          "score": 0.375,
+          "score": 0.5,
           "n": 8,
-          "half": 0.2787
+          "half": 0.2848
         },
         "skills": {
           "score": 0.125,
@@ -524,9 +524,9 @@
           "half": 0.2242
         },
         "cross-cutting": {
-          "score": 0.2308,
+          "score": 0.0769,
           "n": 13,
-          "half": 0.2104
+          "half": 0.1597
         },
         "metric": {
           "score": 0.375,
@@ -539,9 +539,9 @@
           "half": 0.2941
         },
         "corpus-gap": {
-          "score": 0.6667,
+          "score": 1,
           "n": 3,
-          "half": 0.3654
+          "half": 0.2807
         },
         "out-of-corpus": {
           "score": 1,
@@ -551,9 +551,9 @@
       },
       "byShape": {
         "lookup": {
-          "score": 0.3333,
+          "score": 0.381,
           "n": 42,
-          "half": 0.1372
+          "half": 0.1409
         },
         "temporal": {
           "score": 0,
@@ -561,9 +561,9 @@
           "half": 0.3967
         },
         "negation": {
-          "score": 0,
+          "score": 0.5,
           "n": 2,
-          "half": 0.3288
+          "half": 0.4055
         },
         "comparative": {
           "score": 0,
@@ -571,9 +571,9 @@
           "half": 0.3288
         },
         "multi-hop": {
-          "score": 0.5,
+          "score": 0,
           "n": 2,
-          "half": 0.4055
+          "half": 0.3288
         },
         "adversarial": {
           "score": 1,
@@ -719,46 +719,46 @@
     {
       "arm": "gated-embeddings",
       "hit1": {
+        "value": 0.3469,
+        "lo": 0.2292,
+        "hi": 0.4869,
+        "half": 0.1288
+      },
+      "hit3": {
+        "value": 0.3469,
+        "lo": 0.2292,
+        "hi": 0.4869,
+        "half": 0.1288
+      },
+      "hit5": {
         "value": 0.3878,
         "lo": 0.2643,
         "hi": 0.5275,
         "half": 0.1316
       },
-      "hit3": {
-        "value": 0.4082,
-        "lo": 0.2822,
-        "hi": 0.5475,
-        "half": 0.1327
-      },
-      "hit5": {
-        "value": 0.449,
-        "lo": 0.3185,
-        "hi": 0.5868,
-        "half": 0.1342
-      },
       "ent1": {
-        "value": 0.3061,
-        "lo": 0.1952,
-        "hi": 0.4453,
-        "half": 0.1251
+        "value": 0.2857,
+        "lo": 0.1785,
+        "hi": 0.4241,
+        "half": 0.1228
       },
       "ent3": {
-        "value": 0.4082,
-        "lo": 0.2822,
-        "hi": 0.5475,
-        "half": 0.1327
+        "value": 0.3469,
+        "lo": 0.2292,
+        "hi": 0.4869,
+        "half": 0.1288
       },
       "mrr": {
-        "value": 0.4071,
-        "lo": 0.2724,
-        "hi": 0.5419,
-        "half": 0.1348
+        "value": 0.3595,
+        "lo": 0.2267,
+        "hi": 0.4923,
+        "half": 0.1328
       },
       "mrrAtProductionDepth": {
-        "value": 0.4071,
-        "lo": 0.2724,
-        "hi": 0.5419,
-        "half": 0.1348
+        "value": 0.3595,
+        "lo": 0.2267,
+        "hi": 0.4923,
+        "half": 0.1328
       },
       "abstain": {
         "value": 0.875,
@@ -766,14 +766,14 @@
         "hi": 0.965,
         "half": 0.1626
       },
-      "separability": 0.6798,
-      "separabilityScored": 0.6304,
+      "separability": 0.648,
+      "separabilityScored": 0.625,
       "separabilityDetail": {
         "pairs": 784,
-        "emptyDriven": 322,
-        "tied": 364,
-        "scoredPairs": 46,
-        "lostByRefusingAnAnswer": 52
+        "emptyDriven": 280,
+        "tied": 406,
+        "scoredPairs": 40,
+        "lostByRefusingAnAnswer": 58
       },
       "byCategory": {
         "project": {
@@ -792,9 +792,9 @@
           "half": 0.2242
         },
         "cross-cutting": {
-          "score": 0.3077,
+          "score": 0.0769,
           "n": 13,
-          "half": 0.2247
+          "half": 0.1597
         },
         "metric": {
           "score": 0.5,
@@ -819,9 +819,9 @@
       },
       "byShape": {
         "lookup": {
-          "score": 0.4286,
+          "score": 0.381,
           "n": 42,
-          "half": 0.1434
+          "half": 0.1409
         },
         "temporal": {
           "score": 0,
@@ -839,9 +839,9 @@
           "half": 0.3288
         },
         "multi-hop": {
-          "score": 0.5,
+          "score": 0,
           "n": 2,
-          "half": 0.4055
+          "half": 0.3288
         },
         "adversarial": {
           "score": 1,
@@ -857,27 +857,24 @@
       "b": "bm25",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 12,
-      "losses": 0,
-      "discordant": 12,
-      "p": 0.000488,
-      "significant": true,
+      "wins": 6,
+      "losses": 2,
+      "discordant": 8,
+      "p": 0.289,
+      "significant": false,
       "note": "the ranker that ships against the free offline floor",
       "winIds": [
-        "proj-spetema-ia",
-        "proj-malko-colour",
-        "proj-football",
         "exp-research-years",
-        "skill-accessibility",
         "skill-frontend",
         "skill-education",
         "cross-design-systems-where",
-        "cross-figma-not-source",
-        "cross-assistant-accessibility",
-        "metric-spetema-products",
-        "metric-marathon"
+        "metric-marathon",
+        "metric-deadlift"
       ],
-      "lossIds": []
+      "lossIds": [
+        "exp-current",
+        "exp-studio-kipo"
+      ]
     },
     {
       "a": "embeddings",
@@ -927,15 +924,17 @@
       "b": "tools-only",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 18,
-      "losses": 9,
-      "discordant": 27,
-      "p": 0.122,
-      "significant": false,
+      "wins": 21,
+      "losses": 4,
+      "discordant": 25,
+      "p": 0.000911,
+      "significant": true,
       "note": "lexical ranking against structured name lookup",
       "winIds": [
+        "proj-malko-colour",
         "proj-audit-severity",
         "proj-meta-pipeline",
+        "exp-current",
         "exp-domestina-now",
         "exp-greenstreet-scope",
         "skill-ai-tools",
@@ -948,21 +947,17 @@
         "cross-production-code",
         "cross-b2b-b2c",
         "cross-white-label",
+        "cross-figma-not-source",
         "cross-no-build-step",
         "cross-biggest-improvement",
-        "metric-deadlift",
+        "metric-spetema-products",
         "metric-catalogue-vs-components"
       ],
       "lossIds": [
         "proj-domestina-what",
-        "proj-spetema-ia",
         "proj-mindromeda",
-        "proj-football",
-        "exp-studio-kipo",
-        "skill-accessibility",
         "skill-frontend",
-        "cross-design-systems-where",
-        "cross-assistant-accessibility"
+        "cross-design-systems-where"
       ]
     },
     {
@@ -970,13 +965,14 @@
       "b": "hybrid",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 15,
-      "losses": 9,
-      "discordant": 24,
-      "p": 0.307,
-      "significant": false,
+      "wins": 17,
+      "losses": 4,
+      "discordant": 21,
+      "p": 0.0072,
+      "significant": true,
       "note": "does appending BM25 beneath the tools arm cost anything",
       "winIds": [
+        "proj-malko-colour",
         "proj-audit-severity",
         "proj-meta-pipeline",
         "exp-domestina-now",
@@ -989,20 +985,16 @@
         "cross-production-code",
         "cross-b2b-b2c",
         "cross-white-label",
+        "cross-figma-not-source",
         "cross-no-build-step",
-        "cross-biggest-improvement",
+        "metric-spetema-products",
         "metric-catalogue-vs-components"
       ],
       "lossIds": [
         "proj-domestina-what",
-        "proj-spetema-ia",
         "proj-mindromeda",
-        "proj-football",
-        "exp-studio-kipo",
-        "skill-accessibility",
         "skill-frontend",
-        "cross-design-systems-where",
-        "cross-assistant-accessibility"
+        "cross-design-systems-where"
       ]
     },
     {
@@ -1011,9 +1003,9 @@
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
       "wins": 0,
-      "losses": 25,
-      "discordant": 25,
-      "p": 5.96e-8,
+      "losses": 28,
+      "discordant": 28,
+      "p": 7.45e-9,
       "significant": true,
       "note": "what refusing on a gate miss costs the ranker",
       "winIds": [],
@@ -1032,12 +1024,15 @@
         "skill-education",
         "cross-local-government",
         "cross-design-systems-where",
+        "cross-app-stores",
         "cross-conflicting-audiences",
+        "cross-production-code",
         "cross-b2b-b2c",
         "cross-white-label",
         "cross-open-source",
         "cross-no-build-step",
         "cross-biggest-improvement",
+        "cross-kipo-app-stores",
         "cross-assistant-accessibility",
         "metric-issue-count",
         "metric-marathon",
@@ -1050,35 +1045,38 @@
       "b": "bm25",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 5,
-      "losses": 18,
-      "discordant": 23,
-      "p": 0.0106,
+      "wins": 1,
+      "losses": 25,
+      "discordant": 26,
+      "p": 8.05e-7,
       "significant": true,
       "note": "the gated counterfactual against free offline BM25",
       "winIds": [
-        "proj-spetema-ia",
-        "proj-malko-colour",
-        "proj-football",
-        "cross-figma-not-source",
-        "metric-spetema-products"
+        "metric-deadlift"
       ],
       "lossIds": [
         "proj-audit-severity",
         "proj-crypto-platform",
+        "exp-current",
+        "exp-studio-kipo",
         "exp-before-tech",
         "exp-team-lead",
+        "skill-accessibility",
         "skill-research-methods",
         "skill-design-systems",
         "skill-motion",
         "skill-languages",
         "cross-local-government",
+        "cross-app-stores",
         "cross-conflicting-audiences",
+        "cross-production-code",
         "cross-b2b-b2c",
         "cross-white-label",
         "cross-open-source",
         "cross-no-build-step",
         "cross-biggest-improvement",
+        "cross-kipo-app-stores",
+        "cross-assistant-accessibility",
         "metric-issue-count",
         "metric-team-size",
         "metric-catalogue-vs-components"
@@ -1090,28 +1088,34 @@
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
       "wins": 0,
-      "losses": 18,
-      "discordant": 18,
-      "p": 0.00000763,
+      "losses": 24,
+      "discordant": 24,
+      "p": 1.19e-7,
       "significant": true,
       "note": "what refusing on a gate miss costs BM25",
       "winIds": [],
       "lossIds": [
         "proj-audit-severity",
         "proj-crypto-platform",
+        "exp-current",
         "exp-before-tech",
         "exp-team-lead",
+        "skill-accessibility",
         "skill-research-methods",
         "skill-design-systems",
         "skill-motion",
         "skill-languages",
         "cross-local-government",
+        "cross-app-stores",
         "cross-conflicting-audiences",
+        "cross-production-code",
         "cross-b2b-b2c",
         "cross-white-label",
         "cross-open-source",
         "cross-no-build-step",
         "cross-biggest-improvement",
+        "cross-kipo-app-stores",
+        "cross-assistant-accessibility",
         "metric-issue-count",
         "metric-team-size",
         "metric-catalogue-vs-components"
