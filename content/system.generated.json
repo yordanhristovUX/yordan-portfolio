@@ -1,10 +1,11 @@
 {
   "$generatedBy": "design-system/scripts/build.mjs — do not edit",
-  "tokens": 83,
-  "values": 142,
-  "light": 83,
+  "tokens": 84,
+  "values": 149,
+  "light": 84,
   "dark": 24,
-  "print": 35,
+  "print": 36,
+  "wide": 5,
   "components": 21,
   "componentNames": [
     "button",

@@ -362,52 +362,64 @@
   },
   "text.text-lead": {
     "cssVar": "--text-lead",
-    "value": "clamp(1.1rem, 1.7vw, 1.35rem)",
+    "value": "1.1rem",
     "print": "9.5pt",
     "printResolved": "9.5pt",
+    "wide": "1.25rem",
     "description": "The reading lede — one step above body, the paragraph that introduces a section. On paper it collapses back into body: a CV has no room for an emphasised opening size."
   },
   "text.text-sub": {
     "cssVar": "--text-sub",
-    "value": "clamp(1.15rem, 2vw, 1.5rem)",
+    "value": "1.22rem",
     "print": "10pt",
     "printResolved": "10pt",
+    "wide": "1.55rem",
     "description": "Sub-titles: card titles, a role in an entry, an <h3> inside a case study. Three near-identical ramps used to live here — clamp(1.15rem,1.7vw,1.45rem), clamp(1.1rem,1.9vw,1.45rem) and clamp(1.2rem,2.2vw,1.55rem) — rendering at 1280px as 21.76 / 23.2 / 24.8px. That is drift, not hierarchy. A fourth, the work index's project name, was a genuine step larger and became `text-heading`."
   },
   "text.text-heading": {
     "cssVar": "--text-heading",
-    "value": "clamp(1.3rem, 2.4vw, 1.9rem)",
+    "value": "1.355rem",
     "print": "10.5pt",
     "printResolved": "10.5pt",
+    "wide": "1.95rem",
     "description": "One step above a sub-title and below a section title: the work index's project names, which are the largest thing in a scannable list and must not fall back to card-title size."
   },
   "text.text-title": {
     "cssVar": "--text-title",
-    "value": "clamp(1.65rem, 3.7vw, 2.8rem)",
+    "value": "1.5rem",
     "print": "11pt",
     "printResolved": "11pt",
-    "description": "Section titles and the one statement per section. `.t-title` and `.t-statement` were 2.9rem and 2.7rem — the same level wearing different weights and cases, which is what the utility classes are for."
+    "wide": "2.45rem",
+    "description": "Section titles. At the base value it fits BACKGROUND — the longest of them — inside the well at 320px, which the old clamp's 1.65rem floor did not. It no longer shares a step with the statement: see `text-statement`."
+  },
+  "text.text-statement": {
+    "cssVar": "--text-statement",
+    "value": "clamp(1.5rem, 0.7857rem + 3.5714vw, 2.8rem)",
+    "print": "11pt",
+    "printResolved": "11pt",
+    "description": "The one statement per section. It used to share `text-title`, on the argument that the two are the same LEVEL wearing different weights — but they differ by SHAPE OF RESPONSE, which is the distinction that matters here. A title is a single line in a strip that has to land on the lattice, so it steps at the grid break and the step is free. A statement is a 7-19 line paragraph in a measure, so stepping it takes it from six lines to ten in one pixel of resize. It gets an authored curve instead: anchored 320 -> 1440 so both ends are widths the layout actually has, unlike the ramps this scale replaced."
   },
   "text.text-display": {
     "cssVar": "--text-display",
-    "value": "clamp(2.1rem, 4.8vw, 3.45rem)",
+    "value": "1.67rem",
     "print": "20pt",
     "printResolved": "20pt",
+    "wide": "3.05rem",
     "description": "Display: dialog titles, the CV name, a stat, a fact's number. `.fact__num` was clamp(2.2rem, 4.5vw, 3.5rem) and `.stat` was clamp(2.2rem, 5vw, 3.5rem) — a 0.5vw difference nobody chose."
   },
   "text.text-display-xl": {
     "cssVar": "--text-display-xl",
-    "value": "clamp(2.6rem, 8.5vw, 7.5rem)",
+    "value": "clamp(2.25rem, 0.75rem + 7.5vw, 7.5rem)",
     "print": "26pt",
     "printResolved": "26pt",
-    "description": "The contact headline."
+    "description": "The contact headline. Genuinely fluid, because its size IS its container's width rather than its level. Re-anchored 320 -> 1440."
   },
   "text.text-display-hero": {
     "cssVar": "--text-display-hero",
-    "value": "clamp(3rem, 11.5vw, 10.5rem)",
+    "value": "clamp(2.5rem, 0.2143rem + 11.4286vw, 10.5rem)",
     "print": "32pt",
     "printResolved": "32pt",
-    "description": "The hero name, once per site."
+    "description": "The hero name, once per site. Genuinely fluid for the same reason as `text-display-xl`, and re-anchored 320 -> 1440. The old floor of 3rem overflowed its own well at 320px — measured, HRISTOV needs 233.5px against 224px of content column — and the old ceiling landed at 1461px, past 1440 where the sheet stops growing and the well starts SHRINKING while the font keeps growing. 2.5rem measures 194.6px, which fits with 29.4px to spare."
   },
   "text.text-code": {
     "cssVar": "--text-code",

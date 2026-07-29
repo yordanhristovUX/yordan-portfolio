@@ -82,19 +82,20 @@
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  /* --- The type scale: one ramp of twelve steps, static up to body and fluid above it. That split is the whole idea. Below body a size has no voice — it is chrome, and chrome must not resize with the window or a 12px label becomes an 18px one on a wide monitor; so those four steps and body itself are fixed rem on a ~1.085 ratio. Above body every step IS a voice in the hierarchy (lead, sub, heading, title, display), and a display line has to survive both a 375px phone and a 1600px sheet, so those seven are `clamp(min, vw, max)`. Every step also carries a `print` value in pt: paper is a third theme for type exactly as it is for colour, and a `vw` clamp has nothing to scale against on a page. The two `em` entries at the end are ratios, not steps — they mean 'a fraction of whatever set me', which is a relationship the scale cannot express. --- */
+  /* --- The type scale: one ramp of thirteen steps, and the line through it is NOT 'above or below body'. It is: is this line's size set by the LEVEL it occupies in the hierarchy, or by the WIDTH OF THE BOX it has to fill? Ten are set by their level, and a level is a decision, so those are chosen rem values — the five chrome steps up to body sit on a fixed ~1.085 ratio, and the five above it (lead, sub, heading, title, display) carry a second chosen value at the grid break. Three are set by their box and stay `clamp(min, vw, max)`: the two posters, whose size IS their container's width, and the statement, a paragraph whose line count would jump six-to-ten on a single pixel of resize if it stepped. Every step also carries a `print` value in pt: paper is a third theme for type exactly as it is for colour, and a `vw` clamp has nothing to scale against on a page. The two `em` entries at the end are ratios, not steps — they mean 'a fraction of whatever set me', which is a relationship the scale cannot express. WHAT THIS REPLACED, because the failure is instructive: the seven upper steps were all clamps, and not one of their numbers was chosen. Four were arithmetic means of the ramps they consolidated and three were verbatim copies, so the tier carrying the most confident prose was the tier with no author. Their `vw` term was also inert at both viewports the doc argued from, and none of their fourteen pin points was one of the thirteen breakpoints the CSS actually uses. --- */
   --text-2xs: 0.72rem; /* The floor. Chips, the tool trace, the source list's ordinals, the ▪ bullets — text you are not meant to read so much as recognise. */
   --text-xs: 0.78rem; /* The standard chrome label: the nav bar, buttons, section numbers, dated spans, page notes. Twelve of the old 89 declarations were already this value — it was the de-facto step, now it is the actual one. */
   --text-sm: 0.85rem; /* Small prose — captions, fact labels, citation lines, code blocks. */
   --text-md: 0.92rem; /* Secondary prose: card copy, list items, definition bodies. Body's quieter sibling. */
   --text-base: 1rem; /* Body. Set on `body` in components.css; everything else is measured from here. */
-  --text-lead: clamp(1.1rem, 1.7vw, 1.35rem); /* The reading lede — one step above body, the paragraph that introduces a section. On paper it collapses back into body: a CV has no room for an emphasised opening size. */
-  --text-sub: clamp(1.15rem, 2vw, 1.5rem); /* Sub-titles: card titles, a role in an entry, an <h3> inside a case study. Three near-identical ramps used to live here — clamp(1.15rem,1.7vw,1.45rem), clamp(1.1rem,1.9vw,1.45rem) and clamp(1.2rem,2.2vw,1.55rem) — rendering at 1280px as 21.76 / 23.2 / 24.8px. That is drift, not hierarchy. A fourth, the work index's project name, was a genuine step larger and became `text-heading`. */
-  --text-heading: clamp(1.3rem, 2.4vw, 1.9rem); /* One step above a sub-title and below a section title: the work index's project names, which are the largest thing in a scannable list and must not fall back to card-title size. */
-  --text-title: clamp(1.65rem, 3.7vw, 2.8rem); /* Section titles and the one statement per section. `.t-title` and `.t-statement` were 2.9rem and 2.7rem — the same level wearing different weights and cases, which is what the utility classes are for. */
-  --text-display: clamp(2.1rem, 4.8vw, 3.45rem); /* Display: dialog titles, the CV name, a stat, a fact's number. `.fact__num` was clamp(2.2rem, 4.5vw, 3.5rem) and `.stat` was clamp(2.2rem, 5vw, 3.5rem) — a 0.5vw difference nobody chose. */
-  --text-display-xl: clamp(2.6rem, 8.5vw, 7.5rem); /* The contact headline. */
-  --text-display-hero: clamp(3rem, 11.5vw, 10.5rem); /* The hero name, once per site. */
+  --text-lead: 1.1rem; /* The reading lede — one step above body, the paragraph that introduces a section. On paper it collapses back into body: a CV has no room for an emphasised opening size. */
+  --text-sub: 1.22rem; /* Sub-titles: card titles, a role in an entry, an <h3> inside a case study. Three near-identical ramps used to live here — clamp(1.15rem,1.7vw,1.45rem), clamp(1.1rem,1.9vw,1.45rem) and clamp(1.2rem,2.2vw,1.55rem) — rendering at 1280px as 21.76 / 23.2 / 24.8px. That is drift, not hierarchy. A fourth, the work index's project name, was a genuine step larger and became `text-heading`. */
+  --text-heading: 1.355rem; /* One step above a sub-title and below a section title: the work index's project names, which are the largest thing in a scannable list and must not fall back to card-title size. */
+  --text-title: 1.5rem; /* Section titles. At the base value it fits BACKGROUND — the longest of them — inside the well at 320px, which the old clamp's 1.65rem floor did not. It no longer shares a step with the statement: see `text-statement`. */
+  --text-statement: clamp(1.5rem, 0.7857rem + 3.5714vw, 2.8rem); /* The one statement per section. It used to share `text-title`, on the argument that the two are the same LEVEL wearing different weights — but they differ by SHAPE OF RESPONSE, which is the distinction that matters here. A title is a single line in a strip that has to land on the lattice, so it steps at the grid break and the step is free. A statement is a 7-19 line paragraph in a measure, so stepping it takes it from six lines to ten in one pixel of resize. It gets an authored curve instead: anchored 320 -> 1440 so both ends are widths the layout actually has, unlike the ramps this scale replaced. */
+  --text-display: 1.67rem; /* Display: dialog titles, the CV name, a stat, a fact's number. `.fact__num` was clamp(2.2rem, 4.5vw, 3.5rem) and `.stat` was clamp(2.2rem, 5vw, 3.5rem) — a 0.5vw difference nobody chose. */
+  --text-display-xl: clamp(2.25rem, 0.75rem + 7.5vw, 7.5rem); /* The contact headline. Genuinely fluid, because its size IS its container's width rather than its level. Re-anchored 320 -> 1440. */
+  --text-display-hero: clamp(2.5rem, 0.2143rem + 11.4286vw, 10.5rem); /* The hero name, once per site. Genuinely fluid for the same reason as `text-display-xl`, and re-anchored 320 -> 1440. The old floor of 3rem overflowed its own well at 320px — measured, HRISTOV needs 233.5px against 224px of content column — and the old ceiling landed at 1461px, past 1440 where the sheet stops growing and the well starts SHRINKING while the font keeps growing. 2.5rem measures 194.6px, which fits with 29.4px to spare. */
   --text-code: 0.9em; /* Inline <code> inside prose. A RATIO, not a step: monospace runs optically larger than the sans beside it, so it is set relative to whatever paragraph it lands in. */
   --text-unit: 0.38em; /* The unit suffix riding on a display number (`+`, `%`, `×`). A ratio for the same reason: it must stay proportional to the number it annotates, whatever size that number lands at. */
 
@@ -116,6 +117,21 @@
   /* --- Rule shorthands. Used as border/box-shadow values in chrome; the square skeleton itself never uses border (inset shadows keep fr-track math exact). --- */
   --rule: 1px solid var(--chrome-border);
   --rule-strong: 2px solid var(--content-primary); /* The heavy rule. In light it is drawn ink — the section signature. Inverting it literally would make it a 2px stone-50 bar glaring across every section top, so on dark it becomes the strong chrome border instead: still structural, no longer a light source. On paper it returns to ink — the one place the rule is cheap and does the most work. */
+}
+
+/* ============ Wide viewport (>= 760px) ============
+   5 tokens step at the site's own grid break, 24 columns to 12.
+   A step whose size is set by the LEVEL it occupies wants two chosen values
+   with a step between them, not a clamp sliding through every size in
+   between. Anything without a `wide` value simply cascades. */
+@media (min-width: 760px) {
+  :root {
+    --text-lead: 1.25rem;
+    --text-sub: 1.55rem;
+    --text-heading: 1.95rem;
+    --text-title: 2.45rem;
+    --text-display: 3.05rem;
+  }
 }
 
 /* ============ Dark theme ============
@@ -179,7 +195,7 @@
 }
 
 /* ============ Print ============
-   35 tokens re-alias for paper. Emitted after the dark
+   36 tokens re-alias for paper. Emitted after the dark
    blocks so it wins regardless of the theme on screen. */
 @media print {
   :root, :root[data-theme="dark"], :root[data-theme="light"] {
@@ -213,6 +229,7 @@
     --text-sub: 10pt;
     --text-heading: 10.5pt;
     --text-title: 11pt;
+    --text-statement: 11pt;
     --text-display: 20pt;
     --text-display-xl: 26pt;
     --text-display-hero: 32pt;

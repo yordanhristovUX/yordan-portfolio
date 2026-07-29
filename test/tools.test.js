@@ -396,10 +396,17 @@ test("[drift] every declared rule still holds against the contract", async () =>
      prefers-color-scheme query would be describing a system that no longer
      themes itself that way. */
   assert.ok(content.system.dark > 0 && content.system.print > 0, "themes are no longer carried as token values");
+  /* FOUR TIERS NOW, NOT THREE. `wide` joined light/dark/print when the type
+     ramp landed: a step whose size is set by the level it occupies carries a
+     second chosen value at the 760px grid break, emitted as a media query by
+     the same machinery that emits the dark and print blocks. This assertion is
+     what caught the tier being added without the published value count
+     following it — 84 + 24 + 36 = 144 against a published 149 — so it is kept
+     as a sum rather than relaxed to a bound. */
   assert.equal(
-    content.system.light + content.system.dark + content.system.print,
+    content.system.light + content.system.dark + content.system.print + content.system.wide,
     content.system.values,
-    "the three theme counts no longer account for the published value count"
+    "the four tier counts no longer account for the published value count"
   );
 
   /* judgement-lives-in-the-spec: every component points at the human-written

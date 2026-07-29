@@ -1014,6 +1014,12 @@ function buildContentJson() {
       light: system.light,
       dark: system.dark,
       print: system.print,
+      /* The fourth tier, added with the type ramp. It is carried for the same
+         reason the other three are: `values` is their sum, and a reader who
+         asks how the scale is built must be able to get the parts from a tool
+         instead of inferring them. Omitting it here made the sum NaN and a
+         drift test caught it — which is the test doing precisely its job. */
+      wide: system.wide,
     },
     profile: {
       identity: profile.identity,

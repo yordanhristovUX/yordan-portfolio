@@ -149,8 +149,8 @@ READMEs, the **dark count**. Those figures are a claim the site makes about itse
 public, so they get the same enforcement as component coverage — during one session they
 went stale twice, which is exactly the drift this system exists to prevent.
 
-- **tokens** — entries in `tokens.json` (83)
-- **values** — light + dark + print authored values across those tokens (142). Note this is
+- **tokens** — entries in `tokens.json` (84)
+- **values** — light + dark + print + wide authored values across those tokens (149). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
 - **components** — directories under `components/` (21)

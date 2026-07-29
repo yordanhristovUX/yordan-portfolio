@@ -77,7 +77,7 @@ window.CASE_STUDIES = {
       <p><span class="stat">0</span></p>
       <ul>
         <li><strong>0 accessibility violations</strong> across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
-        <li><strong>83 tokens, 142 values, 21 components</strong> — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
+        <li><strong>84 tokens, 149 values, 21 components</strong> — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
         <li><strong>Dark mode is 24 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS — the sharpest test a semantic token layer can be put to.</li>
         <li><strong>No build step in the site.</strong> Two link tags consume the system; view-source shows everything.</li>
       </ul>

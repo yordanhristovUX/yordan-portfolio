@@ -3,12 +3,13 @@
   "version": 1,
   "generatedBy": "scripts/build-content.mjs — do not edit",
   "system": {
-    "tokens": 83,
-    "values": 142,
+    "tokens": 84,
+    "values": 149,
     "components": 21,
-    "light": 83,
+    "light": 84,
     "dark": 24,
-    "print": 35
+    "print": 36,
+    "wide": 5
   },
   "profile": {
     "identity": {
@@ -79,7 +80,7 @@
         "Tokens are born in the repo, not in Figma. One tokens.json builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and the build fails if any of the three is missing, so parity is enforced rather than maintained by hand.",
         "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules."
       ],
-      "openSourceFacts": "83 tokens carrying 142 values across light, dark & print · 21 components · 0 axe violations across 21 Storybook stories · MIT licensed"
+      "openSourceFacts": "84 tokens carrying 149 values across light, dark & print · 21 components · 0 axe violations across 21 Storybook stories · MIT licensed"
     }
   },
   "capabilities": [
@@ -323,7 +324,7 @@
         {
           "kind": "outcome",
           "heading": "Receipts",
-          "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 83 tokens, 142 values, 21 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything."
+          "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 84 tokens, 149 values, 21 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything."
         },
         {
           "kind": "status",
@@ -1763,6 +1764,7 @@
           "--text-heading",
           "--text-md",
           "--text-sm",
+          "--text-sub",
           "--text-xs"
         ]
       },
@@ -2072,6 +2074,7 @@
           "--text-display-hero",
           "--text-display-xl",
           "--text-lead",
+          "--text-statement",
           "--text-title",
           "--text-xs"
         ]

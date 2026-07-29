@@ -59,7 +59,14 @@ fluid steps in particular *need* one.
 
 `--chrome-label-strong`, `--content-body`, `--content-muted`, `--content-primary`,
 `--font-body`, `--font-display`, `--font-mono`, `--space-6`, `--text-display`,
-`--text-display-hero`, `--text-display-xl`, `--text-lead`, `--text-title`, `--text-xs`
+`--text-display-hero`, `--text-display-xl`, `--text-lead`, `--text-statement`, `--text-title`,
+`--text-xs`
+
+`--text-statement` is new, and `.t-statement` no longer shares `--text-title`. The two differ
+by **shape of response**, not by level: a title is one line in a strip that must land on the
+lattice, so it steps at the grid break for free; a statement is a 7-19 line paragraph in a
+measure, so a step moves it from six lines to ten on a single pixel of resize. The title steps;
+the statement keeps an authored curve.
 
 `--space-6` is the lattice cell, and `.t-title` rounds its line box **up** to a whole one
 (`line-height: round(up, 0.8em, var(--space-6))`). That is a typography rule with a layout

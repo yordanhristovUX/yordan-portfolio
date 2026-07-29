@@ -842,6 +842,7 @@
         "--text-heading",
         "--text-md",
         "--text-sm",
+        "--text-sub",
         "--text-xs"
       ]
     },
@@ -1151,6 +1152,7 @@
         "--text-display-hero",
         "--text-display-xl",
         "--text-lead",
+        "--text-statement",
         "--text-title",
         "--text-xs"
       ]

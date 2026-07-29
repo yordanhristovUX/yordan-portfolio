@@ -43,8 +43,15 @@ Full-width list rows. Two members of the family:
 
 `--chrome-border-strong`, `--chrome-label`, `--content-inverse`, `--content-muted`,
 `--content-primary`, `--font-display`, `--font-mono`, `--primary`, `--rule`,
-`--surface-raised`, `--text-base`, `--text-heading`, `--text-md`, `--text-sm`, `--text-xs`,
-`--pad`, `--space-1`, `--space-2`, `--space-3`, `--space-4`, `--space-7`, `--space-flow`
+`--surface-raised`, `--text-base`, `--text-heading`, `--text-md`, `--text-sm`, `--text-sub`,
+`--text-xs`, `--pad`, `--space-1`, `--space-2`, `--space-3`, `--space-4`, `--space-7`,
+`--space-flow`
+
+`--text-sub` is `.idx__name`'s size below 900px. A project name cannot carry section-heading
+level in a ~400px column — measured, it wrapped worse at 1280px than at 1024px, because the
+name grew with the viewport while its grid track did not. Naming a token at a breakpoint is
+the existing idiom for "a component changes level here"; `css/cv.css` does the same thing four
+times.
 
 ## A11y
 

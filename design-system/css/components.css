@@ -53,12 +53,18 @@ body.is-locked { overflow: hidden; }
    One voice per level; components and pages compose these instead
    of declaring their own font stacks.
 
-   Every size here is a step of the `--text-*` ramp in tokens.json.
-   `.t-title` and `.t-statement` share `--text-title` on purpose: they
-   are the same LEVEL wearing different weights, widths and cases,
-   which is exactly what these utilities exist to express. A level
-   that needs its own size is a new step in the token file, not a
-   number typed here. */
+   Every size here is a step of the `--text-*` ramp in tokens.json. A level
+   that needs its own size is a new step in the token file, not a number typed
+   here.
+
+   `.t-title` and `.t-statement` USED to share `--text-title`, on the argument
+   that they are the same level wearing different weights and cases. They are
+   not — they differ by SHAPE OF RESPONSE, which is the distinction the scale
+   now turns on. A title is a single line in a strip that has to land on the
+   lattice, so it steps at the grid break and the step costs nothing. A
+   statement is a 7-19 line paragraph in a measure, so stepping it moves it
+   from six lines to ten on one pixel of resize. The title steps; the statement
+   gets an authored curve. See the `text` $doc in tokens.json. */
 .t-display {
   font-family: var(--font-display);
   font-weight: 900;
@@ -100,7 +106,7 @@ body.is-locked { overflow: hidden; }
   font-family: var(--font-display);
   font-weight: 800;
   font-variation-settings: "wdth" 105;
-  font-size: var(--text-title);
+  font-size: var(--text-statement);
   line-height: 1.15;
   color: var(--content-primary);
   max-width: 56rem;
@@ -876,6 +882,15 @@ body.is-locked { overflow: hidden; }
   text-transform: uppercase;
 }
 .idx__name em { color: var(--content-muted); font-variation-settings: "wdth" 100; font-weight: 700; }
+/* A project name cannot carry section-heading level in a ~400px column. This is
+   the existing idiom rather than a special case — css/cv.css keeps four
+   font-sizes for exactly this reason, "places where a component changes LEVEL",
+   and each names a token instead of a number. Measured before this: `.idx__name`
+   wrapped worse at 1280px than at 1024px, because the name grew with the
+   viewport while its grid track did not. */
+@media (max-width: 899px) {
+  .idx__name { font-size: var(--text-sub); }
+}
 .idx__desc { font-size: var(--text-sm); line-height: 1.5; max-width: 40rem; }
 .idx__tags { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
 .idx__go {
