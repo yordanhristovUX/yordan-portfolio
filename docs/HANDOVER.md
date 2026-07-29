@@ -26,7 +26,7 @@ merged and deployed to production)
 
 ```
 tests           96 / 96
-corpus          9530564fdc07971c · 70 chunks · 1048 terms
+corpus          9530564fdc07971c · 70 chunks · 967 terms (was 1048 — stopwords, item 29)
 design system   83 tokens · 142 values · 21 components · 24 dark · 35 print
 gates           tokens ✓  content ✓  css ✓  vectors ✓
                 bounds ✓  evals ✓  behaviour ✓  api-loads ✓

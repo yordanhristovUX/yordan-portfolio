@@ -87,7 +87,9 @@ The window that works: inject after `css/style.css` is parsed, before `document.
 `scripts/build-vectors.mjs` joined chunk texts with a **literal NUL byte**, which renders as
 `texts.join(" ")` in every editor, in `git diff`, and in a plain file read. Anyone reimplementing
 the hash from the source computes a different digest, declares a current cache stale, and
-`embedRank` silently returns BM25 at 74.4% behind answers that look identical to the 93.0% ones.
+`embedRank` silently returns the weaker lexical ranking behind answers that look identical to
+semantically-ranked ones. (The two figures that used to sit here were a corpus out of date the
+day they were written, which is its own entry below.)
 Found by hex-dumping. Now an explicit `SEP = "\u0000"` with the reasoning attached — same bytes, visible.
 
 **And then this document did the same thing, in the paragraph you have just read.** The sentence
@@ -177,6 +179,15 @@ These came out of doing the work, not from the audit documents.
   the top-level `sources` field — a *required* schema property. The model was citing; the server
   threw it away, then a broken retry accepted the result anyway.
 - **`list_experience` was fixed and three documents still called it a live bug.**
+- **A "these figures are dated, on purpose" caveat aged better than the figures it defended.**
+  `build-vectors.mjs`'s header quoted an embeddings-versus-BM25 pair. It went stale once when a
+  corpus rewrite took the index from 76 chunks to 70; it was corrected, and gained a paragraph
+  explaining that the pair was deliberately dated and that the reader should consult
+  `evals/results.json` instead. Then the stopword list moved BM25 by 16 points and the pair was
+  wrong for the third time. **A comment cannot interpolate, so the only figure it can hold
+  safely is none** — the claim now names a direction and a significance test, which survive a
+  re-run, and points at the generated artefact for cells. The same typed pair was living in
+  `lib/knowledge/tools.js` in two places, already a corpus out of date before any of this.
 - **Four agent charters had drifted from the repo**, and this is the worst class of stale doc
   here: not a number that moved, but an *instruction that causes damage if followed*.
   `design-system`'s hard rule #4 still ordered its agent to maintain `.rail { contain: size }`

@@ -3,15 +3,20 @@
 
    content/dist/content.json  →  content/dist/vectors.json
 
-   The eval measures embeddings at 91.8% hit@3 against BM25's 67.3% — a 12-0
-   win on exact two-sided McNemar, p = 0.0005 — and it still wins every
-   retrieval class. This is what makes that ranker available at runtime.
+   The eval measures embeddings ahead of BM25 on hit@3 by a margin the exact
+   two-sided McNemar test calls significant, and it wins every retrieval class.
+   This is what makes that ranker available at runtime.
 
-   THOSE TWO FIGURES ARE DATED, ON PURPOSE. They are the corpus-9530564fdc07971c
-   run in evals/results.json, re-derived after the owner's rewrite took the index
-   from 76 chunks to 70; the previous pair (93.0% / 74.4%) sat in this header
-   describing a corpus that no longer existed. Nothing checks a number in a
-   comment, so re-read evals/results.json rather than trusting this line.
+   NO FIGURES ARE QUOTED HERE ANY MORE, and the reason is that this header has
+   now gone stale three times. It carried 93.0% / 74.4%, which described a
+   corpus that had stopped existing when the owner's rewrite took the index from
+   76 chunks to 70. It was corrected to 91.8% / 67.3% and gained a paragraph
+   explaining that the pair was dated on purpose. Then BM25 got a stopword list
+   and 67.3% became 83.7%, so the caveat had aged better than the numbers it was
+   defending. **A comment cannot interpolate, so the only figure it can hold
+   safely is none.** The claim above survives a re-run because it names a
+   direction and a test rather than two cells; for the cells, read
+   evals/results.json, which is generated.
 
    WHY THIS IS A SEPARATE SCRIPT and not part of build-content.mjs: this one
    needs a network call and an API key. build-content.mjs is zero-dependency
@@ -69,8 +74,9 @@ const texts = content.chunks.map((c) => `${c.heading}. ${c.text}`);
    editor, in git diff and in a plain file read — indistinguishable from a space.
    Anyone reimplementing this hash from the source would therefore compute a
    DIFFERENT digest, declare a current cache stale, and embedRank() would return
-   null on every request: search silently falls back to BM25 at 67.3% hit@3
-   behind answers that look identical to the 91.8% ones. NUL is the right choice
+   null on every request: search silently falls back to the lexical ranker, several
+   points of hit@3 worse, behind answers that look identical to the good ones.
+   (Figures deliberately omitted — see the header.) NUL is the right choice
    — it cannot occur in chunk text, so no reword can forge a boundary — but it
    must be visible. Changing this value invalidates every committed vector cache
    and costs a billed rebuild. */
