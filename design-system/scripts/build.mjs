@@ -14,10 +14,19 @@
                                                  has exactly one source)
 
    `node scripts/build.mjs`          build tokens + system stats
-   `node scripts/build.mjs --check`  build + verify every component has
-                                     spec.md and a story (coverage gate), and
-                                     that the generated prose still quotes the
-                                     current numbers (counts gate)
+   `node scripts/build.mjs --check`  build + four gates:
+                                     · coverage — every component has spec.md
+                                       and a story
+                                     · counts — the generated prose still
+                                       quotes the current numbers
+                                     · contract — each spec.md agrees with the
+                                       CSS beside it
+                                     · doc arithmetic — every figure in
+                                       tokens.json's own prose recomputes from
+                                       the values beside it. See its block at
+                                       the bottom; it is the one that closes
+                                       "the docs matched the code, and nobody
+                                       checked they matched the arithmetic".
 
    Run order for the repo as a whole: this script first (it emits the stats),
    then `node scripts/build-content.mjs` from the repo root (it consumes them).
@@ -551,4 +560,409 @@ if (CHECK) {
   }
   const claimedTotal = components.reduce((n, id) => n + specs[id].claimed.length, 0);
   console.log(`✓ contract check         (${claimedTotal} spec-claimed classes all defined, ${blocks.length} css blocks owned, token lists match)`);
+}
+
+/* ============================================================
+   4. DOC ARITHMETIC — does tokens.json's prose recompute?
+
+   THE GAP THIS CLOSES. Four separate audits verified that this repo's
+   documentation matched its code, and it did. Nothing verified that the
+   documentation matched the ARITHMETIC, and that is where the remaining
+   problems were: a type scale with a gate enforcing "every size is a token"
+   and no gate enforcing "the tokens form a scale". The mechanism, which is
+   worth stating because it is not carelessness:
+
+     Consolidation produces a value by averaging what was already there, and
+     an average has no author — so the rationale gets written afterwards,
+     describing the result. The prose is most confident exactly where the
+     value was least chosen.
+
+   A $doc is the most load-bearing prose in the system: it is what a
+   contributor reads instead of recomputing, and `get_design_system` serves it
+   to a model that will repeat it. So every figure in it that CAN be
+   recomputed from the values beside it, is.
+
+   PRECISION IS THE CLAIM'S OWN. A figure written "6.94:1" asserts two
+   decimals and is checked to two; "1.9:1" asserts one and is checked to one.
+   That is not pedantry, it is the only non-arbitrary rule available — any
+   fixed tolerance is a number nobody chose, and a gate that tolerates 0.02
+   silently licenses being wrong by 0.02.
+
+   WHAT THIS DELIBERATELY DOES NOT DO, stated because a gate's silence reads
+   as permission:
+
+   · It does not require a clamp's `vw` term to be live at the viewports the
+     $doc argues from. `text` argues a display line "has to survive both a
+     375px phone and a 1600px sheet", and clamp() achieves that BY pinning at
+     the extremes — every one of the seven fluid steps is pinned at both. A
+     gate demanding otherwise would demand the clamp not work. What it does
+     assert is the defensible half: a `vw` term must be active SOMEWHERE, or
+     the clamp is a constant wearing a clamp's clothes.
+   · It does not flag a value for being the arithmetic mean of the two it
+     replaced. Several are, and the `description` fields say so. Consolidating
+     two near-identical ramps into their midpoint is legitimate; a gate that
+     failed on it would block the cleanup this system was built by.
+   · It does not police prose with no arithmetic in it. "Blueprint blue, used
+     scarcely" is judgement, and judgement is what a $doc is for.
+   ============================================================ */
+if (CHECK) {
+  const varByName = new Map();
+  for (const { vars } of categories) for (const v of vars) varByName.set(v.name, v);
+
+  const colourOf = (name, field = "value") => {
+    const v = varByName.get(name);
+    if (!v) return null;
+    if (field === "dark") return resolveDark(v.dark ?? v.value);
+    if (field === "print") return resolvePrint(v.print ?? v.value);
+    return resolve(v.value);
+  };
+
+  /* WCAG 2.x relative luminance. The 0.03928 threshold is the one in the
+     published formula; using 0.04045 instead shifts ratios in the third
+     decimal, which is exactly the size of error this check exists to find, so
+     it is spelled out rather than imported from memory. */
+  const hslToRgb = (h, s, l) => {
+    s /= 100; l /= 100;
+    const k = (n) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(Math.min(k(n) - 3, 9 - k(n)), 1));
+    return [f(0), f(8), f(4)].map((x) => Math.round(x * 255));
+  };
+  const toRgb = (c) => {
+    if (!c) return null;
+    const s = String(c).trim();
+    let m = s.match(/^#([0-9a-f]{6})$/i);
+    if (m) return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16));
+    m = s.match(/^#([0-9a-f]{3})$/i);
+    if (m) return [...m[1]].map((h) => parseInt(h + h, 16));
+    m = s.match(/^hsl\(\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%\s*\)$/i);
+    if (m) return hslToRgb(+m[1], +m[2], +m[3]);
+    m = s.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+    if (m) return [+m[1], +m[2], +m[3]];
+    m = s.match(/^(\d+)\s*,\s*(\d+)\s*,\s*(\d+)$/);
+    if (m) return [+m[1], +m[2], +m[3]];
+    return null;
+  };
+  const chan = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+  const lumi = (rgb) => 0.2126 * chan(rgb[0]) + 0.7152 * chan(rgb[1]) + 0.0722 * chan(rgb[2]);
+  const contrast = (a, b) => {
+    const [x, y] = [lumi(toRgb(a)), lumi(toRgb(b))].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const alphaOf = (c) => { const m = String(c).match(/^rgba?\([^)]*,\s*([\d.]+)\s*\)$/); return m ? Number(m[1]) : null; };
+  const px = (rem) => parseFloat(rem) * 16;   // nothing in the repo sets html { font-size }
+
+  /* ---------- the prose corpus, and its census ---------- */
+  const prose = [];
+  for (const [group, body] of Object.entries(tokens)) {
+    if (group === "$meta") { for (const [k, v] of Object.entries(body)) prose.push([`$meta.${k}`, String(v)]); continue; }
+    for (const [k, v] of Object.entries(body)) {
+      if (k === "$doc") prose.push([`${group}.$doc`, String(v)]);
+      else if (v && typeof v === "object" && v.description) prose.push([`${k}.description`, String(v.description)]);
+    }
+  }
+  const proseOf = (where) => prose.find(([w]) => w === where)?.[1] ?? null;
+
+  const bad = [];
+
+  /* ---------- contrast figures ---------- */
+  const CONTRAST = [
+    { where: "content.$doc", claimed: "4.4", fg: ["stone-500"], bg: ["surface-page"], of: "stone-500 on the page background" },
+    { where: "content.$doc", claimed: "6.99", fg: ["stone-600"], bg: ["surface-page"], of: "stone-600 on the page background" },
+    { where: "content.$doc", claimed: "6.93", fg: ["stone-400"], bg: ["stone-900"], of: "stone-400 on stone-900" },
+    { where: "chrome-label-on-strong.description", claimed: "6.96", fg: ["slate-400"], bg: ["slate-900"], of: "the footer label on slate-900" },
+    { where: "chrome-label-on-strong.description", claimed: "7.87", fg: ["slate-400"], bg: ["slate-950"], of: "the footer label on slate-950" },
+    { where: "accent.$doc", claimed: "2.42", fg: ["accent"], bg: ["surface-page", "dark"], of: "the light accent on the dark page" },
+    { where: "accent.$doc", claimed: "5.21", fg: ["accent", "dark"], bg: ["surface-page", "dark"], of: "the dark accent on the dark page" },
+    { where: "accent.$doc", claimed: "5.32", fg: ["accent", "dark"], bg: ["chrome-bg", "dark"], of: "the dark accent on dark chrome" },
+  ];
+  /* Figures that are constants rather than measurements. Registered so the
+     census below balances, and asserted so a typo in the AA minimum cannot
+     hide behind "it's just prose". */
+  const CONSTANTS = [{ where: "content.$doc", figure: "4.5", is: "the WCAG AA minimum for body text" }];
+
+  for (const c of CONTRAST) {
+    const text = proseOf(c.where);
+    if (text === null) { bad.push(`${c.where} no longer exists — this check cannot find the prose it verifies. Re-point it or remove the claim.`); continue; }
+    if (!text.includes(`${c.claimed}:1`)) {
+      bad.push(`${c.where} no longer contains the figure \`${c.claimed}:1\` (${c.of}). Either it was reworded — re-point this claim — or the number moved without the arithmetic being redone.`);
+      continue;
+    }
+    const fg = colourOf(...c.fg), bg = colourOf(...c.bg);
+    if (!toRgb(fg) || !toRgb(bg)) { bad.push(`${c.where}: cannot resolve the colours behind \`${c.claimed}:1\` (${c.of}) — got fg=${fg} bg=${bg}.`); continue; }
+    const dp = (c.claimed.split(".")[1] ?? "").length;
+    const got = contrast(fg, bg).toFixed(dp);
+    if (got !== c.claimed) {
+      bad.push(
+        `${c.where} claims \`${c.claimed}:1\` for ${c.of} — it recomputes to \`${got}:1\` (${fg} on ${bg}, exact ${contrast(fg, bg).toFixed(4)}). ` +
+          `Fix the prose, or if the VALUE is what is wrong say so: this gate does not know which of the two you meant.`
+      );
+    }
+  }
+  for (const k of CONSTANTS) {
+    const text = proseOf(k.where);
+    if (!text || !text.includes(`${k.figure}:1`)) bad.push(`${k.where} no longer states \`${k.figure}:1\`, ${k.is}.`);
+  }
+
+  /* The census is the anti-rot mechanism, and it is the reason this gate
+     should still be honest in a year. Every contrast-shaped figure anywhere in
+     the prose must be one this file knows about — so ADDING a claim without
+     registering it turns the build red, rather than being silently unchecked
+     forever. Rule 6 of check-css.mjs rotted precisely because it could stop
+     finding its subject and still report success. */
+  const found = [];
+  for (const [where, text] of prose) for (const m of text.matchAll(/\d+(?:\.\d+)?:1/g)) found.push([where, m[0].replace(":1", "")]);
+  const registered = [...CONTRAST.map((c) => `${c.where}|${c.claimed}`), ...CONSTANTS.map((k) => `${k.where}|${k.figure}`)];
+  for (const [where, fig] of found) {
+    if (!registered.includes(`${where}|${fig}`)) {
+      bad.push(
+        `${where} states \`${fig}:1\`, which no claim in build.mjs's doc-arithmetic check recomputes. ` +
+          `A contrast figure in a $doc is a measurement; register it in CONTRAST (or in CONSTANTS if it is a standard, not a measurement) so it cannot drift unchecked.`
+      );
+    }
+  }
+  if (found.length < registered.length) {
+    bad.push(`the prose carries ${found.length} contrast figures but ${registered.length} are registered — a claim was deleted or reworded. Prune the register in the same commit.`);
+  }
+
+  /* ---------- structural claims: an exact quote, and the arithmetic under it ----------
+     The quote is half the check. If a $doc is rewritten, the quote stops
+     matching and this goes red rather than quietly verifying nothing. */
+  const textGroup = tokens.text ?? {};
+  const textKeys = Object.keys(textGroup).filter((k) => k !== "$doc");
+  const valOf = (k) => (typeof textGroup[k] === "string" ? textGroup[k] : textGroup[k].value);
+  const printOf = (k) => (typeof textGroup[k] === "string" ? undefined : textGroup[k].print);
+  /* `(?<![a-z])` so `rem` is not read as `em` — the distinction IS the claim. */
+  const isRatio = (k) => /(?<![a-z])[\d.]+em$/.test(valOf(k));
+  const isClamp = (k) => /^clamp\(/.test(valOf(k));
+  const isStatic = (k) => /^[\d.]+rem$/.test(valOf(k));
+  const spaceGroup = tokens.space ?? {};
+
+  const STRUCTURAL = [
+    {
+      where: "space.$doc",
+      quote: "a fixed 4px-based ramp (4/8/12/16/20/24/32)",
+      check: () => {
+        const claimed = proseOf("space.$doc").match(/ramp \(([\d/]+)\)/)[1].split("/").map(Number);
+        const actual = claimed.map((_, i) => px(spaceGroup[`space-${i + 1}`]));
+        return claimed.join("/") === actual.join("/")
+          ? null
+          : `the ramp is stated as ${claimed.join("/")} and space-1..${claimed.length} resolve to ${actual.join("/")} at a 16px root`;
+      },
+    },
+    {
+      where: "space.$doc",
+      quote: "`space-nav` is the only spacing token with a `print` value, and it is 0",
+      check: () => {
+        const withPrint = Object.entries(spaceGroup).filter(([k, v]) => k !== "$doc" && v && typeof v === "object" && v.print !== undefined);
+        if (withPrint.length !== 1 || withPrint[0][0] !== "space-nav") return `spacing tokens carrying a print value: ${withPrint.map(([k]) => k).join(", ") || "none"}`;
+        if (String(withPrint[0][1].print) !== "0") return `space-nav's print value is ${JSON.stringify(withPrint[0][1].print)}, not 0`;
+        return null;
+      },
+    },
+    {
+      where: "text.$doc",
+      quote: "one ramp of twelve steps",
+      check: () => {
+        const steps = textKeys.filter((k) => !isRatio(k)).length;
+        return steps === 12 ? null : `the scale has ${steps} steps (${textKeys.length} entries, ${textKeys.length - steps} of them em ratios)`;
+      },
+    },
+    {
+      where: "text.$doc",
+      quote: "so those seven are `clamp(min, vw, max)`",
+      check: () => {
+        const n = textKeys.filter(isClamp).length;
+        return n === 7 ? null : `${n} steps are clamps, not seven`;
+      },
+    },
+    {
+      where: "text.$doc",
+      quote: "those four steps and body itself are fixed rem on a ~1.085 ratio",
+      check: () => {
+        const s = textKeys.filter(isStatic);
+        if (s.length !== 5) return `${s.length} steps are fixed rem, not "four steps and body itself"`;
+        const v = s.map((k) => parseFloat(valOf(k)));
+        const claimed = proseOf("text.$doc").match(/~([\d.]+) ratio/)[1];
+        const want = Number(claimed);
+        const geo = Math.pow(v.at(-1) / v[0], 1 / (v.length - 1));
+
+        /* TWO CHECKS, AND THE SECOND IS THE ONE THAT MATTERS.
+           The geometric mean depends only on the endpoints, so on its own it
+           says nothing about the steps between them: moving text-sm from
+           0.85rem to 0.88rem leaves (1/0.72)^(1/4) bit-identical and a
+           mean-only check waves it through. That is the exact shape of the
+           failure this whole gate exists for — the old system had a check
+           that every size is a token and none that the tokens form a SCALE.
+           So every adjacent ratio is tested too.
+
+           THE TILDE IS PART OF THE HEADLINE CLAIM. "~1.085" asserts less than
+           a bare "6.94:1" does, so the mean is held to one unit in its last
+           stated place rather than to exact agreement.
+
+           THE PER-STEP TEST NEEDS NO TOLERANCE, which is why it is done this
+           way rather than with a fudge factor nobody chose. The rem values
+           are written to a fixed number of decimals, so each one stands for
+           an interval of width one last-place unit. Propagating that gives
+           the band of ratios the pair could REALLY be, and the claimed ratio
+           either lies in it or the two disagree. On the current ramp the four
+           bands are about [1.069,1.098], [1.076,1.103], [1.070,1.095] and
+           [1.076,1.098]; 1.085 is comfortably inside all four, and a step
+           moved by 0.03rem lands outside. */
+        const ulp = Math.pow(10, -(claimed.split(".")[1] ?? "").length);
+        if (Math.abs(geo - want) > ulp) {
+          return `the stated ratio is ~${claimed}; the geometric ratio across ${s.join(" → ")} is ${geo.toFixed(4)}, ${(Math.abs(geo - want) / ulp).toFixed(1)} units of the last stated digit away`;
+        }
+        const dp = Math.max(...s.map((k) => (String(parseFloat(valOf(k))).split(".")[1] ?? "").length));
+        const h = Math.pow(10, -dp) / 2;
+        const off = [];
+        for (let i = 1; i < v.length; i++) {
+          const lo = (v[i] - h) / (v[i - 1] + h);
+          const hi = (v[i] + h) / (v[i - 1] - h);
+          if (want < lo || want > hi) {
+            off.push(`${s[i - 1]}→${s[i]} is ${(v[i] / v[i - 1]).toFixed(4)} (possible range ${lo.toFixed(4)}..${hi.toFixed(4)} at ${dp}dp)`);
+          }
+        }
+        return off.length
+          ? `the ramp claims a ~${claimed} ratio but is not one at every step: ${off.join("; ")}. The mean can be right while the steps are wrong — that is what this half of the check is for.`
+          : null;
+      },
+    },
+    {
+      where: "text.$doc",
+      quote: "Every step also carries a `print` value in pt",
+      check: () => {
+        const missing = textKeys.filter((k) => !isRatio(k) && !/pt$/.test(String(printOf(k))));
+        return missing.length ? `these steps have no pt print value: ${missing.join(", ")}` : null;
+      },
+    },
+    {
+      where: "text.$doc",
+      quote: "The two `em` entries at the end are ratios",
+      check: () => {
+        const r = textKeys.filter(isRatio);
+        if (r.length !== 2) return `${r.length} entries are em ratios, not two`;
+        return JSON.stringify(textKeys.slice(-2)) === JSON.stringify(r) ? null : `the em entries are ${r.join(", ")}, which are not the last two (${textKeys.slice(-2).join(", ")})`;
+      },
+    },
+    {
+      /* The defensible half of the fluid-type finding — see the block comment
+         above for why the inert-at-375-and-1600 half is NOT asserted. */
+      where: "text.$doc",
+      quote: "clamp(min, vw, max)",
+      label: "every fluid step's vw term is live somewhere",
+      check: () => {
+        const dead = [];
+        for (const k of textKeys.filter(isClamp)) {
+          const m = valOf(k).match(/^clamp\(\s*([\d.]+)rem\s*,\s*([\d.]+)vw\s*,\s*([\d.]+)rem\s*\)$/);
+          if (!m) { dead.push(`${k} (unparsed: ${valOf(k)})`); continue; }
+          const lo = px(m[1]) / (parseFloat(m[2]) / 100), hi = px(m[3]) / (parseFloat(m[2]) / 100);
+          if (!(hi > lo)) dead.push(`${k} is pinned at every width — min ${m[1]}rem and max ${m[3]}rem cross at ${lo.toFixed(0)}px`);
+        }
+        return dead.length ? `these clamps never scale: ${dead.join("; ")}` : null;
+      },
+    },
+    {
+      where: "content.$doc",
+      quote: "content-muted is stone-600, not -500",
+      check: () => (varByName.get("content-muted")?.value === "var(--stone-600)" ? null : `content-muted is ${varByName.get("content-muted")?.value}`),
+    },
+    {
+      where: "chrome.$doc",
+      quote: "chrome-label is slate-600, not -500",
+      check: () => (varByName.get("chrome-label")?.value === "var(--slate-600)" ? null : `chrome-label is ${varByName.get("chrome-label")?.value}`),
+    },
+    {
+      where: "surface.$doc",
+      quote: "On paper every surface collapses to one",
+      check: () => {
+        const prints = Object.entries(tokens.surface).filter(([k, v]) => k !== "$doc" && v && typeof v === "object" && v.print !== undefined);
+        const distinct = new Set(prints.map(([, v]) => resolvePrint(v.print)));
+        return distinct.size === 1 ? null : `the surfaces that print resolve to ${distinct.size} different colours: ${[...distinct].join(", ")}`;
+      },
+    },
+    {
+      where: "action.$doc",
+      quote: "`action` itself was deleted",
+      check: () => (varByName.has("action") ? `an \`action\` token exists again, with value ${varByName.get("action").value}` : null),
+    },
+    {
+      where: "accent.$doc",
+      quote: "The dark value is the same hue lifted to 68% lightness",
+      check: () => {
+        const a = varByName.get("accent");
+        const p = (c) => String(c).match(/^hsl\(\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%\s*\)$/);
+        const l = p(a?.value), d = p(a?.dark);
+        if (!l || !d) return `accent is not a plain hsl() pair — light ${a?.value}, dark ${a?.dark}`;
+        if (l[1] !== d[1] || l[2] !== d[2]) return `the hue/saturation are not the same: light ${l[1]} ${l[2]}%, dark ${d[1]} ${d[2]}%`;
+        return d[3] === "68" ? null : `the dark lightness is ${d[3]}%, not 68%`;
+      },
+    },
+    {
+      where: "accent-rgb.description",
+      quote: "It has no CSS consumer any more",
+      check: () => {
+        const n = (stripComments(componentsCss).match(/var\(\s*--accent-rgb/g) || []).length;
+        return n === 0 ? null : `components.css uses var(--accent-rgb) ${n} time(s)`;
+      },
+    },
+    {
+      where: "automata-cell-rgb.description",
+      quote: "stone-500 on paper, stone-400 on dark",
+      check: () => {
+        const t = varByName.get("automata-cell-rgb");
+        const want = (name) => toRgb(colourOf(name)).join(", ");
+        if (t.value !== want("stone-500")) return `the light triplet is ${t.value}; stone-500 is ${want("stone-500")}`;
+        if (t.dark !== want("stone-400")) return `the dark triplet is ${t.dark}; stone-400 is ${want("stone-400")}`;
+        return null;
+      },
+    },
+    {
+      where: "chrome-grid.description",
+      quote: "slate-500 at 16% on paper, slate-400 at 14% on dark",
+      check: () => {
+        const t = varByName.get("chrome-grid");
+        const rgbOf = (c) => toRgb(c)?.join(", ");
+        if (rgbOf(t.value) !== toRgb(colourOf("slate-500")).join(", ")) return `the light grid is ${t.value}, which is not slate-500`;
+        if (alphaOf(t.value) !== 0.16) return `the light grid's alpha is ${alphaOf(t.value)}, not 16%`;
+        if (rgbOf(t.dark) !== toRgb(colourOf("slate-400")).join(", ")) return `the dark grid is ${t.dark}, which is not slate-400`;
+        if (alphaOf(t.dark) !== 0.14) return `the dark grid's alpha is ${alphaOf(t.dark)}, not 14%`;
+        return null;
+      },
+    },
+    {
+      where: "shadow-drop.description",
+      quote: "a 15% veil",
+      check: () => {
+        const a = alphaOf(varByName.get("shadow-drop").value);
+        return a === 0.15 ? null : `shadow-drop's light alpha is ${a}, not 15%`;
+      },
+    },
+  ];
+
+  for (const s of STRUCTURAL) {
+    const text = proseOf(s.where);
+    const what = s.label ? `${s.where} (${s.label})` : s.where;
+    if (text === null) { bad.push(`${what}: the prose this claim verifies no longer exists. Re-point it or remove it.`); continue; }
+    if (!text.includes(s.quote)) {
+      bad.push(`${what} no longer says "${s.quote}". If the wording changed, re-point this claim in build.mjs; the check is only meaningful while it is verifying a sentence that is actually there.`);
+      continue;
+    }
+    let why = null;
+    try { why = s.check(); } catch (e) { why = `the check threw (${e.message}) — the shape it assumes has changed`; }
+    if (why) bad.push(`${what} says "${s.quote}" — ${why}`);
+  }
+
+  if (bad.length) {
+    console.error(
+      `✗ doc arithmetic check failed — tokens.json's prose does not recompute (${bad.length}):\n  - ${bad.join("\n  - ")}\n` +
+        `  Every figure in a $doc is a measurement of the values beside it. If one disagrees, either the prose is stale or the value moved;\n` +
+        `  this gate deliberately does not guess which. Fix the one that is wrong, in the same commit.`
+    );
+    process.exit(1);
+  }
+  console.log(
+    `✓ doc arithmetic check   (${CONTRAST.length} contrast figures recomputed to their own precision, ` +
+      `${CONSTANTS.length} constant, ${STRUCTURAL.length} structural claims, ${found.length} prose figures all registered)`
+  );
 }
