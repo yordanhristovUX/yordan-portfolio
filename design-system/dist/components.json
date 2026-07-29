@@ -1,6 +1,6 @@
 {
   "$generatedBy": "design-system/scripts/build.mjs — do not edit",
-  "$doc": "Derived component contract. selectors/classes/elements/variants/tokens are parsed out of css/components.css and are true by construction. status/since/a11y are DECLARED in each spec.md's JSON frontmatter and drift-tested by `build.mjs --check`. The prose — a11y rationale, AI notes, the contain:size explanation — is deliberately not here; it lives in spec.md because it is judgement, not fact.",
+  "$doc": "Derived component contract. selectors/classes/elements/variants/tokens are parsed out of css/components.css and are true by construction. status/since/a11y are DECLARED in each spec.md's JSON frontmatter and drift-tested by `build.mjs --check`. The prose — a11y rationale, AI notes, the reasoning behind a rule — is deliberately not here; it lives in spec.md because it is judgement, not fact.",
   "$derivedFrom": [
     "css/components.css",
     "components/*/spec.md (frontmatter only)"

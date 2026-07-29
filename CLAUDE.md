@@ -23,9 +23,16 @@ slice you actually need.
   override. Never add `prefers-color-scheme` to `components.css` or `style.css`.
 - **Print colour is also tokens** — a `print` value beside `dark`, emitted as `@media print`.
   A page stylesheet's `@media print` block may contain layout only, never a colour.
-- **`.rail { contain: size }` is load-bearing.** The rail is decoration and must never size
-  its band; without it the squares feed back into the row height and the page runs away to
-  tens of thousands of nodes. See `design-system/components/skeleton/spec.md`.
+- **The well sizes the band; a rail never does.** This used to be `.rail { contain: size }`,
+  and that declaration is **gone** — do not restore it. A rail's only child is an
+  absolutely-positioned canvas, so its in-flow content is empty and the feedback loop that once
+  took a 420px band to 36,000px is now unbuildable rather than prevented. The *rule* outlives
+  the property: nothing goes in flow inside a rail. See
+  `design-system/components/skeleton/spec.md`.
+- **`--space-6` is the automata's lattice as well as a spacing step**, and it is the one token
+  whose two audiences don't know about each other. A rail's simulated cell count goes as
+  1/cell², so lowering it for padding reasons quadruples a canvas simulation.
+  `scripts/check-css.mjs` holds a floor at `1.25rem` and a ceiling on the off-stage padding.
 - Anything in `js/` that uses a themed colour reads it via `getComputedStyle` and re-reads on
   the `themechange` event (see `js/automata.js`). No colour literals in JS.
 - GSAP is vendored in `js/vendor/gsap/` — do not swap it back to a CDN, and keep the

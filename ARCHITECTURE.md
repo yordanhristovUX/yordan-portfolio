@@ -120,9 +120,13 @@ Each carries a "generated — do not edit" banner.
 **The design system's four outputs are the honest gap, and it is worth knowing before you
 trust the banner.** `build.mjs` writes all four unconditionally — `--check` regenerates them
 in place and then asserts something *else*: that every component still has a spec and a
-story, that each spec agrees with the CSS beside it, and that the counts advertised in
+story, that each spec agrees with the CSS beside it, that the counts advertised in
 `README.md`, `design-system/README.md`, `cv.html` and `js/case-studies.js` are the current
-ones. `check-boundaries.mjs` separately asserts the four files exist. Nothing compares their
+ones, and that every figure in `tokens.json`'s own prose recomputes from the values beside it
+— the contrast ratios, the stated ramps, the counts and the aliases. That last gate exists
+because four audits confirmed the documentation matched the *code* and nothing confirmed it
+matched the *arithmetic*; it found four contrast figures that did not.
+`check-boundaries.mjs` separately asserts the four files exist. Nothing compares their
 *contents* against what is committed, and CI runs no `git diff`, so a hand-edit to
 `dist/tokens.css` is silently overwritten in the workspace rather than failing a gate.
 Everything below that line in the table is a real comparison. Treat the top four as
@@ -144,10 +148,11 @@ node evals/run.mjs                          # retrieval eval → results.json, e
 **The gate is `npm run check`.** Do not maintain a second list of it here: the `check`
 script in `package.json` is the list, and `.github/workflows/ci.yml` runs the same steps in
 the same order — `test/ci.test.js` fails if the two ever disagree. What it covers, in order:
-the design system's coverage and counts, the content pipeline's generated files, the CSS
-literal-value ban, vector freshness, the boundary direction, the eval artefacts and
-baseline, the `node:test` behaviour suite, and an import-time smoke test of both `api/`
-modules. Everything in it runs with no API key and no network.
+the design system's coverage, counts, spec↔CSS contract and doc arithmetic, the content
+pipeline's generated files, the CSS literal-value ban, vector freshness, the boundary
+direction, the eval artefacts and baseline, the `node:test` behaviour suite, and an
+import-time smoke test of both `api/` modules. Everything in it runs with no API key and no
+network.
 
 The order matters in one direction only: a component or token landing changes the counts and
 the component contract, so `build.mjs` must run before `build-content.mjs` — otherwise the
@@ -186,8 +191,11 @@ These are cheap to violate and expensive to discover. Full detail in `CLAUDE.md`
    is a token with a `dark` value, and print is a token with a `print` value.
 3. Every design-system component is three things: CSS block + `spec.md` + story. The build
    fails otherwise.
-4. `.rail { contain: size }` is load-bearing — see
-   `design-system/components/skeleton/spec.md`.
+4. A rail never sizes its band; content lives in the well. `.rail { contain: size }` used to
+   enforce that and has been deleted — the loop is unbuildable now, not merely prevented, so
+   the rule is upheld by review rather than by a declaration. Separately, `--space-6` is the
+   automata's lattice as well as a spacing step, and `scripts/check-css.mjs` bounds it because
+   a rail's cell count goes as 1/cell². See `design-system/components/skeleton/spec.md`.
 5. No colour literals in JS: read via `getComputedStyle`, re-read on `themechange`.
 6. Zero runtime dependencies in the site half; the generators stay dependency-free. The
    `api/` slice is the only one with `node_modules` in its path, and `package.json` declares

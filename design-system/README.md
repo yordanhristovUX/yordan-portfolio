@@ -165,6 +165,49 @@ a human reviewer cannot catch and a gate does not care about. The same sentence 
 `../content/profile.json` is now `{{dark}}` and is interpolated by
 `../scripts/build-content.mjs`, so it has one source like everything else.
 
+## The doc arithmetic gate
+
+The counts gate above polices numbers this system publishes **about itself**. This one polices
+the numbers it publishes **inside itself** — every figure in a `$doc` or a `description` in
+`tokens.json` is recomputed from the values beside it: the contrast ratios, the stated ramps,
+the step counts, the aliases, the alphas.
+
+It exists because of a gap that four separate audits walked past. They all verified that the
+documentation matched the **code**, and it did. Nothing verified that the documentation matched
+the **arithmetic** — this system had a gate enforcing "every size is a token" and none
+enforcing "the tokens form a scale". The reason that gap produces errors is not carelessness:
+
+> Consolidation produces a value by averaging what was already there, and an average has no
+> author — so the rationale gets written afterwards, describing the result. The prose is most
+> confident exactly where the value was least chosen.
+
+A `$doc` is the most load-bearing prose here. It is what a contributor reads instead of
+recomputing, it is emitted into `dist/tokens.css` as a comment, and `get_design_system` serves
+it to a model that will repeat it. **On the day the gate landed, four contrast figures did not
+recompute** — `6.94:1` (is `6.93`), `5.19:1` (is `5.21`), `5.30:1` (is `5.32`) and `1.9:1`
+(is `2.42`). The first three are the size of a rounding difference; the last is not, and the
+likeliest history is that the accent's lightness moved and the sentence did not follow.
+
+Three things about how it is built are deliberate:
+
+- **No arbitrary tolerances.** A figure is held to its own decimal places, because `6.94:1`
+  asserts two. `~1.085` asserts less, so it is held to one unit in its last place. The
+  per-step ramp test uses interval arithmetic rather than a fudge factor: a value written to
+  2dp stands for an interval, and propagating that gives the band the ratio could really be.
+- **The mean is not the scale.** Checking the geometric ratio across the static steps passes a
+  mutation that moves an interior step, because the mean depends only on the endpoints. Every
+  adjacent ratio is tested. This was caught by mutating the gate, not by reading it.
+- **A census, so it cannot rot.** Every contrast-shaped figure anywhere in the prose must be
+  registered in the check. Adding one without registering it turns the build red instead of
+  being silently unverified — the failure mode that quietly retired `check-css.mjs`'s previous
+  rule 6.
+
+What it deliberately does **not** assert is written into the block itself, because a gate's
+silence reads as permission. Two examples: it does not require a `clamp()`'s `vw` term to be
+live at the viewports the type `$doc` argues from, since `clamp` survives those widths *by*
+pinning at them; and it does not flag a value for being the arithmetic mean of the two it
+replaced, because that is the consolidation this scale was built by.
+
 Add a token or a component and the build tells you which sentence to update, with the new
 numbers. Matching is whitespace-insensitive, so the prose may wrap wherever it reads best.
 
