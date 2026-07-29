@@ -63,9 +63,41 @@
   const IS = (s) => (s === "auto" ? `auto, currently ${resolved("auto")}` : s);
   const TO = (s) => (s === "auto" ? `auto (your system setting, currently ${resolved("auto")})` : s);
 
+  /* ---------- The browser chrome is part of the theme ----------
+
+     `<meta name="theme-color">` is what tints the address bar and the task
+     switcher. There are two of them and they key on `prefers-color-scheme`,
+     which is right for a reader following their OS and WRONG for one who has
+     pinned: pin light on a dark OS and the paper went light while the chrome
+     stayed dark. The inline <head> script fixes the first paint by flipping
+     `media`; this keeps it true for every press afterwards, and restores the
+     OS queries when the reader goes back to auto.
+
+     `not all` never matches and `all` always does, so a pinned tag beats the
+     OS whichever way round they disagree.
+
+     The CONTENT is then re-read from `--surface-page` rather than left as the
+     literal in the markup. Same rule as everything else that touches a themed
+     colour in JS — no colour literals here, read the computed token — and the
+     literal in the HTML stays only because it is the one value available
+     before the stylesheet is parsed, which is also exactly the case a reader
+     with JS off is in. */
+  function syncChrome(state) {
+    const metas = document.querySelectorAll('meta[name="theme-color"][data-theme-color]');
+    if (!metas.length) return;
+    const shown = resolved(state);
+    const paper = getComputedStyle(root).getPropertyValue("--surface-page").trim();
+    for (const m of metas) {
+      const forTheme = m.getAttribute("data-theme-color");
+      m.media = state === "auto" ? `(prefers-color-scheme: ${forTheme})` : forTheme === state ? "all" : "not all";
+      if (paper && forTheme === shown) m.setAttribute("content", paper);
+    }
+  }
+
   function apply(state, { announce = true } = {}) {
     if (state === "auto") root.removeAttribute("data-theme");
     else root.setAttribute("data-theme", state);
+    syncChrome(state);
 
     try {
       if (state === "auto") localStorage.removeItem(KEY);

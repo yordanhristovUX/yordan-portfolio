@@ -11,8 +11,15 @@
   <meta property="og:url" content="https://yordan-portfolio.vercel.app/evals">
   <meta name="twitter:card" content="summary">
 
-  <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)">
+  <!-- Browser chrome. These two follow the OS, which is correct for a reader who
+       has not pinned a theme and WRONG for one who has: pin light on a dark OS and
+       you used to get light paper with dark chrome. The inline script below flips
+       `media` so the pinned one always matches, and js/theme.js then replaces the
+       literal with the real --surface-page. The literals stay because they are the
+       only value available before the stylesheet is parsed, and they are what a
+       reader with JS off gets â€” for whom the OS query is the right answer anyway. -->
+  <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)" data-theme-color="light">
+  <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)" data-theme-color="dark">
 
   <!-- Theme, before first paint. This must stay inline and blocking: a
        deferred script runs after the first frame, which is exactly the
