@@ -110,12 +110,34 @@ body.is-locked { overflow: hidden; }
 }
 
 /* ============ Skeleton ============ @component skeleton
-   The page is a 24-square sheet (12 on small screens): 2-square
-   rails / 20-square solid-paper well. Squares are real .sq divs
-   sized by the same fr tracks as the layout — grid lines are inset
-   box-shadows, never borders, so the track math stays exact.
-   The Squares engine (site js/automata.js) fills rails and strips
-   and runs Life over them. */
+   The page is a 24-column sheet (12 on small screens): 2-column
+   rails / 20-column solid-paper well. Borders are still forbidden
+   anywhere in here — a border changes fr-track math, an inset
+   box-shadow does not.
+
+   The rails and the strips are the automata's two regions, and they
+   are now DRAWN rather than built: one aria-hidden <canvas> per
+   region, where there used to be ~500 one-square divs carrying a
+   background-color transition each — 58.9% of index.html's nodes.
+   Two consequences, and both are structural rather than careful:
+
+   · The canvas is absolutely positioned, so nothing a region
+     contains can size it. That is what retired `contain: size` from
+     .rail; components/skeleton/spec.md keeps the record of the
+     feedback loop it used to stop, because the lesson outlives the
+     declaration.
+   · The grid lines moved from ~500 inset box-shadows to one
+     repeating gradient on the region itself. It is graph paper: it
+     is what a reader with JS off sees (blueprint margin, not a grid
+     of dead divs), and with JS on the canvas draws life over the
+     same lines rather than redrawing them per cell.
+
+   The lattice is --space-6, a rhythm step — not an fr fraction of
+   the rail. Layout is still fr all the way down; the decoration now
+   sits on the page's own 24px rhythm, which is what makes it read
+   as the paper the page is drawn on rather than a widget beside it.
+   The Squares engine (site js/automata.js) owns the bitmap; this
+   file owns the box. */
 .sheet {
   max-width: 90rem;
   margin: 0 auto;

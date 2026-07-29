@@ -3,8 +3,15 @@
 
    content/dist/content.json  →  content/dist/vectors.json
 
-   Phase 1 measured embeddings at 93.0% hit@3 against BM25's 74.4%, winning
-   every retrieval class. This is what makes that ranker available at runtime.
+   The eval measures embeddings at 91.8% hit@3 against BM25's 67.3% — a 12-0
+   win on exact two-sided McNemar, p = 0.0005 — and it still wins every
+   retrieval class. This is what makes that ranker available at runtime.
+
+   THOSE TWO FIGURES ARE DATED, ON PURPOSE. They are the corpus-9530564fdc07971c
+   run in evals/results.json, re-derived after the owner's rewrite took the index
+   from 76 chunks to 70; the previous pair (93.0% / 74.4%) sat in this header
+   describing a corpus that no longer existed. Nothing checks a number in a
+   comment, so re-read evals/results.json rather than trusting this line.
 
    WHY THIS IS A SEPARATE SCRIPT and not part of build-content.mjs: this one
    needs a network call and an API key. build-content.mjs is zero-dependency
@@ -62,8 +69,8 @@ const texts = content.chunks.map((c) => `${c.heading}. ${c.text}`);
    editor, in git diff and in a plain file read — indistinguishable from a space.
    Anyone reimplementing this hash from the source would therefore compute a
    DIFFERENT digest, declare a current cache stale, and embedRank() would return
-   null on every request: search silently falls back to BM25 at 74.4% hit@3
-   behind answers that look identical to the 93.0% ones. NUL is the right choice
+   null on every request: search silently falls back to BM25 at 67.3% hit@3
+   behind answers that look identical to the 91.8% ones. NUL is the right choice
    — it cannot occur in chunk text, so no reword can forge a boundary — but it
    must be visible. Changing this value invalidates every committed vector cache
    and costs a billed rebuild. */
@@ -84,7 +91,7 @@ if (CHECK) {
   }
   console.error(
     `✗ content/dist/vectors.json is stale — chunk text changed since it was built.\n` +
-      `  Retrieval will fall back to BM25 until it is rebuilt (~19pp worse on hit@3).\n` +
+      `  Retrieval will fall back to BM25 until it is rebuilt (~25pp worse on hit@3).\n` +
       `  Rebuild with:  node --env-file=.env scripts/build-vectors.mjs`
   );
   process.exit(1);
@@ -104,7 +111,7 @@ if (!key) {
   process.exit(1);
 }
 
-/* Voyage caps a request at 128 inputs; 76 chunks fits in one, but batching
+/* Voyage caps a request at 128 inputs; 70 chunks fits in one, but batching
    keeps this correct if the corpus grows. */
 const vectors = [];
 for (let i = 0; i < texts.length; i += 96) {

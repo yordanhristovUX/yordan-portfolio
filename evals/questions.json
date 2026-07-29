@@ -236,6 +236,7 @@
       "expectedEntity": "skills:product-design",
       "expectedChunkIds": ["skills:product-design:cv", "skills:design:site"],
       "why": "REPOINTED after the corpus rewrite. `project:spetema#system` no longer exists and NOTHING replaces it: the surviving Spetema summary says nothing about motion, so the id is dropped with no substitute. The two skills chunks that carry \"motion design\" verbatim still do, and `expectedEntity` was already `skills:product-design`, so both hit@k and ent@k stay coherent. The question is strictly harder than it was — one fewer acceptable target."
+    },
     {
       "id": "skill-languages",
       "category": "skills",
@@ -303,6 +304,7 @@
         "project:domestina#problem"
       ],
       "why": "REPOINTED after the corpus rewrite. `project:spetema#problem` no longer exists; `project:spetema#summary` states the same conflict at lower resolution — \"serving households and businesses from one site. Split navigation\" — so the Spetema target moves rather than disappearing. Dropping it outright would have stranded `expectedEntity: project:spetema`, leaving ent@k scoring one entity while hit@k scored two others."
+    },
     {
       "id": "cross-production-code",
       "category": "cross-cutting",
@@ -323,6 +325,7 @@
       "expectedEntity": "project:spetema",
       "expectedChunkIds": ["project:spetema#summary"],
       "why": "REPOINTED after the corpus rewrite. All three targets died with Spetema's case study. The question is still answered by the one surviving chunk — \"serving households and businesses from one site\" is the B2B/B2C reconciliation, and \"Split navigation\" is how it was done — so this stays a retrieval question. It is now a three-targets-to-one lookup and correspondingly harder."
+    },
     {
       "id": "cross-white-label",
       "category": "cross-cutting",
@@ -473,6 +476,7 @@
       "expectedEntity": "experience:live-to-lift",
       "expectedChunkIds": ["experience:live-to-lift#outcome"],
       "why": "REPOINTED after the corpus rewrite, and this one TIGHTENS the ground truth rather than repairing a dead id. `profile:background` was rewritten from a passage that gave the team size to one that reads \"I led a team of coaches\" — the number \"5–6\" now survives only in `experience:live-to-lift#outcome`. The chunk is still relevant, but it can no longer answer \"how big\", and leaving it in the list would have scored an arm a hit for returning a passage that does not contain the answer. It is dropped here and KEPT on exp-team-lead (\"has he ever managed or led a team?\"), which it still answers completely — the contrast between those two rows is the evidence that this rule is about the answer and not about the chunk. Dropping it makes this question harder, not easier."
+    },
     {
       "id": "metric-catalogue-vs-components",
       "category": "metric",
