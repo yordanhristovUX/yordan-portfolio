@@ -7,6 +7,8 @@
 
   "_shape": "`shape` records the FORM of the question, independently of its subject category. It was added because audit 05 §2.5 found the set tested lookup and almost nothing else: of the 54 questions in version 1, 52 were plain lookup and 2 were adversarial. The eleven questions added in version 2 carry the missing shapes — negation, comparative, multi-hop, temporal, and one more fabricated-employer probe. Shapes are reported with their n and a Wilson interval, because a shape bucket of 2 is a bucket of 2.",
 
+  "_corpusRewrite": "GROUND TRUTH REPOINTED after the owner's corpus rewrite took the index from 76 chunks to 70. Spetema was demoted from a case study to a notable project and now keeps ONE section: `project:spetema#summary`. Six ids died (#subtitle, #problem, #approach, #approach-2, #system, #status) and five questions referenced them. No question was added, removed or REWORDED — question text is what the eval's vector cache is keyed on, and leaving it untouched is what keeps this pass free of any wording chosen after seeing a score.\n\nONE RULE was applied to all five, and to the two questions whose targets survived but lost their answer, so that no question was decided on its own merits: a dead expected id is REPLACED by the surviving chunk of the same entity when that chunk's text still answers the question, and DROPPED when it does not; an expected id that survives but no longer contains the answer is dropped too. A question is recategorised as abstention only when the corpus no longer answers it at all.\n\nUnder that rule NOTHING became a corpus-gap, and the reason is in the surviving text. `project:spetema#summary` reads: \"A 200+ product coffee catalogue serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model. Bilingual, live.\" That sentence still answers the layout question (split navigation, preparation-method finder), the B2B/B2C question (households and businesses from one site) and the catalogue-size question (200+). Scoring any of them as abstention would mark a retriever WRONG for returning the one passage that answers it, and would also break this category's own published definition — `corpus-gap` is \"an entity that exists yet produced no chunk\", and Spetema produced one. The corpus-gap bucket therefore stays at n=3, still too small to read, and still needs questions about an entity that genuinely has no chunk rather than relabelled answerable ones.",
+
   "_version2": "Version 2, written AFTER the entity gate was rebuilt (name/label split, IDF floor, proper-noun test). The eleven new questions are therefore the first in this set that the gate was not built against — a small held-out probe, not a held-out SET: they were written by an agent that had read gate.js, so they are out-of-sample for the gate's tuning and not for its author's knowledge. Two of the two queries quoted in gate.js's own header as design examples were deliberately NOT copied in. Two version-1 questions were reworded to remove wording that echoed their target heading (proj-spetema-ia, metric-deadlift); both still have the same expected chunks. No question was added, removed or reworded after seeing a result.",
 
   "questions": [
@@ -32,8 +34,8 @@
       "shape": "lookup",
       "question": "How was the Spetema coffee site laid out so two very different kinds of buyer could each find their way?",
       "expectedEntity": "project:spetema",
-      "expectedChunkIds": ["project:spetema#approach"],
-      "why": "REWORDED in version 2. It read \"How was the information architecture of the Spetema coffee site structured?\" against a target chunk whose heading is literally \"Information architecture\" — audit 05 §2.5 flagged that it inflated BM25 and the gate together and tested no paraphrase. The expected chunk is unchanged; only the question wording moved, and it moved away from the heading, never toward it."
+      "expectedChunkIds": ["project:spetema#summary"],
+      "why": "REWORDED in version 2. It read \"How was the information architecture of the Spetema coffee site structured?\" against a target chunk whose heading is literally \"Information architecture\" — audit 05 §2.5 flagged that it inflated BM25 and the gate together and tested no paraphrase. The expected chunk was unchanged then; only the question wording moved, and it moved away from the heading, never toward it. REPOINTED after the corpus rewrite: `project:spetema#approach` no longer exists, and the heading the version-2 reword was moving away from went with it. The surviving summary still answers the question in as many words — \"serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model\" — so this stays a retrieval question rather than becoming an abstention. The question text is byte-identical to version 2; only the target moved."
     },
     {
       "id": "proj-malko-colour",
@@ -232,8 +234,8 @@
       "shape": "lookup",
       "question": "Does he do motion design?",
       "expectedEntity": "skills:product-design",
-      "expectedChunkIds": ["skills:product-design:cv", "skills:design:site", "project:spetema#system"]
-    },
+      "expectedChunkIds": ["skills:product-design:cv", "skills:design:site"],
+      "why": "REPOINTED after the corpus rewrite. `project:spetema#system` no longer exists and NOTHING replaces it: the surviving Spetema summary says nothing about motion, so the id is dropped with no substitute. The two skills chunks that carry \"motion design\" verbatim still do, and `expectedEntity` was already `skills:product-design`, so both hit@k and ent@k stay coherent. The question is strictly harder than it was — one fewer acceptable target."
     {
       "id": "skill-languages",
       "category": "skills",
@@ -296,11 +298,11 @@
       "question": "Has he designed for two audiences with conflicting needs on one product?",
       "expectedEntity": "project:spetema",
       "expectedChunkIds": [
-        "project:spetema#problem",
+        "project:spetema#summary",
         "project:malko-tarnovo#problem",
         "project:domestina#problem"
-      ]
-    },
+      ],
+      "why": "REPOINTED after the corpus rewrite. `project:spetema#problem` no longer exists; `project:spetema#summary` states the same conflict at lower resolution — \"serving households and businesses from one site. Split navigation\" — so the Spetema target moves rather than disappearing. Dropping it outright would have stranded `expectedEntity: project:spetema`, leaving ent@k scoring one entity while hit@k scored two others."
     {
       "id": "cross-production-code",
       "category": "cross-cutting",
@@ -319,8 +321,8 @@
       "shape": "lookup",
       "question": "Any experience reconciling B2B and B2C on one site?",
       "expectedEntity": "project:spetema",
-      "expectedChunkIds": ["project:spetema#problem", "project:spetema#subtitle", "project:spetema#approach"]
-    },
+      "expectedChunkIds": ["project:spetema#summary"],
+      "why": "REPOINTED after the corpus rewrite. All three targets died with Spetema's case study. The question is still answered by the one surviving chunk — \"serving households and businesses from one site\" is the B2B/B2C reconciliation, and \"Split navigation\" is how it was done — so this stays a retrieval question. It is now a three-targets-to-one lookup and correspondingly harder."
     {
       "id": "cross-white-label",
       "category": "cross-cutting",
@@ -442,11 +444,8 @@
       "shape": "lookup",
       "question": "How many products are in the Spetema catalogue?",
       "expectedEntity": "project:spetema",
-      "expectedChunkIds": [
-        "project:spetema#summary",
-        "project:spetema#subtitle",
-        "project:spetema#approach"
-      ]
+      "expectedChunkIds": ["project:spetema#summary"],
+      "why": "REPOINTED after the corpus rewrite. `#subtitle` and `#approach` died; `#summary` was already the first target and still carries the answer verbatim — \"A 200+ product coffee catalogue\". Two acceptable targets removed, the one that answers the question kept."
     },
     {
       "id": "metric-marathon",
@@ -454,7 +453,8 @@
       "shape": "lookup",
       "question": "How far has he run?",
       "expectedEntity": "fact:endurance",
-      "expectedChunkIds": ["fact:endurance"]
+      "expectedChunkIds": ["fact:endurance"],
+      "why": "KEPT as a retrieval question after the corpus rewrite, deliberately. `fact:endurance` used to read \"42 km. Marathon finisher.\" and now reads \"I ran a marathon\"; the digits `42` and the unit `km` exist nowhere in the corpus and in no structured field either, so unlike metric-token-count there is no tool that can produce them. The chunk is still the passage that answers \"how far\" — it names the distance by its canonical name instead of its numeral — so returning it is the CORRECT retrieval behaviour and marking this question `abstain` would score that correct behaviour as a failure. Whether an answer may say \"42 km\" is an answer-level property this suite does not measure; groundedness.mjs is where that belongs. The lexical property the question was chosen for is unchanged and was re-verified: `run` and `far` are not index terms at all, `ran` has df 3 and `marathon` df 1, and BM25 still returns literally nothing for this query."
     },
     {
       "id": "metric-deadlift",
@@ -463,7 +463,7 @@
       "question": "How much can he lift?",
       "expectedEntity": "fact:power",
       "expectedChunkIds": ["fact:power:cv", "fact:power"],
-      "why": "REWORDED in version 2. It read \"What is his heaviest deadlift?\" against a fact whose CV label is literally \"Heaviest deadlift.\" — audit 05 §2.5 flagged the echo. The expected chunks are unchanged. The paraphrase is genuinely harder: the site label is \"Heaviest lift\", the CV label is \"Heaviest deadlift\", and `lift` is also a name token of experience:live-to-lift."
+      "why": "REWORDED in version 2. It read \"What is his heaviest deadlift?\" against a fact whose CV label is literally \"Heaviest deadlift.\" — audit 05 §2.5 flagged the echo. The expected chunks are unchanged, then and now. HALF THIS NOTE HAS EXPIRED and is kept rather than deleted: the site/CV label divergence it describes (\"Heaviest lift\" vs \"Heaviest deadlift\") was retired by the owner when he replaced the numeral-plus-caption blocks with whole sentences, and both surfaces now read \"I can deadlift 250 kg\" under the heading \"Power\". So the question is EASIER than the note claims — \"deadlift\" is now in both chunks — while the collision it also names is unchanged: `lift` is still a name token of experience:live-to-lift, and the gate still resolves this question to that role rather than to the fact."
     },
     {
       "id": "metric-team-size",
@@ -471,8 +471,8 @@
       "shape": "lookup",
       "question": "How big was the coaching team he managed?",
       "expectedEntity": "experience:live-to-lift",
-      "expectedChunkIds": ["experience:live-to-lift#outcome", "profile:background"]
-    },
+      "expectedChunkIds": ["experience:live-to-lift#outcome"],
+      "why": "REPOINTED after the corpus rewrite, and this one TIGHTENS the ground truth rather than repairing a dead id. `profile:background` was rewritten from a passage that gave the team size to one that reads \"I led a team of coaches\" — the number \"5–6\" now survives only in `experience:live-to-lift#outcome`. The chunk is still relevant, but it can no longer answer \"how big\", and leaving it in the list would have scored an arm a hit for returning a passage that does not contain the answer. It is dropped here and KEPT on exp-team-lead (\"has he ever managed or led a team?\"), which it still answers completely — the contrast between those two rows is the evidence that this rule is about the answer and not about the chunk. Dropping it makes this question harder, not easier."
     {
       "id": "metric-catalogue-vs-components",
       "category": "metric",
@@ -591,7 +591,7 @@
       "question": "Did he ever work at Google?",
       "expectedEntity": null,
       "expectedChunkIds": [],
-      "why": "'Google' appears eight times in the corpus — Google Analytics, Google Play, Google AI Studio — none of them an employer."
+      "why": "'Google' appears ten times across nine chunks — Google Analytics ×4, Google Play ×4, Google AI Studio ×2 — none of them an employer. It was eight before the corpus rewrite; the count was re-derived rather than carried over, because a stale figure in a `why` note is how a question set starts describing a corpus it no longer measures."
     },
     {
       "id": "oob-japanese",
