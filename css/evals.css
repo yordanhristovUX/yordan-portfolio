@@ -73,6 +73,7 @@
    colour swap for print is a `print` value in tokens.json. */
 @media print {
   .bar,
+  .drawer, /* a fixed overlay prints once, on top of sheet one */
   .strip,
   .rail { display: none; }
 

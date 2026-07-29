@@ -98,11 +98,16 @@ in advance beats acknowledging it in retrospect.
 
 ## Tokens
 
-`--chrome-border`, `--chrome-label`, `--content-inverse`, `--primary`, `--space-2`,
-`--space-4`
+`--chrome-border`, `--chrome-label`, `--content-inverse`, `--primary`, `--space-1`,
+`--space-2`, `--space-4`
 
 The lamp is drawn in `currentColor` on purpose, so it inverts with the button on hover
 without a second colour token.
+
+`--space-1` is the ≤480px padding, and it is one of the three steps that paid for the Ask
+segment joining the bar — see the arithmetic in `components/nav/spec.md`. The toggle gives
+up 8.0px of a 40.0px bill. It is not an independent choice: change it back and the bar
+overflows at 375px.
 
 ## A11y
 

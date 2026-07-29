@@ -134,6 +134,7 @@
    nothing to scroll. */
 @media print {
   .bar,
+  .drawer, /* a fixed overlay prints once, on top of sheet one */
   .strip,
   .rail { display: none; }
 

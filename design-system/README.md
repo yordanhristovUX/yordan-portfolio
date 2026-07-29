@@ -29,6 +29,7 @@ scripts/build.mjs       tokens → dist/ + coverage check   (npm run build)
 dist/tokens.css         generated :root variables — the site <link>s this
 dist/tokens.flat.json   generated machine-readable tokens — AI + Figma push read this
 css/components.css      every component's styles (hand-authored, semantic tokens only)
+assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
 stories/*.stories.js    Storybook (CSF3, vanilla HTML strings)  (npm run storybook → :6006)
 figma/push-guide.md     the repeatable Figma Variables push (Figma MCP)
@@ -38,9 +39,18 @@ The site consumes the system with two `<link>` tags in `../index.html`
 (`dist/tokens.css` then `css/components.css`) ahead of the page-layout stylesheet
 `../css/style.css` — no build step in the site itself.
 
+**`dist/`, `css/` and `assets/` are the published surface; everything else here is
+private.** `scripts/check-boundaries.mjs` names `tokens/`, `components/`, `stories/`,
+`scripts/` and `figma/` as internals that nothing outside this directory may reach into, and
+its silence about the other three is the permission. `assets/` holds artwork that belongs to
+a component rather than to the copy: `avatar.svg` is the portrait
+`components/drawer/spec.md` prints on its plate. It is a derivative of the owner's export in
+`../content/assets/`, which stays untouched — content owns the words and the figures inside
+them, the system owns its own chrome.
+
 ## Theming (light / dark)
 
-The whole theme is 23 re-aliased semantic tokens. Nothing else in the system knows a theme
+The whole theme is 24 re-aliased semantic tokens. Nothing else in the system knows a theme
 exists — that is the design, and it is what proves the semantic tier is real rather than
 decorative.
 
@@ -68,6 +78,14 @@ Three rules for anyone extending it:
   in light; inverted literally that becomes a glaring 2px near-white bar across every
   section, so its dark value is the strong chrome border instead. Judgement belongs in
   `tokens.json`, where it can carry a `description` explaining itself.
+- **One token refuses to invert at all, and it is the clearest case for the tier.**
+  `surface-portrait` is stone-50 in light and stone-**100** in dark: still paper, one step
+  down the same end of the ramp. It is the plate the face illustration is printed on, and
+  that illustration is dark line-art over light fills — on a stone-900 page its ink measures
+  1.09:1 and the hair and jacket simply disappear. The condition is "this artwork is not
+  theme-neutral", which is a fact about a colour and therefore a `dark` value here; the
+  drawer that shows it contains no theme query and does not know a theme exists. See
+  `components/drawer/spec.md` for the measured table.
 - **JS that reads a themed colour must re-read it.** Read via `getComputedStyle` and listen
   for the `themechange` window event — `js/automata.js` is the reference implementation.
   Values cached at load will be wrong the moment the theme changes.
@@ -131,19 +149,21 @@ READMEs, the **dark count**. Those figures are a claim the site makes about itse
 public, so they get the same enforcement as component coverage — during one session they
 went stale twice, which is exactly the drift this system exists to prevent.
 
-- **tokens** — entries in `tokens.json` (82)
-- **values** — light + dark + print authored values across those tokens (140). Note this is
+- **tokens** — entries in `tokens.json` (83)
+- **values** — light + dark + print authored values across those tokens (142). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
-- **components** — directories under `components/` (19)
-- **dark** — tokens carrying a `dark` value (23)
+- **components** — directories under `components/` (20)
+- **dark** — tokens carrying a `dark` value (24)
 
 The dark count was added to the gate after it proved the point the hard way. Deleting one
 unused token (`surface-inverse`) took the theme from 24 re-aliased tokens to 23, and the
 sentence "the entire dark theme is 24 re-aliased tokens" survived in four files because
-nothing asserted it. The same sentence in `../content/profile.json` still says 24: it is
-the content pipeline's to interpolate, and needs a `{{dark}}` substitution in
-`../scripts/build-content.mjs` before it can be asserted here.
+nothing asserted it. The count is 24 again today — `surface-portrait` brought it back — and
+that coincidence is worth naming: a number that returns to a stale value is exactly the case
+a human reviewer cannot catch and a gate does not care about. The same sentence in
+`../content/profile.json` is now `{{dark}}` and is interpolated by
+`../scripts/build-content.mjs`, so it has one source like everything else.
 
 Add a token or a component and the build tells you which sentence to update, with the new
 numbers. Matching is whitespace-insensitive, so the prose may wrap wherever it reads best.

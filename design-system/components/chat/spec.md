@@ -10,8 +10,14 @@
 # Chat
 
 The assistant surface: a turn list, a composer, a streaming state, and a collapsible tool
-trace. It is a **section of the page**, not a widget floating over it — it lives inside a
-`.band`/`.well` and obeys the skeleton's rules like everything else.
+trace. It is a **surface, not a container**: it knows nothing about where it is mounted and
+carries no `position`, no z-index and no backdrop of its own. Two hosts exist today —
+a `.band`/`.well` on the page, where it obeys the skeleton's rules like everything else, and
+`components/drawer/spec.md`, which slides it in over the page from the nav bar. The drawer
+holds the frame; everything below is the same in both.
+
+**A widget floating over the page is the drawer's job, never this block's.** Adding
+`position: fixed` here is the change this paragraph exists to prevent.
 
 The answer inside an assistant turn is not chat markup. It is **the site's own components**,
 built from `content/dist/content.json` by `js/answer-render.js`: a project renders as the
@@ -122,6 +128,13 @@ exactly as tall on message 20 as on message 1, and the page's node count stays f
 no rail is ever rebuilt taller. `stories/chat.stories.js` has a 20-message story that exists
 purely to keep this honest — if that story makes the band grow, the regression is back.
 
+**Inside the drawer that max-height is released, and the property it protects is not.** The
+drawer's sheet is `top: 0; bottom: 0` on a fixed layer, so its height *is* the viewport and
+the thread cannot stretch anything whatever it contains — the bound is structural rather
+than declared. Keeping the max-height there as well would leave the composer floating in the
+middle of a tall panel. The three rules that do it live in the drawer's block, not this one;
+they are listed in `components/drawer/spec.md`.
+
 `js/chat.js` calls `window.rebuildCaseSquares?.()` after appending, the same way
 `js/main.js:167` does on dialog open.
 
@@ -187,5 +200,8 @@ There is no streaming JSON parser here and there must never be one.
   the rail rebuild live in `js/main.js`.
 - Do not put a background on `.chat__turn--assistant` — the well is already paper, and a
   second tint makes the answer read as quoted rather than as the page's own content.
-- Print is a *layout* rule and lives in `css/style.css`: the chat surface is hidden on paper.
-  Never put a print colour here.
+- Print is a *layout* rule and lives in the page stylesheets: the chat surface and the
+  drawer that may be carrying it are both hidden on paper. Never put a print colour here.
+- `js/chat.js` binds to `document.querySelector("[data-chat]")` — **one** instance per
+  document. Moving the assistant into the drawer means removing the section, not rendering a
+  second composer into both.

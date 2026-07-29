@@ -100,9 +100,17 @@ html { scroll-behavior: smooth; }
    The assistant is a live surface: it needs a network round trip, it
    renders nothing until asked, and a composer printed on paper is an
    empty box with a button in it. So the whole section is removed from
-   the printed page rather than made to look acceptable on it. */
+   the printed page rather than made to look acceptable on it.
+
+   `.drawer` goes with it, for a second reason on top of that one: it is
+   a fixed overlay, and a fixed overlay on paper is printed once, at the
+   top of the first sheet, over whatever was there. Every page that
+   mounts the drawer needs this line — see the same rule in cv.css,
+   mcp.css and evals.css, which carry it before they carry a drawer so
+   that adding one cannot ship a broken print. */
 @media print {
-  #ask { display: none; }
+  #ask,
+  .drawer { display: none; }
 }
 
 /* ============ Reduced motion ============ */

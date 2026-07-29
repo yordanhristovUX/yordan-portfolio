@@ -3,11 +3,11 @@
   "version": 1,
   "generatedBy": "scripts/build-content.mjs — do not edit",
   "system": {
-    "tokens": 82,
-    "values": 140,
-    "components": 19,
-    "light": 82,
-    "dark": 23,
+    "tokens": 83,
+    "values": 142,
+    "components": 20,
+    "light": 83,
+    "dark": 24,
     "print": 35
   },
   "profile": {
@@ -77,9 +77,9 @@
       },
       "openSource": [
         "Tokens are born in the repo, not in Figma. One tokens.json builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and the build fails if any of the three is missing, so parity is enforced rather than maintained by hand.",
-        "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 23 re-aliased tokens with zero per-component rules."
+        "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules."
       ],
-      "openSourceFacts": "82 tokens carrying 140 values across light, dark & print · 19 components · 0 axe violations across 19 Storybook stories · MIT licensed"
+      "openSourceFacts": "83 tokens carrying 142 values across light, dark & print · 20 components · 0 axe violations across 20 Storybook stories · MIT licensed"
     }
   },
   "capabilities": [
@@ -323,7 +323,7 @@
         {
           "kind": "outcome",
           "heading": "Receipts",
-          "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 82 tokens, 140 values, 19 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 23 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything."
+          "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 83 tokens, 142 values, 20 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything."
         },
         {
           "kind": "status",
@@ -926,7 +926,7 @@
   ],
   "designSystem": {
     "$derivedFrom": "design-system/dist/components.json (generated) — folded in verbatim",
-    "count": 19,
+    "count": 20,
     "components": [
       {
         "id": "button",
@@ -1290,6 +1290,92 @@
         ]
       },
       {
+        "id": "drawer",
+        "status": "stable",
+        "since": "phase-3",
+        "a11y": "role=dialog aria-modal=true labelled by its title; the focus trap, Escape and focus restore are mandatory, and the opener carries aria-expanded.",
+        "spec": "components/drawer/spec.md",
+        "story": "stories/drawer.stories.js",
+        "blocks": [
+          "Drawer (slide-in panel)"
+        ],
+        "classes": [
+          ".chat",
+          ".chat__thread",
+          ".drawer",
+          ".drawer__body",
+          ".drawer__head",
+          ".drawer__heading",
+          ".drawer__note",
+          ".drawer__portrait",
+          ".drawer__scrim",
+          ".drawer__sheet",
+          ".drawer__title",
+          ".entry",
+          ".entry__span",
+          ".idx__row",
+          ".idx__tags",
+          ".profile"
+        ],
+        "elements": [
+          "__body",
+          "__head",
+          "__heading",
+          "__note",
+          "__portrait",
+          "__row",
+          "__scrim",
+          "__sheet",
+          "__span",
+          "__tags",
+          "__thread",
+          "__title"
+        ],
+        "variants": [],
+        "selectors": [
+          ".drawer",
+          ".drawer .chat",
+          ".drawer .chat__thread",
+          ".drawer .chat__thread:empty",
+          ".drawer .entry",
+          ".drawer .entry__span",
+          ".drawer .idx__row",
+          ".drawer .idx__tags",
+          ".drawer .profile",
+          ".drawer .profile > div:nth-child(odd)",
+          ".drawer[data-open]",
+          ".drawer[data-open] .drawer__scrim",
+          ".drawer[data-open] .drawer__sheet",
+          ".drawer__body",
+          ".drawer__head",
+          ".drawer__heading",
+          ".drawer__note",
+          ".drawer__portrait",
+          ".drawer__portrait img",
+          ".drawer__scrim",
+          ".drawer__sheet",
+          ".drawer__title"
+        ],
+        "tokens": [
+          "--chrome-bg",
+          "--chrome-border-strong",
+          "--chrome-label",
+          "--content-primary",
+          "--font-display",
+          "--font-mono",
+          "--rule-strong",
+          "--scrim",
+          "--space-1",
+          "--space-3",
+          "--space-4",
+          "--space-5",
+          "--surface-page",
+          "--surface-portrait",
+          "--text-2xs",
+          "--text-sub"
+        ]
+      },
+      {
         "id": "entry",
         "status": "stable",
         "since": "initial",
@@ -1535,6 +1621,7 @@
           ".bar",
           ".bar__action",
           ".bar__action:hover",
+          ".bar__action[aria-expanded=\"true\"]",
           ".bar__clock",
           ".bar__dot",
           ".bar__id",
@@ -1555,6 +1642,7 @@
           "--font-mono",
           "--primary",
           "--shadow-drop",
+          "--space-1",
           "--space-2",
           "--space-3",
           "--space-5",
@@ -1894,6 +1982,7 @@
           "--chrome-label",
           "--content-inverse",
           "--primary",
+          "--space-1",
           "--space-2",
           "--space-4"
         ]

@@ -109,6 +109,7 @@
 
   /* ---- what does not exist on paper ---- */
   .bar,               /* floating nav — nothing to click */
+  .drawer,            /* a fixed overlay prints once, on top of sheet one */
   .strip, .rail,      /* the living squares are decoration */
   .foot,              /* the copyright line repeats the header */
   .sec__no,           /* section numbers are a screen device */

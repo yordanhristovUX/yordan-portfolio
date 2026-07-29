@@ -40,6 +40,7 @@
   --surface-page: var(--stone-100);
   --surface-raised: var(--stone-50);
   --surface-sunken: var(--stone-200);
+  --surface-portrait: var(--stone-50); /* The plate the face illustration is printed on, and the ONE surface that does not walk the ramp to the far end in dark. The portrait is dark line-art over light fills (its densest fill is #DDDCDE), so on a stone-900 page it loses its hair and its jacket and leaves a face floating in the dark — measured, not assumed. Kept light in both themes it reads as a printed card lying on the page, which is the same 'object on the sheet' language as the nav bar's drop shadow, and it avoids the alternative everyone reaches for first: a CSS invert() filter, which makes an uncanny negative of a human face and flips his blue collar to orange. It is stone-100 rather than stone-50 in dark because at 3.5rem on near-black the brightest paper in the ramp is a light source rather than a card; stone-100 is the page's own light-theme paper, which is exactly the fiction being maintained. No print value: the drawer that carries it is display:none on paper. */
 
   /* --- The ONE changeable brand colour. Everything that reads as 'brand' (headline type, interactive states, the automata's resident ink) routes through these three. Retheme by editing them alone. In dark mode the ink inverts to paper: primary is what the page is NOT, which is why the same components read correctly with no per-component overrides. --- */
   --primary: var(--ink-900);
@@ -118,7 +119,7 @@
 }
 
 /* ============ Dark theme ============
-   23 semantic tokens re-alias; the raw ramps never move.
+   24 semantic tokens re-alias; the raw ramps never move.
    Followed automatically unless the visitor has pinned light. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -126,6 +127,7 @@
     --surface-page: var(--stone-900);
     --surface-raised: var(--stone-800);
     --surface-sunken: var(--stone-950);
+    --surface-portrait: var(--stone-100);
     --primary: var(--stone-50);
     --primary-hover: var(--stone-300);
     --primary-muted: var(--stone-400);
@@ -154,6 +156,7 @@
   --surface-page: var(--stone-900);
   --surface-raised: var(--stone-800);
   --surface-sunken: var(--stone-950);
+  --surface-portrait: var(--stone-100);
   --primary: var(--stone-50);
   --primary-hover: var(--stone-300);
   --primary-muted: var(--stone-400);
