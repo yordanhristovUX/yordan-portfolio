@@ -5,7 +5,7 @@
     "css/components.css",
     "components/*/spec.md (frontmatter only)"
   ],
-  "count": 20,
+  "count": 21,
   "components": [
     {
       "id": "button",
@@ -933,6 +933,7 @@
         ".band > .sec__head",
         ".rail",
         ".sheet",
+        ".sheet .band",
         ".strip",
         ".well",
         ".well--flush"
@@ -942,6 +943,7 @@
         "--chrome-grid",
         "--pad",
         "--pad-y",
+        "--rail-track",
         "--space-6",
         "--surface-page"
       ]
@@ -1025,6 +1027,40 @@
         "--space-4",
         "--space-6",
         "--text-display"
+      ]
+    },
+    {
+      "id": "terminator",
+      "status": "stable",
+      "since": "phase-3",
+      "a11y": "Pure decoration: it carries aria-hidden, holds no content and is never focusable or announced — its only job is to be the height nobody's words are using.",
+      "spec": "components/terminator/spec.md",
+      "story": "stories/terminator.stories.js",
+      "blocks": [
+        "Terminator"
+      ],
+      "classes": [
+        ".band",
+        ".rail--l",
+        ".rail--r",
+        ".term"
+      ],
+      "elements": [],
+      "variants": [
+        "--l",
+        "--r"
+      ],
+      "selectors": [
+        ".band:has(> .term) > .rail--l",
+        ".band:has(> .term) > .rail--r",
+        ".term"
+      ],
+      "tokens": [
+        "--chrome-border",
+        "--chrome-grid",
+        "--space-6",
+        "--surface-page",
+        "--term-slack"
       ]
     },
     {

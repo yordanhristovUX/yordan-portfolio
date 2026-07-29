@@ -37,7 +37,7 @@ generations. "An old sketchbook with machines that help."
   semantic tier can be put to. No stylesheet anywhere contains a colour for print, and
   since the type scale landed, none contains a literal `font-size` either: paper gets its
   own pt sizes down the same pipe the colours use. `scripts/check-css.mjs` enforces it.
-- **20 components, triple-enforced** — each is a CSS block + an AI spec
+- **21 components, triple-enforced** — each is a CSS block + an AI spec
   ([example](design-system/components/button/spec.md)) + a Storybook story; `npm run build`
   fails if any leg is missing.
 - **AI-first** — [`CLAUDE.md`](CLAUDE.md) routes agents to

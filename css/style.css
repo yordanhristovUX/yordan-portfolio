@@ -117,12 +117,22 @@ html { scroll-behavior: smooth; }
    their own reasons; index.html was the one page relying on a browser
    default, and a default is not a decision.
 
+   THE TERMINATOR JOINS THEM, and for a third reason again. Its diagonal
+   is --chrome-grid and disappears on paper by itself, so the colour half
+   is already handled — but the plate underneath it is --surface-page and
+   its two edges are inset hairlines, and those would print as an empty
+   24px band under every section that carries one. It is decoration whose
+   whole job is to make a grid land, and there is no grid on paper.
+
    Only the geometry is here. The colour half needs no rule anywhere:
    --chrome-grid, which draws the graph paper behind the canvas, has a
-   `print` value of `transparent` in tokens.json. */
+   `print` value of `transparent` in tokens.json. Nor is there a `.sheet`
+   width reset: the sheet's snap to the lattice is scoped `@media screen`
+   in components.css, precisely so that no page stylesheet has to
+   remember it. */
 @media print {
   .drawer { display: none; }
-  .rail, .strip { display: none; }
+  .rail, .strip, .term { display: none; }
 }
 
 /* ============ Reduced motion ============ */

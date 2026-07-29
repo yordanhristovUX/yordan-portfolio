@@ -132,6 +132,10 @@
    swap for print is a `print` value in tokens.json. Hiding the regions is the
    geometry half and it is required, not tidy: the automata is a canvas, and a
    canvas prints as an image where the old squares' background tints did not.
+   `.term` is here for a nearby reason: its diagonal is --chrome-grid and
+   vanishes on paper by itself, but its plate and two hairline edges would print
+   as an empty band under every section. It is listed before this page ships one
+   on purpose — adding a terminator later cannot then ship a broken print.
    A code block that
    scrolls on screen must show its full contents on paper, since there is
    nothing to scroll. */
@@ -139,6 +143,7 @@
   .bar,
   .drawer, /* a fixed overlay prints once, on top of sheet one */
   .strip,
+  .term,
   .rail { display: none; }
 
   /* the nav clearance resets itself: --space-nav's print value is 0 */

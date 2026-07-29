@@ -8,18 +8,43 @@ export default { title: "Skeleton/Band, rails & strips" };
      intentional on its own, because it is the whole effect for that reader.
    · the PAINTED stories inject a canvas and draw one settled generation with
      the same contract js/automata.js has to hold: the lattice is read from the
-     region's computed background-size, the inks are read from the design
+     LATTICE ROOT's computed background-size, the region's phase against that
+     root is measured rather than assumed, the inks are read from the design
      system, and the bitmap is the box times the device pixel ratio.
 
    Nothing here is the engine — there is no loop, no click seeding and no
    breath. It is a still frame, so that what the CSS guarantees is reviewable
-   without the site's JS in the room. */
+   without the site's JS in the room.
 
-/* ---------- the two reads the engine also does ---------- */
+   EVERY STORY IS WRAPPED IN A .sheet, including the ones that are only showing
+   a strip. That is not framing: the sheet is where the graph paper is drawn
+   now, so a region outside one is a window onto nothing and the story would
+   quietly stop testing the thing it is named after. */
+
+/* ---------- the three reads the engine also does ---------- */
+
+/* The lattice root — the one element that draws the grid. `.sheet` is the
+   page's; a `.band` outside a sheet (the case dialog's) is its own. */
+const rootOf = (el) => el.closest(".sheet") ?? el.closest(".band");
 
 /* The lattice, from the one place it exists as a resolved length. The graph
    paper's tile IS the cell, so a story cannot drift from the stylesheet. */
-const cellOf = (el) => parseFloat(getComputedStyle(el).backgroundSize) || 0;
+const cellOf = (el) => parseFloat(getComputedStyle(rootOf(el) ?? el).backgroundSize) || 0;
+
+/* A region's offset into the root's grid. Zero horizontally on a snapped
+   sheet; vertically it is whatever the band above ended on, which is what the
+   terminator exists to drive to zero. Drawing at -phase is what puts a cell in
+   the root's square rather than in the region's own corner. */
+function phaseOf(region, cell) {
+  const root = rootOf(region);
+  if (!root || !cell) return { x: 0, y: 0 };
+  const rr = root.getBoundingClientRect();
+  const r = region.getBoundingClientRect();
+  return {
+    x: (((r.left - rr.left) % cell) + cell) % cell,
+    y: (((r.top - rr.top) % cell) + cell) % cell,
+  };
+}
 
 /* Never a colour literal, here or anywhere. Both inks flip with the theme, and
    Storybook's theme global re-runs the story, so each render re-reads them —
@@ -63,13 +88,14 @@ function still(cols, rows, wall, seed, gens) {
 
 /* Any client rect → cells. This is the formula components/skeleton/spec.md
    states, run against a real rect rather than described — if the canvas ever
-   stops being the region's box exactly, this story goes visibly wrong. */
-function rectToCells(region, box, cell, cols, rows, wall) {
+   stops being the region's box exactly, this story goes visibly wrong. The
+   phase is the one term that is new: cells are the ROOT's, not the region's. */
+function rectToCells(region, box, cell, cols, rows, wall, phase) {
   const r = region.getBoundingClientRect();
-  const c0 = Math.max(0, Math.floor((box.left - r.left) / cell));
-  const c1 = Math.min(cols, Math.ceil((box.right - r.left) / cell));
-  const y0 = Math.max(0, Math.floor((box.top - r.top) / cell));
-  const y1 = Math.min(rows, Math.ceil((box.bottom - r.top) / cell));
+  const c0 = Math.max(0, Math.floor((box.left - r.left + phase.x) / cell));
+  const c1 = Math.min(cols, Math.ceil((box.right - r.left + phase.x) / cell));
+  const y0 = Math.max(0, Math.floor((box.top - r.top + phase.y) / cell));
+  const y1 = Math.min(rows, Math.ceil((box.bottom - r.top + phase.y) / cell));
   for (let y = y0; y < y1; y++) for (let x = c0; x < c1; x++) wall[y * cols + x] = 1;
 }
 
@@ -85,8 +111,12 @@ function live(region, { seed = 7, gens = 14, walls = () => [], showWalls = false
     const cell = cellOf(region);
     const r = region.getBoundingClientRect();
     if (!cell || r.width < 1 || r.height < 1) return; // the engine's own guard
-    const cols = Math.ceil(r.width / cell);
-    const rows = Math.ceil(r.height / cell);
+    const phase = phaseOf(region, cell);
+    /* One more column and row than the box needs, because a phased grid starts
+       before the region does and ends after it. `overflow: hidden` clips both,
+       which is what graph paper does at the edge of a sheet. */
+    const cols = Math.ceil((r.width + phase.x) / cell);
+    const rows = Math.ceil((r.height + phase.y) / cell);
 
     /* CSS owns the box; JS owns the bitmap. Nothing below can change the box. */
     const dpr = window.devicePixelRatio || 1;
@@ -96,7 +126,7 @@ function live(region, { seed = 7, gens = 14, walls = () => [], showWalls = false
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const wall = new Uint8Array(cols * rows);
-    for (const box of walls(region)) rectToCells(region, box, cell, cols, rows, wall);
+    for (const box of walls(region)) rectToCells(region, box, cell, cols, rows, wall, phase);
 
     const a = still(cols, rows, wall, seed, gens);
     const cellInk = ink("--automata-cell-rgb");
@@ -105,16 +135,18 @@ function live(region, { seed = 7, gens = 14, walls = () => [], showWalls = false
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
         const i = y * cols + x;
+        const px = x * cell - phase.x;
+        const py = y * cell - phase.y;
         if (showWalls && wall[i]) {
           ctx.fillStyle = `rgba(${accent}, 0.06)`;
-          ctx.fillRect(x * cell, y * cell, cell, cell);
+          ctx.fillRect(px, py, cell, cell);
           continue;
         }
         if (!a[i]) continue;
         /* One fillStyle per band of alpha, not per cell — the reason the two
            inks are still rgb triplets rather than plain colours. */
         ctx.fillStyle = `rgba(${cellInk}, ${x % 5 === 0 ? 0.42 : 0.28})`;
-        ctx.fillRect(x * cell, y * cell, cell, cell);
+        ctx.fillRect(px, py, cell, cell);
       }
     }
   });
@@ -149,10 +181,43 @@ export const GraphPaperFallback = {
   render: () =>
     band(
       `With JS off there is no canvas and no automaton, and the rails are still
-       something: a repeating gradient on the 24px lattice, in the same
-       <code>--chrome-grid</code> ink the squares used to draw one line at a
-       time. Blueprint margin, not a grid of dead divs.`
+       something: one repeating gradient on the 24px lattice, drawn by the
+       sheet in the same <code>--chrome-grid</code> ink the squares used to
+       draw one line at a time. The rails are windows onto it. Blueprint
+       margin, not a grid of dead divs.`
     ),
+};
+
+/* The claim this component now makes, in the one place it is falsifiable: a
+   rail and the strip under it are two windows onto ONE grid, so their columns
+   line up whether or not anyone remembered to make them. Resize the frame —
+   the rails stay a whole number of squares wide at every width, and the strip
+   never shows a sliver at either end. */
+export const OneLattice = {
+  name: "One lattice — the rail/strip junction",
+  render: () => {
+    const el = node(`
+      <main class="sheet">
+        <section class="band sec">
+          <header class="sec__head">
+            <span class="sec__no mono">02</span>
+            <h2 class="sec__title t-title">One grid, four windows</h2>
+            <span class="sec__note">rail · well · rail · strip</span>
+          </header>
+          <div class="rail rail--l" aria-hidden="true"></div>
+          <div class="well"><p class="t-lead">The graph paper used to be drawn by each
+            region from its own corner, so a rail and the strip below it agreed only by
+            accident — measured at 1280px, the first six regions down the page started
+            their cells 0, 14.53, 22.33, 17.48, 12.31 and 20.11px past a line. There is
+            one grid now and the regions are holes cut in the paper over it.</p></div>
+          <div class="rail rail--r" aria-hidden="true"></div>
+        </section>
+        <div class="strip" aria-hidden="true"></div>
+      </main>`);
+    el.querySelectorAll(".rail").forEach((rail, i) => live(rail, { seed: 41 + i * 7 }));
+    live(el.querySelector(".strip"), { seed: 61, gens: 11 });
+    return el;
+  },
 };
 
 /* ---------- 2. what the engine draws over it ---------- */
@@ -176,8 +241,8 @@ export const BandWithLife = {
 export const Strip = {
   name: "Strip — four cells tall",
   render: () => {
-    const el = node(`<div class="strip" aria-hidden="true"></div>`);
-    live(el, { seed: 23, gens: 9 });
+    const el = node(`<main class="sheet"><div class="strip" aria-hidden="true"></div></main>`);
+    live(el.querySelector(".strip"), { seed: 23, gens: 9 });
     return el;
   },
 };
@@ -188,13 +253,13 @@ export const ContentIsAWall = {
   name: "Content is a wall (rect → cells)",
   render: () => {
     const el = node(`
-      <div style="position:relative">
+      <main class="sheet" style="position:relative">
         <div class="strip" aria-hidden="true"></div>
         <p class="t-label" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
            background:var(--surface-page);padding:var(--space-3) var(--space-5);margin:0">
           the machine works around the words
         </p>
-      </div>`);
+      </main>`);
     const strip = el.querySelector(".strip");
     live(strip, {
       seed: 5,

@@ -112,6 +112,9 @@
   .drawer,            /* a fixed overlay prints once, on top of sheet one */
   .strip, .rail,      /* the living canvas is decoration — and a canvas,
                          unlike the squares' background tints, would print */
+  .term,              /* its diagonal is --chrome-grid and goes by itself; its
+                         plate and two hairline edges would print as an empty
+                         band under every section */
   .foot,              /* the copyright line repeats the header */
   .sec__no,           /* section numbers are a screen device */
   .link-grid,         /* buttons; their URLs print via .print-only instead */

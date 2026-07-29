@@ -5,7 +5,7 @@
   "system": {
     "tokens": 83,
     "values": 142,
-    "components": 20,
+    "components": 21,
     "light": 83,
     "dark": 24,
     "print": 35
@@ -79,7 +79,7 @@
         "Tokens are born in the repo, not in Figma. One tokens.json builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and the build fails if any of the three is missing, so parity is enforced rather than maintained by hand.",
         "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules."
       ],
-      "openSourceFacts": "83 tokens carrying 142 values across light, dark & print · 20 components · 0 axe violations across 20 Storybook stories · MIT licensed"
+      "openSourceFacts": "83 tokens carrying 142 values across light, dark & print · 21 components · 0 axe violations across 21 Storybook stories · MIT licensed"
     }
   },
   "capabilities": [
@@ -323,7 +323,7 @@
         {
           "kind": "outcome",
           "heading": "Receipts",
-          "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 83 tokens, 142 values, 20 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything."
+          "text": "0 accessibility violations across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in both themes. 83 tokens, 142 values, 21 components — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build. Dark mode is 24 tokens and zero component rules. A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no prefers-color-scheme anywhere in the component CSS — the sharpest test a semantic token layer can be put to. No build step in the site. Two link tags consume the system; view-source shows everything."
         },
         {
           "kind": "status",
@@ -926,7 +926,7 @@
   ],
   "designSystem": {
     "$derivedFrom": "design-system/dist/components.json (generated) — folded in verbatim",
-    "count": 20,
+    "count": 21,
     "components": [
       {
         "id": "button",
@@ -1854,6 +1854,7 @@
           ".band > .sec__head",
           ".rail",
           ".sheet",
+          ".sheet .band",
           ".strip",
           ".well",
           ".well--flush"
@@ -1863,6 +1864,7 @@
           "--chrome-grid",
           "--pad",
           "--pad-y",
+          "--rail-track",
           "--space-6",
           "--surface-page"
         ]
@@ -1946,6 +1948,40 @@
           "--space-4",
           "--space-6",
           "--text-display"
+        ]
+      },
+      {
+        "id": "terminator",
+        "status": "stable",
+        "since": "phase-3",
+        "a11y": "Pure decoration: it carries aria-hidden, holds no content and is never focusable or announced — its only job is to be the height nobody's words are using.",
+        "spec": "components/terminator/spec.md",
+        "story": "stories/terminator.stories.js",
+        "blocks": [
+          "Terminator"
+        ],
+        "classes": [
+          ".band",
+          ".rail--l",
+          ".rail--r",
+          ".term"
+        ],
+        "elements": [],
+        "variants": [
+          "--l",
+          "--r"
+        ],
+        "selectors": [
+          ".band:has(> .term) > .rail--l",
+          ".band:has(> .term) > .rail--r",
+          ".term"
+        ],
+        "tokens": [
+          "--chrome-border",
+          "--chrome-grid",
+          "--space-6",
+          "--surface-page",
+          "--term-slack"
         ]
       },
       {

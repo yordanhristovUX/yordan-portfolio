@@ -137,11 +137,25 @@ body.is-locked { overflow: hidden; }
    sits on the page's own 24px rhythm, which is what makes it read
    as the paper the page is drawn on rather than a widget beside it.
    The Squares engine (site js/automata.js) owns the bitmap; this
-   file owns the box. */
+   file owns the box.
+
+   ONE LATTICE, ONE ORIGIN. The graph paper used to be drawn by each
+   region from its own top-left corner, so every region carried its own
+   phase and the junction between a rail and the strip under it was
+   coherent only by luck. Measured on index.html at 1280px, the first
+   six regions down the sheet started their cells at 0 · 14.53 · 22.33
+   · 17.48 · 12.31 · 20.11 px past a line — six different answers to
+   "where does a cell start". It is drawn once now, by the LATTICE
+   ROOT, and every region is a transparent window onto it. Junctions
+   line up by construction because there is nothing left to disagree.
+   See "The lattice root" below and components/skeleton/spec.md. */
 .sheet {
   max-width: 90rem;
   margin: 0 auto;
-  background: var(--surface-page);
+  /* background-COLOR, not the shorthand: the lattice rule below sets
+     background-image on this same element and a shorthand here would
+     reset it out of existence. */
+  background-color: var(--surface-page);
   box-shadow: inset 1px 0 0 var(--chrome-border), inset -1px 0 0 var(--chrome-border);
 }
 
@@ -156,6 +170,58 @@ body.is-locked { overflow: hidden; }
 .band > .sec__head { grid-column: 1 / -1; }
 .band > .rail--l { grid-column: 1; }
 .band > .rail--r { grid-column: 3; }
+
+/* ---- THE RAILS SNAP TO THE LATTICE ----
+   `2fr 20fr 2fr` makes a rail a fraction of the CONTAINER, which is never a
+   multiple of the cell: measured, a rail was 1.302 columns at 375px, 2.667 at
+   768, 3.555 at 1024 and 4.444 at 1280. A rail one square and a third wide is
+   the whole of the "half a square is showing" complaint.
+
+   `round(down, …)` makes it a whole number of cells and the well, which is the
+   flexible track, absorbs the 0-23px left over. Note 2/24 and 1/12 are the same
+   fraction, so the two breakpoints' column counts collapse to ONE expression —
+   the mobile media query above was never changing a rail's width, only its
+   name.
+
+   PERCENTAGES, NOT `cqi`, and that is a measurement rather than a preference.
+   `container-type: inline-size` on `.band` does NOT make the band its own query
+   container — a container is a container for its DESCENDANTS — so `cqi` in the
+   band's own `grid-template-columns` falls through to the viewport. Measured in
+   headless Chrome: a band inside a 1000px parent at a 1280px viewport resolved
+   `8.3333cqi` to 106.656px, i.e. exactly the viewport-derived number the change
+   exists to stop using. A percentage in `grid-template-columns` already resolves
+   against the grid container's own inline size, so it needs no containment, no
+   new containing block for fixed descendants and no extra stacking context.
+
+   THE FLOOR IS NOT DEFENSIVE. `round(down, 23px, 24px)` is 0, so without the
+   `max()` a rail vanishes entirely below ~288px of band. One cell is the
+   smallest rail that is still a rail.
+
+   AND THE 0.02px IS NOT A FUDGE — it is the difference between right and
+   wrong at the one width this site cares most about. `round(down, …)` on a
+   value a hair under a multiple drops a WHOLE CELL, and `100% / 12` lands a
+   LayoutUnit short of one exactly when the band is a multiple of 288px.
+   Measured in headless Chrome, without the epsilon:
+
+     band 1440 → track  96px  (should be 120: 1440/12 = 120 exactly)
+     band 1152 → track  72px  (should be 96)
+     band  864 → track  48px  (should be 72)
+     band  576 → track  24px  (should be 48)
+
+   1440 is the sheet at its 90rem maximum, i.e. every desktop above it. With
+   the epsilon all four are correct, and 1439 still resolves to 96 — so it
+   rescues an exact multiple without ever promoting a real remainder. 0.02px
+   is one LayoutUnit (1/64px) plus a hair: the smallest quantity Chrome can
+   be wrong by, and far below anything a rail can be seen to gain.
+
+   `@supports` because `round()` is Chrome 130+ / Firefox 127+ / Safari 15.4+;
+   without it the fr tracks above stand, which is today's behaviour. */
+@supports (grid-template-columns: round(down, 10%, 3px)) {
+  .band {
+    --rail-track: max(var(--space-6), round(down, calc(100% / 12 + 0.02px), var(--space-6)));
+    grid-template-columns: var(--rail-track) 1fr var(--rail-track);
+  }
+}
 
 /* THE WELL SIZES THE BAND. THE RAIL STILL NEVER DOES — but it is now the
    markup that says so rather than a containment property. A rail holds one
@@ -185,34 +251,106 @@ body.is-locked { overflow: hidden; }
    `aspect-ratio: 1` of the two rows of squares inside it, which is the same
    contents-size-the-box arrangement the rail needed containment for — a canvas
    child would simply have collapsed it to nothing. A multiple of the lattice
-   rather than a round number, so the last row of cells is never a sliver. */
+   rather than a round number, so the last row of cells is never a sliver.
+
+   Its `background-color: var(--surface-page)` is GONE, and that deletion is the
+   change, not a tidy-up: an opaque strip is an opaque lid over the sheet's
+   lattice, and the strip's whole job now is to be a window onto it. The `.well`
+   keeps its paper for exactly the opposite reason — words are printed ON the
+   sheet, so paper over graph is what a well is. */
 .strip {
   position: relative;
   overflow: hidden;
   cursor: cell;
   height: calc(var(--space-6) * 4);
-  background-color: var(--surface-page);
   box-shadow: inset 0 1px 0 var(--chrome-border), inset 0 -1px 0 var(--chrome-border);
 }
 @media (max-width: 760px) {
   .strip { height: calc(var(--space-6) * 3); }
 }
 
-/* THE GRAPH PAPER — the fallback and the grid lines are one thing.
-   Two 1px rules per cell, at the cell's leading edges, tiled from the region's
-   top-left corner: cell (0,0) starts at the region's origin, which is what
-   lets the engine turn any client rect into cell coordinates by division.
-   `background-size` is redundant against the gradient's own stops and is
-   declared anyway — it is the one place the cell size appears as a resolved
-   length, so js/automata.js reads the lattice from the computed style instead
-   of restating 24px. Prints as nothing without a print rule anywhere: the ink
-   is --chrome-grid and its print value is `transparent`. */
-.rail, .strip {
+/* ---- THE LATTICE ROOT ----
+   THE GRAPH PAPER — the fallback and the grid lines are one thing. Two 1px
+   rules per cell, at each cell's leading edges. What changed is WHERE it is
+   tiled from.
+
+   It used to be on `.rail, .strip`, tiled from each region's own top-left, so
+   every region carried its own origin and the page had as many lattices as it
+   had regions. Where a rail met the strip below it the two grids were in step
+   only by accident. It is drawn once now, by the sheet, and a region is a
+   transparent window onto it: a junction cannot be out of step because there is
+   only one grid to be out of step with.
+
+   TWO SELECTORS, because there are two lattice roots. `.sheet` is the page's.
+   A `.band` that is NOT inside a sheet is its own — that is the case dialog,
+   whose band lives in its own scroller, and it must be the BAND rather than the
+   panel because a background on a scroll container does not scroll with the
+   content over it. The pair below reads as one sentence: a band inside a sheet
+   hands its lattice and its own edge back to the sheet.
+
+   Prints as nothing without a print rule anywhere: the ink is --chrome-grid and
+   its print value is `transparent`. */
+.sheet, .band {
   background-image:
     repeating-linear-gradient(to right,  var(--chrome-grid) 0 1px, transparent 1px var(--space-6)),
     repeating-linear-gradient(to bottom, var(--chrome-grid) 0 1px, transparent 1px var(--space-6));
   background-size: var(--space-6) var(--space-6);
   background-position: 0 0;
+}
+.sheet .band { background-image: none; }
+
+/* ---- THE ROOT'S OWN EDGE IS ON A LINE ----
+   Snapping the rails is not enough on its own, and the arithmetic says why:
+   rail + well + rail = W, and if both rails are multiples of the cell then the
+   well is one only when W is. Otherwise the LEFT rail lands on a line, the well
+   swallows the remainder, and the RIGHT rail starts mid-cell — a half square at
+   the inner edge of every right margin, which is worse than what it replaces.
+   The strip has the same defect from the same cause: measured 52.708 columns at
+   1280px, cut at the sheet's right edge.
+
+   So the root rounds its own inline size down to a whole number of cells and
+   centres what is left (0-23px, so 0-11.5px a side) against the page's own
+   sunken ground — which is what already happens above 90rem, where the sheet is
+   1440px = exactly 60 cells. Every region on the sheet then measures a whole
+   number of columns, and there is no partial cell left anywhere on the
+   horizontal axis.
+
+   `@media screen` rather than a reset in four print blocks: the lattice is
+   screen scaffolding (--chrome-grid prints as transparent and every region is
+   display:none on paper), so a snapped sheet on paper is 0-24px of measure
+   given up for a grid that is not there. Scoping it here is one place a future
+   page cannot forget. */
+@supports (width: round(down, 10%, 3px)) {
+  @media screen {
+    .sheet, .band { width: round(down, 100%, var(--space-6)); margin-inline: auto; }
+    .sheet .band { width: auto; margin-inline: 0; }
+  }
+}
+
+/* ---- THE STEP, KEPT WHERE THE ENGINE HAS ALWAYS READ IT ----
+   `background-size` with no background-image draws nothing; it is a declared
+   length and nothing else. It stays on the regions because js/automata.js reads
+   the lattice as `parseFloat(getComputedStyle(region).backgroundSize)`, and
+   moving the graph paper out from under it would make that NaN and take every
+   canvas on the page down with it. Same token, so the region and the root
+   cannot disagree about the step.
+
+   The step is only half of what the renderer now needs. The ORIGIN is the
+   lattice root's, and the phase between them is a DOM read, not a declaration:
+
+     const root  = region.closest(".sheet") ?? region.closest(".band");
+     const cell  = parseFloat(getComputedStyle(root).backgroundSize);
+     const rr    = root.getBoundingClientRect();
+     const br    = region.getBoundingClientRect();
+     const phaseX = (((br.left - rr.left) % cell) + cell) % cell;
+     const phaseY = (((br.top  - rr.top ) % cell) + cell) % cell;
+
+   Once the engine takes BOTH from the root, this declaration has no reader left
+   and should go with the same commit. Until then the cells keep their 24px step
+   and lose only their vertical phase, which is a page that still breathes
+   rather than a page with no automata on it at all. */
+.rail, .strip {
+  background-size: var(--space-6) var(--space-6);
 }
 
 /* ONE CANVAS PER REGION, and it is the region's box exactly.
@@ -229,6 +367,72 @@ body.is-locked { overflow: hidden; }
   width: 100%;
   height: 100%;
 }
+
+/* ============ Terminator ============ @component terminator
+   The last row of a plate, and the only element in a band whose height is
+   nobody's content — which is exactly why it is the one that can absorb the
+   section's remainder.
+
+   A rail's height is its band's height, which is however much text the well
+   holds, so its last row is a fraction of a cell: measured on index.html at
+   1280px, rail rows ran 40.605 / 12.473 / 39.785 / 32.051 / 29.850 / 15.503 /
+   7.839 / 25.097 — not one of them whole. The terminator is where that fraction
+   goes. Give it the shortfall and the plate ends on a lattice line, so the next
+   region starts on one too and the whole sheet stays in step down the page.
+
+   FOUR THINGS THE PROTOTYPE PROVED, kept here because each one cost a round of
+   measuring:
+
+   · IT IS THE PLATE'S EDGE, NOT THE SHEET'S. `grid-column: 2` puts it in the
+     well's own column, so the rails run straight past it and keep their life
+     uninterrupted. It closes a section; the automata strip still separates one
+     plate from the next. A full-width terminator ends the page instead.
+
+   · THE RAILS MUST SPAN ITS ROW, and `grid-row: 2 / -1` does NOT do that: `-1`
+     addresses the EXPLICIT grid and the terminator's row is implicit, so the
+     rails stopped 317px short. `auto / span 2` is correct AND survives the one
+     band that has no `.sec__head` — the hero, whose rails sit in row 1, not
+     row 2. Scoped with `:has()` so a band without a terminator keeps exactly
+     the geometry it has today.
+
+   · THE DIAGONAL IS ANCHORED TO `left bottom`. The terminator holds the
+     remainder, so its own height is deliberately NOT a whole number of cells
+     and the tile has to be cut somewhere. Tiled from the top, the cut lands on
+     the plate's bottom edge — the one edge that now sits exactly on a lattice
+     line, and therefore the one place a cut is conspicuous. Tiled from the
+     bottom it lands where the terminator meets the well, against a border that
+     is already there. Same fraction, invisible instead of loud.
+
+   · ITS HEIGHT IS SET BY JS, and the hook is `--term-slack`, not `height`.
+     One pass, no iteration: set the slack to 0, measure the rail's bottom
+     against the lattice root, write the shortfall back.
+
+       term.style.setProperty("--term-slack", "0px");        // back to the base
+       const cell = parseFloat(getComputedStyle(root).backgroundSize);
+       const drop = rail.getBoundingClientRect().bottom - root.getBoundingClientRect().top;
+       const short = (cell - (drop % cell)) % cell;           // 0 when already exact
+       term.style.setProperty("--term-slack", short + "px");
+
+     A custom property rather than an inline `height` so the base stays in this
+     file and JS never restates it, and so `--term-slack: 0px` is a real reset
+     rather than a `removeProperty` that has to guess what CSS wanted.
+
+   Note the shortfall is measured against the ROOT, not against the rail's own
+   height. Those are the same number only while every band above happens to be
+   in step; measuring from the root makes it true by construction, and it is
+   what makes the strips land at phase 0 all the way down. */
+.term {
+  --term-slack: 0px;
+  grid-column: 2;                        /* the well's column — the plate */
+  height: calc(var(--space-6) + var(--term-slack));
+  background-color: var(--surface-page); /* paper over graph, like the well */
+  background-image: repeating-linear-gradient(45deg, var(--chrome-grid) 0 25%, transparent 25% 50%);
+  background-size: var(--space-6) var(--space-6);
+  background-position: left bottom;
+  box-shadow: inset 1px 0 0 var(--chrome-border), inset -1px 0 0 var(--chrome-border);
+}
+.band:has(> .term) > .rail--l,
+.band:has(> .term) > .rail--r { grid-row: auto / span 2; }
 
 /* ============ Nav (floating bar) ============ @component nav */
 .bar {
