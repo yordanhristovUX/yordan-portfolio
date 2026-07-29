@@ -472,7 +472,9 @@
   },
   "space.pad-y": {
     "cssVar": "--pad-y",
-    "value": "clamp(2rem, 5vh, 3.5rem)"
+    "value": "calc(var(--space-6) * 2)",
+    "resolved": "calc(1.5rem * 2)",
+    "description": "The vertical inset of every content well, and therefore the page's section rhythm. TWO LATTICE CELLS, not a viewport clamp: it was clamp(2rem, 5vh, 3.5rem), which resolved to 36px in a 720px-tall window — 1.5 cells, off the grid the terminator exists to keep every plate on, and a different fraction of a cell at every window height. Horizontal inset stays fluid (`pad`) because a measure should breathe with the viewport; vertical rhythm is structure, and structure is measured in cells here. Expressed against `space-6` rather than as 3rem so the two cannot drift apart — change the lattice and the section rhythm follows it, exactly as the strip's height and the rail's width already do."
   },
   "border.rule": {
     "cssVar": "--rule",

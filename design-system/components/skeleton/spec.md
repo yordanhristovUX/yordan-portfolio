@@ -52,10 +52,45 @@ rules in this file exist.
 | `.sheet` | 90rem max sheet, paper surface, hairline inset edges. **The lattice root**: it draws the graph paper and its own width is a whole number of cells |
 | `.band` | rail / well / rail grid; `.sec__head` spans all columns. A band outside a sheet is its own lattice root |
 | `.rail` (`--l`/`--r`) | Engine-injected side region. Height comes from the band row; it never gives any back |
-| `.well` (`--flush`) | Solid-paper content column — the automata never sits under text |
+| `.well` (`--flush`) | Solid-paper content column — the automata never sits under text. `--flush` removes the **inline** inset only; see "One vertical rhythm" below |
 | `.strip` | Full-width living separator between sections. Four cells tall (three under 760px) |
 | `.automata` | The one canvas per region. Absolutely positioned, transparent, `aria-hidden` |
 | `.term` | Not this component's — [terminator](../terminator/spec.md). Named here because the rails span its row |
+
+## One vertical rhythm, and it is not a colour's to decide
+
+**Every content well is inset by `--pad-y` on the block axis, and that is two lattice cells.**
+No section opts out. The horizontal inset (`--pad`) stays fluid, because a measure should
+breathe with the viewport; the vertical inset does not, because section rhythm is structure
+and structure is measured in cells here.
+
+The rule exists because the page did not have one. `--flush` used to zero *both* axes, so a
+section that wanted its grid to reach the rails horizontally also, silently, gave up its
+vertical rhythm — and the sections that kept theirs were exactly the tinted ones, because a
+tint makes a missing inset *look* broken while plain paper hides it. **The page's vertical
+rhythm was therefore being decided by a colour.** Measured on `index.html` at 1280px:
+
+| Section | Tinted | Inset above / below content |
+| --- | --- | --- |
+| `#about` `#work` `#notable` skills | no | **0 / 0** |
+| `#background` `#unexpected` `#contact` | yes | 36 / 36 |
+
+36px was `clamp(2rem, 5vh, 3.5rem)` at a 720px-tall window — **1.5 cells**, off the grid the
+terminator exists to keep every plate on, and a different fraction of a cell at every window
+height. It is `calc(var(--space-6) * 2)` now, so it is 48px at every viewport and moves with
+the lattice if the lattice ever moves, exactly as the strip's height and the rail's width do.
+
+Two things follow:
+
+- **`--flush` means "the content reaches the rails", inline only.** If a grid needs to bleed,
+  that is an inline decision and it says nothing about rhythm.
+- **`sec--tint` is colour and nothing else.** It was carrying spacing by accident; it does not
+  now, and a new tinted section needs no spacing thought at all.
+
+**The one deliberate exception** is the hero, whose well takes `--space-nav` on top to clear
+the floating bar. That is chrome clearance rather than section rhythm — it answers to the
+bar's height, not to the lattice — and it is the only vertical inset on the page that is not a
+whole number of cells. Its *bottom* is `--pad-y` like everything else.
 
 ## The lattice is a rhythm step, not an fr fraction
 

@@ -77,7 +77,20 @@ body.is-locked { overflow: hidden; }
   font-weight: 800;
   font-variation-settings: "wdth" 110;
   font-size: var(--text-title);
-  line-height: 1;
+  /* A WHOLE NUMBER OF CELLS, which is what makes the section head land — see
+     the `.sec__head` block. `1` was the defect: it makes the line box the font
+     size exactly, so the head's height was whatever the type happened to be and
+     landed on a lattice line only by luck.
+
+     Two declarations, not @supports: a browser without `round()` keeps 1.1,
+     which is no worse than the 1 it replaces. 0.8em is derived rather than
+     chosen — Archivo's cap height is 0.69em and capitals clear their box at
+     L >= 0.71F, so 0.8 has room to spare. It matters because js/main.js splits
+     `.sec__title` with GSAP `mask: "lines"`, which wraps every line in an
+     overflow:hidden box the height of its line box: too tight a box clips the
+     capitals permanently, and that clipping is not recoverable by scrolling. */
+  line-height: 1.1;
+  line-height: round(up, 0.8em, var(--space-6));
   text-transform: uppercase;
   letter-spacing: -0.01em;
   color: var(--content-primary);
@@ -238,13 +251,34 @@ body.is-locked { overflow: hidden; }
   cursor: cell;
 }
 
+/* ---- ONE VERTICAL RHYTHM FOR EVERY SECTION ----
+   `--pad-y` is the vertical inset of a content well and every well gets it,
+   which sounds obvious and was not true until now.
+
+   WHAT WENT WRONG, because the shape recurs. `--flush` zeroed BOTH axes, so a
+   section that wanted its grid to reach the rails horizontally also, silently,
+   gave up its vertical rhythm. Four of the eight sections on index.html carried
+   it. The other four did not — and they were exactly the tinted ones, because a
+   tint makes missing padding *look* broken while plain paper hides it. So the
+   page's vertical rhythm was being decided by a COLOUR: measured at 1280px,
+   about / work / notable / skills had 0 above and 0 below their content while
+   background / unexpected / contact had 36px, and nothing said why.
+
+   `--flush` now means what its name says — the content reaches the rails on the
+   INLINE axis — and the block axis is not its business. Tint is colour again.
+
+   The value is a whole number of lattice cells rather than a viewport clamp.
+   It was `clamp(2rem, 5vh, 3.5rem)`, which resolved to 36px at a 720px-tall
+   window: 1.5 cells, off the grid the terminator exists to keep everything on,
+   and a different fraction of a cell at every window height. Section rhythm is
+   structure, and the lattice is what structure is measured in here. */
 .well {
   background: var(--surface-page);
   box-shadow: inset 1px 0 0 var(--chrome-border), inset -1px 0 0 var(--chrome-border);
   padding: var(--pad-y) var(--pad);
   min-width: 0;
 }
-.well--flush { padding: 0; }
+.well--flush { padding-inline: 0; }
 
 /* The strip is the one region with no well to take its height from, so it
    states one: four cells, three on a small screen. It used to be sized by the
@@ -680,17 +714,42 @@ body.is-locked { overflow: hidden; }
 
 /* ============ Section head ============ @component section-head */
 .sec { border-top: var(--rule-strong); }
+/* ---- THE HEAD LANDS ON THE LATTICE ----
+   Every section head used to leave a half-square under it, and the clamp was
+   blamed for years. It was not the clamp. It was `line-height: 1` on the title
+   plus the 2px `.sec` top rule that the arithmetic kept omitting:
+   (2 + 77.797) mod 24 = 7.797px, the exact offset measured at 1280px.
+
+   The chrome is now one cell, algebraically:
+
+     2px  .sec border-top (rule-strong)
+   + (--space-3 - 2px)    padding-top
+   + the title's line box
+   + (--space-3 - 1px)    padding-bottom
+   + 1px  .sec__head border-bottom
+   = 1.5rem + line box, and 1.5rem IS --space-6, the cell.
+
+   So the head is a whole number of cells whenever the line box is, which is
+   what the `round(up, …)` on `.t-title` below guarantees. Written against the
+   rem token rather than 24px so it survives a reader changing their root size.
+
+   `align-items: baseline` is why `.sec__no` needs `line-height: 1`. A baseline
+   row is max(above-baseline) + max(below-baseline) ACROSS its items, so the row
+   can exceed every item's own line box: at --text-xs x 1.6 the number's descent
+   beats the title's whenever the title is under ~29.9px, which is why the head
+   measured 59.969px at 375px instead of the 26.4 + 32 the arithmetic predicted. */
 .sec__head {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
   gap: var(--space-6);
-  padding: var(--space-4) var(--pad);
+  padding: calc(var(--space-3) - 2px) var(--pad) calc(var(--space-3) - 1px);
   border-bottom: var(--rule);
   background: var(--chrome-bg);
 }
 .sec__no {
   font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.1em;
+  line-height: 1;
   color: var(--accent);
 }
 /* The middle track of the head grid. Typography comes from `.t-title` beside

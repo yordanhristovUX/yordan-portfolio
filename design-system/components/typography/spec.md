@@ -58,8 +58,14 @@ fluid steps in particular *need* one.
 ## Tokens
 
 `--chrome-label-strong`, `--content-body`, `--content-muted`, `--content-primary`,
-`--font-body`, `--font-display`, `--font-mono`, `--text-display`, `--text-display-hero`,
-`--text-display-xl`, `--text-lead`, `--text-title`, `--text-xs`
+`--font-body`, `--font-display`, `--font-mono`, `--space-6`, `--text-display`,
+`--text-display-hero`, `--text-display-xl`, `--text-lead`, `--text-title`, `--text-xs`
+
+`--space-6` is the lattice cell, and `.t-title` rounds its line box **up** to a whole one
+(`line-height: round(up, 0.8em, var(--space-6))`). That is a typography rule with a layout
+job: it is what makes a section head an exact number of cells tall, so the head lands on the
+grid instead of leaving a fraction of a square under it. A size utility consuming a spacing
+token is unusual and deliberate — the alternative was a number typed here.
 
 ## AI notes
 

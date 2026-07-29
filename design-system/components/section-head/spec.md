@@ -29,7 +29,12 @@ Parent section: `<section class="band sec">` (adds the strong top rule);
 
 `--accent`, `--chrome-bg`, `--chrome-label`, `--rule`, `--rule-strong`,
 `--surface-raised` (`.sec--tint`), `--text-xs`, `--pad` (title typography from `.t-title`),
-`--space-4`, `--space-6`
+`--space-3`, `--space-6`
+
+`--space-3` is the head's vertical padding, minus the two rules that bracket it — the 2px
+`.sec` top rule above and the 1px `.sec__head` bottom rule below — so the whole chrome sums to
+`1.5rem`, which is `--space-6`, the lattice cell. It replaced the fourth spacing step, which
+had no relationship to the grid. See the block comment in `components.css`.
 
 ## A11y
 

@@ -888,7 +888,7 @@
         "--pad",
         "--rule",
         "--rule-strong",
-        "--space-4",
+        "--space-3",
         "--space-6",
         "--surface-raised",
         "--text-xs"
@@ -1146,6 +1146,7 @@
         "--content-primary",
         "--font-display",
         "--font-mono",
+        "--space-6",
         "--text-display",
         "--text-display-hero",
         "--text-display-xl",
