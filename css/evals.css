@@ -69,8 +69,10 @@
 .ev-facts { margin-bottom: var(--space-6); }
 
 /* ============ Print ============
-   Layout only. Paper drops the floating chrome and the living squares; every
-   colour swap for print is a `print` value in tokens.json. */
+   Layout only. Paper drops the floating chrome and the automata; every colour
+   swap for print is a `print` value in tokens.json. Hiding the regions is the
+   geometry half and it is required, not tidy: the automata is a canvas, and a
+   canvas prints as an image where the old squares' background tints did not. */
 @media print {
   .bar,
   .drawer, /* a fixed overlay prints once, on top of sheet one */

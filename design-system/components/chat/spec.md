@@ -117,11 +117,13 @@ removed when it ends:
 
 ## The thread must not size the band
 
-`.rail { contain: size }` stops the rails feeding their squares back into the band's row
-height (`components/skeleton/spec.md` — the documented failure is a 420 px band reaching
-36,000 px). That fixes the rail. **A growing message list is the same failure from the other
-side**: the well would grow without bound, the row would follow, and the rails would rebuild
-against a height that keeps moving.
+A rail can no longer feed its cells back into the band's row height — they are pixels on a
+canvas that is out of flow, so the loop is unbuildable (`components/skeleton/spec.md` keeps
+the record: the documented failure was a 420 px band reaching 36,000 px, and until the
+canvas landed it was held off by `contain: size` alone). That fixes the rail. **A growing
+message list is the same failure from the other side, and nothing structural fixes it**: the
+well would grow without bound, the row would follow, and every rail would resize against a
+height that keeps moving.
 
 So `.chat__thread` carries `max-height: min(46rem, 75vh)` and `overflow-y: auto`. The band is
 exactly as tall on message 20 as on message 1, and the page's node count stays flat because

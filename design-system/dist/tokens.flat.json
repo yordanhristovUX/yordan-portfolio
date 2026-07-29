@@ -264,7 +264,7 @@
     "darkResolved": "rgba(148, 163, 184, 0.14)",
     "print": "transparent",
     "printResolved": "transparent",
-    "description": "The skeleton's square lines — slate-500 at 16% on paper, slate-400 at 14% on dark (a lighter ink at lower alpha, so the grid stays a whisper rather than becoming a cage). Prints as nothing: the grid is screen scaffolding, not content."
+    "description": "The skeleton's graph paper — slate-500 at 16% on paper, slate-400 at 14% on dark (a lighter ink at lower alpha, so the grid stays a whisper rather than becoming a cage). It used to be drawn one inset box-shadow per square and is now one repeating gradient per region, which also makes it the whole of what a reader with JS off sees. Prints as nothing: the grid is screen scaffolding, not content, and that is why hiding the automata on paper needs no colour rule in any stylesheet."
   },
   "action.action-hover": {
     "cssVar": "--action-hover",
@@ -286,7 +286,7 @@
     "value": "0, 60, 240",
     "dark": "92, 133, 255",
     "darkResolved": "92, 133, 255",
-    "description": "rgb triplet of --accent, for rgba() composition in JS and hover states"
+    "description": "rgb triplet of --accent, for rgba() composition at runtime. It has no CSS consumer any more: its one stylesheet use was the automata square's :hover tint, and squares are pixels on a canvas now — js/automata.js reads this and draws the hover cell and the seeded lineage itself."
   },
   "effect.shadow-drop": {
     "cssVar": "--shadow-drop",

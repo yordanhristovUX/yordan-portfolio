@@ -128,8 +128,11 @@
 .tools__row dd { line-height: 1.55; max-width: 46rem; }
 
 /* ============ Print ============
-   Layout only. Paper drops the floating chrome and the living squares; every
-   colour swap for print is a `print` value in tokens.json. A code block that
+   Layout only. Paper drops the floating chrome and the automata; every colour
+   swap for print is a `print` value in tokens.json. Hiding the regions is the
+   geometry half and it is required, not tidy: the automata is a canvas, and a
+   canvas prints as an image where the old squares' background tints did not.
+   A code block that
    scrolls on screen must show its full contents on paper, since there is
    nothing to scroll. */
 @media print {

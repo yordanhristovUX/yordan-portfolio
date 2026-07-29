@@ -1819,20 +1819,20 @@
         "id": "skeleton",
         "status": "stable",
         "since": "initial",
-        "a11y": "Rails and strips are decoration: js/automata.js sets aria-hidden on every one, and content never goes in them.",
+        "a11y": "Rails and strips are decoration: js/automata.js sets aria-hidden on every one, its canvas carries none of the page's meaning, and content never goes in them.",
         "spec": "components/skeleton/spec.md",
         "story": "stories/skeleton.stories.js",
         "blocks": [
           "Skeleton"
         ],
         "classes": [
+          ".automata",
           ".band",
           ".rail",
           ".rail--l",
           ".rail--r",
           ".sec__head",
           ".sheet",
-          ".sq",
           ".strip",
           ".well",
           ".well--flush"
@@ -1846,6 +1846,7 @@
           "--r"
         ],
         "selectors": [
+          ".automata",
           ".band",
           ".band > *",
           ".band > .rail--l",
@@ -1853,18 +1854,16 @@
           ".band > .sec__head",
           ".rail",
           ".sheet",
-          ".sq",
-          ".sq:hover",
           ".strip",
           ".well",
           ".well--flush"
         ],
         "tokens": [
-          "--accent-rgb",
           "--chrome-border",
           "--chrome-grid",
           "--pad",
           "--pad-y",
+          "--space-6",
           "--surface-page"
         ]
       },

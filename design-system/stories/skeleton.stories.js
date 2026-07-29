@@ -1,38 +1,209 @@
-export default { title: "Skeleton/Band & squares" };
+export default { title: "Skeleton/Band, rails & strips" };
 
-/* Static demonstration of the skeleton. On the site, js/automata.js fills
-   rails and strips with living .sq cells (Conway's Life); here a few cells
-   are pre-tinted to show the resident (stone) and seeded (accent) states. */
+/* The skeleton's decoration is a canvas now, not ~500 divs. These stories are
+   therefore in two halves, and both are worth looking at:
 
-const sq = (style = "") => `<div class="sq" ${style ? `style="${style}"` : ""}></div>`;
-const stone = "background-color: rgba(120, 113, 108, 0.3)";
-const blue = "background-color: rgba(var(--accent-rgb), 0.45)";
+   · the FALLBACK stories render the exact markup the page ships minus the
+     canvas — which is what a reader with JS off sees. It has to look
+     intentional on its own, because it is the whole effect for that reader.
+   · the PAINTED stories inject a canvas and draw one settled generation with
+     the same contract js/automata.js has to hold: the lattice is read from the
+     region's computed background-size, the inks are read from the design
+     system, and the bitmap is the box times the device pixel ratio.
 
-export const BandWithRails = {
-  render: () => `
-    <main class="sheet">
-      <section class="band sec">
-        <header class="sec__head">
-          <span class="sec__no mono">01</span>
-          <h2 class="sec__title t-title">What I do</h2>
-        </header>
-        <div class="rail rail--l" style="grid-template-columns:repeat(2,1fr)">
-          ${sq()}${sq(stone)}${sq()}${sq()}${sq(stone)}${sq(stone)}${sq()}${sq()}${sq()}${sq(blue)}
-        </div>
-        <div class="well">
-          <p class="t-lead">The middle 20 squares are solid paper — text never sits on the grid.
-          The rails either side are real squares where the automata lives.</p>
-        </div>
-        <div class="rail rail--r" style="grid-template-columns:repeat(2,1fr)">
-          ${sq(stone)}${sq()}${sq()}${sq(stone)}${sq()}${sq()}${sq(stone)}${sq(stone)}${sq()}${sq()}
-        </div>
-      </section>
-    </main>`,
+   Nothing here is the engine — there is no loop, no click seeding and no
+   breath. It is a still frame, so that what the CSS guarantees is reviewable
+   without the site's JS in the room. */
+
+/* ---------- the two reads the engine also does ---------- */
+
+/* The lattice, from the one place it exists as a resolved length. The graph
+   paper's tile IS the cell, so a story cannot drift from the stylesheet. */
+const cellOf = (el) => parseFloat(getComputedStyle(el).backgroundSize) || 0;
+
+/* Never a colour literal, here or anywhere. Both inks flip with the theme, and
+   Storybook's theme global re-runs the story, so each render re-reads them —
+   the same discipline as listening for `themechange` on the site. */
+const ink = (name) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+/* ---------- a still frame of Life ---------- */
+
+/* Deterministic, so a visual diff of this story means something changed in the
+   CSS rather than in a random seed. */
+const rand = (s) => () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+
+function still(cols, rows, wall, seed, gens) {
+  const n = cols * rows;
+  const next = new Uint8Array(n);
+  const rnd = rand(seed);
+  let a = new Uint8Array(n);
+  for (let i = 0; i < n; i++) a[i] = !wall[i] && rnd() < 0.34 ? 1 : 0;
+
+  for (let g = 0; g < gens; g++) {
+    for (let y = 0; y < rows; y++) {
+      const up = ((y - 1 + rows) % rows) * cols;
+      const mid = y * cols;
+      const dn = ((y + 1) % rows) * cols;
+      for (let x = 0; x < cols; x++) {
+        const l = (x - 1 + cols) % cols;
+        const r = (x + 1) % cols;
+        const live =
+          a[up + l] + a[up + x] + a[up + r] + a[mid + l] + a[mid + r] +
+          a[dn + l] + a[dn + x] + a[dn + r];
+        /* A wall cell is dead and stays dead. That is the whole of "content
+           becomes a wall": life is computed around it, not over it. */
+        next[mid + x] = wall[mid + x] ? 0 : a[mid + x] ? (live === 2 || live === 3 ? 1 : 0) : live === 3 ? 1 : 0;
+      }
+    }
+    a.set(next);
+  }
+  return a;
+}
+
+/* Any client rect → cells. This is the formula components/skeleton/spec.md
+   states, run against a real rect rather than described — if the canvas ever
+   stops being the region's box exactly, this story goes visibly wrong. */
+function rectToCells(region, box, cell, cols, rows, wall) {
+  const r = region.getBoundingClientRect();
+  const c0 = Math.max(0, Math.floor((box.left - r.left) / cell));
+  const c1 = Math.min(cols, Math.ceil((box.right - r.left) / cell));
+  const y0 = Math.max(0, Math.floor((box.top - r.top) / cell));
+  const y1 = Math.min(rows, Math.ceil((box.bottom - r.top) / cell));
+  for (let y = y0; y < y1; y++) for (let x = c0; x < c1; x++) wall[y * cols + x] = 1;
+}
+
+/* Inject the canvas the engine would inject, then draw one generation into it
+   once layout has given the region a box. */
+function live(region, { seed = 7, gens = 14, walls = () => [], showWalls = false } = {}) {
+  const canvas = document.createElement("canvas");
+  canvas.className = "automata";
+  canvas.setAttribute("aria-hidden", "true");
+  region.appendChild(canvas);
+
+  requestAnimationFrame(() => {
+    const cell = cellOf(region);
+    const r = region.getBoundingClientRect();
+    if (!cell || r.width < 1 || r.height < 1) return; // the engine's own guard
+    const cols = Math.ceil(r.width / cell);
+    const rows = Math.ceil(r.height / cell);
+
+    /* CSS owns the box; JS owns the bitmap. Nothing below can change the box. */
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const wall = new Uint8Array(cols * rows);
+    for (const box of walls(region)) rectToCells(region, box, cell, cols, rows, wall);
+
+    const a = still(cols, rows, wall, seed, gens);
+    const cellInk = ink("--automata-cell-rgb");
+    const accent = ink("--accent-rgb");
+
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const i = y * cols + x;
+        if (showWalls && wall[i]) {
+          ctx.fillStyle = `rgba(${accent}, 0.06)`;
+          ctx.fillRect(x * cell, y * cell, cell, cell);
+          continue;
+        }
+        if (!a[i]) continue;
+        /* One fillStyle per band of alpha, not per cell — the reason the two
+           inks are still rgb triplets rather than plain colours. */
+        ctx.fillStyle = `rgba(${cellInk}, ${x % 5 === 0 ? 0.42 : 0.28})`;
+        ctx.fillRect(x * cell, y * cell, cell, cell);
+      }
+    }
+  });
+  return region;
+}
+
+/* ---------- markup ---------- */
+
+const band = (copy) => `
+  <main class="sheet">
+    <section class="band sec">
+      <header class="sec__head">
+        <span class="sec__no mono">01</span>
+        <h2 class="sec__title t-title">What I do</h2>
+      </header>
+      <div class="rail rail--l" aria-hidden="true"></div>
+      <div class="well"><p class="t-lead">${copy}</p></div>
+      <div class="rail rail--r" aria-hidden="true"></div>
+    </section>
+  </main>`;
+
+const node = (html) => {
+  const t = document.createElement("div");
+  t.innerHTML = html.trim();
+  return t.firstElementChild;
+};
+
+/* ---------- 1. the scriptless page ---------- */
+
+export const GraphPaperFallback = {
+  name: "Fallback (no JS) — graph paper",
+  render: () =>
+    band(
+      `With JS off there is no canvas and no automaton, and the rails are still
+       something: a repeating gradient on the 24px lattice, in the same
+       <code>--chrome-grid</code> ink the squares used to draw one line at a
+       time. Blueprint margin, not a grid of dead divs.`
+    ),
+};
+
+/* ---------- 2. what the engine draws over it ---------- */
+
+export const BandWithLife = {
+  name: "Rails — one canvas each",
+  render: () => {
+    const el = node(
+      band(
+        `The middle 20 columns are solid paper — the automata never sits under
+         text. Either side, one canvas per rail replaces the ~250 divs that
+         used to be here, and the graph paper reads through the living cells
+         because the canvas has no background of its own.`
+      )
+    );
+    el.querySelectorAll(".rail").forEach((rail, i) => live(rail, { seed: 3 + i * 11 }));
+    return el;
+  },
 };
 
 export const Strip = {
-  render: () => `
-    <div class="strip" style="grid-template-columns:repeat(24,1fr)">
-      ${Array.from({ length: 48 }, (_, i) => sq([3, 7, 8, 20, 21, 33, 40, 41, 42].includes(i) ? stone : i === 27 ? blue : "")).join("")}
-    </div>`,
+  name: "Strip — four cells tall",
+  render: () => {
+    const el = node(`<div class="strip" aria-hidden="true"></div>`);
+    live(el, { seed: 23, gens: 9 });
+    return el;
+  },
+};
+
+/* ---------- 3. the reason the geometry is specified at all ---------- */
+
+export const ContentIsAWall = {
+  name: "Content is a wall (rect → cells)",
+  render: () => {
+    const el = node(`
+      <div style="position:relative">
+        <div class="strip" aria-hidden="true"></div>
+        <p class="t-label" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+           background:var(--surface-page);padding:var(--space-3) var(--space-5);margin:0">
+          the machine works around the words
+        </p>
+      </div>`);
+    const strip = el.querySelector(".strip");
+    live(strip, {
+      seed: 5,
+      gens: 16,
+      showWalls: true,
+      /* Any element's rect, turned into dead cells by division alone. The
+         canvas is the region's box exactly, so there is no offset term. */
+      walls: () => [el.querySelector(".t-label").getBoundingClientRect()],
+    });
+    return el;
+  },
 };

@@ -105,9 +105,24 @@ html { scroll-behavior: smooth; }
    on paper is printed once, at the top of the first sheet, over whatever
    was there — so this line is required by any page that mounts one. cv.css,
    mcp.css and evals.css carry the same rule BEFORE they carry a drawer,
-   deliberately: adding one to those pages cannot ship a broken print. */
+   deliberately: adding one to those pages cannot ship a broken print.
+
+   THE AUTOMATA IS THE NEW LINE HERE, and it is new because the model
+   changed rather than because it was missed. The squares tinted themselves
+   with `background-color`, which browsers drop from a printout by default,
+   so this page could leave its rails and strips in and print nothing. A
+   canvas is not a background — it is image content, and it prints. Left
+   alone it would put a grey wash down both margins and across all three
+   separators. cv.css, mcp.css and evals.css already hid these regions for
+   their own reasons; index.html was the one page relying on a browser
+   default, and a default is not a decision.
+
+   Only the geometry is here. The colour half needs no rule anywhere:
+   --chrome-grid, which draws the graph paper behind the canvas, has a
+   `print` value of `transparent` in tokens.json. */
 @media print {
   .drawer { display: none; }
+  .rail, .strip { display: none; }
 }
 
 /* ============ Reduced motion ============ */

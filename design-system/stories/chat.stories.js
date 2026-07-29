@@ -224,13 +224,14 @@ export const Stopped = {
    Twenty messages. This story exists for exactly one reason: to prove the
    thread does not size the band.
 
-   `.rail { contain: size }` stops the RAILS feeding their squares back
-   into the band's row height — the documented failure is a 420px band
-   reaching 36,000px with thousands of squares in it
-   (components/skeleton/spec.md). A growing message list is the same
-   failure from the other side: an unbounded thread grows the WELL, the
-   well grows the row, and every rail rebuild measures a height that keeps
-   moving.
+   The RAILS used to be the danger: they fed their squares back into the
+   band's row height, and the documented failure is a 420px band reaching
+   36,000px with thousands of squares in it (components/skeleton/spec.md).
+   That half is now structural — a rail holds one out-of-flow canvas and
+   has no in-flow content to grow with. A growing message list is the same
+   failure from the other side and has no such protection: an unbounded
+   thread grows the WELL, the well grows the row, and every region resizes
+   against a height that keeps moving.
 
    `.chat__thread` therefore has a max-height and scrolls internally. Open
    this story and the band must be the SAME HEIGHT as the Empty story

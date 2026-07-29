@@ -147,38 +147,30 @@ body.is-locked { overflow: hidden; }
 
 .band {
   display: grid;
-  grid-template-columns: 2fr 20fr 2fr;   /* 24 squares: 2 / 20 / 2 */
+  grid-template-columns: 2fr 20fr 2fr;   /* 24 columns: 2 / 20 / 2 */
 }
 @media (max-width: 760px) {
-  .band { grid-template-columns: 1fr 10fr 1fr; }  /* 12 squares: 1 / 10 / 1 */
+  .band { grid-template-columns: 1fr 10fr 1fr; }  /* 12 columns: 1 / 10 / 1 */
 }
 .band > * { grid-column: 2; }
 .band > .sec__head { grid-column: 1 / -1; }
 .band > .rail--l { grid-column: 1; }
 .band > .rail--r { grid-column: 3; }
 
+/* THE WELL SIZES THE BAND. THE RAIL STILL NEVER DOES — but it is now the
+   markup that says so rather than a containment property. A rail holds one
+   absolutely-positioned canvas and nothing else, so its in-flow content is
+   empty, its intrinsic height is zero, and the grid row is the well's to set.
+   A canvas cannot argue with that either: its bitmap is set from its box, not
+   the other way round. `contain: size` used to be the only thing standing
+   between this rail and a 36,000px band; it is gone because the shape of the
+   thing it guarded is gone. The history is in components/skeleton/spec.md. */
 .rail {
-  display: grid;
-  align-content: start;
+  position: relative;
   overflow: hidden;
   min-width: 0;
   cursor: cell;
-  box-shadow: inset 0 1px 0 var(--chrome-grid); /* opening line of the first row */
-
-  /* The rail is decoration and must never size the band. Without this its
-     squares feed the row height, the well stretches to match, and the next
-     rebuild measures the height it just caused — a self-confirming loop that
-     settles wherever it happens to land. `contain: size` makes the rail size
-     purely from the outside: the well sets the row, the rail fills it. */
-  contain: size;
 }
-
-.sq {
-  aspect-ratio: 1 / 1;
-  box-shadow: inset -1px -1px 0 var(--chrome-grid);
-  transition: background-color 0.3s linear;
-}
-.sq:hover { background-color: rgba(var(--accent-rgb), 0.4) !important; transition: none; }
 
 .well {
   background: var(--surface-page);
@@ -188,11 +180,54 @@ body.is-locked { overflow: hidden; }
 }
 .well--flush { padding: 0; }
 
+/* The strip is the one region with no well to take its height from, so it
+   states one: four cells, three on a small screen. It used to be sized by the
+   `aspect-ratio: 1` of the two rows of squares inside it, which is the same
+   contents-size-the-box arrangement the rail needed containment for — a canvas
+   child would simply have collapsed it to nothing. A multiple of the lattice
+   rather than a round number, so the last row of cells is never a sliver. */
 .strip {
-  display: grid;
+  position: relative;
+  overflow: hidden;
   cursor: cell;
-  background: var(--surface-page);
+  height: calc(var(--space-6) * 4);
+  background-color: var(--surface-page);
   box-shadow: inset 0 1px 0 var(--chrome-border), inset 0 -1px 0 var(--chrome-border);
+}
+@media (max-width: 760px) {
+  .strip { height: calc(var(--space-6) * 3); }
+}
+
+/* THE GRAPH PAPER — the fallback and the grid lines are one thing.
+   Two 1px rules per cell, at the cell's leading edges, tiled from the region's
+   top-left corner: cell (0,0) starts at the region's origin, which is what
+   lets the engine turn any client rect into cell coordinates by division.
+   `background-size` is redundant against the gradient's own stops and is
+   declared anyway — it is the one place the cell size appears as a resolved
+   length, so js/automata.js reads the lattice from the computed style instead
+   of restating 24px. Prints as nothing without a print rule anywhere: the ink
+   is --chrome-grid and its print value is `transparent`. */
+.rail, .strip {
+  background-image:
+    repeating-linear-gradient(to right,  var(--chrome-grid) 0 1px, transparent 1px var(--space-6)),
+    repeating-linear-gradient(to bottom, var(--chrome-grid) 0 1px, transparent 1px var(--space-6));
+  background-size: var(--space-6) var(--space-6);
+  background-position: 0 0;
+}
+
+/* ONE CANVAS PER REGION, and it is the region's box exactly.
+   `position: absolute` is the load-bearing word: it takes the canvas out of
+   flow so it can never contribute to the band's row height, and it makes the
+   canvas's top-left the region's top-left so a rect maps onto cells with no
+   offset term. The explicit 100%/100% is not belt-and-braces — a canvas is a
+   replaced element, so `inset: 0` alone leaves it at its intrinsic 300×150.
+   No background: the graph paper below must show through the living cells. */
+.automata {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* ============ Nav (floating bar) ============ @component nav */
@@ -890,9 +925,10 @@ body.is-locked { overflow: hidden; }
    section — it is a section of the page, not a widget floating over it.
 
    The thread has a max-height and scrolls internally. That is not
-   cosmetic: `.rail { contain: size }` stops the rails sizing the band,
-   and a bounded thread stops the WELL doing it instead. A conversation
-   of any length leaves the band exactly as tall as it started.
+   cosmetic: a rail cannot size the band (its only child is out of
+   flow — components/skeleton/spec.md), and a bounded thread stops the
+   WELL doing it instead. A conversation of any length leaves the band
+   exactly as tall as it started.
 
    Every colour here is a semantic token. There is no
    `prefers-color-scheme` query in this file and adding one would be a
@@ -1293,7 +1329,11 @@ body.is-locked { overflow: hidden; }
 
 /* ============ Reduced motion ============ @component none */
 @media (prefers-reduced-motion: reduce) {
-  .sq { transition: none; }
+  /* `.sq { transition: none }` used to lead this block: every square carried a
+     0.3s background-color transition, so a still automaton still cross-faded.
+     A canvas has no transitions to cancel — stillness is now entirely
+     js/automata.js's, which cancels the rAF loop rather than leaving it
+     spinning on a no-op. Nothing in this file assumes the canvas moves. */
   .bar__dot { animation: none; }
   .chat__cell { animation: none; opacity: 0.5; }
   /* The panel must not travel. Killing the transitions is enough and is the
