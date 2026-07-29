@@ -107,8 +107,21 @@
      place and becomes a seam. At 3 it is a place, 72px of it, and a glider
      takes ~12 generations (≈3.6s at this tick) to cross it and arrive.
 
-     Measured consequence at 1280px: rails fall from 5,236 simulated cells to
-     3,808, and off-stage drops from 75% of every rail's simulation to 37.5%. */
+     The consequence, as SHARES rather than totals. A total needs every band's
+     height, and those belong to the content — adding a word to the page moves
+     them, so any total committed here is a figure a later edit falsifies in
+     silence. The share needs only the geometry: off-stage is
+     HIDDEN / (cols + HIDDEN), and a rail is 1 / 2 / 3 / 4 / 5 cells wide at
+     375 / 768 / 1024 / 1280 / 1440+ (components/skeleton/spec.md).
+
+       at 1280px (4 cells)    6 -> 60.0%     3 -> 42.9%
+       at 1440px (5 cells)    6 -> 54.5%     3 -> 37.5%
+
+     The number this constant was ORIGINALLY chosen against is neither of
+     those: it is 75%, the old div model's 2-visible-column rail with six
+     hidden columns beside it. That is the figure "off-stage wings three times
+     the size of the picture" describes, and it is why 6 was affordable then
+     and is not now. */
   const HIDDEN = 3;
 
   /* A torus narrower than 3 makes a cell its own neighbour twice over and
@@ -133,9 +146,12 @@
   /* ---- Walls: content the life has to flow around ----------------------
      Any element whose rect genuinely lies over a region can mark the cells it
      covers permanently dead, so the population goes around the words instead
-     of under them. The mapping needs no offset term — the canvas is the
-     region's border box with the same origin (components/skeleton/spec.md) —
-     so this is one division, recomputed on rebuild rather than per frame.
+     of under them. TWO ORIGINS ARE IN PLAY AND ONLY ONE OF THEM IS THE
+     REGION'S. The canvas is the region's border box exactly, same origin, so
+     nothing here needs a term for that; the LATTICE is the root's, and the
+     grid is drawn at minus the region's phase, so turning a rect into cell
+     indices does carry a phase term — see it applied in `markWalls` below.
+     It is still one division per bound, recomputed on rebuild not per frame.
 
      TWO FILTERS, and both are about coordinate spaces rather than taste.
 
@@ -154,8 +170,11 @@
        column that nothing is actually covering.
 
      MEASURED, so nobody has to trust the mechanism: on index.html today this
-     masks ZERO cells at 375, 768 and 1280. The band is `2fr 20fr 2fr` and the
-     rails are columns 1 and 3, so a `.well` is BESIDE a rail, never over it —
+     masks ZERO cells at 375, 768 and 1280. A band is `--rail-track 1fr
+     --rail-track` (the `2fr 20fr 2fr` form is the `@supports` fallback for
+     engines without `round()`, and it partitions the band the same way), so
+     the rails are the outer two tracks and a `.well` is BESIDE a rail, never
+     over it —
      the paper is already the region's own edge, which is the strongest form
      of the same rule and the reason the mask has nothing left to do. The code
      stays because it is what makes that a measurement rather than an
