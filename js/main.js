@@ -188,11 +188,143 @@
      still documents `data-count` as a live hook; it now documents one
      nothing produces and nothing consumes. */
 
+  /* ---------- Overlay layers ----------
+     Two things on this page cover the reader: the case dialog and the Ask
+     drawer. They STACK rather than exclude each other, because an answer
+     inside the drawer renders real `.idx__row`s that call `window.openCase`,
+     and `z-index: 400` under `500` was chosen so the case study lands on top
+     of the drawer that opened it (components/drawer/spec.md). So everything
+     that makes a modal a modal is written once, here, instead of twice: the
+     tab trap, Escape, the body lock and focus restoration. A second copy
+     would be a second set of bugs — the same argument js/answer-render.js
+     already follows by reusing this dialog instead of building its own.
+
+     The stack is LIFO. Escape unwinds exactly ONE layer per press, Tab is
+     trapped in the topmost layer only, and every layer beneath the top is
+     `inert`, which takes it out of the tab order and the accessibility tree
+     for as long as something covers it. `inert` is not a style and not
+     visual state; the drawer's only visual state is still `data-open`.
+
+     THE BODY LOCK IS DERIVED FROM THE STACK'S DEPTH, and that is not tidiness.
+     `closeCase()` used to remove `is-locked` unconditionally, which with a
+     drawer underneath would unlock the page while a modal was still covering
+     it — and the mirror-image mistake (never removing it) is a reader left
+     with a frozen page and nothing on screen to press. Computing the class
+     from `layers.length` makes "Escape never leaves a locked body with no way
+     out" true by construction rather than by inspection. */
+
+  /* `textarea`, `input` and `details > summary` are in this list and were not
+     in the one it replaces, because the drawer puts a composer and two
+     disclosures (the tool trace, the citation list) inside a trap for the
+     first time. A trap that cannot name the last focusable in its own subtree
+     lets Tab walk out of it at that element, and which element is last here is
+     decided by a model-composed answer rather than by this file.
+
+     Nothing is filtered on `aria-disabled`, deliberately: the composer carries
+     `aria-disabled` + `readOnly` while a request is in flight precisely so it
+     KEEPS focus, and a trap that skipped it would undo the Wave 0 fix from the
+     other end. Only the real `disabled` property is filtered — such an element
+     cannot be focused at all. */
+  const FOCUSABLE = [
+    "a[href]", "button", "input", "select", "textarea",
+    "details > summary", '[tabindex]:not([tabindex="-1"])',
+  ].join(", ");
+
+  /* `offsetParent !== null` was the old visibility test and it is not one.
+     Measured on the live page: a `.source__link` inside a COLLAPSED `<details>`
+     reports `offsetParent !== null` and a 357x20 rect while being unreachable
+     by Tab, and every control inside the closed drawer reports the same — the
+     drawer closes with `visibility: hidden`, which offsetParent does not see.
+     Collecting an unreachable element is not cosmetic in a trap: if it lands
+     first or last, the wrap focuses something the reader cannot see and the
+     cycle silently breaks. `checkVisibility()` reads `visibility` and
+     `content-visibility` as well as `display`, and it moved the drawer's
+     collected set from 10 elements to the 11 that are actually there. The
+     fallback for a browser without it is exactly the previous behaviour. */
+  const isVisible = (el) =>
+    el instanceof HTMLElement && el.isConnected &&
+    (typeof el.checkVisibility === "function"
+      ? el.checkVisibility({ visibilityProperty: true, contentVisibilityAuto: true })
+      : el.offsetParent !== null);
+
+  const focusablesIn = (root) =>
+    $$(FOCUSABLE, root).filter((el) => !el.disabled && isVisible(el));
+
+  /** Open overlays, innermost last. Each: { root, initial, returnTo, close }. */
+  const layers = [];
+
+  function syncLayers() {
+    document.body.classList.toggle("is-locked", layers.length > 0);
+    layers.forEach((layer, i) => {
+      if (i < layers.length - 1) layer.root.setAttribute("inert", "");
+      else layer.root.removeAttribute("inert");
+    });
+  }
+
+  function pushLayer(layer) {
+    layers.push(layer);
+    syncLayers();
+  }
+
+  function popLayer(layer) {
+    const i = layers.indexOf(layer);
+    if (i === -1) return false;
+    layers.splice(i, 1);
+    syncLayers();
+    return true;
+  }
+
+  /* Focus restoration, checked at the moment of use rather than assumed.
+     `returnTo.focus()` is right whenever the reader closes one layer at a time,
+     and silently does NOTHING when the target has stopped being focusable —
+     measured: an element inside a `visibility: hidden` drawer no-ops the call
+     and leaves activeElement where it was. That is the danger, not the call
+     itself: `closeCase`'s `overlay.hidden = true` has already blurred the
+     scroller to <body> by then, so a no-op restore leaves the reader on <body>
+     with the page still locked behind a drawer that is still open — the Wave 0
+     defect arriving by a new route. Two ways in: hold Escape and the case
+     dialog's 0.4s exit tween is still running when the drawer beneath it
+     closes, or the return target is inside a disclosure that is now collapsed.
+     So the target is verified and the fallback is whichever layer is still
+     open, which is somewhere the reader can always Tab out of. */
+  function restoreFocus(returnTo) {
+    if (isVisible(returnTo)) { returnTo.focus(); return; }
+    const top = layers[layers.length - 1];
+    if (top && isVisible(top.initial)) top.initial.focus({ preventScroll: true });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    const top = layers[layers.length - 1];
+    if (!top) return;
+
+    if (e.key === "Escape") { top.close(); return; }
+    if (e.key !== "Tab") return;
+
+    const focusables = focusablesIn(top.root);
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    /* Focus outside the top layer is not hypothetical: applying `inert` to the
+       drawer blurs whatever was focused inside it, so for one moment focus is
+       on <body> with a modal on screen. Left alone, Tab would then walk into
+       the page behind the scrim. */
+    if (!top.root.contains(document.activeElement)) {
+      (e.shiftKey ? last : first).focus();
+      e.preventDefault();
+      return;
+    }
+    if (e.shiftKey && document.activeElement === first) {
+      last.focus(); e.preventDefault();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      first.focus(); e.preventDefault();
+    }
+  });
+
   /* ---------- Case study page ---------- */
   const overlay = $(".case");
   const panel = $(".case__panel");
   const scrollBox = $(".case__scroll");
-  let lastFocused = null;
 
   /* The scroller is the element that actually holds the case study —
      ~2150px of it below the fold — and it is the only thing in the dialog
@@ -210,6 +342,13 @@
      narrows the label to the open case's title, which is the one part that
      is genuinely dynamic. */
 
+  const caseLayer = {
+    root: overlay,
+    initial: scrollBox,
+    returnTo: null,
+    close: () => closeCase(),
+  };
+
   function openCase(id) {
     const data = window.CASE_STUDIES[id];
     if (!data) return;
@@ -224,27 +363,35 @@
     scrollBox.scrollTop = 0;
     scrollBox.setAttribute("aria-label", data.title + " — case study");
 
-    lastFocused = document.activeElement;
+    caseLayer.returnTo = document.activeElement;
     overlay.hidden = false;
-    document.body.classList.add("is-locked");
+    pushLayer(caseLayer);
     requestAnimationFrame(() => window.rebuildCaseSquares?.());
 
-    if (!HAS_GSAP) {
-      scrollBox.focus({ preventScroll: true });
-      return;
-    }
+    /* Focus moves NOW, not in the tween's onComplete as it used to. Two
+       reasons, and the second only exists since the drawer did. For 500ms
+       after open, focus sat on <body> with a modal on screen: any Tab in that
+       window walked into the page behind. And when this dialog is opened from
+       a row inside the drawer, `pushLayer` makes that drawer inert, which
+       blurs the row — so focus is guaranteed to be on <body> at this point,
+       not merely likely to be. `preventScroll` is what makes it safe to focus
+       a panel that is still sitting at yPercent: 100. */
+    scrollBox.focus({ preventScroll: true });
+
+    if (!HAS_GSAP) return;
     gsap.fromTo($(".case__backdrop"), { opacity: 0 }, { opacity: 1, duration: dur(0.25) });
-    gsap.fromTo(panel, { yPercent: 100 }, {
-      yPercent: 0, duration: dur(0.5), ease: "power3.out",
-      onComplete: () => scrollBox.focus({ preventScroll: true }),
-    });
+    gsap.fromTo(panel, { yPercent: 100 }, { yPercent: 0, duration: dur(0.5), ease: "power3.out" });
   }
 
   function closeCase() {
+    /* Popped synchronously, ahead of the exit tween: a second Escape during
+       the 0.4s close has to reach the layer UNDERNEATH, not this one again. */
+    if (!popLayer(caseLayer)) return;
+    const returnTo = caseLayer.returnTo;
+
     const dismiss = () => {
       overlay.hidden = true;
-      document.body.classList.remove("is-locked");
-      lastFocused?.focus();
+      restoreFocus(returnTo);
     };
 
     if (!HAS_GSAP) { dismiss(); return; }
@@ -267,20 +414,73 @@
   );
   $$("[data-case-close]").forEach((el) => el.addEventListener("click", closeCase));
 
-  document.addEventListener("keydown", (e) => {
-    if (overlay.hidden) return;
-    if (e.key === "Escape") closeCase();
-    if (e.key === "Tab") {
-      const focusables = $$('button, a[href], [tabindex]:not([tabindex="-1"])', overlay)
-        .filter((el) => el.offsetParent !== null);
-      if (!focusables.length) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        last.focus(); e.preventDefault();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        first.focus(); e.preventDefault();
-      }
-    }
-  });
+  /* ---------- The assistant, summoned ----------
+     The drawer was section 06 of this page: something you scrolled past,
+     reachable only by scrolling, invisible to anyone who read the top and
+     left. It is now a control in the fixed bar, which is why focus
+     restoration matters MORE here than in the case dialog — losing it puts
+     the reader at the top of ~9000px with the one control they wanted eight
+     screens behind them.
+
+     THE DRAWER IS PRESENTATION ONLY. This writes `data-open` and no style at
+     all, so the CSS keeps sole ownership of the slide, the scrim, the
+     visibility delay and the reduced-motion behaviour — which there is
+     "arrive in one frame", not "no transition". Anything here that set a
+     style would have to re-decide all four, and would get reduce-motion
+     wrong the first time the preference changed mid-visit.
+
+     There is exactly one `[data-chat]` per document (js/chat.js binds one
+     instance), so the composer moved into this panel rather than being
+     duplicated into it. */
+  const drawer = $("[data-drawer]");
+  const drawerSheet = drawer ? $(".drawer__sheet", drawer) : null;
+  const drawerOpeners = $$("[data-drawer-open]");
+
+  const drawerLayer = {
+    root: drawer,
+    initial: drawerSheet,
+    returnTo: null,
+    close: () => closeDrawer(),
+  };
+
+  function openDrawer(opener) {
+    if (!drawer || drawer.hasAttribute("data-open")) return;
+    drawerLayer.returnTo = opener || drawerOpeners[0] || null;
+    drawer.setAttribute("data-open", "");
+    /* Mirrored, never independent: the bar styles `[aria-expanded="true"]`,
+       so the lit segment and the announcement are the same fact. */
+    drawerOpeners.forEach((b) => b.setAttribute("aria-expanded", "true"));
+    pushLayer(drawerLayer);
+    drawerSheet.focus({ preventScroll: true });
+  }
+
+  function closeDrawer() {
+    if (!drawer || !drawer.hasAttribute("data-open")) return;
+    drawer.removeAttribute("data-open");
+    drawerOpeners.forEach((b) => b.setAttribute("aria-expanded", "false"));
+    popLayer(drawerLayer);
+    /* Before the CSS flips the sheet to `visibility: hidden` 280ms from now.
+       Leaving focus inside it until then would hand it to <body> instead. */
+    restoreFocus(drawerLayer.returnTo);
+  }
+
+  if (drawer && drawerSheet) {
+    drawerOpeners.forEach((btn) =>
+      btn.addEventListener("click", () =>
+        drawer.hasAttribute("data-open") ? closeDrawer() : openDrawer(btn)
+      )
+    );
+    /* The scrim carries this attribute too, so a click anywhere off the sheet
+       closes. Escape is handled by the shared layer keydown above. */
+    $$("[data-drawer-close]", drawer).forEach((el) =>
+      el.addEventListener("click", () => closeDrawer())
+    );
+  }
+
+  /* A request in flight is deliberately NOT aborted by closing the panel.
+     js/chat.js owns cancellation and gives it one control — the Stop button —
+     because Enter must not become destructive; a close is not an activation of
+     that control either. The stream keeps arriving into a hidden panel and the
+     answer is there on reopen, which is the outcome a reader who closed a
+     panel by accident wants. */
 })();

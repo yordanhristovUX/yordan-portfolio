@@ -105,7 +105,7 @@ const drawer = (thread, open = true) => `
       </header>
       <div class="drawer__body">
         <div class="chat">
-          <div class="chat__thread" role="log" aria-live="polite" aria-label="Conversation">${thread}</div>
+          <div class="chat__thread" tabindex="0" role="log" aria-live="polite" aria-label="Conversation">${thread}</div>
           <form class="chat__form" onsubmit="return false">
             <textarea class="chat__input" rows="2" maxlength="1000"
               placeholder="Ask about the work, the roles, or this design system"

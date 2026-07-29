@@ -35,7 +35,7 @@ const shell = (thread, extra = "") => `
       </header>
       <div class="well">
         <div class="chat">
-          <div class="chat__thread" role="log" aria-live="polite" aria-label="Conversation">${thread}</div>
+          <div class="chat__thread" tabindex="0" role="log" aria-live="polite" aria-label="Conversation">${thread}</div>
           ${composer()}
           ${extra}
         </div>

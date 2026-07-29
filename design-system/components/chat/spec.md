@@ -35,7 +35,7 @@ owns the conversation chrome; it owns none of the answer.
   </header>
   <div class="well">
     <div class="chat" data-chat>
-      <div class="chat__thread" role="log" aria-live="polite" aria-label="Conversation">
+      <div class="chat__thread" tabindex="0" role="log" aria-live="polite" aria-label="Conversation">
 
         <article class="chat__turn chat__turn--user">
           <p class="chat__role t-label">You</p>

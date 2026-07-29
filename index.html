@@ -53,6 +53,15 @@
       <span class="bar__dot" aria-hidden="true"></span>
       <span>Available for work — Sofia<span class="bar__clock">, <time id="local-time">--:--</time></span></span>
     </div>
+    <!-- The only route on this page to the assistant. A real button, not a
+         link to an anchor: there is no `#ask` section to link to any more.
+         `aria-expanded` is both the announcement and the lit state — the bar
+         styles `[aria-expanded="true"]`, so the highlight cannot drift from
+         what a screen reader is told. Between `.bar__status` and `.theme`
+         because every seam is owned by the segment on its right
+         (components/nav/spec.md). -->
+    <button class="bar__action mono" type="button"
+            data-drawer-open="ask-panel" aria-controls="ask-panel" aria-expanded="false">Ask</button>
     <!-- Deliberately vaguer than anything js/theme.js produces: the script's
          name for `auto` states what auto currently RESOLVES to, and static
          HTML cannot know the visitor's OS. A name that guessed would be
@@ -314,46 +323,7 @@
     <!-- living separator -->
     <div class="strip" aria-hidden="true"></div>
 
-    <!-- ============ 06 ASK ============
-         Hand-authored: this section has no content: region because none of its
-         words come from content/. The prose the assistant emits is
-         model-authored; everything else it renders is resolved from
-         content/dist/content.json at runtime by js/answer-render.js.
-
-         Do not write a content: region marker in here as literal markup —
-         HTML comments do not nest, so the parser would close this comment at
-         that inner delimiter and render the rest of this note as body text on
-         the homepage. That shipped to production once. -->
-    <section class="band sec" id="ask">
-      <header class="sec__head">
-        <span class="sec__no mono">06</span>
-        <h2 class="sec__title t-title">Ask</h2>
-        <span class="sec__note">Answers are built from the same source as this page</span>
-      </header>
-      <div class="well">
-        <div class="chat" data-chat data-chat-endpoint="/api/chat">
-          <div class="chat__thread" role="log" aria-live="polite" aria-label="Conversation"></div>
-
-          <form class="chat__form">
-            <textarea class="chat__input" rows="2" maxlength="1000"
-              placeholder="Ask about the work, the roles, or this design system"
-              aria-label="Ask a question about Yordan's work"></textarea>
-            <button class="btn btn--solid chat__send" type="submit">Ask →</button>
-          </form>
-
-          <div class="chat__suggest">
-            <button class="btn btn--small" type="button" data-chat-ask="What has he shipped?">What has he shipped?</button>
-            <button class="btn btn--small" type="button" data-chat-ask="What accessibility work has he done?">Accessibility work?</button>
-            <button class="btn btn--small" type="button" data-chat-ask="Where is he based and is he available?">Where is he based?</button>
-            <button class="btn btn--small" type="button" data-chat-ask="How is this site and its design system built?">How is this built?</button>
-          </div>
-
-          <p class="chat__status mono">Every answer is built from Yordan's own written record, cited to the passage it came from — or it says so.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ 07 UNEXPECTED FACTS ============
+    <!-- ============ 06 UNEXPECTED FACTS ============
          The facts used to hang off a kicker sentence at the end of Background
          ("The research habits started there, not in tech. So did these:"),
          which landed "I can walk on stilts" immediately after the strongest
@@ -370,7 +340,7 @@
          anchor, so the site's can too without inventing a second name. -->
     <section class="band sec sec--tint" id="unexpected">
       <header class="sec__head">
-        <span class="sec__no mono">07</span>
+        <span class="sec__no mono">06</span>
         <h2 class="sec__title t-title">Unexpected facts</h2>
       </header>
       <div class="well">
@@ -393,10 +363,10 @@
       </div>
     </section>
 
-    <!-- ============ 08 CONTACT ============ -->
+    <!-- ============ 07 CONTACT ============ -->
     <section class="band sec sec--contact" id="contact">
       <header class="sec__head">
-        <span class="sec__no mono">08</span>
+        <span class="sec__no mono">07</span>
         <h2 class="sec__title t-title">Contact</h2>
       </header>
       <div class="well">
@@ -474,5 +444,75 @@
        open the real case dialog. -->
   <script src="js/answer-render.js" defer></script>
   <script src="js/chat.js" defer></script>
+
+  <!-- ============ ASK (drawer) ============
+       LITERALLY the last child of <body>, after the footer, after the case
+       dialog and after the scripts, so that no ancestor can trap the fixed
+       layer in a stacking context. Every script above is `defer`, which runs
+       after the document is parsed, so js/chat.js still finds [data-chat] and
+       js/main.js still finds [data-drawer].
+
+       Hand-authored: nothing here has a content: region because none of its
+       words come from content/. The prose the assistant emits is
+       model-authored; everything else it renders is resolved from
+       content/dist/content.json at runtime by js/answer-render.js. This is the
+       copy that was section 06 of the page, moved verbatim — the heading, the
+       note, the placeholder, the four seed questions and the provenance line
+       are the same strings.
+
+       Do not write a content: region marker in here as literal markup — HTML
+       comments do not nest, so the parser would close this comment at that
+       inner delimiter and render the rest of this note as body text on the
+       homepage. That shipped to production once.
+
+       Markup per design-system/components/drawer/spec.md. JS sets `data-open`
+       here and nothing else visual. -->
+  <div class="drawer" id="ask-panel" data-drawer>
+    <div class="drawer__scrim" data-drawer-close></div>
+    <aside class="drawer__sheet" role="dialog" aria-modal="true"
+           aria-labelledby="drawer-title" tabindex="-1">
+      <header class="drawer__head">
+        <span class="drawer__portrait">
+          <!-- alt="" on purpose: the heading beside it carries the meaning and
+               the illustration is chrome. Never inlined — 160 KB of path data
+               in every page is worse than one cached request. -->
+          <img src="design-system/assets/avatar.svg" alt="" width="80" height="80" decoding="async">
+        </span>
+        <span class="drawer__heading">
+          <h2 class="drawer__title" id="drawer-title">Ask</h2>
+          <p class="drawer__note">Answers are built from the same source as this page</p>
+        </span>
+        <button class="btn btn--small" type="button" data-drawer-close
+                aria-label="Close the assistant">Close ✕</button>
+      </header>
+      <div class="drawer__body">
+        <div class="chat" data-chat data-chat-endpoint="/api/chat">
+          <!-- tabindex="0" is the same WCAG 2.1.1 fix .case__scroll carries, for the
+               same reason: this is a bounded scroller (max-height + overflow-y:auto)
+               holding content taller than itself — measured 1263px inside 489px — and
+               <body> is overflow:hidden, so a keyboard reader has nowhere to send a
+               PageDown. Chrome's focusable-scroller heuristic never rescues it,
+               because the tool trace always renders at least one focusable child. -->
+          <div class="chat__thread" tabindex="0" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+          <form class="chat__form">
+            <textarea class="chat__input" rows="2" maxlength="1000"
+              placeholder="Ask about the work, the roles, or this design system"
+              aria-label="Ask a question about Yordan's work"></textarea>
+            <button class="btn btn--solid chat__send" type="submit">Ask →</button>
+          </form>
+
+          <div class="chat__suggest">
+            <button class="btn btn--small" type="button" data-chat-ask="What has he shipped?">What has he shipped?</button>
+            <button class="btn btn--small" type="button" data-chat-ask="What accessibility work has he done?">Accessibility work?</button>
+            <button class="btn btn--small" type="button" data-chat-ask="Where is he based and is he available?">Where is he based?</button>
+            <button class="btn btn--small" type="button" data-chat-ask="How is this site and its design system built?">How is this built?</button>
+          </div>
+
+          <p class="chat__status mono">Every answer is built from Yordan's own written record, cited to the passage it came from — or it says so.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
 </body>
 </html>
