@@ -2,42 +2,48 @@
 
 Written at the end of a long session. Everything here was measured, not remembered.
 
-**Branch:** `audit/w1-w2-foundations` · **HEAD:** `440ae8b` · **Base:** `main` (Wave 0 already
-merged and deployed to production)
+**Branch:** `main` · **HEAD:** `7b47aa2` · **Everything below is merged and deployed to
+production.** The `audit/w1-w2-foundations` branch was fast-forwarded into `main` and the site
+at `yordan-portfolio.vercel.app` is running it.
 
 ---
 
 ## Starter prompt for a new session
 
-> I'm continuing a remediation programme on my portfolio repo. Read `docs/HANDOVER.md` first —
-> it has the full state, what's left, and the open decisions. `docs/PROGRAMME-LOG.md` has the
-> history and the traps, read it before you trust any measurement tool. Then read
+> I'm continuing work on my portfolio repo. Read `docs/HANDOVER.md` first — it has the full
+> state, what is deliberately deferred, and the standing rules. `docs/PROGRAMME-LOG.md` has the
+> traps; read it before you trust any measurement tool, especially the browser pane. Then read
 > `ARCHITECTURE.md` for the slice map.
 >
-> Work through specialists in `.claude/agents/` — each is scoped to one slice, and the rule is
-> that no agent writes a file another agent owns. Brief them with what is already fixed, what is
-> deliberately still broken, and which findings they own, or they redo work.
+> Everything is merged to `main` and deployed, and `npm run check` is green — start there, and
+> if it is not green, that is the first thing to tell me.
 >
-> Start by telling me what you think the next step is and why, before doing it.
+> I have more defects to fix. I will describe them; audit each one against the actual code
+> before you change anything, because several of my reports this session turned out to have a
+> different cause than the symptom suggested.
+>
+> Standing rules: copy is mine — corrections are fine, editorial changes are drafted and
+> stopped for review. Do not touch anything eval-related, the assistant's retrieval defects
+> (items 24 and 26), or the groundedness re-run until I say so. Verify in the browser before
+> claiming something works, and tell me plainly what you could not verify.
 
 ---
 
 ## Current numbers
 
 ```
+HEAD            7b47aa2 on main, deployed
 tests           96 / 96
-corpus          9530564fdc07971c · 70 chunks · 967 terms (was 1048 — stopwords, item 29)
-design system   83 tokens · 142 values · 21 components · 24 dark · 35 print
-gates           tokens ✓  content ✓  css ✓  vectors ✓
-                bounds ✓  evals ✓  behaviour ✓  api-loads ✓
-                doc-arithmetic ✓  (new — see task 32 below)
+gates           all green — `npm run check` exits 0 end to end
+corpus          9530564fdc07971c · 70 chunks · 967 terms
+design system   83 tokens · 147 values · 21 components
+                (83 base + 23 dark + 36 print + 5 wide)
+pages           index · cv · mcp · evals · work/<id> × 5
 ```
 
-**`npm run check` runs end to end and exits 0.** It had been short-circuiting at step 3 of
-nine, so `build-vectors --check`, `check-boundaries`, `evals --check`, the behaviour suite and
-both `api/` smoke tests were not executing in a single command — the numbers above were true
-but had been gathered by running the steps individually. That is fixed; one command now proves
-all of it.
+**Nothing is billed by the current state.** `corpusHash` has not moved since the corpus
+freeze: the stopword change altered the index and not the chunk text, and the project pages
+altered `cite` metadata and not the chunk text. Both vector caches are valid.
 
 ---
 
@@ -65,14 +71,27 @@ was the first free one.
 
 ## What is left
 
+### The design pass is finished and shipped
+
+Everything in this block is live. It is listed so a new session does not re-propose it.
+
+| Landed | What |
+|---|---|
+| Section rhythm | One rule: every well is inset two lattice cells, tint no longer decides spacing. A strip separates **every** section boundary including the last — 8 sections, 8 strips, all 96px. |
+| Type ramp | Ten steps set by level (chosen rem, stepping at the 760px grid break), three set by their box (clamps). Measured ratios 1.11 phone / 1.25 wide. |
+| A viewport tier in the token layer | A step that changes at the grid break is a token with a `wide` value, emitted as a media query by the same machinery that emits `dark` and `print`. The build refuses a token carrying both `dark` and `wide`. |
+| Section heads | Exactly 3 cells from the section's top edge, bottom edge at phase 0 on every section. |
+| `theme-color` | Browser chrome follows the pinned theme, fixed inside the already-blocking head script. |
+| Notable cards | Minimal at rest (6 cells, eyebrow + title). Image **and** description ride the pointer in one floating panel — `js/peek.js`. Touch and no-JS show both in the card. |
+| Portrait | The owner's original file, byte-identical, black tile intact. Circular in both the bar and the drawer. |
+| Nav hierarchy | identity → navigation → context → **primary action** → utility. The action is a solid **accent** block, not ink. |
+| Theme control | **Out of the nav.** A floating 40px puck, bottom right. No text: a fill for each pinned state, half-and-half + rotating for auto. |
+| Project pages | Five case studies at `/work/<id>`, generated and byte-compared. The full-screen modal is retired. |
+
 ### Open decisions — these need the owner, nothing else blocks on me
 
-1. **The type ramp.** Full proposal in the session log; prototype at
-   `_type-study.html` (serve it, never open as `file://`). The decision is the **768–1024 band**:
-   card titles 18.4 → 24.8px, page 7–12% longer. 1280/1600 barely move. Owner chose "prototype
-   first" and has seen it; verdict pending.
-2. **The head fix.** Three CSS declarations, no token changed, delivers phase 0 at every width.
-   Owner chose to hold it and land with the ramp. **It is independent and could ship alone.**
+1. ~~**The type ramp.**~~ **SHIPPED.** The prototype files are deleted.
+2. ~~**The head fix.**~~ **SHIPPED**, with the ramp.
 3. ~~**The hero floor.**~~ **ANSWERED — `2.5rem` fits. The `2.25rem` fallback is not needed.**
    Settled by arithmetic rather than by a viewport, because the pane will not go below ~353px.
    Archivo was confirmed loaded, `HRISTOV` (the longer of the two lines) was measured by glyph
@@ -90,13 +109,26 @@ was the first free one.
    The one caveat: in a 320px *desktop* window a scrollbar takes 15px and the margin falls to
    5.4px, under 3%. Real 320px devices have no persistent scrollbar. If you want comfort rather
    than a fit, `2.25rem` buys 25px — but the proposal as written is sound.
-4. **`theme-color`.** The `<meta>` tags key on `prefers-color-scheme` while the site keys on
-   `[data-theme]` — pin light on a dark OS and the browser chrome is wrong. Only a JS-written
-   value fully fixes it, which brushes the no-flash head-script rule.
-5. **Notable Projects images** — nine cards, placeholders in place, real files drop in with no
-   code change.
+4. ~~**`theme-color`.**~~ **SHIPPED.** It did not brush the no-flash rule after all — the head
+   script that reads the pinned theme is already inline and blocking, so it flips the metas in
+   the same frame. No new script.
+5. **Notable Projects images.** Nine placeholder plates are generated by
+   `scripts/make-placeholders.mjs` — the site's own graph paper with each project's initials.
+   Dropping a real file at `content/assets/notable/<id>.svg` is the whole migration: the path is
+   derived from the id, so there is no frontmatter to add and no build change.
+   **Constraint for real photography:** type sits over the image under a `--surface-page` wash
+   at 0.88. Light images are fine; a dark photograph needs that wash raised. In `card/spec.md`.
 6. **Groundedness re-run** (~$0.93). The committed artefact describes an endpoint that no longer
    exists; the 15% figure is a large understatement. Deliberately deferred until content settles.
+7. **Bespoke hover copy for the notable cards.** The cards currently reveal each project's
+   existing `{#summary}` — the owner's own words, and free. A *new* description field becomes a
+   corpus chunk, which moves `corpusHash` and forces the billed vector rebuild, so it should
+   batch with item 8.
+8. **Assistant-only project knowledge.** Not due. The architecture is written up in
+   `docs/PROJECT-PAGES.md`: sections in `content/projects/*.md` are chunked by default and
+   *rendered* by an allow-list, so "not on the page" is already the safe default and each one
+   becomes a real citable chunk. The single constraint is operational — **write all nine, then
+   rebuild once.** One at a time pays the billed rebuild nine times.
 
 ### Tracked work
 
@@ -109,11 +141,39 @@ was the first free one.
 | ~~31~~ | ~~Replace `check-css` rule 6~~ — **done, `98882fa`.** It bounds a floor on `--space-6` (a rail's simulated cells go as 1/cell²) and a ceiling on `HIDDEN`, plus an assertion that the cost *model* still has four sim assignments from a known term set. Nine mutation cases verified. |
 | ~~32~~ | ~~Gate that tokens obey their own documented system~~ — **done, `2142dbf`.** See below; it found four bad contrast figures and the handover's framing of it was overstated. |
 | — | W6 numbers pass (docs citing measured figures, held until content settles) |
-| — | W7 end-to-end verification and deploy |
+| ~~—~~ | ~~W7 end-to-end verification and deploy~~ — **done.** Merged to `main` and deployed. |
 
 ### Uncommitted right now
 
-`_type-study.html`, `_type-proposed.css` — the type prototype. Delete once decided.
+Nothing. The tree is clean and `main` is deployed.
+
+---
+
+## What a new session must NOT touch without being asked
+
+The owner has deferred these explicitly. They are not oversights and they are not warm-ups.
+
+- **Anything eval-related.** `/evals` publishes five claims that are currently false; the owner
+  has seen the list and chosen to ship anyway. They are recorded with their arithmetic in
+  `content/evals.json`'s `review` array. **Do not rewrite them** — that file's own rule is that
+  replacement prose must be the owner's.
+- **Items 24 and 26**, the assistant's retrieval defects.
+- **The groundedness re-run**, which is billed.
+- **Per-project prose.** The owner intends to review each case study's text himself.
+
+## How the owner's defect reports have gone
+
+Worth reading before acting on the next one. **Four of the reports this session had a different
+cause than the symptom suggested**, and in each case auditing first was what found it:
+
+| Reported | Actual cause |
+|---|---|
+| "spacing under sections is inconsistent" | Twice. First the well padding was coupled to *tint*; then the real complaint turned out to be the **strip**, which existed at only 3 of 7 boundaries. |
+| "the avatar has a strange border radius" | A square stroke drawn around a *rounded* tile — the radius mismatch, not a radius. |
+| "the dark/light switch order is wrong" | The order was already correct, verified on production. The dial was unreadable: two mirror-image states. |
+| "the hover is nothing like what I imagined" | A correct reading of a wrong implementation — an in-card reveal instead of a cursor-following panel. |
+
+**Audit the code before changing it, and say what you found.**
 
 ---
 

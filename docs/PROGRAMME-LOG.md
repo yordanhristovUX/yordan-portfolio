@@ -60,6 +60,21 @@ Worth reading — the pattern is that the agent measured something I had reasone
 - **The useful reads in this pane are all non-visual.** `getImageData` alpha-sampling proves the
   automata is drawing, and `getComputedStyle` proves the lattice resolved — neither needs a
   frame, a screenshot, or a working rAF. Prefer them to anything that has to composite.
+- **Transition clocks stall, so a mid-transition read is meaningless.** A CSS transition can sit
+  at its start value indefinitely here, which makes a correct rule look like it is not applying
+  — it cost a false diagnosis twice, on the peek panel and again on the theme dial. **The
+  decisive test is to remove the transition and re-read**: set `transition: none`, force a
+  reflow with `void el.offsetWidth`, then read the computed value. If it resolves to the target,
+  the rule is right and only the clock is stuck.
+- **The viewport silently collapses.** A measurement once came back with the card grid reporting
+  a single 205px column and `--text-sub` resolving to its *mobile* value on what was supposed to
+  be a desktop pane. Every width-derived conclusion from that read was wrong, and it very nearly
+  caused a type-size "fix" for a problem that did not exist. **Pin the viewport explicitly with
+  `resize_window` before any width-dependent measurement, and print `window.innerWidth` beside
+  the result** so a collapsed pane is visible in the output rather than inferred later.
+- **Compare bitmaps to CSS pixels only after multiplying by devicePixelRatio.** A check that
+  omitted it reported 0 of 23 canvases correctly sized; with `dpr = 1.5` applied it was 23 of
+  23. The pane's dpr is not 1.
 - **Viewport reported as 0×0 at one point**, which makes `IntersectionObserver` unable to fire at
   all — so scroll-triggered code is unreachable. The workaround that worked: run the *real
   shipped files* under stub DOMs in `vm`.
@@ -130,6 +145,23 @@ Two rules fall out of it:
   mutations looked verified when the JSON had simply stopped parsing. Use
   `[IO.File]::WriteAllText($p, $s, [Text.UTF8Encoding]::new($false))`. **A mutation test must
   assert the failure REASON, not just a non-zero exit.**
+- **A PowerShell script written as UTF-8 is read as ANSI by PS 5.1**, so every non-ASCII
+  character in it is corrupted before it is used. This did two kinds of damage in one commit:
+  every em dash inserted into four page heads shipped as mojibake, **and** a `.Replace()` whose
+  search string contained an em dash silently matched nothing — so half of a fix never applied
+  while the script reported success, because it checked that *something* had changed rather
+  than that *both* changes had. The browser verification passed too, because it tested the
+  outcome after load and the missing half was the pre-first-paint one. **Use Node for text
+  edits**: it reads and writes UTF-8 without being told.
+- **A regex with an optional `(?:<!--[\s\S]*?-->)?` group before its anchor deleted 273 lines
+  across four pages.** The quantifier is lazy, but laziness does not stop backtracking: the
+  engine took the leftmost start position that could match at all, which was the *first comment
+  in the file*, and swallowed everything down to the target — document heads included. Caught by
+  `build-content.mjs --check` on the next run and restored from git. **Anchor a destructive
+  pattern on a literal that occurs once**, and guard the write: assert what must still be true
+  afterwards and refuse to write if it is not. The guard on the retry was itself wrong — it
+  asserted a region only some pages have — but it failed in the safe direction and wrote
+  nothing.
 - **Rewriting the same file in a tight loop** while Node still holds a mapped view throws
   `"The requested operation cannot be performed on a file with a user-mapped section open"`.
   Restore via `git checkout --` between cases instead, and never `git checkout` a file that has
