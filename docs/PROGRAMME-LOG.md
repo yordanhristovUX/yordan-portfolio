@@ -238,6 +238,42 @@ These came out of doing the work, not from the audit documents.
   `cache_read_input_tokens: 0` was a tautology. The real prefix was 4,680 tokens — already over
   the 4,096 minimum. And enabling it would have silently stopped billing ~4.8k tokens per
   conversation to the daily budget, because cached tokens report outside `input_tokens`.
+- **No script may change the page's flow layout, and the rule was bought twice.** js/automata.js
+  derives every band's terminator slack from the DOM it finds at run time; when js/peek.js's
+  tap mode began injecting card triggers and collapsing the notable cards on touch, every
+  band below Selected work slid off the 24px lattice — the owner saw squares disagreeing
+  with the graph paper. The first fix reordered scripts and dispatched a synthetic `resize`
+  after mutating: a patch, and the owner called it one. The real fix removed the mutation —
+  the triggers are authored in the cards by the content build, the peek sheet is authored in
+  index.html beside the drawer, CSS decides visibility, and peek.js wires without creating.
+  The invariant that survives: **the page's geometry after scripts is its geometry before
+  them.** Anything that needs structure puts it in markup; JS toggles attributes.
+- **The second lattice slide had nothing to do with scripts: the scroll lock itself moved the
+  page.** A classic scrollbar occupies ~15px of layout, so any overlay's `overflow: hidden`
+  handed that width back — measured, the sheet shifted 4.33px left and grew 24px under every
+  body lock, with **no resize event fired**. Open→close restored it exactly, so the defect
+  needed a third ingredient: a real resize landing *while* locked (devtools moving, rotation,
+  the mobile URL bar) baked the scrollbar-less geometry into the automata's phases, and
+  closing the overlay left every canvas a few px off the paper — worst far down the page,
+  where re-wrap deltas accumulate, which is why the owner saw it "only under Selected work".
+  Fixed structurally with `html { scrollbar-gutter: stable }`: the gutter is reserved whether
+  or not the scrollbar draws, so every lock (is-locked and the `:has()` locks) is now
+  layout-neutral — verified by resizing mid-lock and measuring zero drift after close. The
+  rule: **a scroll lock that changes the scrollbar's layout contribution is a resize nobody
+  is told about.**
+- **The lattice saga's closing move was to stop enumerating shifters.** After fonts (handled),
+  injected structure (removed), and the scrollbar toggle (neutralised), the owner could STILL
+  reproduce a slide on every fresh warm reload that any resize healed — proof that layout
+  keeps settling after the engine's last rebuild through paths nobody has listed yet
+  (measured: a 2.2px Contact delta with the whole enumerated list already fixed). The engine
+  now watches its own lattice root with a **ResizeObserver feeding the same debounced rebuild
+  a resize uses**: any layout change from any cause re-measures automatically, and it
+  converges because a rebuild against unchanged layout writes unchanged slack. Verified:
+  fresh load self-settles with no synthetic resize, and consecutive rebuilds are byte-stable
+  (624 → 624 → 624). The instrument lesson beneath it: every earlier pane verification
+  OPENED with a synthetic resize (the pane's own canvas-trap workaround) — which silently hid
+  every fresh-load defect. **A workaround baked into the measurement ritual becomes a blind
+  spot in exactly the shape of the workaround.**
 - **The div model proved its own thesis while being replaced.** An intermediate measurement read
   556 squares at 61.8% of the DOM — taken with the old engine running against the new CSS, where
   `contain: size` had already gone. It immediately rebuilt the feedback loop that property
