@@ -212,6 +212,139 @@ test("engines.node covers the --env-file flag those scripts use", () => {
 });
 
 /* ============================================================
+   The design system's own workflow
+
+   The two Storybook gates (axe over every story, and the screenshot
+   regression) need Chromium and a Storybook build, so they cannot
+   join the job above without breaking the one promise it makes:
+   everything in `check` runs offline, browser-free and with no heavy
+   dependency. They live in .github/workflows/design-system.yml
+   instead, path-filtered so they only fire on design-system/**.
+
+   That separation is the thing worth guarding. The obvious "tidy-up"
+   is to merge the two workflows, and it would pass every other test
+   in this file while making `npm run check` either impossible to run
+   offline or no longer equal to CI. These assertions are what makes
+   that a red build rather than a discovery.
+
+   Parsed by hand, for the reason in the header — but scoped to the
+   `steps:` block, because unlike ci.yml this file has a `paths:` list
+   at the same indent as a step and a naive split would read a glob as
+   a step and find no `run:` in it.
+   ============================================================ */
+const dsYml = readFileSync(new URL(".github/workflows/design-system.yml", root), "utf8");
+
+/** The steps of the one job, each as its raw YAML block. */
+function jobSteps(source) {
+  const at = source.indexOf("\n    steps:\n");
+  assert.notEqual(at, -1, "design-system.yml has no `steps:` — the workflow shape changed");
+  const blocks = source.slice(at).split(/^ {6}- /m).slice(1);
+  assert.ok(blocks.length >= 5, `parsed only ${blocks.length} steps — the workflow shape changed`);
+  return blocks.map((b) => ({
+    run: b.match(/(?:^|\n)\s*run: (.*)/)?.[1]?.trim() ?? null,
+    uses: b.match(/(?:^|\n)\s*uses: (.*)/)?.[1]?.trim() ?? null,
+    dir: /(?:^|\n)\s*working-directory: design-system\s*$/m.test(b),
+    named: /(?:^|\n)\s*name: /.test(b),
+  }));
+}
+
+test("the browser gates stay out of the root check and out of ci.yml", () => {
+  for (const [what, source] of [["package.json `check`", pkg.scripts.check], ["ci.yml", yml]]) {
+    assert.doesNotMatch(
+      source,
+      /test:(a11y|visual)|playwright|storybook/i,
+      `${what} reaches for a browser. The root gate is offline, browser-free and dependency-light — ` +
+        `that is why a contributor can run it. These two gates belong in design-system.yml.`
+    );
+  }
+  /* And the other direction, so the separation cannot be resolved by deletion. */
+  assert.match(dsYml, /npm run test:a11y/, "design-system.yml no longer runs the a11y gate");
+  assert.match(dsYml, /npm run test:visual/, "design-system.yml no longer runs the visual gate");
+});
+
+/** The `on:` block, split into one chunk per trigger name. */
+function triggers(source) {
+  const region = source.slice(source.indexOf("\non:\n"), source.indexOf("\njobs:"));
+  const out = {};
+  let name = null;
+  for (const line of region.split("\n")) {
+    const m = line.match(/^ {2}(\w+):/);
+    if (m) name = m[1];
+    else if (name) out[name] += `\n${line}`;
+    if (m) out[m[1]] = "";
+  }
+  return out;
+}
+
+test("the design-system workflow only fires on design-system changes", () => {
+  const on = triggers(dsYml);
+  assert.deepEqual(
+    Object.keys(on).sort(),
+    ["pull_request", "push", "workflow_dispatch"],
+    "the trigger set changed"
+  );
+  for (const name of ["push", "pull_request"]) {
+    const block = on[name];
+    assert.match(block, /paths:/, `the \`${name}\` trigger has no path filter — every commit would install Chromium`);
+    assert.match(block, /- "design-system\/\*\*"/, `the \`${name}\` trigger does not watch design-system/**`);
+    assert.match(
+      block,
+      /- "\.github\/workflows\/design-system\.yml"/,
+      `the \`${name}\` trigger does not watch its own file — an edit to the workflow would not re-run it`
+    );
+  }
+  /* Unfiltered by design: the manual trigger is how a baseline set gets
+     collected without pushing a no-op commit into design-system/. */
+  assert.doesNotMatch(on.workflow_dispatch, /paths:/, "workflow_dispatch takes no path filter");
+});
+
+test("every design-system step runs in design-system/", () => {
+  /* npm ci, the Playwright install and both gates resolve against
+     design-system/package.json and its own lockfile. A step that forgets
+     `working-directory` runs against the ROOT package.json, where none of
+     these scripts exist — and `npm run test:a11y` there fails with a usage
+     dump about a missing script, which reads as "the gate is broken". */
+  const missing = jobSteps(dsYml).filter((s) => s.run && !s.dir).map((s) => s.run);
+  assert.deepEqual(missing, [], `design-system.yml steps without \`working-directory: design-system\`: ${missing.join(", ")}`);
+
+  const unnamed = jobSteps(dsYml).filter((s) => s.run && !s.named).map((s) => s.run);
+  assert.deepEqual(unnamed, [], `design-system.yml steps without a name: ${unnamed.join(", ")}`);
+});
+
+test("a11y runs before visual, because it is what builds storybook-static", () => {
+  /* scripts/test-storybook.mjs rebuilds only when the static build is stale.
+     a11y first means the pair costs one build; reversed, the report-only gate
+     pays for the build that the gate which can actually fail then reuses —
+     and a build failure would surface under the step allowed to exit 0. */
+  const runs = jobSteps(dsYml).filter((s) => s.run).map((s) => s.run);
+  const a11y = runs.findIndex((c) => c.includes("test:a11y"));
+  const visual = runs.findIndex((c) => c.includes("test:visual"));
+  assert.ok(a11y !== -1 && visual !== -1, `both gates should be present, got: ${runs.join(", ")}`);
+  assert.ok(a11y < visual, "test:a11y must precede test:visual — see the comment above this assertion");
+
+  /* The diffs are gitignored, so the artifact is the only way to read them,
+     and `always()` is the only way to get it off a red run. */
+  const upload = jobSteps(dsYml).find((s) => s.uses?.startsWith("actions/upload-artifact"));
+  assert.ok(upload, "design-system.yml no longer uploads the visual diff");
+});
+
+test("the workflow states the report-only window the runner actually enforces", () => {
+  /* Derived, not hard-coded. test-runner.cjs holds the date as a constant, and
+     the workflow header tells a reader why a green run can list mismatches. On
+     the day someone flips the gate to enforcing, this fails until the prose
+     agrees with the code — which is the cheapest possible way to stop a
+     workflow comment from outliving the policy it describes. */
+  const runner = readFileSync(new URL("design-system/.storybook/test-runner.cjs", root), "utf8");
+  const date = runner.match(/ENFORCE_FROM\s*=\s*"([\d-]+)"/)?.[1];
+  assert.ok(date, "test-runner.cjs no longer declares ENFORCE_FROM — update this test with it");
+  assert.ok(
+    dsYml.includes(date),
+    `design-system.yml never mentions ${date}, the date test-runner.cjs flips the visual gate to enforcing. ` +
+      `A reader seeing a green run full of mismatches has nothing to tell them that is deliberate.`
+  );
+});
+
+/* ============================================================
    Declared dependencies
 
    Audit m4: "zod is in `dependencies` with zero imports anywhere in the repo —

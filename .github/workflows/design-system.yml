@@ -1,0 +1,101 @@
+# The design system's own gate — the one job in this repo that needs a browser.
+#
+# It is a SEPARATE workflow deliberately. ci.yml and `npm run check` are held
+# byte-for-byte equal by test/ci.test.js, and the contract behind that equality
+# is that every step in it runs with no network, no key and no heavy
+# dependency, so a contributor who is green locally cannot break CI. These two
+# gates need Chromium and a Storybook build. Bolting them onto that job would
+# either break the offline promise or turn `check` into something nobody runs
+# before pushing — so they get their own file, their own trigger and their own
+# node_modules.
+#
+# The path filter is `design-system/**`, plus this file. Nothing outside that
+# directory can change a story's accessibility tree or its pixels, and a
+# Chromium install on every content commit is a minute nobody reads. This file
+# is in the list because a workflow that cannot re-run itself after an edit is
+# a workflow you debug by guessing.
+#
+# Each step answers one question:
+#   a11y    — does axe still pass on all 62 stories? GREEN OR THE JOB FAILS.
+#             It runs first because it is also what BUILDS storybook-static/;
+#             the visual gate then finds the build current, skips it, and the
+#             pair costs one build rather than two.
+#   visual  — has any story changed shape? REPORT-ONLY UNTIL 2026-09-01: it
+#             prints every mismatch and exits 0 on purpose. What it does still
+#             fail on is a real test failure — a story that threw, a page that
+#             would not load, a browser that died — because report-only is
+#             about images, not about the harness. The flip is written down in
+#             two places that both name the date:
+#             design-system/scripts/test-storybook.mjs and
+#             design-system/.storybook/test-runner.cjs (.cjs is deliberate —
+#             the test-runner config is CommonJS).
+#
+# On the win32/linux baseline gap: screenshots are stored per platform and the
+# committed set is `__screenshots__/win32/`, because that is the machine that
+# captured them. Font rasterisation and subpixel rendering differ enough that
+# a win32 PNG is not a valid expectation for ubuntu-latest, so on this runner
+# every story reports "no baseline yet" and the job exits 0. That is expected
+# and by design, not a broken gate. The linux captures ride out in the
+# visual-diff artifact below; the first linux baseline set gets committed from
+# it, after which this run starts comparing rather than collecting. Until then
+# the linux job still proves the harness boots, all 62 stories render and axe
+# is clean — which is the half that fails loudly anyway.
+name: design-system
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "design-system/**"
+      - ".github/workflows/design-system.yml"
+  pull_request:
+    paths:
+      - "design-system/**"
+      - ".github/workflows/design-system.yml"
+  # Unfiltered on purpose: the manual trigger is how you collect a baseline set
+  # or re-run a flake without pushing a no-op commit into design-system/.
+  workflow_dispatch:
+
+jobs:
+  stories:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # design-system/ has a lockfile of its own — Storybook, Playwright and the
+      # test-runner are devDependencies THERE, and none of them are installed by
+      # the root `npm ci` that ci.yml runs.
+      - name: "install: the design system's own dependencies"
+        run: npm ci
+        working-directory: design-system
+
+      # --with-deps pulls the shared libraries the runner image lacks. Chromium
+      # only: the gates drive one browser and a second download buys nothing.
+      - name: "install: chromium"
+        run: npx playwright install --with-deps chromium
+        working-directory: design-system
+
+      - name: "a11y: axe over every story"
+        run: npm run test:a11y
+        working-directory: design-system
+
+      - name: "visual: screenshot regression (report-only until 2026-09-01)"
+        run: npm run test:visual
+        working-directory: design-system
+
+      # The received images, the pixel diffs and the jsonl report — gitignored,
+      # so this upload is the only way to see them. `always()` because the run
+      # worth looking at is usually the one that just went red.
+      # `if-no-files-found: ignore`: a failing a11y gate stops the job before
+      # test-results/ is ever written, and a red X paired with a warning about a
+      # missing directory sends the reader to the wrong file.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-diff
+          path: design-system/test-results/
+          if-no-files-found: ignore
