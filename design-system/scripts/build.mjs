@@ -497,7 +497,11 @@ if (CHECK) {
        bullet list that documents this very gate. */
     ["README.md", [`(${tokenCount})`, `(${valueCount})`, `(${components.length})`, `${darkVars.length} re-aliased`]],
     ["../cv.html", counts],
-    ["../js/case-studies.js", counts],
+    /* Was `../js/case-studies.js`. That file rendered the case studies inside a
+       modal and is gone — the five are pages now — so the prose advertising
+       these counts moved with the "Portfolio as a Product" study to its own
+       page. The gate follows the prose, not the filename. */
+    ["../work/portfolio-system.html", counts],
   ];
   const stale = [];
   // Prose wraps: "106\n  values" is the same claim as "106 values", so match on
@@ -518,7 +522,7 @@ if (CHECK) {
     console.error(
       `✗ counts check failed — the docs advertise numbers that are no longer true:\n  - ${stale.join("\n  - ")}\n` +
         `  Current: ${tokenCount} tokens, ${valueCount} values (${tokenCount} light + ${darkVars.length} dark + ${printVars.length} print + ${wideVars.length} wide), ${components.length} components.\n` +
-        `  cv.html and js/case-studies.js are GENERATED — do not edit them. Run:\n` +
+        `  cv.html and work/*.html are GENERATED — do not edit them. Run:\n` +
         `    node design-system/scripts/build.mjs && node scripts/build-content.mjs`
     );
     process.exit(1);

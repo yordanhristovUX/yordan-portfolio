@@ -189,15 +189,18 @@
      nothing produces and nothing consumes. */
 
   /* ---------- Overlay layers ----------
-     Two things on this page cover the reader: the case dialog and the Ask
-     drawer. They STACK rather than exclude each other, because an answer
-     inside the drawer renders real `.idx__row`s that call `window.openCase`,
-     and `z-index: 400` under `500` was chosen so the case study lands on top
-     of the drawer that opened it (components/drawer/spec.md). So everything
-     that makes a modal a modal is written once, here, instead of twice: the
-     tab trap, Escape, the body lock and focus restoration. A second copy
-     would be a second set of bugs — the same argument js/answer-render.js
-     already follows by reusing this dialog instead of building its own.
+     ONE thing on this page covers the reader now: the Ask drawer. There used
+     to be two — the case-study modal stacked on top of the drawer, because an
+     answer inside the drawer rendered rows that opened it, and `z-index: 400`
+     under `500` put the case study above the drawer that opened it.
+
+     The case studies are pages now, so an answer's project row is an anchor
+     and nothing stacks on the drawer any more. **This layer machinery is kept
+     as it is**, and that is deliberate rather than lazy: it is written for N
+     layers, it is correct at N = 1, and the properties below — LIFO Escape,
+     `inert` beneath the top, a body lock derived from depth — are the ones a
+     future second layer would otherwise have to reinvent. Collapsing it to
+     one layer would save nothing and would delete the reasoning.
 
      The stack is LIFO. Escape unwinds exactly ONE layer per press, Tab is
      trapped in the topmost layer only, and every layer beneath the top is
@@ -321,98 +324,18 @@
     }
   });
 
-  /* ---------- Case study page ---------- */
-  const overlay = $(".case");
-  const panel = $(".case__panel");
-  const scrollBox = $(".case__scroll");
+  /* ---------- The case studies left this file ----------
+     They opened in a full-screen modal that lived here: an overlay, a focus
+     trap, a scroller, a rail rebuild and a `window.openCase` the assistant
+     called into. All of it is gone. The five case studies are pages at
+     /work/<id>, the index rows are anchors, and js/answer-render.js links to
+     the same URLs instead of reaching for a global.
 
-  /* The scroller is the element that actually holds the case study —
-     ~2150px of it below the fold — and it is the only thing in the dialog
-     with `overflow-y: auto`. The panel's own overflow is `visible`, so
-     focusing the PANEL leaves the scroller as a descendant of the focused
-     element rather than an ancestor of it, and no key the reader presses
-     has anywhere to go: `<body>` is locked, the trap collects one control,
-     and Page Down does nothing. Making the scroller focusable is what
-     turns the dialog back into something you can read with a keyboard
-     (WCAG 2.1.1). The trap needs no change — it picks the scroller up on
-     its own, because it collects `[tabindex]:not([tabindex="-1"])`.
-
-     `tabindex`, `role` and `aria-label` live in the MARKUP, not here — a
-     keyboard path should not depend on a script having run. This file only
-     narrows the label to the open case's title, which is the one part that
-     is genuinely dynamic. */
-
-  const caseLayer = {
-    root: overlay,
-    initial: scrollBox,
-    returnTo: null,
-    close: () => closeCase(),
-  };
-
-  function openCase(id) {
-    const data = window.CASE_STUDIES[id];
-    if (!data) return;
-
-    $(".case__index").textContent = "Case study " + data.index;
-    $(".case__title").textContent = data.title;
-    $(".case__subtitle").textContent = data.subtitle;
-    $(".case__meta").innerHTML = data.meta
-      .map((m) => `<span class="chip${data.accentMeta?.includes(m) ? " chip--solid" : ""}">${m}</span>`)
-      .join("");
-    $(".case__content").innerHTML = data.content;
-    scrollBox.scrollTop = 0;
-    scrollBox.setAttribute("aria-label", data.title + " — case study");
-
-    caseLayer.returnTo = document.activeElement;
-    overlay.hidden = false;
-    pushLayer(caseLayer);
-    requestAnimationFrame(() => window.rebuildCaseSquares?.());
-
-    /* Focus moves NOW, not in the tween's onComplete as it used to. Two
-       reasons, and the second only exists since the drawer did. For 500ms
-       after open, focus sat on <body> with a modal on screen: any Tab in that
-       window walked into the page behind. And when this dialog is opened from
-       a row inside the drawer, `pushLayer` makes that drawer inert, which
-       blurs the row — so focus is guaranteed to be on <body> at this point,
-       not merely likely to be. `preventScroll` is what makes it safe to focus
-       a panel that is still sitting at yPercent: 100. */
-    scrollBox.focus({ preventScroll: true });
-
-    if (!HAS_GSAP) return;
-    gsap.fromTo($(".case__backdrop"), { opacity: 0 }, { opacity: 1, duration: dur(0.25) });
-    gsap.fromTo(panel, { yPercent: 100 }, { yPercent: 0, duration: dur(0.5), ease: "power3.out" });
-  }
-
-  function closeCase() {
-    /* Popped synchronously, ahead of the exit tween: a second Escape during
-       the 0.4s close has to reach the layer UNDERNEATH, not this one again. */
-    if (!popLayer(caseLayer)) return;
-    const returnTo = caseLayer.returnTo;
-
-    const dismiss = () => {
-      overlay.hidden = true;
-      restoreFocus(returnTo);
-    };
-
-    if (!HAS_GSAP) { dismiss(); return; }
-
-    gsap.to($(".case__backdrop"), { opacity: 0, duration: dur(0.2) });
-    gsap.to(panel, {
-      yPercent: 100, duration: dur(0.4), ease: "power2.in",
-      onComplete: dismiss,
-    });
-  }
-
-  /* The dialog is the site's, not the chat's. js/answer-render.js builds
-     `.idx__row`s for the assistant's `project` blocks and opens THIS
-     dialog with them — same focus trap, same rail rebuild, same content.
-     A second dialog would be a second set of bugs. */
-  window.openCase = openCase;
-
-  $$("[data-project]").forEach((btn) =>
-    btn.addEventListener("click", () => openCase(btn.dataset.project))
-  );
-  $$("[data-case-close]").forEach((el) => el.addEventListener("click", closeCase));
+     What replaced ~90 lines of modal machinery is an `href`. That is the
+     whole trade, and it is worth remembering the next time something on this
+     page wants to be "in place": a page already does focus, history, scroll
+     restoration, printing and sharing, and does them without being written.
+     See docs/PROJECT-PAGES.md. */
 
   /* ---------- The assistant, summoned ----------
      The drawer was section 06 of this page: something you scrolled past,

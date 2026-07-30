@@ -575,7 +575,9 @@ function workPage(project, prev, next) {
   L.push(`        <div class="chips">${project.tags
     .map((t) => `<span class="chip${t === project.accentTag ? " chip--solid" : ""}">${inline(t)}</span>`)
     .join("")}</div>`);
-  L.push(...indent(8, body));
+  L.push(`        <div class="case-body">`);
+  L.push(...indent(10, body));
+  L.push(`        </div>`);
   L.push(`      </div>`);
   L.push(`      <div class="term" aria-hidden="true"></div>`);
   L.push(`    </section>`);
@@ -793,7 +795,12 @@ function workIndexRegion() {
       .join("");
     out.push(
       `  <li>`,
-      `    <button class="idx__row" data-project="${escAttr(p.id)}">`,
+      /* AN ANCHOR, NOT A BUTTON, and this is the whole navigation change.
+         A button cannot be linked to, opened in a tab, bookmarked, or handed
+         to anyone — which is why these case studies had no URL at all while
+         they opened in a modal. The element was the constraint, not the
+         styling. */
+      `    <a class="idx__row" href="${escAttr(workUrl(p.id))}">`,
       `      <span class="idx__no mono">${String(p.index).padStart(2, "0")}</span>`,
       `      <span class="idx__main">`,
       /* A heading, not a span: these six are the page's flagship work, and the
@@ -809,7 +816,7 @@ function workIndexRegion() {
       `      </span>`,
       `      <span class="idx__tags">${chips}</span>`,
       `      <span class="idx__go mono" aria-hidden="true">View →</span>`,
-      `    </button>`,
+      `    </a>`,
       `  </li>`
     );
   }
@@ -1493,7 +1500,10 @@ const cvRegions = {
 };
 
 const outputs = [
-  ["js/case-studies.js", buildCaseStudiesJs()],
+  /* `js/case-studies.js` is gone. It existed so a modal could render a case
+     study in JavaScript from `window.CASE_STUDIES`; the five have pages now, so
+     that was a second renderer for content already rendered as HTML — which is
+     the drift this pipeline exists to prevent. See docs/PROJECT-PAGES.md. */
   ["index.html", applyRegions(read("index.html"), indexRegions, "index.html")],
   ["cv.html", applyRegions(read("cv.html"), cvRegions, "cv.html")],
   ...buildWorkPages(),
@@ -1607,7 +1617,6 @@ if (CHECK) {
   console.log(`✓ nested comment check   (${PAGES.length} pages, no comment contains "<!--")`);
 } else {
   for (const [rel, text] of outputs) writeFileSync(join(root, rel), lf(text));
-  console.log(`✓ js/case-studies.js     (${caseStudies.length} case studies)`);
   console.log(`✓ ${WORK_DIR}/*.html           (${caseStudies.length} project pages, root-absolute refs)`);
   console.log(`✓ index.html             (${Object.keys(indexRegions).length} regions)`);
   console.log(`✓ cv.html                (${Object.keys(cvRegions).length} regions)`);

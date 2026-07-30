@@ -673,18 +673,15 @@
      the Region constructors below are what build the canvases. */
   settleTerminators(document);
 
-  const pageRegions = [];
-  const caseRegions = [];
+  /* ONE SET OF REGIONS. There used to be two — the page's, and a second set
+     inside the case-study modal, which had its own lattice root and settled
+     separately. The five case studies are pages at /work/<id> now, so every
+     region on any page belongs to that page's sheet and there is nothing to
+     split. See docs/PROJECT-PAGES.md. */
+  const all = [];
   document.querySelectorAll(".rail, .strip").forEach((el) => {
-    const region = new Region(el, el.classList.contains("strip") ? "strip" : "rail");
-    (el.closest(".case") ? caseRegions : pageRegions).push(region);
+    all.push(new Region(el, el.classList.contains("strip") ? "strip" : "rail"));
   });
-  const all = [...pageRegions, ...caseRegions];
-
-  /* The dialog's band is its own lattice root, so its slack is independent of
-     the page's and the two settle separately. Null on the three pages that
-     ship no case dialog, where `caseRegions` is empty anyway. */
-  const caseEl = document.querySelector(".case");
 
   /* ONE REBUILD PATH, sequenced once, rather than a second listener that also
      wants to know when layout moved: settle the slack, THEN read the walls it
@@ -696,8 +693,17 @@
     regions.forEach((r) => r.build(walls));
   }
 
-  // The case page lays out only when opened — rebuild its cells then.
-  window.rebuildCaseSquares = () => rebuild(caseRegions, caseEl ?? document);
+  /* `window.rebuildCaseSquares` was here: a hook the case-study modal called
+     after it laid out, because a surface that has no layout until it opens
+     cannot be measured before then. Nothing opens like that any more.
+
+     It is deleted rather than kept as a harmless no-op, and the deletion was
+     checked rather than assumed: its regions came only from inside the modal,
+     and its last caller — js/chat.js, after appending to the thread — acts on
+     a drawer that contains no `.rail`, no `.strip` and no canvas at all.
+     Measured: 0 automata regions inside the drawer, and calling the hook
+     changed no canvas on the page. A global that does nothing is worse than
+     no global, because the next reader has to prove that again. */
 
   /* ---- Run only what's on screen ---- */
   const io = new IntersectionObserver((entries) => {
@@ -728,10 +734,7 @@
   let resizeT;
   window.addEventListener("resize", () => {
     clearTimeout(resizeT);
-    resizeT = setTimeout(() => {
-      rebuild(pageRegions, document);
-      if (caseEl && !caseEl.hidden) rebuild(caseRegions, caseEl);
-    }, 200);
+    resizeT = setTimeout(() => rebuild(all, document), 200);
   });
 
   /* ---- Run, or stand still ----

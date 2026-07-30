@@ -1054,6 +1054,45 @@
         ]
       },
       {
+        "id": "case-body",
+        "status": "stable",
+        "since": "initial",
+        "a11y": "Headings are <h3> under the page's <h1>; the list marker is drawn with ::before, so it is decoration rather than content a screen reader reads out.",
+        "spec": "components/case-body/spec.md",
+        "story": "stories/case-body.stories.js",
+        "blocks": [
+          "Case study body"
+        ],
+        "classes": [
+          ".case-body"
+        ],
+        "elements": [],
+        "variants": [],
+        "selectors": [
+          ".case-body h3",
+          ".case-body h3:first-child",
+          ".case-body li",
+          ".case-body li strong",
+          ".case-body li::before",
+          ".case-body p",
+          ".case-body p strong",
+          ".case-body ul"
+        ],
+        "tokens": [
+          "--content-primary",
+          "--font-display",
+          "--primary",
+          "--rule",
+          "--space-2",
+          "--space-3",
+          "--space-4",
+          "--space-6",
+          "--space-7",
+          "--text-2xs",
+          "--text-sub"
+        ]
+      },
+      {
         "id": "chat",
         "status": "stable",
         "since": "phase-3",
@@ -1232,92 +1271,6 @@
           "--space-1",
           "--space-2",
           "--text-2xs"
-        ]
-      },
-      {
-        "id": "dialog",
-        "status": "stable",
-        "since": "initial",
-        "a11y": "role=dialog aria-modal=true labelled by its title; the focus trap and focus restore are mandatory.",
-        "spec": "components/dialog/spec.md",
-        "story": "stories/dialog.stories.js",
-        "blocks": [
-          "Dialog (inner page)"
-        ],
-        "classes": [
-          ".case",
-          ".case__backdrop",
-          ".case__bar",
-          ".case__content",
-          ".case__head",
-          ".case__index",
-          ".case__meta",
-          ".case__panel",
-          ".case__scroll",
-          ".case__subtitle",
-          ".case__title",
-          ".case__well"
-        ],
-        "elements": [
-          "__backdrop",
-          "__bar",
-          "__content",
-          "__head",
-          "__index",
-          "__meta",
-          "__panel",
-          "__scroll",
-          "__subtitle",
-          "__title",
-          "__well"
-        ],
-        "variants": [],
-        "selectors": [
-          ".case",
-          ".case[hidden]",
-          ".case__backdrop",
-          ".case__bar",
-          ".case__content h3",
-          ".case__content h3:first-child",
-          ".case__content li",
-          ".case__content li strong",
-          ".case__content li::before",
-          ".case__content p",
-          ".case__content p strong",
-          ".case__content ul",
-          ".case__head",
-          ".case__index",
-          ".case__meta",
-          ".case__panel",
-          ".case__scroll",
-          ".case__subtitle",
-          ".case__title",
-          ".case__well"
-        ],
-        "tokens": [
-          "--chrome-bg",
-          "--chrome-border",
-          "--chrome-label-strong",
-          "--content-primary",
-          "--font-display",
-          "--font-mono",
-          "--pad",
-          "--primary",
-          "--rule",
-          "--rule-strong",
-          "--scrim",
-          "--space-2",
-          "--space-3",
-          "--space-4",
-          "--space-5",
-          "--space-6",
-          "--space-7",
-          "--space-flow-lg",
-          "--surface-page",
-          "--text-2xs",
-          "--text-base",
-          "--text-sub",
-          "--text-xs"
         ]
       },
       {

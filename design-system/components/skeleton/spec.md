@@ -352,7 +352,7 @@ What the engine must hold up, all of it a consequence of the CSS above:
 | Click | seeds life, with an accent lineage that fades over ~10 generations. Hit-test against the canvas rect, not an element |
 | Off-screen | regions pause; the page still breathes (a slow opacity sine, ~36s, phase-offset per region) |
 | Reduced motion | the loop is **cancelled**, not left spinning on a no-op branch, and re-armed if the reader flips the setting back. Nothing in this file assumes a moving canvas |
-| Rebuild | on resize and on `document.fonts.ready`; after DOM/layout changes in the dialog, `window.rebuildCaseSquares()` |
+| Rebuild | on resize and on `document.fonts.ready`. There is no third trigger: the case-study modal had one, because a surface with no layout until it opens cannot be measured before then, and the five case studies are pages now |
 | Guard | a zero box must be survivable. The dialog's band has no layout until it opens, and every region is `display: none` on paper — a rebuild in either state measures 0 and must not divide by it |
 
 **The two inks stay rgb triplets**, and a canvas makes the case for that stronger rather

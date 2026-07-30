@@ -235,9 +235,10 @@ the sheet while open, `Escape` closes, and a click on `[data-drawer-close]` — 
 the scrim — closes.** Focus restore matters more here than in the case dialog: the opener is
 in a fixed bar, so a lost focus lands the reader at the top of a ~9000px document.
 
-`js/chat.js` already calls `window.rebuildCaseSquares?.()` after appending. Opening the
-drawer changes no band's height — it is a fixed layer outside `.sheet` — so it needs no
-rail rebuild of its own.
+Opening the drawer changes no band's height — it is a fixed layer outside `.sheet` — so it
+needs no rail rebuild of its own. It contains no rail, strip or canvas either: measured, **0
+automata regions inside the drawer**, which is why the rebuild hook `js/chat.js` used to call
+after appending was removed with the case-study modal rather than re-pointed at something.
 
 ## A11y
 

@@ -132,12 +132,25 @@ renderers, which is the thing worth not having. The owner's call was native navi
 | `window.CASE_STUDIES` | its only consumer is `js/main.js:353` |
 | the modal open/close path | `js/main.js:412`, bound to `[data-project]` |
 | `.case`, `.case__backdrop`, `.case__well`, `.case__title` | markup in `index.html` and the block in `components.css` |
-| `window.rebuildCaseSquares()` | exists so the automata can re-measure after the modal lays out |
+| `window.rebuildCaseSquares()` | exists so the automata can re-measure after the modal lays out — **and it had a second caller this checklist did not predict**, see below |
 | the second lattice root | `.band` outside a `.sheet` is its own root *because of* this modal — see `skeleton/spec.md`. With it gone, check whether any other surface still needs that rule before deleting it |
 
 The last row is the one to be careful with: it is a rule in the skeleton that exists for this
 modal, and removing a rule because its only caller went away is right *only* after confirming
 it has no other caller.
+
+**Two things that caution caught, recorded because the checklist was wrong about both.**
+
+- `window.rebuildCaseSquares()` had a **live second caller**: `js/chat.js`, after appending to
+  the thread. Deleting it blind would have looked safe and silently changed the drawer's
+  behaviour. It turned out to be removable anyway, but only after measuring: the drawer
+  contains **0 automata regions** — no rail, no strip, no canvas — so there was never anything
+  inside it for that call to rebuild. Deleted, with the measurement written into all three
+  specs that documented it.
+- The `.band`-outside-a-`.sheet` rule was confirmed to have exactly one user, the modal, and
+  **kept anyway**. It is a capability rather than a claim: it makes a band self-sufficient, it
+  costs one declaration, and deleting a capability because its only caller left is a different
+  decision from deleting a false statement. The spec says it is currently unexercised.
 
 ---
 

@@ -66,90 +66,92 @@
       <div class="well">
         <p class="t-lead">Every claim on this page is inspectable in the same public repository that renders it. If the system were not real, this page could not exist in the shape it does.</p>
         <div class="chips"><span class="chip">Designer &amp; Builder</span><span class="chip">Design system</span><span class="chip">AI-first</span><span class="chip">Storybook</span><span class="chip">Figma push</span><span class="chip chip--solid">Open source</span></div>
-        <h3>The idea</h3>
-        <p>A designer's portfolio usually <strong>describes</strong> process. This one <strong>demonstrates</strong> it: every button, chip, and square on this page comes from a design system that lives in the same public repository, documents itself for AI agents, and ships automatically. If I claim to build AI-ready systems, the claim should be inspectable.</p>
+        <div class="case-body">
+          <h3>The idea</h3>
+          <p>A designer's portfolio usually <strong>describes</strong> process. This one <strong>demonstrates</strong> it: every button, chip, and square on this page comes from a design system that lives in the same public repository, documents itself for AI agents, and ships automatically. If I claim to build AI-ready systems, the claim should be inspectable.</p>
 
-        <h3>The system</h3>
-        <ul>
-          <li><strong>Repo-first tokens.</strong> One JSON file is the only place a colour is born. A zero-dependency script generates the CSS variables this very page loads, plus a machine-readable flat file for AI agents and the Figma push.</li>
-          <li><strong>Every component is three things.</strong> A CSS block, an AI spec (canonical HTML pattern + do/don't rules), and a Storybook story. The build fails if any of the three is missing — governance as a 90-line script, not a platform.</li>
-          <li><strong>The skeleton is the concept.</strong> A 24-square sheet whose rails are real square divs sized by the layout's own fr-tracks — and Conway's Game of Life lives on them. Click a square: the life you seed is born blueprint-blue and its lineage fades to stone.</li>
-        </ul>
+          <h3>The system</h3>
+          <ul>
+            <li><strong>Repo-first tokens.</strong> One JSON file is the only place a colour is born. A zero-dependency script generates the CSS variables this very page loads, plus a machine-readable flat file for AI agents and the Figma push.</li>
+            <li><strong>Every component is three things.</strong> A CSS block, an AI spec (canonical HTML pattern + do/don't rules), and a Storybook story. The build fails if any of the three is missing — governance as a 90-line script, not a platform.</li>
+            <li><strong>The skeleton is the concept.</strong> A 24-square sheet whose rails are real square divs sized by the layout's own fr-tracks — and Conway's Game of Life lives on them. Click a square: the life you seed is born blueprint-blue and its lineage fades to stone.</li>
+          </ul>
 
-        <h3>The pipeline</h3>
-        <figure style="border: 1px solid var(--chrome-border-strong); background: var(--surface-raised); padding: 1.25rem; margin: 1.5rem 0; color: var(--content-primary); max-width: none;">
-          <svg viewBox="0 0 800 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline: tokens.json builds to dist, consumed by the site, Storybook, Figma and AI agents; GitHub auto-deploys both apps to Vercel" style="width:100%;height:auto;display:block;font-family:ui-monospace,monospace">
-            <g fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="20"  y="30" width="150" height="44"/>
-              <rect x="240" y="30" width="150" height="44"/>
-              <rect x="460" y="30" width="150" height="44"/>
-              <path d="M170 52h62m0 0-8-5m8 5-8 5"/>
-              <path d="M390 52h62m0 0-8-5m8 5-8 5"/>
-              <path d="M535 74v28"/>
-              <path d="M60 130h680" stroke-dasharray="4 4" stroke-width="1"/>
-              <path d="M110 130v34m0 0-5-8m5 8 5-8"/>
-              <path d="M310 130v34m0 0-5-8m5 8 5-8"/>
-              <path d="M510 130v34m0 0-5-8m5 8 5-8"/>
-              <path d="M690 130v34m0 0-5-8m5 8 5-8"/>
-              <rect x="35"  y="164" width="150" height="44"/>
-              <rect x="235" y="164" width="150" height="44"/>
-              <rect x="435" y="164" width="150" height="44"/>
-              <rect x="635" y="164" width="130" height="44"/>
-              <rect x="20"  y="262" width="200" height="44"/>
-              <path d="M220 284h96m0 0-8-5m8 5-8 5"/>
-              <rect x="316" y="262" width="200" height="44"/>
-              <path d="M110 208v54"/>
-              <path d="M310 208v54"/>
-            </g>
-            <g fill="currentColor" font-size="13" text-anchor="middle">
-              <text x="95"  y="56">tokens.json</text>
-              <text x="315" y="56">build.mjs</text>
-              <text x="535" y="56">dist/</text>
-              <text x="110" y="190">THE SITE</text>
-              <text x="310" y="190">STORYBOOK</text>
-              <text x="510" y="190">FIGMA VARS</text>
-              <text x="700" y="190">AI AGENTS</text>
-              <text x="120" y="288">GITHUB (main)</text>
-              <text x="416" y="288">VERCEL ×2</text>
-            </g>
-            <g fill="currentColor" font-size="10" opacity="0.65" text-anchor="middle">
-              <text x="95"  y="90">source of truth</text>
-              <text x="315" y="90">zero deps</text>
-              <text x="535" y="90">css + flat.json</text>
-              <text x="510" y="222">one-way, via MCP</text>
-              <text x="700" y="222">spec.md files</text>
-              <text x="268" y="254">auto-deploy on push</text>
-            </g>
-          </svg>
-          <figcaption class="mono" style="font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--chrome-label);margin-top:.75rem">One source of truth, four consumers, no manual steps between commit and production.</figcaption>
-        </figure>
-        <ul>
-          <li><strong>GitHub → Vercel.</strong> Two deployments from one public repo: this site (pure static, no build) and the Storybook, rebuilt on every push to main.</li>
-          <li><strong>Repo → Figma.</strong> Tokens flow one way — an AI agent pushes them as Figma Variables following a written, idempotent procedure. Figma is an output, never a source.</li>
-          <li><strong>Repo → AI.</strong> CLAUDE.md routes any agent to the system's README and per-component specs; an agent can assemble correct UI from the canonical patterns without seeing the site first.</li>
-        </ul>
+          <h3>The pipeline</h3>
+          <figure style="border: 1px solid var(--chrome-border-strong); background: var(--surface-raised); padding: 1.25rem; margin: 1.5rem 0; color: var(--content-primary); max-width: none;">
+            <svg viewBox="0 0 800 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline: tokens.json builds to dist, consumed by the site, Storybook, Figma and AI agents; GitHub auto-deploys both apps to Vercel" style="width:100%;height:auto;display:block;font-family:ui-monospace,monospace">
+              <g fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="20"  y="30" width="150" height="44"/>
+                <rect x="240" y="30" width="150" height="44"/>
+                <rect x="460" y="30" width="150" height="44"/>
+                <path d="M170 52h62m0 0-8-5m8 5-8 5"/>
+                <path d="M390 52h62m0 0-8-5m8 5-8 5"/>
+                <path d="M535 74v28"/>
+                <path d="M60 130h680" stroke-dasharray="4 4" stroke-width="1"/>
+                <path d="M110 130v34m0 0-5-8m5 8 5-8"/>
+                <path d="M310 130v34m0 0-5-8m5 8 5-8"/>
+                <path d="M510 130v34m0 0-5-8m5 8 5-8"/>
+                <path d="M690 130v34m0 0-5-8m5 8 5-8"/>
+                <rect x="35"  y="164" width="150" height="44"/>
+                <rect x="235" y="164" width="150" height="44"/>
+                <rect x="435" y="164" width="150" height="44"/>
+                <rect x="635" y="164" width="130" height="44"/>
+                <rect x="20"  y="262" width="200" height="44"/>
+                <path d="M220 284h96m0 0-8-5m8 5-8 5"/>
+                <rect x="316" y="262" width="200" height="44"/>
+                <path d="M110 208v54"/>
+                <path d="M310 208v54"/>
+              </g>
+              <g fill="currentColor" font-size="13" text-anchor="middle">
+                <text x="95"  y="56">tokens.json</text>
+                <text x="315" y="56">build.mjs</text>
+                <text x="535" y="56">dist/</text>
+                <text x="110" y="190">THE SITE</text>
+                <text x="310" y="190">STORYBOOK</text>
+                <text x="510" y="190">FIGMA VARS</text>
+                <text x="700" y="190">AI AGENTS</text>
+                <text x="120" y="288">GITHUB (main)</text>
+                <text x="416" y="288">VERCEL ×2</text>
+              </g>
+              <g fill="currentColor" font-size="10" opacity="0.65" text-anchor="middle">
+                <text x="95"  y="90">source of truth</text>
+                <text x="315" y="90">zero deps</text>
+                <text x="535" y="90">css + flat.json</text>
+                <text x="510" y="222">one-way, via MCP</text>
+                <text x="700" y="222">spec.md files</text>
+                <text x="268" y="254">auto-deploy on push</text>
+              </g>
+            </svg>
+            <figcaption class="mono" style="font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--chrome-label);margin-top:.75rem">One source of truth, four consumers, no manual steps between commit and production.</figcaption>
+          </figure>
+          <ul>
+            <li><strong>GitHub → Vercel.</strong> Two deployments from one public repo: this site (pure static, no build) and the Storybook, rebuilt on every push to main.</li>
+            <li><strong>Repo → Figma.</strong> Tokens flow one way — an AI agent pushes them as Figma Variables following a written, idempotent procedure. Figma is an output, never a source.</li>
+            <li><strong>Repo → AI.</strong> CLAUDE.md routes any agent to the system's README and per-component specs; an agent can assemble correct UI from the canonical patterns without seeing the site first.</li>
+          </ul>
 
-        <h3>Receipts</h3>
-        <p><span class="stat">0</span></p>
-        <ul>
-          <li><strong>0 accessibility violations</strong> across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
-          <li><strong>83 tokens, 147 values, 21 components</strong> — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
-          <li><strong>Dark mode is 23 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS — the sharpest test a semantic token layer can be put to.</li>
-          <li><strong>No build step in the site.</strong> Two link tags consume the system; view-source shows everything.</li>
-        </ul>
+          <h3>Receipts</h3>
+          <p><span class="stat">0</span></p>
+          <ul>
+            <li><strong>0 accessibility violations</strong> across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
+            <li><strong>83 tokens, 147 values, 21 components</strong> — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
+            <li><strong>Dark mode is 23 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS — the sharpest test a semantic token layer can be put to.</li>
+            <li><strong>No build step in the site.</strong> Two link tags consume the system; view-source shows everything.</li>
+          </ul>
 
-        <div class="ph-grid">
-          <figure class="ph"><span class="ph__label">Storybook — component library live</span></figure>
-          <figure class="ph"><span class="ph__label">Figma — variables after the first push</span></figure>
+          <div class="ph-grid">
+            <figure class="ph"><span class="ph__label">Storybook — component library live</span></figure>
+            <figure class="ph"><span class="ph__label">Figma — variables after the first push</span></figure>
+          </div>
+
+          <h3>See for yourself</h3>
+          <p>
+            <a class="btn btn--solid" href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener" style="margin-right:.6rem">GitHub repo ↗</a>
+            <a class="btn" href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener" style="margin-right:.6rem">Storybook ↗</a>
+            <a class="btn" href="/evals.html" style="margin-right:.6rem">Retrieval evaluation →</a>
+            <a class="btn" href="/mcp.html">MCP server →</a>
+          </p>
         </div>
-
-        <h3>See for yourself</h3>
-        <p>
-          <a class="btn btn--solid" href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener" style="margin-right:.6rem">GitHub repo ↗</a>
-          <a class="btn" href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener" style="margin-right:.6rem">Storybook ↗</a>
-          <a class="btn" href="/evals.html" style="margin-right:.6rem">Retrieval evaluation →</a>
-          <a class="btn" href="/mcp.html">MCP server →</a>
-        </p>
       </div>
       <div class="term" aria-hidden="true"></div>
     </section>

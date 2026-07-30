@@ -1306,49 +1306,16 @@ body.is-locked { overflow: hidden; }
   font-size: var(--text-2xs); letter-spacing: 0.06em;
 }
 
-/* ============ Dialog (inner page) ============ @component dialog */
-.case { position: fixed; inset: 0; z-index: 500; }
-.case[hidden] { display: none; }
-.case__backdrop {
-  position: absolute; inset: 0;
-  background: var(--scrim);
-}
-.case__panel {
-  position: absolute; inset: 0;
-  margin: 0 auto;
-  max-width: 90rem;
-  background: var(--surface-page);
-  box-shadow: inset 1px 0 0 var(--chrome-border), inset -1px 0 0 var(--chrome-border);
-  display: flex; flex-direction: column;
-  will-change: transform;
-}
-.case__bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: var(--space-3) var(--pad);
-  background: var(--chrome-bg);
-  border-bottom: var(--rule-strong);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.05em;
-  color: var(--chrome-label-strong);
-}
-/* Left segment of the bar, written by js/main.js on open ("Case study 03 /
-   Client"). The bar is a flex row with a Close button at the far end, and the
-   button must never be squeezed or pushed to a second line by a long client
-   name — so the index is the segment that gives way. */
-.case__index {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.case__scroll { overflow-y: auto; overscroll-behavior: contain; flex: 1; }
-.case__well { padding-bottom: var(--space-flow-lg); }
-.case__head { margin-bottom: var(--space-7); border-bottom: var(--rule-strong); padding-bottom: var(--space-7); }
-.case__title { margin-bottom: var(--space-4); }
-.case__subtitle { font-size: var(--text-base); max-width: 40rem; }
-.case__meta { margin-top: var(--space-5); }
+/* ============ Case study body ============ @component case-body
+   The prose of a case study: headings ruled off from each other, a measure on
+   the paragraphs, and the list marker the rest of the site uses.
 
-.case__content h3 {
+   IT USED TO BE `.case__content`, inside a full-screen modal that js/main.js
+   owned. The five case studies have pages at /work/<id> now and the modal is
+   gone, so what survives is the half that was never about being a modal — the
+   body itself. The name changed with the container: a class called
+   `__content` belongs to something, and this belongs to nothing but the prose. */
+.case-body h3 {
   font-family: var(--font-display); font-weight: 800;
   font-variation-settings: "wdth" 108;
   font-size: var(--text-sub);
@@ -1358,21 +1325,23 @@ body.is-locked { overflow: hidden; }
   padding-top: var(--space-7);
   border-top: var(--rule);
 }
-.case__content h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-.case__content p { margin-bottom: var(--space-4); max-width: 44rem; }
-.case__content p strong { color: var(--content-primary); font-weight: 600; }
-.case__content ul { list-style: none; margin-bottom: var(--space-4); }
-.case__content li {
+.case-body h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.case-body p { margin-bottom: var(--space-4); max-width: 44rem; }
+.case-body p strong { color: var(--content-primary); font-weight: 600; }
+.case-body ul { list-style: none; margin-bottom: var(--space-4); }
+.case-body li {
   padding: var(--space-2) 0 var(--space-2) var(--space-6);
   position: relative;
   border-bottom: var(--rule); /* not surface-sunken: a surface token read as a border, which in dark sits behind the page and vanishes */
   max-width: 44rem;
 }
-.case__content li::before {
+.case-body li::before {
   content: "▪"; position: absolute; left: 0; top: var(--space-2);
   color: var(--primary); font-size: var(--text-2xs);
 }
-.case__content li strong { color: var(--content-primary); font-weight: 600; }
+.case-body li strong { color: var(--content-primary); font-weight: 600; }
+
+
 
 /* ============ Chat ============ @component chat
    The assistant surface: turn list, composer, streaming state and a

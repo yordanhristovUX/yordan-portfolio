@@ -134,9 +134,15 @@
     thread.scrollTop += delta;
   }
 
+  /* This used to also call `window.rebuildCaseSquares?.()`, so the automata
+     could re-measure after the thread grew. That hook is gone with the
+     case-study modal, and the call was doing nothing here anyway: the drawer
+     contains no `.rail`, no `.strip` and no canvas — measured, 0 regions — so
+     there has never been anything inside it for the engine to rebuild. The
+     thread's own bounded height is what keeps the layout still, and that is
+     unchanged. */
   function settle() {
     keepAnchor();
-    requestAnimationFrame(() => window.rebuildCaseSquares?.());
   }
 
   /* The moment the reader scrolls for themselves, they own the viewport

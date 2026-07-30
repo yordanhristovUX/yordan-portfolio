@@ -137,8 +137,10 @@ than declared. Keeping the max-height there as well would leave the composer flo
 middle of a tall panel. The three rules that do it live in the drawer's block, not this one;
 they are listed in `components/drawer/spec.md`.
 
-`js/chat.js` calls `window.rebuildCaseSquares?.()` after appending, the same way
-`js/main.js:167` does on dialog open.
+`js/chat.js` used to call a rebuild hook after appending, so the automata could re-measure a
+grown thread. It does not any more, and the hook is gone: the drawer contains **0 automata
+regions** — no rail, no strip, no canvas — so there was never anything inside it to rebuild.
+The thread's bounded height is what keeps the layout still, and that is unchanged.
 
 ## Tokens
 

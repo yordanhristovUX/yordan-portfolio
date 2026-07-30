@@ -77,15 +77,19 @@
     return el("p", "chat__prose", b.text);
   }
 
-  /* project — a real .idx__row that opens the REAL case dialog.
-     js/main.js owns that dialog, its focus trap and its rail rebuild;
-     building a second one here would be the bug this reuses its way out
-     of. See design-system/components/row/spec.md for the markup. */
+  /* project — a real `.idx__row`, and now a real LINK.
+     It used to be a button that opened a modal owned by js/main.js. The five
+     case studies have pages at /work/<id>, so the assistant can point at the
+     work instead of performing it: an answer's project row is an anchor a
+     reader can open in a tab, copy, or come back to — which is the thing a
+     citation is for. See design-system/components/row/spec.md for the markup. */
   function renderProject(b) {
     const p = corpus.project.get(b.id);
     if (!p) return null;
 
-    const openable = Boolean(p.hasCaseStudy) && typeof window.openCase === "function";
+    /* A card-only project has no page, so it stays a plain `div`: a link to
+       nowhere is worse than no link. */
+    const openable = Boolean(p.hasCaseStudy);
     const out = frag();
 
     /* There is no `why` here. It was a free-text field on `project` blocks —
@@ -100,13 +104,9 @@
     const list = el("ul", "idx");
     list.setAttribute("role", "list");
     const li = el("li");
-    const row = document.createElement(openable ? "button" : "div");
+    const row = document.createElement(openable ? "a" : "div");
     row.className = "idx__row";
-    if (openable) {
-      row.type = "button";
-      row.dataset.project = p.id;
-      row.addEventListener("click", () => window.openCase(p.id));
-    }
+    if (openable) row.href = `/work/${p.id}`;
 
     row.appendChild(el("span", "idx__no mono", String(p.index ?? "").padStart(2, "0")));
 
@@ -264,18 +264,16 @@
 
       const label = (c.cite?.label ? c.cite.label + " — " : "") + (c.heading || c.kind);
       const project = c.cite?.project;
-      const openable = project && corpus.project.get(project)?.hasCaseStudy && typeof window.openCase === "function";
+      const hasPage = project && corpus.project.get(project)?.hasCaseStudy;
 
-      if (openable) {
-        const btn = el("button", "source__link", label);
-        btn.type = "button";
-        btn.addEventListener("click", () => window.openCase(project));
-        li.appendChild(btn);
-      } else {
-        const a = el("a", "source__link", label);
-        a.href = (c.cite?.page || "/") + (c.cite?.anchor || "");
-        li.appendChild(a);
-      }
+      /* Every source is an anchor now. A citation that opened a modal could
+         not be copied, opened in a tab, or followed by anything but a mouse —
+         which is a strange property for the part of the answer whose entire
+         job is "here is where this came from". A cited case study points at
+         its page; everything else keeps its own cite page and anchor. */
+      const a = el("a", "source__link", label);
+      a.href = hasPage ? `/work/${project}` : (c.cite?.page || "/") + (c.cite?.anchor || "");
+      li.appendChild(a);
 
       li.appendChild(el("span", "source__id mono", c.id));
       ol.appendChild(li);

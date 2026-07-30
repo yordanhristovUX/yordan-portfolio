@@ -10,9 +10,9 @@
   "componentNames": [
     "button",
     "card",
+    "case-body",
     "chat",
     "chip",
-    "dialog",
     "drawer",
     "entry",
     "fact",
