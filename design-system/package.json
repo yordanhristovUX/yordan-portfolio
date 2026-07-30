@@ -1,10 +1,27 @@
 {
   "name": "@yordan/design-system",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "AI-ready, repo-first design system for the blueprint portfolio. Source of truth: tokens/tokens.json + components/*/spec.md + css/components.css. See README.md.",
+  "//": "`private: true` and no `publishConfig`: this is consumed by `file:`, never from a registry. `version` is still real — scripts/contract-diff.mjs enforces it against the committed contract in RELEASED.json, so a consumer pinning a range gets a semver promise a publish step would otherwise have to make. `exports` is the same statement the boundary gate makes: dist/ and css/ are published, everything else here is private, and a subpath not listed below is unreachable rather than merely undocumented. `assets/` is in `files` and NOT in `exports` on purpose — avatar.svg is fetched by URL from markup, never resolved as a module.",
+  "files": [
+    "dist",
+    "css",
+    "assets"
+  ],
+  "exports": {
+    "./tokens.css": "./dist/tokens.css",
+    "./components.css": "./css/components.css",
+    "./components.json": "./dist/components.json",
+    "./tokens.flat.json": "./dist/tokens.flat.json",
+    "./tokens.dtcg.json": "./dist/tokens.dtcg.json",
+    "./tokens.d.ts": "./dist/tokens.d.ts"
+  },
   "scripts": {
-    "build": "node scripts/build.mjs --check",
+    "build": "node scripts/build.mjs && node scripts/build.mjs --check",
+    "contract": "node scripts/contract-diff.mjs --check",
+    "release": "node scripts/contract-diff.mjs --release",
     "storybook": "npm run build && storybook dev -p 6006 --no-open",
     "build-storybook": "npm run build && storybook build"
   },

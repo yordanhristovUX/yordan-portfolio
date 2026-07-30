@@ -7,6 +7,14 @@
                        →  dist/tokens.flat.json (dotted keys with resolved
                                                  values, consumed by AI agents
                                                  and the Figma push procedure)
+                       →  dist/tokens.dtcg.json (W3C Design Tokens format, from
+                                                 the UNRESOLVED values — aliases
+                                                 stay aliases. For any consumer
+                                                 with a DTCG pipeline of its own)
+                       →  dist/tokens.d.ts      (the token names as a TypeScript
+                                                 union, so a TS consumer is
+                                                 checked against the real
+                                                 contract rather than a string)
                        →  ../content/system.generated.json
                                                  (the system's own statistics,
                                                  consumed by scripts/build-content.mjs
@@ -14,7 +22,13 @@
                                                  has exactly one source)
 
    `node scripts/build.mjs`          build tokens + system stats
-   `node scripts/build.mjs --check`  build + four gates:
+   `node scripts/build.mjs --check`  build + five gates:
+                                     · package — dist/tokens.dtcg.json and
+                                       dist/tokens.d.ts byte-compare against a
+                                       fresh generation. These two are a
+                                       PUBLISHED package surface, so unlike the
+                                       four older dist files they are compared
+                                       rather than silently rewritten.
                                      · coverage — every component has spec.md
                                        and a story
                                      · counts — the generated prose still
@@ -27,6 +41,9 @@
                                        the bottom; it is the one that closes
                                        "the docs matched the code, and nobody
                                        checked they matched the arithmetic".
+
+   The published contract those two files describe is versioned separately by
+   scripts/contract-diff.mjs, against the committed snapshot in RELEASED.json.
 
    Run order for the repo as a whole: this script first (it emits the stats),
    then `node scripts/build-content.mjs` from the repo root (it consumes them).
@@ -210,6 +227,187 @@ console.log(
     `${darkVars.length} dark, ${printVars.length} print, ${wideVars.length} wide)`
 );
 console.log(`✓ dist/tokens.flat.json  (${Object.keys(flat).length} entries)`);
+
+/* ============================================================
+   THE PACKAGE SURFACE — dist/tokens.dtcg.json + dist/tokens.d.ts
+
+   tokens.flat.json exists for THIS repo's agents and the Figma push, and it
+   resolves aliases because both of those want the answer rather than the
+   graph. A second consumer with a token pipeline of its own wants the
+   opposite: the graph, in the format its tooling already reads. So the DTCG
+   file is emitted from the UNRESOLVED values — `var(--stone-100)` becomes
+   `{color-stone.stone-100}` and stays a reference. Retheme by editing one raw
+   ramp and every alias downstream still points at it, which is the property
+   resolution destroys.
+
+   These two are the first files here that `--check` BYTE-COMPARES. The four
+   older outputs are regenerated in place and merely asserted to exist —
+   ARCHITECTURE.md calls that "the honest gap" — and that is tolerable while
+   the only consumer is this repo, which rebuilds them on every run. It stops
+   being tolerable the moment another repo installs this directory: a
+   hand-edit that survives in the workspace is then a hand-edit that ships.
+   ============================================================ */
+
+/* One stable extension key for the whole mode tier. DTCG has no concept of a
+   theme, and inventing one as a sibling group would fork every token name;
+   $extensions is the spec's own escape hatch and the key is namespaced so it
+   cannot collide with another producer's. */
+const MODES_KEY = "com.yordan.modes";
+
+const groupOf = new Map();
+for (const { cat, vars } of categories) for (const v of vars) groupOf.set(v.name, cat);
+
+/** `var(--x)` → `{group.x}`. A name this file does not own is left alone. */
+const toRefs = (value) =>
+  String(value).replace(/var\(\s*--([a-z0-9-]+)\s*\)/gi, (m, name) =>
+    groupOf.has(name) ? `{${groupOf.get(name)}.${name}}` : m
+  );
+
+/* $type is classified from the FORM of the resolved value, never from the
+   group name — a group is an editorial heading and would silently mistype a
+   token that moved between two of them. The four forms DTCG defines that this
+   system actually produces are color, dimension, fontFamily and border.
+   Everything else is `other`, which is NOT a DTCG type and is documented as
+   such in the banner: three tokens here are a CSS keyword or a raw rgb
+   channel triplet, which are values a design-token type system has no name
+   for because they exist to be recomposed at runtime by js/automata.js. */
+const AS_COLOUR = /^(#[0-9a-f]{3,8}$|rgba?\(|hsla?\(|color\(|transparent$)/i;
+const AS_DIMENSION = /^(-?[\d.]+(rem|em|px|pt|vh|vw|ch|%)$|0$|clamp\(|calc\()/;
+const AS_FONT_FAMILY = /^["'][^"']+["']\s*,/;
+const AS_BORDER = /^-?[\d.]+(px|rem|em)\s+(solid|dashed|dotted|double|none)\b/;
+
+function dtcgType(value) {
+  const r = resolve(value).trim();
+  if (AS_COLOUR.test(r)) return "color";
+  if (AS_BORDER.test(r)) return "border";
+  if (AS_FONT_FAMILY.test(r)) return "fontFamily";
+  if (AS_DIMENSION.test(r)) return "dimension";
+  return "other";
+}
+
+const dtcgBanner =
+  "GENERATED by scripts/build.mjs from tokens/tokens.json — do not edit. " +
+  "W3C Design Tokens (DTCG) export of the blueprint portfolio's token layer, published as " +
+  "@yordan/design-system/tokens.dtcg.json. " +
+  "ALIASES ARE NOT RESOLVED: a value of the form var(--x) is emitted as the DTCG reference " +
+  "{group.x}, so the alias graph survives the export — that is the whole difference between " +
+  "this file and tokens.flat.json, which resolves. " +
+  `MODES: a token that changes with the theme, the printer or the viewport carries its other ` +
+  `values under $extensions["${MODES_KEY}"] as { dark?, print?, wide? }, with references written ` +
+  "the same way. DTCG has no theme concept and a sibling group per mode would fork every token " +
+  "name, so the spec's own escape hatch is used and the key is namespaced. " +
+  "$VALUE IS THE AUTHORED CSS STRING, including clamp() and em ratios. The dimension type's " +
+  "{value,unit} object form cannot express either, and this scale is built on both. " +
+  '$TYPE "other" is not a DTCG type. It marks the three tokens whose value is a CSS keyword or ' +
+  "a raw rgb channel triplet — color-scheme, accent-rgb, automata-cell-rgb — which exist to be " +
+  "recomposed at runtime rather than consumed as a typed design value. Treat them as opaque strings.";
+
+const dtcg = {
+  $description: dtcgBanner,
+  $extensions: {
+    "com.yordan.build": {
+      generatedBy: "design-system/scripts/build.mjs",
+      source: "design-system/tokens/tokens.json",
+      modesKey: MODES_KEY,
+    },
+  },
+};
+for (const { cat, doc, vars } of categories) {
+  const group = doc ? { $description: doc } : {};
+  for (const v of vars) {
+    const modes = {
+      ...(v.dark !== undefined ? { dark: toRefs(v.dark) } : {}),
+      ...(v.print !== undefined ? { print: toRefs(v.print) } : {}),
+      ...(v.wide !== undefined ? { wide: toRefs(v.wide) } : {}),
+    };
+    group[v.name] = {
+      $value: toRefs(v.value),
+      $type: dtcgType(v.value),
+      ...(v.description ? { $description: v.description } : {}),
+      ...(Object.keys(modes).length ? { $extensions: { [MODES_KEY]: modes } } : {}),
+    };
+  }
+  dtcg[cat] = group;
+}
+const dtcgOut = JSON.stringify(dtcg, null, 2) + "\n";
+
+/* ---------- dist/tokens.d.ts ----------
+   A union of the custom-property names, so a TS consumer writing
+   `var("--surface-page")` is checked against the contract rather than against
+   the set of all strings. Types only — there is no runtime module behind this
+   file, and there deliberately is not: the values live in CSS, and a JS mirror
+   of them would be a second source for the thing this system exists to have
+   one of. */
+const dtsNames = categories.flatMap(({ vars }) => vars.map((v) => `--${v.name}`)).sort();
+const dtsGroups = categories.map((c) => c.cat);
+const union = (list) => list.map((n) => `  | "${n}"`).join("\n");
+
+const dtsOut =
+  `/* GENERATED by scripts/build.mjs from tokens/tokens.json — do not edit.\n` +
+  `   Edit tokens/tokens.json and run \`npm run build\`.\n\n` +
+  `   Published as @yordan/design-system/tokens.d.ts. Types only: the values live in\n` +
+  `   dist/tokens.css and dist/tokens.dtcg.json, and a JS mirror of them would be a second\n` +
+  `   source for the one thing this system exists to have one of. \`--check\` byte-compares\n` +
+  `   this file, so a hand-edit fails the build rather than being silently overwritten. */\n\n` +
+  `/** Every custom property \`dist/tokens.css\` defines on \`:root\` (${dtsNames.length}). */\n` +
+  `export type DesignTokenName =\n${union(dtsNames)};\n\n` +
+  `/** The editorial groups of \`tokens/tokens.json\`, as \`tokens.dtcg.json\` nests them. */\n` +
+  `export type DesignTokenGroup =\n${union(dtsGroups)};\n\n` +
+  `/** A \`var()\` reference to a token that exists — usable wherever a CSS string is taken. */\n` +
+  `export type DesignTokenVar = \`var(\${DesignTokenName})\`;\n`;
+
+/* --check compares; a plain build writes. Comparing BEFORE writing is the
+   point: writing first would erase the evidence and turn every hand-edit into
+   a pass. */
+const packaged = [
+  ["dist/tokens.dtcg.json", dtcgOut],
+  ["dist/tokens.d.ts", dtsOut],
+];
+if (CHECK) {
+  const drift = [];
+  for (const [rel, want] of packaged) {
+    const path = join(root, rel);
+    if (!existsSync(path)) {
+      drift.push(`${rel} is missing — it is part of the published package surface. Run \`npm run build\`.`);
+      continue;
+    }
+    const got = readFileSync(path, "utf8");
+    if (got === want) continue;
+    /* Name the first differing line. "they differ" sends you to a diff tool;
+       a line number sends you to the edit. */
+    const g = got.split("\n"), w = want.split("\n");
+    let i = 0;
+    while (i < Math.min(g.length, w.length) && g[i] === w[i]) i++;
+    drift.push(
+      `${rel} differs from a fresh generation at line ${i + 1}:\n` +
+        `      on disk: ${JSON.stringify(g[i] ?? "<end of file>")}\n` +
+        `      built:   ${JSON.stringify(w[i] ?? "<end of file>")}`
+    );
+  }
+  if (drift.length) {
+    console.error(
+      `✗ package check failed — a published artefact was hand-edited or is stale:\n  - ${drift.join("\n  - ")}\n` +
+        `  These two files are the package surface another repo installs, so they are byte-compared\n` +
+        `  rather than regenerated in place. Edit tokens/tokens.json and run \`npm run build\`.`
+    );
+    process.exit(1);
+  }
+  console.log(
+    `✓ package check          (dist/tokens.dtcg.json + dist/tokens.d.ts byte-identical to a fresh build)`
+  );
+} else {
+  for (const [rel, out] of packaged) writeFileSync(join(root, rel), out);
+  const types = {};
+  for (const { vars } of categories) for (const v of vars) {
+    const t = dtcgType(v.value);
+    types[t] = (types[t] ?? 0) + 1;
+  }
+  console.log(
+    `✓ dist/tokens.dtcg.json  (${Object.keys(flat).length} tokens in ${categories.length} groups; ` +
+      `${Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${n} ${t}`).join(", ")})`
+  );
+  console.log(`✓ dist/tokens.d.ts       (${dtsNames.length} names, ${dtsGroups.length} groups)`);
+}
 
 /* ---------- ../content/system.generated.json ----------
    The system's statistics, emitted rather than asserted. The site and the CV
