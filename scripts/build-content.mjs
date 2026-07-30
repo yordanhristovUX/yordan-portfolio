@@ -557,9 +557,6 @@ function workPage(project, prev, next) {
   L.push(`      <img class="bar__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">`);
   L.push(`      <span class="bar__action-label">Ask my Bot</span>`);
   L.push(`    </button>`);
-  L.push(`    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">`);
-  L.push(`      <span class="theme__lamp" aria-hidden="true"></span>`);
-  L.push(`    </button>`);
   L.push(`  </header>`);
   L.push(``);
   L.push(`  <main class="sheet" id="top">`);
@@ -593,6 +590,12 @@ function workPage(project, prev, next) {
   L.push(`      <div class="term" aria-hidden="true"></div>`);
   L.push(`    </section>`);
   L.push(`  </main>`);
+  L.push(``);
+  /* Outside the bar, like every other page: the bar is about THIS page and the
+     theme is about every page. See components/theme-toggle/spec.md. */
+  L.push(`  <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">`);
+  L.push(`    <span class="theme__lamp" aria-hidden="true"></span>`);
+  L.push(`  </button>`);
   L.push(``);
   L.push(`  <script src="/js/theme.js" defer></script>`);
   L.push(`  <script src="/js/automata.js" defer></script>`);

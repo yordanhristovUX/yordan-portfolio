@@ -1995,20 +1995,17 @@
         "selectors": [
           ".theme",
           ".theme:hover",
-          ".theme:hover .theme__lamp",
           ".theme[data-state=\"auto\"] .theme__lamp",
           ".theme[data-state=\"dark\"] .theme__lamp",
-          ".theme[data-state=\"light\"] .theme__lamp",
           ".theme__lamp"
         ],
         "tokens": [
-          "--chrome-bg-strong",
+          "--chrome-bg",
           "--chrome-border",
           "--chrome-label",
-          "--chrome-label-on-strong",
           "--content-primary",
+          "--shadow-drop",
           "--space-1",
-          "--space-4",
           "--surface-page"
         ]
       },

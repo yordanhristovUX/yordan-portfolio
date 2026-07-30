@@ -126,12 +126,15 @@ in advance beats acknowledging it in retrospect.
 
 ## Tokens
 
-`--chrome-bg-strong`, `--chrome-border`, `--chrome-label`, `--chrome-label-on-strong`,
-`--content-primary`, `--surface-page`, `--space-4`
+`--chrome-bg`, `--chrome-border`, `--chrome-label`, `--content-primary`, `--shadow-drop`,
+`--surface-page`
 
-`--content-primary` and `--surface-page` are the dial's two halves, which is why this
-component consumes a *surface* token without drawing a surface: the circle is a picture of
-the two themes, so it has to be made of them.
+`--content-primary` and `--surface-page` are the dial's two tones, which is why this component
+consumes a *surface* token without drawing a surface: the dial is a picture of the two themes,
+so it has to be made of them.
+
+`--chrome-bg` and `--shadow-drop` are the floating puck's own paper and its offset shadow —
+the same pair the nav bar uses, because it is the same idea: an object lying on the sheet.
 
 The lamp is drawn in `currentColor` on purpose, so it inverts with the button on hover
 without a second colour token.

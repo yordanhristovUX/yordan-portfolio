@@ -605,13 +605,12 @@ body.is-locked { overflow: hidden; }
   display: block;
   width: 1.25rem; height: 1.25rem;
   flex: none;
-  /* THE TILE IN THE SVG IS A ROUNDED SQUARE, so the stroke around it has to be
-     one too. Read off the drawing rather than guessed: the first path's top
-     edge runs from x=14.2387 to x=65.8209 in an 80-unit box, so the corner
-     radius is 14.2387/80 = 17.8%. A square stroke around it read as a stray
-     border, which is what it was. Percentage, not px, so it stays right at the
-     1.25rem here and the 3.5rem in the drawer. */
-  border-radius: 17.8%;
+  /* A CIRCLE, which crops the drawing rather than framing it. The tile inside
+     the SVG is a rounded square (its corner radius is 14.2387/80 = 17.8%, read
+     off the first path), so a 50% radius cuts the four corners off that tile.
+     That is the intent: the portrait reads as an avatar here, and an avatar is
+     round. The face sits centred in the tile, well inside the crop. */
+  border-radius: 50%;
   box-shadow: inset 0 0 0 1px var(--chrome-border-strong);
 }
 .bar__dot {
@@ -734,56 +733,89 @@ body.is-locked { overflow: hidden; }
    block has the arithmetic that forces this, and why there is no flash. The
    label is the CURRENT state, not the next one — this is a readout you can
    press, like the rest of the bar. */
+/* ---- IT IS NOT PART OF THE NAV ANY MORE ----
+   The theme control used to be the bar's last segment. It is its own floating
+   object now: same paper, same hairline, same drop shadow as the bar, sitting
+   apart from it.
+
+   That is a hierarchy decision rather than a layout one. The bar carries
+   identity, navigation and the page's one primary action — things about THIS
+   page. The theme is about how you read every page, it is set once and rarely
+   touched, and while it sat inside the bar it took a full segment's width from
+   a row that was already 95.9% full at 375px. Out of the bar it costs the
+   nav nothing and stops competing with the accent block beside it.
+
+   BOTTOM RIGHT, not top right, and that is measured rather than taste: the bar
+   is centred and 333px wide at a 375px viewport, so it spans x 21-354 and a
+   control at `top: 1rem; right: 1rem` would sit on top of it. The bottom
+   corner never collides at any width.
+
+   `z-index` sits under the drawer's, so an open panel covers it — a theme
+   toggle floating over a modal surface is a control with nothing to act on. */
 .theme {
-  display: flex; align-items: center;
-  padding: 0 var(--space-4);
+  position: fixed;
+  bottom: 1rem; right: 1rem;
+  z-index: 90;
+  display: flex; align-items: center; justify-content: center;
+  width: 2.5rem; height: 2.5rem;
+  border-radius: 50%;
+  background: var(--chrome-bg);
   color: var(--chrome-label);
-  box-shadow: inset 1px 0 0 var(--chrome-border);
-  transition: background-color 0.2s;
+  box-shadow: inset 0 0 0 1px var(--chrome-border), 2px 2px 0 var(--shadow-drop);
+  transition: background-color 0.2s, transform 0.2s;
 }
-/* A QUIET HOVER, and that is the hierarchy rather than an oversight. This is
-   the bar's utility segment and the segment beside it is now a solid accent
-   block; a toggle that also filled solid on hover would compete with the one
-   thing on the page that is supposed to look pressable. It was a full
-   ink-fill until the bar gained a hierarchy. */
-.theme:hover { background: var(--chrome-bg-strong); }
-.theme:hover .theme__lamp { box-shadow: inset 0 0 0 1px var(--chrome-label-on-strong); }
+/* A QUIET HOVER, and that is the hierarchy rather than an oversight. The one
+   control on the page that is supposed to look pressable is the accent block
+   in the bar; this lifts slightly and does not fill. */
+.theme:hover { transform: translateY(-1px); }
+@media print { .theme { display: none; } }
 
 /* ---- THE DIAL ----
-   One circle, permanently half dark and half light, and the STATE IS ITS
-   ANGLE. There is no text: three words in the bar were three widths, and the
-   thing they described is a two-sided object that can simply show which side
-   it is on.
+   No text: three words were three widths, and the thing they described is a
+   two-sided object that can just show which side it is on.
 
-     light   the paper half faces up      rotate(180deg)
-     dark    the ink half faces up        rotate(0)
-     auto    it is still turning          a slow, endless rotation
+     dark    a filled ink circle
+     light   an empty paper circle
+     auto    HALF EACH, and turning
 
-   Auto being IN MOTION is the whole idea. The other two states are a
-   decision — the dial has landed — and auto is the absence of one: the page
-   is following something else, so the dial never settles. That reads without
-   a legend, which is what let the label go.
+   A PINNED STATE IS A FILL; AUTO IS THE HALF-AND-HALF. That split is the
+   correction, and the version it replaces is worth recording because it looked
+   right and was not. Every state was the same half-ink/half-paper circle and
+   only the ANGLE changed — but the gradient runs at 90deg, so the halves are
+   left and right, and rotating them 180deg produces a mirror image. Dark was
+   "ink on the left" and light was "ink on the right": two states that differ
+   only by chirality, which nobody reads as dark versus light. The commentary
+   even claimed the halves faced up and down. They never did.
 
-   The two halves are `--content-primary` and `--surface-page`, so the dial is
-   literally "the two themes" and it inverts with the theme like everything
-   else. No theme query, and nothing here knows which theme is live. */
+   So the pinned states now say what they are by how much ink is in them, which
+   needs no convention at all, and the half-and-half is reserved for the one
+   state that genuinely is both. Auto still turns, and that is still the whole
+   idea: the two pinned states are a decision — the dial has landed — and auto
+   is the absence of one, so it never settles.
+
+   The two tones are `--content-primary` and `--surface-page`, so the dial is
+   literally made of the two themes and inverts with them. No theme query, and
+   nothing here knows which theme is live. */
 .theme__lamp {
   width: 14px; height: 14px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: linear-gradient(90deg, var(--content-primary) 0 50%, var(--surface-page) 50% 100%);
-  box-shadow: inset 0 0 0 1px currentColor;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+  background: var(--surface-page);
+  box-shadow: inset 0 0 0 1px var(--content-primary);
+  transition: background 0.3s, box-shadow 0.2s;
 }
-.theme[data-state="dark"] .theme__lamp { transform: rotate(0deg); }
-.theme[data-state="light"] .theme__lamp { transform: rotate(180deg); }
-.theme[data-state="auto"] .theme__lamp { animation: theme-dial 9s linear infinite; }
+.theme[data-state="dark"] .theme__lamp { background: var(--content-primary); }
+.theme[data-state="auto"] .theme__lamp {
+  background: linear-gradient(90deg, var(--content-primary) 0 50%, var(--surface-page) 50% 100%);
+  animation: theme-dial 9s linear infinite;
+}
 @keyframes theme-dial { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Auto stops turning and rests at the diagonal — still visibly neither of
-     the two settled angles, so the state survives without the motion that
-     usually carries it. A spinning object is exactly what this query is for. */
+  /* Auto stops turning and rests on the diagonal. It is still the only state
+     that is half of each, so it stays legible without the motion that
+     otherwise carries it — a perpetually spinning object is exactly what this
+     query is for. */
   .theme[data-state="auto"] .theme__lamp { animation: none; transform: rotate(45deg); }
   .theme__lamp { transition: none; }
 }
@@ -1689,9 +1721,9 @@ body.is-locked { overflow: hidden; }
 .drawer__portrait {
   display: block;
   width: 3.5rem; height: 3.5rem;
-  /* Matches the rounded tile inside the drawing — see `.bar__face` for where
-     17.8% comes from. */
-  border-radius: 17.8%;
+  /* Round, like the one in the bar — see `.bar__face`. The drawing's own tile
+     is a rounded square and the circle crops its corners. */
+  border-radius: 50%;
   box-shadow: inset 0 0 0 1px var(--chrome-border-strong);
 }
 .drawer__portrait img { display: block; width: 100%; height: 100%; }

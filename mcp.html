@@ -61,12 +61,6 @@
       <a href="#tools">Tools</a>
       <a href="#why">Why MCP</a>
     </nav>
-    <!-- Deliberately vaguer than anything js/theme.js produces — see the note
-         in index.html and components/theme-toggle/spec.md. Replaced on the
-         first apply(). -->
-    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
-      <span class="theme__lamp" aria-hidden="true"></span>
-    </button>
   </header>
 
   <main id="top" class="sheet">
@@ -398,5 +392,19 @@
 
   <script src="js/theme.js" defer></script>
   <script src="js/automata.js" defer></script>
+
+  <!-- NOT PART OF THE NAV. The bar is about THIS page — identity,
+       navigation, the one primary action. The theme is about every page,
+       is set once and rarely touched, and inside the bar it took a full
+       segment from a row already 95.9% full at 375px. Bottom right rather
+       than top right because the bar is centred and 333px wide at that
+       viewport, so a top-right control would sit on top of it.
+       The label is deliberately vaguer than anything js/theme.js produces:
+       the script names what auto currently RESOLVES to and static HTML
+       cannot know the visitor's OS. Replaced on the first apply(). -->
+  <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+    <span class="theme__lamp" aria-hidden="true"></span>
+  </button>
+
 </body>
 </html>
