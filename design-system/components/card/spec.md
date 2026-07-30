@@ -55,40 +55,54 @@ every card on the final row drop the rules that would otherwise trail into empty
 
 ## Tokens
 
-`--chrome-label`, `--content-body`, `--content-primary`, `--font-display`, `--font-mono`,
-`--primary`, `--rule`, `--surface-page`, `--text-2xs`, `--text-md`, `--text-sm`, `--text-sub`,
-`--pad`, `--space-3`, `--space-6`, `--space-flow`
+`--chrome-border`, `--chrome-grid`, `--chrome-label`, `--content-body`, `--content-primary`,
+`--font-display`, `--font-mono`, `--primary`, `--rule`, `--shadow-drop`, `--surface-raised`,
+`--text-2xs`, `--text-md`, `--text-sm`, `--text-sub`, `--pad`, `--space-3`, `--space-4`,
+`--space-6`, `--space-flow`
 
-`--surface-page` is the scrim over `.card__media`, at 0.88 — see "The reveal" below.
-`--space-6` is the lattice cell, and a reveal card's `min-height` is nine of them, so a card is
-a whole number of squares like everything else on the sheet and nine cards are one height
-whatever their copy runs to.
+`--surface-raised` and `--shadow-drop` belong to `.peek`, the panel that rides the pointer:
+raised paper with the same drop shadow the floating nav uses, because it is the same idea —
+an object lying **on** the sheet rather than a hole cut into it. `--space-6` is the lattice
+cell, and a reveal card is six of them tall, so a card is a whole number of squares like
+everything else here.
 
-## The reveal
+## The peek panel
 
-`.card--reveal` is minimal at rest — eyebrow and title, nothing else — and uncovers an image
-and a note on hover. Three things about how, because each is the difference between this
-pattern and the version of it that ships broken:
+A `.card--reveal` shows an eyebrow and a title and **nothing else, ever**. It still carries an
+image and a description; `js/peek.js` reads them out and paints them into one panel that
+follows the pointer, so the grid stays a quiet list of names and the detail arrives where the
+reader is already looking.
 
-- **Both are hidden by `opacity`, not by `display` or height.** The card's box therefore never
-  changes size, so revealing one card cannot reflow the other eight. A grid that reshuffles
-  under the pointer is the usual failure here, and it is why the reveal is a *substitution*
-  rather than an expansion.
-- **Opacity keeps them in the accessibility tree.** A screen reader gets the note at rest, in
-  reading order, with no hover to perform and no `aria-hidden` to work around. The image is
-  `alt=""` because the title already says what it says.
-- **`@media (hover: none)` shows everything.** A touch reader has no hover to give, so the card
-  does not withhold half of itself behind a gesture their device does not have.
+The card is six lattice cells tall and never changes size, so nothing can reflow under the
+pointer.
 
-`:focus-within` sits beside `:hover` throughout, so the affordance already exists for a
-keyboard the moment these cards carry a link or a button.
+**One panel, not nine.** Nine absolutely-positioned previews would be nine boxes to keep off
+the viewport edges and nine more elements under the cursor to confuse `pointerleave`. There is
+exactly one, reused.
 
-**The scrim is a constraint on the images, not a decoration.** Type sits over the picture, so
-the picture is held under a `--surface-page` wash at 0.88 and the text keeps its contrast
-against paper rather than against whatever the photograph happens to be. The generated
-placeholders are light graph paper, so today the wash is barely working. **A dark photograph
-would need the wash raised** — the alternative, a colour decision per image, is precisely what
-a system exists to avoid.
+**`pointer-events: none` on the panel is load-bearing, not hygiene.** It sits in the cursor's
+neighbourhood, so anything there that could receive a pointer event would come between the
+reader and the card being described — it would swallow the `pointerleave` that dismisses it
+and then flicker against its own presence.
+
+**It flips rather than clamps at the viewport edge.** A panel pinned to the edge stops tracking
+the pointer and reads as stuck; one that flips to the other side of the cursor keeps the
+relationship the reader is using to understand what it belongs to.
+
+### The content is in the card, not in the panel
+
+Both the image and the note stay in the markup, in reading order, and are removed *visually*
+rather than hidden — `display: none` and `visibility: hidden` would both take them out of the
+accessibility tree. So a screen reader gets the full description with no hover to perform, and
+**`js/peek.js` is allowed to fail**: `@media (hover: none), (pointer: coarse)` shows the image
+and the note in the card instead. That is also what a touch reader gets, because a card must
+not withhold half of itself behind a gesture the device cannot perform.
+
+The image is `alt=""` and `aria-hidden` because the title already says what it says, and an
+alt repeating it makes a screen reader read every project twice.
+
+**The panel is not a dialog.** It takes no focus, traps nothing, and carries `aria-hidden` —
+everything in it is already available elsewhere in the page.
 
 ## A11y
 
