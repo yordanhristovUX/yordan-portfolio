@@ -9,7 +9,7 @@
     "dev": "node scripts/dev.mjs",
     "build": "node design-system/scripts/build.mjs && node scripts/build-content.mjs",
     "build:all": "npm run build && node --env-file=.env scripts/build-vectors.mjs && node --env-file=.env evals/run.mjs",
-    "check": "node design-system/scripts/build.mjs --check && node scripts/build-content.mjs --check && node scripts/check-css.mjs && node scripts/build-vectors.mjs --check && node scripts/check-boundaries.mjs && node evals/run.mjs --check && npm test && node -e \"import('./api/mcp.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('mcp ok'); })\" && node -e \"import('./api/chat.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('chat ok'); })\"",
+    "check": "node design-system/scripts/build.mjs --check && node design-system/scripts/contract-diff.mjs --check && node scripts/build-content.mjs --check && npm run build && git diff --exit-code -- design-system/dist content/system.generated.json index.html cv.html work content/dist/content.json content/dist/site.jsonld llms.txt && node scripts/check-css.mjs && node scripts/build-vectors.mjs --check && node scripts/check-boundaries.mjs && node evals/run.mjs --check && npm test && node -e \"import('./api/mcp.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('mcp ok'); })\" && node -e \"import('./api/chat.js').then(m => { if (typeof m.default !== 'function') process.exit(1); console.log('chat ok'); })\"",
     "test": "node --test",
     "evals": "node --env-file=.env evals/run.mjs",
     "serve": "npx --yes serve . -l 3000 --no-clipboard",

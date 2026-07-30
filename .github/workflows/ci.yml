@@ -13,7 +13,18 @@
 # Each step answers one question:
 #   tokens    — is every component still CSS + spec + story, and do the numbers
 #               the site advertises about itself still match reality?
+#   contract  — does the published package surface still match RELEASED.json at
+#               the version it claims, or does the change need a semver bump?
 #   content   — has anyone hand-edited a generated file?
+#   drift     — run both generators for real and diff: does the tree still hold
+#               what they produce? The two steps above compare the files they
+#               BUILD IN MEMORY; four of the design system's outputs
+#               (tokens.css, tokens.flat.json, components.json,
+#               system.generated.json) are written unconditionally and were
+#               compared against nothing at all. This is the step that notices.
+#               It runs after them deliberately: it overwrites the working tree,
+#               so putting it first would leave every --check gate above
+#               comparing files it had just written.
 #   css       — has a literal font-size, colour or media query got back in?
 #   vectors   — has chunk text changed without the embeddings being rebuilt?
 #   bounds    — does the dependency direction between slices still hold?
@@ -48,8 +59,22 @@ jobs:
       - name: "tokens: coverage + counts"
         run: node design-system/scripts/build.mjs --check
 
+      - name: "contract: the published surface against RELEASED.json"
+        run: node design-system/scripts/contract-diff.mjs --check
+
       - name: "content: generated files are current"
         run: node scripts/build-content.mjs --check
+
+      # The pathspecs are explicit so a developer's in-progress edits elsewhere
+      # never trip this, and they deliberately name content/dist/content.json
+      # and content/dist/site.jsonld rather than content/dist: vectors.json
+      # lives there too and cannot be rebuilt without a Voyage key. Same reason
+      # evals.html is absent — it is evals/run.mjs's output, not this build's,
+      # and it has a digest check of its own.
+      - name: "drift: the generators reproduce every committed artefact"
+        run: |
+          npm run build
+          git diff --exit-code -- design-system/dist content/system.generated.json index.html cv.html work content/dist/content.json content/dist/site.jsonld llms.txt
 
       - name: "css: no literal size, colour or media query"
         run: node scripts/check-css.mjs

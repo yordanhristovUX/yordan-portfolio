@@ -89,22 +89,42 @@ test("the gate order is the documented one", () => {
   /* ARCHITECTURE.md's run order is load-bearing in one direction — build.mjs
      emits the counts build-content.mjs interpolates — so tokens must precede
      content. The rest of the order is cheapest-first, which is why the two
-     slowest (evals, then the behavioural suite) are last. */
+     slowest (evals, then the behavioural suite) are last.
+
+     Two positions are load-bearing for a reason of their own:
+
+       contract-diff reads design-system/dist/, so it follows the step that
+       writes it.
+
+       The drift pair (`npm run build`, then `git diff`) FOLLOWS both --check
+       gates rather than leading. It regenerates the working tree, so first
+       place would leave `build.mjs --check` byte-comparing two files it had
+       just written and `build-content.mjs --check` comparing six of them —
+       every staleness assertion above would become a tautology. Last place
+       among the artefact gates costs one extra build and keeps them honest.
+
+     A RegExp entry asserts the shape of a command whose exact text lives in
+     package.json — the pathspec list is checked, path by path, against what
+     the generators actually write, in test/drift.test.js. */
   const gates = ciCommands(yml).filter((c) => !SETUP.has(c));
   const expected = [
     "node design-system/scripts/build.mjs --check",
+    "node design-system/scripts/contract-diff.mjs --check",
     "node scripts/build-content.mjs --check",
+    "npm run build",
+    /^git diff --exit-code -- \S/,
     "node scripts/check-css.mjs",
     "node scripts/build-vectors.mjs --check",
     "node scripts/check-boundaries.mjs",
     "node evals/run.mjs --check",
     "npm test",
   ];
-  assert.deepEqual(
-    gates.slice(0, expected.length),
-    expected,
-    "the gate order changed — if that is deliberate, change this list and say why in the commit"
-  );
+  expected.forEach((want, i) => {
+    const got = gates[i];
+    const why = "the gate order changed — if that is deliberate, change this list and say why in the commit";
+    if (want instanceof RegExp) assert.match(String(got), want, `step ${i + 1}: ${why}`);
+    else assert.equal(got, want, `step ${i + 1}: ${why}`);
+  });
 });
 
 test("every CI gate carries a name", () => {
