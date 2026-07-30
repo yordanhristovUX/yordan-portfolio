@@ -45,9 +45,9 @@ that no ancestor can trap it in a stacking context:
 ```html
 <div class="drawer" id="ask-panel" data-drawer>
   <div class="drawer__scrim" data-drawer-close></div>
-  <aside class="drawer__sheet" role="dialog" aria-modal="true"
-         aria-labelledby="drawer-title" tabindex="-1">
-    <header class="drawer__head">
+  <div class="drawer__sheet" role="dialog" aria-modal="true"
+       aria-labelledby="drawer-title" tabindex="-1">
+    <div class="drawer__head">
       <span class="drawer__portrait">
         <img src="design-system/assets/avatar.svg" alt="" width="80" height="80" decoding="async">
       </span>
@@ -57,15 +57,27 @@ that no ancestor can trap it in a stacking context:
       </span>
       <button class="btn btn--small" type="button" data-drawer-close
               aria-label="Close the assistant">Close ✕</button>
-    </header>
+    </div>
     <div class="drawer__body">
       <div class="chat" data-chat data-chat-endpoint="/api/chat">
         <!-- exactly the chat from components/chat/spec.md, unchanged -->
       </div>
     </div>
-  </aside>
+  </div>
 </div>
 ```
+
+**Both of those elements are `<div>` for a reason the axe gate found, not for taste.** The
+sheet was an `<aside>` and the head a `<header>`, and together they produced two violations
+that neither produces alone. `role="dialog"` is not an allowed role for `<aside>`
+(`aria-allowed-role`) — but the expensive half is what the override did to the head: a
+`<header>` is a **banner landmark** unless its nearest sectioning ancestor is something other
+than `<body>`, and `<aside>` is sectioning content. Overriding the aside's role removed that
+exemption, so `.drawer__head` became a *second banner landmark* on a page that already has
+the bar, and an open drawer announced two site headers. Neither element name was buying
+anything — `role="dialog"` already replaced the aside's semantics, and a dialog's head is not
+a page header. The CSS selects both by class, so the change is invisible on screen. Do not
+put the sectioning elements back.
 
 `js/chat.js` binds to `document.querySelector("[data-chat]")` — **one** instance per
 document. Moving the assistant into the drawer means removing the `#ask` section, not
@@ -242,7 +254,9 @@ after appending was removed with the case-study modal rather than re-pointed at 
 
 ## A11y
 
-- `role="dialog" aria-modal="true"` on `.drawer__sheet`, labelled by `.drawer__title`.
+- `role="dialog" aria-modal="true"` on `.drawer__sheet`, labelled by `.drawer__title`. The
+  sheet and its head are both `<div>` — see the canonical markup above; the pair used to be
+  `<aside>` + `<header>` and announced a second banner landmark.
 - Closed is `visibility: hidden`, not a JS-written style. That removes the panel from the
   tab order **and** the accessibility tree, and it is animatable, so the close transition
   is not cut off at frame one. It is the reason no `hidden` attribute is needed.

@@ -58,7 +58,27 @@ const step = (label, extra) => `
     ${bar(extra)}
   </div>`;
 
+/* A VARIANT MATRIX IS NOT A DOCUMENT — the exemption both stories below carry.
+   Each renders the bar two or three times, on purpose, so each renders two or
+   three banner landmarks. The component ships ONE bar per page; the
+   single-banner assertion is a property of a page and belongs to a page-level
+   a11y check over index.html / cv.html / mcp.html / evals.html, where a second
+   banner would be a real defect. Disabled per story and per rule rather than in
+   the runner's config, so each exemption is a line someone chose to write next
+   to the markup that needed it. Everything else axe knows still runs here. */
+const matrix = {
+  a11y: {
+    config: {
+      rules: [
+        { id: "landmark-no-duplicate-banner", enabled: false },
+        { id: "landmark-unique", enabled: false },
+      ],
+    },
+  },
+};
+
 export const ResponsiveSteps = {
+  parameters: matrix,
   render: () => `
     <div style="display:grid;gap:var(--space-7)">
       ${step("≥ 1280px — everything · 872.1px · 81.8% of the well", "")}
@@ -70,12 +90,21 @@ export const ResponsiveSteps = {
 /* The Ask segment is a `.bar__action`, and an action that opens something and
    leaves it open wears the hover state for as long as it is open. The rule keys
    off `aria-expanded`, which is the state a screen reader is already being told
-   about — so the highlight cannot drift from the announcement. */
+   about — so the highlight cannot drift from the announcement.
+
+   The closed `#ask-panel` at the end is what `aria-controls` points at. axe only
+   validates that reference once the segment says `aria-expanded="true"` — which
+   is exactly what this story exists to show — so this was the one place in the
+   set where a dangling reference could fail `aria-valid-attr-value`, and on the
+   first run of the a11y gate it did. `visibility: hidden` keeps the panel out of
+   the tree, the tab order and the screenshot. */
 export const AskExpanded = {
   name: "Ask, expanded",
+  parameters: matrix,
   render: () => `
     <div style="display:grid;gap:var(--space-7)">
       ${step("aria-expanded=\"false\" — the drawer is closed", "no-status")}
       ${step("aria-expanded=\"true\" — the drawer is open, and the segment says so", "open")}
+      <div class="drawer" id="ask-panel" data-drawer></div>
     </div>`,
 };

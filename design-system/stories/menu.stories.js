@@ -61,9 +61,36 @@ export const SubPage = {
 
 /* The trigger lives in the nav component's block (`.bar__menu`) but only ever
    appears in service of this one, so the pairing is shown here: the segment at
-   rest and wearing its `aria-expanded` pressed ink. */
+   rest and wearing its `aria-expanded` pressed ink.
+
+   THE CLOSED MENU AT THE END IS NOT DECORATION. `aria-controls="site-menu"` is
+   part of the canonical segment, and a story that renders the trigger without
+   its target ships a dangling ARIA reference — `aria-valid-attr-value`, which
+   axe rates CRITICAL and which the first run of the a11y gate found here. One
+   closed `#site-menu` serves both triggers, exactly as one serves the whole
+   page: `visibility: hidden` keeps it out of the tree, the tab order and the
+   screenshot, and duplicating it per frame would trade this violation for a
+   duplicate id. */
 export const Trigger = {
   name: "Bar segment (trigger)",
+  parameters: {
+    /* A VARIANT MATRIX IS NOT A DOCUMENT. This story renders the bar twice to
+       put the two `aria-expanded` states side by side, so of course there are
+       two banner landmarks — that is the story's whole subject, not a defect in
+       the component, which ships one bar per page. Both rules below are
+       document-scope assertions and belong to a page-level a11y check over
+       index.html / cv.html / mcp.html / evals.html, where a second banner would
+       be real. Scoped per story and per rule so it stays a visible decision:
+       everything else axe knows still runs here, including the whole of WCAG. */
+    a11y: {
+      config: {
+        rules: [
+          { id: "landmark-no-duplicate-banner", enabled: false },
+          { id: "landmark-unique", enabled: false },
+        ],
+      },
+    },
+  },
   render: () => `
     <div style="display:grid;gap:var(--space-5)">
       ${["false", "true"].map(
@@ -77,5 +104,6 @@ export const Trigger = {
         </header>
       </div>`
       ).join("")}
+      <div class="menu" id="site-menu" data-menu></div>
     </div>`,
 };

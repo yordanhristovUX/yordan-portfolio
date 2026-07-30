@@ -86,13 +86,32 @@ const turn = (who, body) => `
   </article>`;
 
 /* The canonical panel from components/drawer/spec.md. `open` is the only
-   difference between the closed and open renderings anywhere in this file. */
+   difference between the closed and open renderings anywhere in this file.
+
+   TWO ELEMENT NAMES HERE ARE LOAD-BEARING AND WERE BOTH WRONG until the axe
+   gate ran over this story for the first time. The sheet used to be an
+   `<aside>` and its head a `<header>`, and the pair produced two violations
+   that only exist together:
+
+   · `aria-allowed-role` — `role="dialog"` is not an allowed role for `<aside>`,
+     whose implicit role is `complementary`.
+   · `landmark-no-duplicate-banner` — and this is the one that matters. A
+     `<header>` is a banner UNLESS its nearest sectioning ancestor is something
+     other than `<body>`. `<aside>` is sectioning content, so the head was safe
+     by accident; overriding the aside's role took the exemption away with it
+     and `.drawer__head` became a SECOND banner landmark on a page that already
+     has the bar. So the open drawer announced two site headers.
+
+   `<div role="dialog">` + `<div class="drawer__head">` has neither problem, and
+   loses nothing: `role="dialog"` was already overriding the aside's semantics,
+   and a dialog's head is not a page header. The CSS selects both by class, so
+   nothing moved by a pixel. See components/drawer/spec.md. */
 const drawer = (thread, open = true) => `
   <div class="drawer" id="ask-panel" data-drawer${open ? " data-open" : ""}>
     <div class="drawer__scrim" data-drawer-close></div>
-    <aside class="drawer__sheet" role="dialog" aria-modal="true"
-           aria-labelledby="drawer-title" tabindex="-1">
-      <header class="drawer__head">
+    <div class="drawer__sheet" role="dialog" aria-modal="true"
+         aria-labelledby="drawer-title" tabindex="-1">
+      <div class="drawer__head">
         <span class="drawer__portrait">
           <img src="../assets/avatar.svg" alt="" width="80" height="80" decoding="async">
         </span>
@@ -102,7 +121,7 @@ const drawer = (thread, open = true) => `
         </span>
         <button class="btn btn--small" type="button" data-drawer-close
                 aria-label="Close the assistant">Close &#10005;</button>
-      </header>
+      </div>
       <div class="drawer__body">
         <div class="chat">
           <div class="chat__thread" tabindex="0" role="log" aria-live="polite" aria-label="Conversation">${thread}</div>
@@ -120,7 +139,7 @@ const drawer = (thread, open = true) => `
             cited to the passage it came from &mdash; or it says so.</p>
         </div>
       </div>
-    </aside>
+    </div>
   </div>`;
 
 /* A page behind the panel, so the scrim has something to veil and the bar

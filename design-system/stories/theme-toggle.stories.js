@@ -22,10 +22,13 @@ const name = (state, sys) =>
 
 const LABEL = { auto: "Auto", light: "Light", dark: "Dark" };
 
+/* `aria-label="Primary"` because that is what components/nav/spec.md's canonical
+   bar carries and what all four pages ship. It was missing here, which made this
+   file's borrowed bar a near-copy of the pattern rather than the pattern. */
 const inBar = (state, sys = "light") => `
   <header class="bar" style="position:static;transform:none;width:max-content">
     <span class="bar__id">Yordan Hristov</span>
-    <nav class="bar__nav"><a href="#">Work</a><a href="#">About</a></nav>
+    <nav class="bar__nav" aria-label="Primary"><a href="#">Work</a><a href="#">About</a></nav>
     <button class="theme mono" data-state="${state}" aria-label="${name(state, sys)}">
       <span class="theme__lamp" aria-hidden="true"></span>
       <span class="theme__label">${LABEL[state]}</span>
@@ -36,9 +39,29 @@ export const Auto = { render: () => inBar("auto") };
 export const Light = { render: () => inBar("light") };
 export const Dark = { render: () => inBar("dark") };
 
+/* A VARIANT MATRIX IS NOT A DOCUMENT — the exemption the two stories below
+   carry. Both borrow the bar to show the toggle where it actually lives, and
+   both render it three and six times respectively, so both render that many
+   `<nav>`s and (in AllStates) that many banner landmarks. Nothing is wrong with
+   the component: a page has one bar. The single-banner and unique-landmark
+   assertions belong to a page-level a11y check over the four shipped pages.
+   Per story, per rule, next to the markup that needs it — everything else axe
+   knows, including the whole of WCAG, still runs over these two. */
+const matrix = {
+  a11y: {
+    config: {
+      rules: [
+        { id: "landmark-no-duplicate-banner", enabled: false },
+        { id: "landmark-unique", enabled: false },
+      ],
+    },
+  },
+};
+
 /* The three lamps side by side — the states have to be tellable apart at a
    glance and at 9px, which is the whole design risk of this component. */
 export const AllStates = {
+  parameters: matrix,
   render: () => `
     <div style="display:flex;flex-direction:column;gap:1rem;align-items:flex-start">
       ${inBar("auto")}
@@ -52,6 +75,7 @@ export const AllStates = {
    press does what, so this story prints both rather than relying on the
    rendering to show a difference it cannot show. */
 export const AccessibleNameMatrix = {
+  parameters: matrix,
   render: () => `
     <div style="display:grid;gap:var(--space-6)">
       ${["light", "dark"]

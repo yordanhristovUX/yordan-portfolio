@@ -1,0 +1,14 @@
+# What the two test gates emit, and why only half of it is transient.
+#
+# `__screenshots__/` is NOT here: the baselines ARE the test, and a visual
+# regression harness whose expected values live only on one laptop is a
+# screenshot script. They are committed, per platform, and reviewed in the diff.
+#
+# Everything below is a run artefact — the received image, the pixel diff and
+# the jsonl the runner summarises. Regenerated on every run, worth uploading as
+# a CI artifact, never worth a commit.
+test-results/
+
+# The built Storybook the runner serves. Also ignored at the repo root; repeated
+# here so this directory is self-describing when it is installed as a package.
+storybook-static/
