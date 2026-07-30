@@ -4,8 +4,9 @@
     {
       "name": "site",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", ".", "-l", "3000", "--no-clipboard"],
-      "port": 3000
+      "runtimeArgs": ["--yes", "serve", ".", "--no-clipboard"],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

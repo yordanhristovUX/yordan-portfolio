@@ -80,7 +80,6 @@ function report(scope, el) {
 const plate = (no, title, note, copy, term = true) => `
   <section class="band sec">
     <header class="sec__head">
-      <span class="sec__no mono">${no}</span>
       <h2 class="sec__title t-title">${title}</h2>
       <span class="sec__note">${note}</span>
     </header>

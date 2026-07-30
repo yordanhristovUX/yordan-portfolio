@@ -732,10 +732,33 @@
      resets to the base before every measurement, so a run is a pure function of
      the un-slacked layout and there is no carried value to oscillate. */
   let resizeT;
-  window.addEventListener("resize", () => {
+  const settle = () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(() => rebuild(all, document), 200);
-  });
+  };
+  window.addEventListener("resize", settle);
+
+  /* ---- The engine watches its own lattice root ----
+     Every misalignment this engine has ever shipped had the same anatomy:
+     something changed the page's layout after the last rebuild, and no
+     resize event told anyone. Fonts were handled, then a script that
+     injected structure, then the scroll lock's scrollbar toggle — and each
+     fix enumerated one shifter while the next waited. Measured on a fresh
+     warm reload: the Contact band sat 2.2px from its settled height with
+     nothing left on the enumerated list, and the owner could reproduce a
+     visible slide on every reload that any resize then healed.
+
+     So stop enumerating. The lattice root's own size is the sum of every
+     layout fact the terminator pass depends on: if ANY of them moves, the
+     sheet's height moves, and this observer funnels it into the same
+     debounced rebuild a resize uses. It converges: a rebuild writes the
+     same slack values against unchanged layout, the root's size stops
+     changing, the observer goes quiet. Browsers without ResizeObserver
+     keep the enumerated triggers. */
+  if (typeof ResizeObserver === "function") {
+    const root = document.querySelector(".sheet");
+    if (root) new ResizeObserver(settle).observe(root);
+  }
 
   /* ---- Run, or stand still ----
      Under reduce-motion the regions are not animated at all: the loop is

@@ -22,6 +22,8 @@ edges (no border) and a hard 5px offset shadow. Identity / links / availability 
     <a href="#about">About</a>
     <a href="#contact">Contact</a>
   </nav>
+  <button class="bar__menu" type="button" data-menu-open
+          aria-controls="site-menu" aria-expanded="false">Menu</button>
   <div class="bar__status">
     <span class="bar__dot" aria-hidden="true"></span>
     <span>Available for work — Sofia<span class="bar__clock">, <time id="local-time">--:--</time></span></span>
@@ -33,7 +35,7 @@ edges (no border) and a hard 5px offset shadow. Identity / links / availability 
          width="80" height="80" decoding="async">
     <span class="bar__action-label">Ask my Bot</span>
   </button>
-  <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+  <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
     <span class="theme__lamp" aria-hidden="true"></span>
   </button>
 </header>
@@ -49,13 +51,22 @@ inside it is exactly what was there before.
 | Class | Use |
 | --- | --- |
 | `.bar__id` | Identity or the way back; always first, and the only segment with no left divider |
-| `.bar__nav` | Up to three links |
+| `.bar__nav` | Up to three links. Hidden under 700px, where `.bar__menu` takes over |
+| `.bar__menu` | **The nav's mobile form**: one word, `Menu`, summoning the full-screen menu component. Shown only under 700px, **at the very right of the docked bar**; styled as a link, pressed ink on `[aria-expanded="true"]` |
 | `.bar__status` | Passive readout (availability, clock). Hidden under 1200px |
 | `.bar__clock` | The separator + `<time>` inside the status. Hidden under 1280px |
-| `.theme` | The theme toggle — see `components/theme-toggle/spec.md` |
-| `.bar__action` | **The page's one primary action** (Ask my Bot, Print / PDF). Solid primary ink |
+| `.theme` | The theme toggle, a satellite hanging off the bar's right edge, ≥700px only — see `components/theme-toggle/spec.md` |
+| `.bar__action` | **The page's one primary action** (Ask my Bot, Print / PDF). Solid accent. A chat action carries `data-ask` and leaves the bar under 700px for the ask-fab; a non-chat action (Print) keeps its segment at every width |
 | `.bar__face` | The assistant's portrait inside `.bar__action`, 1.25rem. A mark, not a likeness |
 | `.bar__action-label` | The action's words. Hidden under 860px; the accessible name is not |
+
+`.bar__menu` is a word, not a hamburger, by the owner's decision — the bar is made of words,
+and an icon would be the only picture in it besides the assistant's face. **At the very right
+by the same decision**, which on cv puts it after the action: the docked row's order is
+identity → action → Menu, and the button sits after `.bar__action` in the DOM so tab order
+and visual order agree. Above 700px it is `display: none`, so its position costs the desktop
+row nothing. The chat never folds into the menu — the owner's rule is that it stays reachable
+without opening it, and its mobile home is the ask-fab at the corner.
 
 ## The bar has a hierarchy, and it is stated
 
@@ -102,7 +113,9 @@ segment for the link's right edge to butt against.
 `--accent` (dot), `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`,
 `--chrome-label`, `--chrome-label-strong`, `--content-inverse`, `--content-primary`,
 `--accent`, `--font-mono`, `--primary`, `--shadow-drop` (the offset drop shadow),
-`--text-xs`, `--space-1`, `--space-2`, `--space-3`, `--space-5`
+`--text-xs`, `--text-sm` (the identity's one-step-up on the docked mobile bar — desktop
+stays `--text-xs`, so the measured widths above remain true), `--space-2`, `--space-3`,
+`--space-5`
 
 **`--accent` is the primary action's ground**, and this is the only place in the system where
 the accent is a ground rather than a mark. A solid ink segment carried the right hierarchy and
@@ -124,45 +137,29 @@ The responsive steps are derived from the bar's measured width against the `.wel
 it, not chosen for roundness — chrome that is wider than the content column it labels has
 stopped being an object lying on the sheet:
 
-| Viewport | Bar shows | Width | Share of the well |
+| Viewport | Bar shows | Width (index) | Share of the well |
 | --- | --- | --- | --- |
-| ≤ 480px | identity + links + **Ask** + toggle, tightest paddings | 336.6px | fits with 14.4px slack at 375px |
-| 481–600px | same, mid paddings | 440.5px | fits with 16.5px slack at 481px |
-| 601–1199px | full paddings | 552.5px | 55.3% at 1199px |
+| ≤ 699px | **docked, edge to edge**: identity (growing) + Menu at the right; Ask is the ask-fab at the corner; hairline underline instead of the drop shadow | viewport width | — (it *is* the chrome edge) |
+| 700–1199px | floating: identity + links + **Ask**, full paddings | 552.5px | 55.3% at 1199px |
 | 1200–1279px | + status, without the clock | 816.2px | 81.6% at 1200px, 76.6% at 1279px |
 | ≥ 1280px | + the clock | 872.1px | 81.8% at 1280px, 72.7% at 1440px and wider |
 
 The well stops growing at 1200px, so 72.7% is the floor rather than a point on the way to
 something smaller. Before any of these steps existed the bar appeared at 98.9% of the well.
 
-**The Ask segment is a fifth cell and it was not free.** It measures 64.0px at full padding
-and 40.0px tightened. Two things paid for it, and both were re-derived rather than nudged:
+**The ≤600px and ≤480px padding steps predate the menu and are kept for slack, not fit.**
+Their history: the Ask segment was a fifth cell in a row already 95.9% full at 375px, and it
+was paid for by dropping three neighbours' paddings one step down the ramp — the arithmetic
+lives with the rules in `components.css`. Since the menu and the dock, the row below 700px
+is two segments on index (identity + Menu) and three on cv (+ Print) inside a bar spanning
+the whole viewport, and the 320px identity clip that arithmetic documented is *gone* — the
+identity is the growing segment now, clipped only if a viewport is narrower than its
+neighbours' fixed widths, which no real device is.
 
-- **The status reveal moved from 1080px to 1200px.** Left at 1080 the status-bearing bar
-  would have been 816.2px inside a 900px well — 90.7%, most of the way back to the 98.9%
-  defect the two-step reveal exists to fix. At 1200 it is 81.6%, and the worst case anywhere
-  is now **81.8%, better than the 83.6%** this bar had before Ask existed. The cost is the
-  1080–1199px band, which loses the availability line; the status is a passive readout and
-  Ask is the only route on the page to the assistant, so that is the right thing to lose.
-- **A new ≤480px step drops three paddings one step down the ramp** (`.bar__id` space-3 →
-  space-2 horizontally, `.bar__nav a` and `.theme` space-2 → space-1). That frees
-  8 + 24 + 8 = 40.0px, so 336.64px becomes 336.61px and the 375px slack is 14.39px against
-  14.36px. `.bar__id`'s *vertical* padding stays at space-3 — it is what sets the bar's
-  height.
-
-At 320px the bar has clipped the identity since long before Ask existed (336.6px of content
-in a 296px box, which is what `.bar__id`'s `overflow: hidden` is for). The overflow absorbed
-is 40.6px either way; what changes is how much name survives it — 95.2px before, 87.2px
-after, one monospace character.
-
-The 600px step is a fit constraint, not taste: above it the full paddings need a 576px
-viewport to hold cv's four segments, and the band between the old 480px boundary and that
-figure truncated the identity on all four pages.
-
-**Before adding the Ask segment to cv, mcp or evals, redo this arithmetic.** cv's bar is
-551.8px with its Print / PDF action, so Ask would take it to 615.8px and it would need a
-640px viewport at full padding; cv's own `.bar__nav` hide step (`css/cv.css`, 560px) would
-have to move with it.
+**Before adding the Ask segment to cv, mcp or evals, redo the wide-viewport arithmetic.**
+cv's bar is 551.8px with its Print / PDF action, so Ask would take it to 615.8px and it
+would need a 640px viewport at full padding. (Below 700px this stopped mattering: the links
+fold into the menu, which is also what retired cv's old 560px `.bar__nav` hide rule.)
 
 ## A11y
 
@@ -173,8 +170,12 @@ ink — AA contrast in both states.
 
 - Three links maximum in `.bar__nav`; this bar is a compass, not a sitemap. A fourth
   destination is a sign that something should be a `.bar__action` instead, or should not be
-  in the bar at all.
-- The floating layer has exactly three occupants and they are ordered: the bar (`z-index:
-  100`), the drawer (400) and the case dialog (500). Nothing else may be `position: fixed`.
-  The order is not cosmetic — an answer inside the drawer renders real `.idx__row`s that
-  open the case dialog, so the dialog must land on top of the drawer that opened it.
+  in the bar at all. (The menu sheet is not bound by three — it carries the way back too.)
+- **The map of the floating layer**, lowest first: the peek panel (`z-index: 90`,
+  pointer-events none), the theme puck (90, a satellite of the bar, ≥700px only), the
+  ask-fab (90, the chat pill at the bottom corner, <700px only), the bar (100), the menu
+  (300), the peek sheet (350, touch only — the notable cards' bottom sheet) and the drawer
+  (400). The case dialog (500) is retired with the modal. Menu and drawer both cover the
+  bar, which is what makes them mutually exclusive: each one's trigger lives under the
+  other's sheet; the peek sheet's triggers sit under both. Check this list before adding
+  anything `position: fixed`, and update it in the same commit.

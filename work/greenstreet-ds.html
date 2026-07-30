@@ -46,16 +46,44 @@
       <a href="/#work">All work</a>
       <a href="/#contact">Contact</a>
     </nav>
-    <button class="bar__action mono" type="button" aria-label="Ask my Bot" onclick="location.href='/#ask'">
+    <button class="bar__action mono" type="button" aria-label="Ask my Bot" data-ask onclick="location.href='/#ask'">
       <img class="bar__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">
       <span class="bar__action-label">Ask my Bot</span>
     </button>
+    <!-- The nav's mobile form, at the very right of the docked bar — see components/menu/spec.md. -->
+    <button class="bar__menu" type="button" data-menu-open aria-controls="site-menu" aria-expanded="false">Menu</button>
+    <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+    </button>
   </header>
+
+  <div class="menu" id="site-menu" data-menu>
+    <div class="menu__sheet" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
+      <div class="menu__head">
+        <span class="menu__title">Menu</span>
+        <button class="menu__close" type="button" data-menu-close>Close</button>
+      </div>
+      <div class="menu__body">
+        <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+          <span class="theme__lamp" aria-hidden="true"></span>
+        </button>
+        <nav class="menu__nav" aria-label="Menu">
+          <a href="/">Home</a>
+          <a href="/#work">All work</a>
+          <a href="/#contact">Contact</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <button class="ask-fab" type="button" aria-label="Ask my Bot" data-ask-fab onclick="location.href='/#ask'">
+    <img class="ask-fab__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">
+    <span class="ask-fab__label">Ask my Bot</span>
+  </button>
 
   <main class="sheet" id="top">
     <section class="band sec work" aria-labelledby="work-title">
       <header class="sec__head">
-        <span class="sec__no mono">02</span>
         <h1 class="sec__title t-title" id="work-title">AI-ready design systems and Agentic workflows</h1>
         <span class="sec__note">Green Street</span>
       </header>
@@ -113,11 +141,9 @@
     </section>
   </main>
 
-  <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
-    <span class="theme__lamp" aria-hidden="true"></span>
-  </button>
-
   <script src="/js/theme.js" defer></script>
+  <script src="/js/menu.js" defer></script>
+  <script src="/js/fab.js" defer></script>
   <script src="/js/automata.js" defer></script>
 </body>
 </html>

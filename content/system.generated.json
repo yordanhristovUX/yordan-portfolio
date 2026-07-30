@@ -6,8 +6,9 @@
   "dark": 23,
   "print": 36,
   "wide": 5,
-  "components": 21,
+  "components": 23,
   "componentNames": [
+    "ask-fab",
     "button",
     "card",
     "case-body",
@@ -19,6 +20,7 @@
     "footer",
     "link-grid",
     "media",
+    "menu",
     "nav",
     "profile",
     "row",

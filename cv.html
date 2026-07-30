@@ -58,7 +58,7 @@
 
   <!-- ============ FLOATING NAV ============ -->
   <header class="bar">
-    <a class="bar__id" href="index.html">← Portfolio</a>
+    <a class="bar__id" href="index.html">← Home</a>
     <nav class="bar__nav" aria-label="Primary">
       <a href="#experience">Experience</a>
       <a href="#skills">Skills</a>
@@ -68,7 +68,45 @@
          toggle, so the one control a CV page exists to offer was the last thing
          in the bar and the least prominent thing in it. -->
     <button class="bar__action mono" data-print>Print / PDF</button>
+    <!-- The nav's mobile form — see index.html. At the very right of the docked
+         bar by the owner's decision, hence after the action in the DOM. Print
+         carries no `data-ask`: it is not the chat, so it keeps its segment on
+         mobile. This replaces cv.css's old 560px rule, which hid the links
+         with nothing in their place. -->
+    <button class="bar__menu" type="button" data-menu-open aria-controls="site-menu" aria-expanded="false">Menu</button>
+    <!-- A SATELLITE OF THE BAR, not a segment: absolutely positioned just off
+         the bar's right edge, its own paper and shadow, back to the viewport's
+         bottom corner below 700px where the bar leaves no room. In the DOM
+         here because the bar is centred and shrink-wrapped, so nothing outside
+         it can know where its right edge is. The label is deliberately vaguer
+         than anything js/theme.js produces: the script names what auto
+         currently RESOLVES to and static HTML cannot know the visitor's OS.
+         Replaced on the first apply(). -->
+    <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+    </button>
   </header>
+
+  <!-- The full-screen menu. The sheet covers the bar, so the way back rides
+       in it too — the identity segment must not be lost with the bar. -->
+  <div class="menu" id="site-menu" data-menu>
+    <div class="menu__sheet" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
+      <div class="menu__head">
+        <span class="menu__title">Menu</span>
+        <button class="menu__close" type="button" data-menu-close>Close</button>
+      </div>
+      <div class="menu__body">
+        <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+          <span class="theme__lamp" aria-hidden="true"></span>
+        </button>
+        <nav class="menu__nav" aria-label="Menu">
+          <a href="index.html">Home</a>
+          <a href="#experience">Experience</a>
+          <a href="#skills">Skills</a>
+        </nav>
+      </div>
+    </div>
+  </div>
 
   <main id="top" class="sheet">
 
@@ -105,7 +143,6 @@
     <!-- ============ 01 OPEN SOURCE ============ -->
     <section class="band sec" id="open-source">
       <header class="sec__head">
-        <span class="sec__no mono">01</span>
         <h2 class="sec__title t-title">AI-ready design system</h2>
         <span class="sec__note">Open source</span>
       </header>
@@ -113,7 +150,7 @@
         <!-- content:open-source -->
         <p>Tokens are born in the repo, not in Figma. One <code>tokens.json</code> builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and <strong>the build fails if any of the three is missing</strong>, so parity is enforced rather than maintained by hand.</p>
         <p>Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 23 re-aliased tokens with zero per-component rules.</p>
-        <p class="cv-facts mono">83 tokens carrying 147 values across light, dark &amp; print · 21 components · 0 axe violations across 21 Storybook stories · MIT licensed</p>
+        <p class="cv-facts mono">83 tokens carrying 147 values across light, dark &amp; print · 23 components · 0 axe violations across 23 Storybook stories · MIT licensed</p>
         <div class="link-grid">
           <a href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener">GitHub repo ↗</a>
           <a href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener">Storybook ↗</a>
@@ -128,7 +165,6 @@
     <!-- ============ 02 EXPERIENCE ============ -->
     <section class="band sec" id="experience">
       <header class="sec__head">
-        <span class="sec__no mono">02</span>
         <h2 class="sec__title t-title">Experience</h2>
       </header>
       <div class="well well--flush">
@@ -208,7 +244,6 @@
     <!-- ============ 03 SKILLS ============ -->
     <section class="band sec" id="skills">
       <header class="sec__head">
-        <span class="sec__no mono">03</span>
         <h2 class="sec__title t-title">Skills</h2>
       </header>
       <div class="well well--flush">
@@ -243,7 +278,6 @@
     <!-- ============ 04 EDUCATION ============ -->
     <section class="band sec" id="education">
       <header class="sec__head">
-        <span class="sec__no mono">04</span>
         <h2 class="sec__title t-title">Education &amp; languages</h2>
       </header>
       <div class="well well--flush">
@@ -266,7 +300,6 @@
     <!-- ============ 05 UNEXPECTED ============ -->
     <section class="band sec sec--tint" id="unexpected">
       <header class="sec__head">
-        <span class="sec__no mono">05</span>
         <h2 class="sec__title t-title">Unexpected facts</h2>
       </header>
       <div class="well">
@@ -301,21 +334,9 @@
   </footer>
 
   <script src="js/theme.js" defer></script>
+  <script src="js/menu.js" defer></script>
   <script src="js/automata.js" defer></script>
   <script src="js/cv.js" defer></script>
-
-  <!-- NOT PART OF THE NAV. The bar is about THIS page — identity,
-       navigation, the one primary action. The theme is about every page,
-       is set once and rarely touched, and inside the bar it took a full
-       segment from a row already 95.9% full at 375px. Bottom right rather
-       than top right because the bar is centred and 333px wide at that
-       viewport, so a top-right control would sit on top of it.
-       The label is deliberately vaguer than anything js/theme.js produces:
-       the script names what auto currently RESOLVES to and static HTML
-       cannot know the visitor's OS. Replaced on the first apply(). -->
-  <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
-    <span class="theme__lamp" aria-hidden="true"></span>
-  </button>
 
 </body>
 </html>

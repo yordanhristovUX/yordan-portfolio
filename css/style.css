@@ -39,6 +39,18 @@ html { scroll-behavior: smooth; }
 }
 .hero__lede strong { color: var(--content-primary); }
 .hero__actions { display: flex; gap: var(--space-3); flex-shrink: 0; }
+/* Measured at 375px: the two buttons need 305.5px of a 312px well — they sit
+   side by side with 6.5px to spare, which reads as touching, and below a
+   ~369px viewport they genuinely overflow. Stacked at the ramp's small step
+   instead, with real slack rather than at the boundary. EQUAL widths, not
+   full width — the owner's call between the two: `width: max-content` sizes
+   the column to the wider button and `stretch` brings the narrower one up to
+   it, so they read as a deliberate pair; two viewport-wide slabs would
+   out-shout the hero. (`.btn` centres its text in components.css, which is
+   invisible at natural width and correct when stretched.) */
+@media (max-width: 480px) {
+  .hero__actions { flex-direction: column; align-items: stretch; width: max-content; }
+}
 
 /* ============ Background section ============
    Two rules used to live here and both lost their subject when the unexpected
@@ -146,6 +158,14 @@ html { scroll-behavior: smooth; }
    FIRST and LAST case studies — which have only one neighbour each — still put
    their single link on the correct side, with no `:only-child` rule and no
    emitter branch. */
+/* The first thing on a /work/<id> page is a section HEAD, and the fixed bar
+   sat on it — measured 32px over the title at 375px and 48px at 1280px. Every
+   other page clears the bar inside its first well (`--space-nav` on the hero
+   and cv head), but here the head comes before the well, so the clearance
+   goes on the section itself. Index's own work section is `#work`, not
+   `.work` — this rule reaches only the five project pages. */
+.work { padding-top: var(--space-nav); }
+
 .work__nav { display: flex; flex-wrap: wrap; gap: var(--space-4); }
 .work__next { margin-inline-start: auto; text-align: right; }
 .work__prev,

@@ -553,16 +553,54 @@ function workPage(project, prev, next) {
   L.push(`      <a href="/#work">All work</a>`);
   L.push(`      <a href="/#contact">Contact</a>`);
   L.push(`    </nav>`);
-  L.push(`    <button class="bar__action mono" type="button" aria-label="Ask my Bot" onclick="location.href='/#ask'">`);
+  L.push(`    <button class="bar__action mono" type="button" aria-label="Ask my Bot" data-ask onclick="location.href='/#ask'">`);
   L.push(`      <img class="bar__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">`);
   L.push(`      <span class="bar__action-label">Ask my Bot</span>`);
   L.push(`    </button>`);
+  L.push(`    <!-- The nav's mobile form, at the very right of the docked bar — see components/menu/spec.md. -->`);
+  L.push(`    <button class="bar__menu" type="button" data-menu-open aria-controls="site-menu" aria-expanded="false">Menu</button>`);
+  /* A satellite of the bar, not a segment: last child, absolutely positioned
+     off the bar's right edge, back to the viewport corner below 700px. See
+     components/theme-toggle/spec.md. */
+  L.push(`    <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">`);
+  L.push(`      <span class="theme__lamp" aria-hidden="true"></span>`);
+  L.push(`    </button>`);
   L.push(`  </header>`);
+  L.push(``);
+  /* The full-screen menu. The bar's id ("← Work") points at /#work, which "All
+     work" already covers — so the menu carries the two nav links only, and no
+     destination is duplicated. */
+  L.push(`  <div class="menu" id="site-menu" data-menu>`);
+  L.push(`    <div class="menu__sheet" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">`);
+  L.push(`      <div class="menu__head">`);
+  L.push(`        <span class="menu__title">Menu</span>`);
+  L.push(`        <button class="menu__close" type="button" data-menu-close>Close</button>`);
+  L.push(`      </div>`);
+  L.push(`      <div class="menu__body">`);
+  L.push(`        <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">`);
+  L.push(`          <span class="theme__lamp" aria-hidden="true"></span>`);
+  L.push(`        </button>`);
+  /* "Home" goes to the top of the index, "All work" to its work section —
+     distinct destinations, so neither duplicates the other. */
+  L.push(`        <nav class="menu__nav" aria-label="Menu">`);
+  L.push(`          <a href="/">Home</a>`);
+  L.push(`          <a href="/#work">All work</a>`);
+  L.push(`          <a href="/#contact">Contact</a>`);
+  L.push(`        </nav>`);
+  L.push(`      </div>`);
+  L.push(`    </div>`);
+  L.push(`  </div>`);
+  L.push(``);
+  /* The chat pill at the corner — on a work page it is a link to the
+     assistant on the index, same destination as the bar's Ask. */
+  L.push(`  <button class="ask-fab" type="button" aria-label="Ask my Bot" data-ask-fab onclick="location.href='/#ask'">`);
+  L.push(`    <img class="ask-fab__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">`);
+  L.push(`    <span class="ask-fab__label">Ask my Bot</span>`);
+  L.push(`  </button>`);
   L.push(``);
   L.push(`  <main class="sheet" id="top">`);
   L.push(`    <section class="band sec work" aria-labelledby="work-title">`);
   L.push(`      <header class="sec__head">`);
-  L.push(`        <span class="sec__no mono">${String(project.index).padStart(2, "0")}</span>`);
   L.push(`        <h1 class="sec__title t-title" id="work-title">${inline(project.title)}</h1>`);
   L.push(`        <span class="sec__note">${escText(project.client)}</span>`);
   L.push(`      </header>`);
@@ -591,13 +629,9 @@ function workPage(project, prev, next) {
   L.push(`    </section>`);
   L.push(`  </main>`);
   L.push(``);
-  /* Outside the bar, like every other page: the bar is about THIS page and the
-     theme is about every page. See components/theme-toggle/spec.md. */
-  L.push(`  <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">`);
-  L.push(`    <span class="theme__lamp" aria-hidden="true"></span>`);
-  L.push(`  </button>`);
-  L.push(``);
   L.push(`  <script src="/js/theme.js" defer></script>`);
+  L.push(`  <script src="/js/menu.js" defer></script>`);
+  L.push(`  <script src="/js/fab.js" defer></script>`);
   L.push(`  <script src="/js/automata.js" defer></script>`);
   L.push(`</body>`);
   L.push(`</html>`);
@@ -743,6 +777,12 @@ function cardGrid(items, cardClass, extraAttr, typeOf) {
        rather than left a bare <p>. Everywhere else a card's body is just its
        body and stays exactly as it was. */
     out.push(it.media ? `    <p class="card__note">${inline(it.body)}</p>` : `    <p>${inline(it.body)}</p>`);
+    /* The touch trigger is part of the card's own markup — structure is
+       authored, never injected. CSS shows it only where hover cannot happen;
+       js/peek.js wires it to the peek sheet and creates nothing. */
+    if (it.media) {
+      out.push(`    <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>`);
+    }
     out.push(`  </article>`);
   }
   out.push(`</div>`);

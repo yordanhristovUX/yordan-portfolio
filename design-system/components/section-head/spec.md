@@ -9,14 +9,13 @@
 
 # Section head
 
-Full-width chrome band opening every numbered section: accent number, display title,
-optional right-aligned note. Spans the whole sheet including the rails.
+Full-width chrome band opening every section: display title, optional right-aligned note.
+Spans the whole sheet including the rails.
 
 ## Pattern
 
 ```html
 <header class="sec__head">
-  <span class="sec__no mono">02</span>
   <h2 class="sec__title t-title">Selected work</h2>
   <span class="sec__note">Click a project for the full case study</span>
 </header>
@@ -25,9 +24,18 @@ optional right-aligned note. Spans the whole sheet including the rails.
 Parent section: `<section class="band sec">` (adds the strong top rule);
 `.sec--tint` tints the section's well (used for Background).
 
+**The plate number is gone.** The accent-coloured `01`–`07` that led every head (a span
+whose class named it the section's "no") was removed by the owner: the sections are
+distinguishable by name, and the number was plate decoration, not wayfinding. It is
+recorded here because it once bent this component's arithmetic (its descent could stretch
+the baseline row past every item's own line box; see the block comment in
+`components.css`), and because it was one of only two places that wore the accent as a
+mark. Do not reintroduce it as decoration; if a numbered register ever returns, it returns
+to every head on every page at once.
+
 ## Tokens
 
-`--accent`, `--chrome-bg`, `--chrome-label`, `--rule`, `--rule-strong`,
+`--chrome-bg`, `--chrome-label`, `--rule`, `--rule-strong`,
 `--surface-raised` (`.sec--tint`), `--text-xs`, `--pad` (title typography from `.t-title`),
 `--space-3`, `--space-6`
 
@@ -43,7 +51,6 @@ Always an `<h2>`; the page has exactly one `<h1>` (hero name). The note is hidde
 
 ## AI notes
 
-- Numbers are two digits (`01`…`06`), the only place besides availability that wears accent.
 - The note is for a genuinely useful hint only. No decorative annotations — if it doesn't
   help the user act, leave it out.
 - Titles are 1–3 plain words ("Selected work", not "Index of works").

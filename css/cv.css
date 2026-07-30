@@ -22,21 +22,13 @@
    ============================================================ */
 
 /* ============ Nav ============
-   This bar carries a segment more than the portfolio's — Print / PDF — and at
-   narrow widths the four together overflow the bar's own box. The section
-   links are the cheapest thing to lose: the CV is a handful of screens and
-   scrolling finds everything, whereas Print is the reason many people open
-   this page at all.
-
-   There used to be a second declaration here restating `.bar__id`'s right-hand
-   divider so the identity kept an edge once the links vanished. It is gone
-   because every seam in the bar is now owned by the segment on its RIGHT (see
-   the nav block in components.css): with the links hidden, the toggle's own
-   left edge draws that seam, and the old rule was adding a second 1px line on
-   top of it rather than supplying a missing one. */
-@media (max-width: 560px) {
-  .bar__nav { display: none; }
-}
+   This file used to hide `.bar__nav` below 560px — the CV bar carries a
+   segment more than the portfolio's (Print / PDF), and at narrow widths the
+   four together overflowed the bar's own box. The links were the cheapest
+   thing to lose, but losing them left the page with no in-page navigation at
+   all on a phone. The shared mobile menu replaced that rule: below 700px the
+   links fold into `.bar__menu` on every page, this one included, and come
+   back inside the full-screen sheet. See components/menu/spec.md. */
 
 /* ============ Head ============ */
 .cv-head .well { padding-top: var(--space-nav); } /* clears the floating nav; 0 on paper */
@@ -116,7 +108,6 @@
                          plate and two hairline edges would print as an empty
                          band under every section */
   .foot,              /* the copyright line repeats the header */
-  .sec__no,           /* section numbers are a screen device */
   .link-grid,         /* buttons; their URLs print via .print-only instead */
   .fact__label        /* the one-line jokes survive; their explanations do not */
     { display: none !important; }

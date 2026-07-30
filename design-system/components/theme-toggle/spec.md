@@ -9,13 +9,15 @@
 
 # Theme toggle
 
-Tri-state theme control. Sits in the nav bar as the bar's **utility** segment — the least of
-its parts, and always last — and it carries no text at all.
+Tri-state theme control. A **satellite of the nav bar**: in the DOM as the bar's last child,
+absolutely positioned just off the bar's right edge — its own paper, hairline and drop shadow,
+so it reads as related to the instrument without being a segment of it. It carries no text at
+all.
 
 ## Pattern
 
 ```html
-<button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+<button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
   <span class="theme__lamp" aria-hidden="true"></span>
 </button>
 ```
@@ -26,108 +28,117 @@ produces: the script's `auto` name says what auto is currently resolving to, and
 cannot know the visitor's OS preference. So the initial value says only what is true under
 both. A name that guessed a resolution would be wrong half the time.
 
+## Placement
+
+Hanging 0.75rem off the bar's right edge, centred on the bar's midline. It must be a **child
+of `.bar`** for that to be expressible at all: the bar is centred and shrink-wrapped
+(`width: max-content`), so no viewport-anchored rule can know where its right edge is.
+
+Two consequences of being a child, both deliberate:
+
+- **The bar centres by opposing insets + auto margins, not by `translateX(-50%)`.** A
+  transformed ancestor is the containing block for `position: fixed` descendants, and the
+  narrow-screen fallback below needs `fixed` to mean the viewport.
+- **The puck sits in the bar's tab order, last** — identity → navigation → context → primary
+  action → utility, which is the bar's stated order.
+
+**Below 700px the satellite hides and the menu sheet carries the control.** The bar docks
+full-width there, so there is no edge to hang off; and the bottom corner — the puck's old
+fallback — belongs to the chat now (see `components/ask-fab/spec.md`): messages are expected
+at that corner on a phone, a theme dial is not. The same control sits at the end of the
+sheet's `.menu__body`, under the links on their left edge — just the circle, no strip and no
+caption, by the owner's decision. Two renderings, one visible per breakpoint; `js/theme.js`
+rewrites every `[data-theme-toggle]` on every change, so they cannot disagree — and "one
+control per document" becomes "one *visible* control per viewport".
+
+`z-index` sits under the drawer's, so an open panel covers it — a theme toggle floating over
+a modal surface is a control with nothing to act on.
+
 ## The dial, and why it lost its words
 
 It used to read `AUTO` / `LIGHT` / `DARK` beside a small square lamp. Three words are three
-widths in a bar with no room to spare, and — the deciding reason — **the thing they described
-is a two-sided object that can simply show which side it is on.**
+widths, and — the deciding reason — **the thing they described can simply show what it is.**
 
-One circle, permanently half dark and half light. The state is its ANGLE:
+| `data-state` | Lamp | Means |
+| --- | --- | --- |
+| `auto` | half ink, half paper, **turning** | Following `prefers-color-scheme`; nothing stored |
+| `light` | outline only | Pinned light, stored in `localStorage` |
+| `dark` | filled | Pinned dark, stored in `localStorage` |
 
-| State | The dial |
-| --- | --- |
-| `dark` | the ink half faces up — `rotate(0)` |
-| `light` | the paper half faces up — `rotate(180deg)` |
-| `auto` | **it is still turning**, a slow endless rotation |
-
-Auto being in motion is the whole idea rather than an embellishment. The other two states are
-a decision — the dial has landed — and auto is the *absence* of one: the page is following
-something else, so the dial never settles. That distinction reads without a legend, which is
-what let the words go.
+A pinned state is a fill — how much ink is in the circle says which one, which needs no
+convention at all. Auto is the half-and-half, and it is **still turning**: the two pinned
+states are a decision — the dial has landed — and auto is the absence of one, so it never
+settles. That distinction reads without a legend, which is what let the words go.
 
 The two halves are `--content-primary` and `--surface-page`, so the dial is literally "the two
 themes" and it inverts with the theme like everything else. There is no theme query in this
 block and nothing in it knows which theme is live.
 
 **Under `prefers-reduced-motion` auto stops turning and rests at 45°** — still visibly neither
-settled angle, so the state survives the loss of the motion that usually carries it. A
-perpetually spinning object is exactly what that query exists for.
+settled state, so it stays legible without the motion that usually carries it. A perpetually
+spinning object is exactly what that query exists for.
 
-**The hover is deliberately quiet.** This was a full ink-fill until the bar gained a
-hierarchy; the segment beside it is now a solid accent block, and a utility that also filled
-solid on hover would compete with the one control on the page that is meant to look pressable.
+**The hover is deliberately quiet.** A lift, not a fill: the one control on the page that is
+meant to look pressable is the bar's accent block, and the puck must not compete with it.
 
-## The cycle is not a fixed ring
+## Every press changes the page
 
-Three states, two renderings. Going round the ring must therefore repeat a rendering
-somewhere: in `auto → X → Y → auto` there is always exactly one press that leaves the
-page's colours untouched. That is arithmetic, not a bug, and it cannot be designed away
-without dropping a state.
+The next state is always the **opposite of what is currently rendered** — and when that
+opposite is what the system would show anyway, it is stored as `auto` (nothing stored) rather
+than as a pin. "Showing what your OS shows" and "following your OS" are the same state, so
+there is nothing to pin.
 
-What can be chosen is **which** press it is, and it must not be the first. The old fixed
-ring `auto → light → dark` put it there: a visitor on a light system pressed once, watched
-the control relabel itself to LIGHT, saw nothing else move, and learned the control was
-broken — the second press was where dark finally arrived.
+| From | Rendering | Next state | The page |
+| --- | --- | --- | --- |
+| `auto`, system light | light | `dark` | flips to dark |
+| `dark` pinned, system light | dark | `auto` | flips to light |
+| `auto`, system dark | dark | `light` | flips to light |
+| `light` pinned, system dark | light | `auto` | flips to dark |
 
-So the next state is computed against what `auto` resolves to **right now**:
+An earlier version of this control was a three-state ring, and a ring over two renderings
+must repeat a rendering once per lap — its best available fix was parking the dead press on
+the deliberate return to auto. This design dissolves that arithmetic instead of relocating
+it: only two states are reachable by pressing — `auto`, and the pin that **contradicts** the
+system — so every press flips the page, including a first press from a fresh load, which
+gives the visitor the opposite of whatever they are looking at.
 
-| From | System is light | System is dark |
-| --- | --- | --- |
-| `auto` | → `dark` | → `light` |
-| the pinned state that differs from the system | → the other pinned state | → the other pinned state |
-| the pinned state that matches the system | → `auto` | → `auto` |
-
-which is `auto → dark → light → auto` on a light system and `auto → light → dark → auto`
-on a dark one. Both press 1 and press 2 change the page. Press 3 is the repeat, and it is
-the deliberate return to auto — a press whose meaning is "stop overriding", where landing
-on the colour you were already looking at is the correct outcome rather than a surprise.
-The `aria-label` says so before it happens.
-
-If the OS preference changes mid-visit while a theme is pinned, the target of the next
-press changes with it, so the label has to be recomputed on `prefers-color-scheme` changes
-even when the rendered theme does not move.
+The third state — a pin that **agrees** with the system — is unreachable by pressing. Only an
+OS change under a pin can produce it, and from it the next press still flips the page (to the
+other pin). If the OS preference changes mid-visit, the target of the next press changes with
+it, so the label is recomputed on `prefers-color-scheme` changes even when the rendered theme
+does not move.
 
 ## Variants
 
 None. The three states are data, not variants.
 
-| `data-state` | Lamp | Means |
-| --- | --- | --- |
-| `auto` | half-filled | Following `prefers-color-scheme`; nothing stored |
-| `light` | outline only | Pinned light, stored in `localStorage` |
-| `dark` | filled | Pinned dark, stored in `localStorage` |
-
-The lamp does not encode what `auto` resolves to, and should not be asked to. A 9px square
+The lamp does not encode what `auto` resolves to, and should not be asked to. A 14px circle
 already carries three states; a fourth distinction inside one of them turns a readout into
 a puzzle. The resolution is legible in the most direct way available — the page around it
-is either light or dark — and it is stated exactly in the accessible name, where it costs
-no width in a bar that has none to spare.
+is either light or dark — and it is stated exactly in the accessible name.
 
 ## Why there is no press-acknowledgement flash
 
-Reordering the cycle fixes two presses out of three. The third — the return to auto — still
-cannot move the page, so the obvious next move is to flash the lamp and prove the press
-landed. It was built, measured and removed; the reasoning is recorded here so it is not
-rebuilt.
+There is no longer a press it could exist for: every press changes the page's colours, and
+the page itself is the acknowledgement.
 
-A CSS animation restarts only when its **name** changes, so acknowledging a state change
-needs one keyframe name per state. An element that enters the document already matching
-such a rule starts that animation immediately: measured, the lamp fired `theme-ack-auto`
-at t≈111ms on a cold load with nothing stored and nothing pressed. A flash on every page
-load is not an acknowledgement, and it devalues the one that follows a real press. Gating
-on `.theme:focus` suppresses the load case but does nothing in Safari, which does not focus
-a button on click — a polish effect that silently vanishes for a browser share that large
-is worse than no effect.
-
-It is also solving the wrong half of the problem. The lamp fill and the label already
-change on every press including that one, and the accessible name now states the
-consequence **before** it happens rather than confirming it afterwards. Announcing a no-op
-in advance beats acknowledging it in retrospect.
+The mechanism it would have needed is recorded anyway, because it was built once and the
+reason it failed outlives the reason it was wanted. A CSS animation restarts only when its
+**name** changes, so acknowledging a state change needs one keyframe name per state — and an
+element that enters the document already matching such a rule starts that animation
+immediately: measured, the lamp fired `theme-ack-auto` at t≈111ms on a cold load with nothing
+stored and nothing pressed. A flash on every page load is not an acknowledgement. Gating on
+`.theme:focus` suppresses the load case but does nothing in Safari, which does not focus a
+button on click — a polish effect that silently vanishes for a browser share that large is
+worse than no effect.
 
 ## Tokens
 
 `--chrome-bg`, `--chrome-border`, `--chrome-label`, `--content-primary`, `--shadow-drop`,
-`--surface-page`
+`--space-6`, `--surface-page`
+
+`--space-6` is only the gap above the menu-sheet rendering — a spacing use, nothing to do
+with the automata lattice that token also feeds (see `skeleton/spec.md`).
 
 `--content-primary` and `--surface-page` are the dial's two tones, which is why this component
 consumes a *surface* token without drawing a surface: the dial is a picture of the two themes,
@@ -139,33 +150,24 @@ the same pair the nav bar uses, because it is the same idea: an object lying on 
 The lamp is drawn in `currentColor` on purpose, so it inverts with the button on hover
 without a second colour token.
 
-`--space-1` is the ≤480px padding, and it is one of the three steps that paid for the Ask
-segment joining the bar — see the arithmetic in `components/nav/spec.md`. The toggle gives
-up 8.0px of a 40.0px bill. It is not an independent choice: change it back and the bar
-overflows at 375px.
-
 ## A11y
 
 - Real `<button>`, not a checkbox: three states, not two, so no `aria-pressed`.
-- The label carries the **current** state; the `aria-label` carries current state *and* what
-  activating does, because the visible text alone would leave a screen-reader user guessing.
-  `js/theme.js` rewrites both on every change.
+- The `aria-label` carries the current state *and* what activating does — the control has no
+  visible text, so the accessible name is what keeps it usable, which is why it is not
+  optional. `js/theme.js` rewrites it on every change.
 - **The accessible name has to be true in all six combinations** — three states against two
-  system settings — and the old one was true in three of them. `Theme: following your system
-  setting. Activate for light.` is a lie on a light system, where activating gives you light
-  on light. The name is now built from the resolved theme, and the two forms it takes are:
+  system settings — so both halves of it name the resolution rather than the bare state:
 
   | State | Name |
   | --- | --- |
   | `auto` | `Theme: auto, currently light. Activate for dark.` (and the dark-system mirror) |
-  | pinned, differs from system | `Theme: dark. Activate for light.` |
-  | pinned, matches system | `Theme: light. Activate for auto (your system setting, currently light).` |
+  | pinned, differs from system | `Theme: dark. Activate for auto (your system setting, currently light).` |
+  | pinned, matches system (OS changed under a pin) | `Theme: dark. Activate for light.` |
 
-  The third form is the important one. It is the press that will not change the page, and
-  saying what auto resolves to is what turns that from a control that ignored you into a
-  control that told you in advance.
-- Below 480px the text label is hidden and the lamp stands alone — the `aria-label` is what
-  keeps it usable, which is why it is not optional.
+  The middle form names what auto resolves to because that is the press's visible outcome:
+  "activate for auto" alone would leave a screen-reader user unable to predict what the page
+  is about to do.
 - Auto is a real state, not the absence of one: it must survive reload, so "no stored value"
   is what encodes it.
 
@@ -177,6 +179,11 @@ overflows at 375px.
   needs a *token*, not a query.
 - The theme is set by `data-theme` on `<html>`, applied by an inline script in `<head>`
   before first paint. Do not move it to a deferred script — that reintroduces the flash.
-- One toggle per document. It belongs to `.bar`; do not repeat it in the footer or dialog.
+- Two renderings per document, exactly: the satellite child of `.bar` (≥700px) and the one
+  at the end of `.menu__body` (mobile). Both carry `data-theme-toggle`; `js/theme.js`
+  updates all of them, which is what licenses the second one. Do not add a third, and do
+  not move the satellite out of the bar without giving it a new anchor.
+- Do not reintroduce `translateX(-50%)` centring on `.bar`: it silently turns the puck's
+  narrow-screen `position: fixed` fallback into bar-relative positioning.
 - Anything that reads a themed colour in JS must read it from `getComputedStyle` and re-read
   on the `themechange` window event (see `js/automata.js`) — not cache it at load.

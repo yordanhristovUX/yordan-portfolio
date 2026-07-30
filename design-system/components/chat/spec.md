@@ -29,7 +29,6 @@ owns the conversation chrome; it owns none of the answer.
 ```html
 <section class="band sec" id="ask">
   <header class="sec__head">
-    <span class="sec__no mono">07</span>
     <h2 class="sec__title t-title">Ask</h2>
     <span class="sec__note">Answers are built from the same source as the page</span>
   </header>

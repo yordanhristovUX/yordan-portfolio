@@ -13,7 +13,6 @@
 (() => {
   const KEY = "theme";               // shared with the inline <head> script
   const STATES = ["auto", "light", "dark"];
-  const LABEL = { auto: "Auto", light: "Light", dark: "Dark" };
 
   const root = document.documentElement;
   const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -32,29 +31,28 @@
      the state: "auto" resolves through the OS. */
   const resolved = (state) => (state === "auto" ? (media.matches ? "dark" : "light") : state);
 
-  /* ---------- The cycle is not a fixed ring ----------
+  /* ---------- Every press changes the page ----------
 
-     Three states over two renderings: going round must repeat a rendering
-     exactly once. That is arithmetic, and it cannot be designed away
-     without dropping a state. What CAN be chosen is which press repeats,
-     and it must not be the first.
+     The next state is always the OPPOSITE of what is currently rendered —
+     and when that opposite is what the system would show anyway, it is
+     stored as auto (nothing stored) rather than as a pin. "Showing what
+     your OS shows" and "following your OS" are the same state, so there
+     is nothing to pin.
 
-     The old fixed ring `auto → light → dark` put it there. On a light
-     system, auto already renders light, so press 1 relabelled the control
-     to LIGHT and moved nothing: the reader learned the control was broken
-     one press before dark arrived.
+     That is what dissolves the old ring's arithmetic problem. Three
+     states over two renderings forced one press per lap to repeat a
+     rendering; this ring simply has two reachable states — auto and the
+     pin that CONTRADICTS the system — so every press flips the page. The
+     third state, a pin that AGREES with the system, is unreachable by
+     pressing (only an OS change under a pin can produce it), and from it
+     the next press still flips the page.
 
-     So the next state is computed against what auto resolves to RIGHT NOW
-     — `auto → dark → light → auto` on a light system, mirrored on a dark
-     one. Press 1 and press 2 both change the page; the repeat lands on
-     press 3, the return to auto, whose meaning is "stop overriding" and
-     where staying on the colour you were already looking at is the
-     correct outcome rather than a surprise. The label says so in advance.
+     A fresh visitor is in auto, and the first press gives them the
+     opposite of whatever they are looking at.
      See design-system/components/theme-toggle/spec.md. */
   const nextOf = (state) => {
-    const sys = resolved("auto");
-    if (state === "auto") return sys === "dark" ? "light" : "dark";
-    return state === sys ? "auto" : sys;          // matches system → back to auto
+    const target = resolved(state) === "dark" ? "light" : "dark";
+    return target === resolved("auto") ? "auto" : target;
   };
 
   /* The accessible name has to be true in all SIX combinations — three
@@ -107,10 +105,9 @@
     const next = nextOf(state);
     for (const btn of document.querySelectorAll("[data-theme-toggle]")) {
       btn.dataset.state = state;
-      const label = btn.querySelector(".theme__label");
-      if (label) label.textContent = LABEL[state];
-      // Current state AND the consequence of pressing: the visible label can
-      // only carry the first, and on narrow screens it is hidden entirely.
+      // The control has no visible text — the dial carries the state — so the
+      // accessible name carries the current state AND the consequence of
+      // pressing, and it is not optional.
       btn.setAttribute("aria-label", `Theme: ${IS(state)}. Activate for ${TO(next)}.`);
     }
 

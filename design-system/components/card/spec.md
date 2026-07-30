@@ -48,6 +48,8 @@ One card component serves every card grid on the site — do not invent section-
 | --- | --- |
 | `.card` | Base cell; optional `.card__type` eyebrow above the title |
 | `.card--ruled` | 3px ink rule above the title (capability/emphasis cards) |
+| `.card__more` | The touch trigger, **authored in the card's markup by the content build** — a quiet underlined link in the card's corner. Real `<button>`, `aria-haspopup="dialog"`, `data-card-more`; CSS hides it on fine pointers; a tap anywhere on the card delegates to it |
+| `.peek-sheet` (+`__scrim`, `__panel`, `__head`, `__title`, `__close`, `__body`, `__frame`, `__note`) | The bottom sheet the trigger opens — authored once in `index.html` beside the drawer, populated by `js/peek.js` |
 | `.card-grid` | 3 → 2 → 1 column responsive grid with hairline dividers |
 
 The grid's dividers are computed from position, so any card count works: the last card and
@@ -55,10 +57,16 @@ every card on the final row drop the rules that would otherwise trail into empty
 
 ## Tokens
 
-`--chrome-border`, `--chrome-grid`, `--chrome-label`, `--content-body`, `--content-primary`,
-`--font-display`, `--font-mono`, `--primary`, `--rule`, `--shadow-drop`, `--surface-raised`,
-`--text-2xs`, `--text-md`, `--text-sm`, `--text-sub`, `--pad`, `--space-3`, `--space-4`,
-`--space-6`, `--space-flow`
+`--accent`, `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`, `--chrome-grid`,
+`--chrome-label`, `--chrome-label-strong`, `--content-body`, `--content-inverse`,
+`--content-primary`, `--font-display`, `--font-mono`, `--primary`, `--rule`,
+`--rule-strong`, `--scrim`, `--shadow-drop`, `--surface-page`, `--surface-raised`,
+`--text-2xs`, `--text-base`, `--text-md`, `--text-sm`, `--text-sub`, `--text-xs`, `--pad`,
+`--space-2`, `--space-3`, `--space-4`, `--space-5`, `--space-6`, `--space-flow`
+
+The `--scrim`/`--surface-page`/`--chrome-bg` group belongs to the peek sheet — a real
+overlay wears the same dress every other overlay here wears, which is why a card component
+suddenly consumes chrome and scrim tokens.
 
 `--surface-raised` and `--shadow-drop` belong to `.peek`, the panel that rides the pointer:
 raised paper with the same drop shadow the floating nav uses, because it is the same idea —
@@ -68,13 +76,14 @@ everything else here.
 
 ## The peek panel
 
-A `.card--reveal` shows an eyebrow and a title and **nothing else, ever**. It still carries an
-image and a description; `js/peek.js` reads them out and paints them into one panel that
-follows the pointer, so the grid stays a quiet list of names and the detail arrives where the
-reader is already looking.
+A `.card--reveal` shows an eyebrow, a title and (on touch) its corner trigger — **nothing
+else, at any width, on any input**. It still carries an image and a description; two
+consumers read them out of the markup: the cursor panel on fine pointers, the peek sheet on
+coarse ones. The grid stays a quiet list of names either way.
 
-The card is six lattice cells tall and never changes size, so nothing can reflow under the
-pointer.
+The card is six lattice cells tall everywhere and never changes size — one stated height,
+no per-input override, which is both the owner's spec ("collapsed by default on mobile and
+desktop") and what keeps nine cards one grid.
 
 **One panel, not nine.** Nine absolutely-positioned previews would be nine boxes to keep off
 the viewport edges and nine more elements under the cursor to confuse `pointerleave`. There is
@@ -91,12 +100,28 @@ relationship the reader is using to understand what it belongs to.
 
 ### The content is in the card, not in the panel
 
-Both the image and the note stay in the markup, in reading order, and are removed *visually*
-rather than hidden — `display: none` and `visibility: hidden` would both take them out of the
-accessibility tree. So a screen reader gets the full description with no hover to perform, and
-**`js/peek.js` is allowed to fail**: `@media (hover: none), (pointer: coarse)` shows the image
-and the note in the card instead. That is also what a touch reader gets, because a card must
-not withhold half of itself behind a gesture the device cannot perform.
+Both the image and the note stay in the markup, in reading order, visually clipped rather
+than display-hidden — `display: none` and `visibility: hidden` would both take them out of
+the accessibility tree. One base rule, no media query: a screen reader gets the full
+description on every device with no gesture to perform.
+
+**Touch gets the peek *sheet*** — one reusable surface, authored in `index.html` beside the
+drawer, populated from whichever card was tapped, arriving from the bottom edge. It is a
+real dialog where the cursor panel is deliberately not one: focus moves in, Tab is trapped,
+the background goes `inert`, and it closes on Escape, scrim tap or its Close segment
+(close-on-scroll was rejected — dismissing a surface with the gesture used to read it is a
+trap, and the page behind is locked anyway). The trigger is authored in the card and merely
+*wired* by `js/peek.js` — **nothing is injected, so the page's geometry after scripts is
+its geometry before them**, which is the invariant the lattice measurements depend on (the
+injected first version slid every band below the cards off the grid; PROGRAMME-LOG has the
+record).
+
+**The traded fallback, stated honestly:** a sighted touch reader without JS sees the
+collapsed card and a dead trigger. The content remains in the DOM, the accessibility tree
+and reader mode; the *visual* detail view is the one thing that requires JS. The owner
+chose this over the previous three-state cascade (fine-clip / coarse-expand / JS-collapse),
+which was also the override soup the inspector complained about. The labels ("Tap for
+details", "Close") are assistant-drafted chrome, flagged for the owner's rewording.
 
 The image is `alt=""` and `aria-hidden` because the title already says what it says, and an
 alt repeating it makes a screen reader read every project twice.

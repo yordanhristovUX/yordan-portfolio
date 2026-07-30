@@ -133,14 +133,13 @@ const page = (expanded) => `
     </nav>
     <button class="bar__action mono" type="button" data-drawer-open="ask-panel"
             aria-controls="ask-panel" aria-expanded="${expanded}">Ask</button>
-    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto.">
+    <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto.">
       <span class="theme__lamp" aria-hidden="true"></span>
     </button>
   </header>
   <main class="sheet">
     <section class="band sec">
       <header class="sec__head">
-        <span class="sec__no mono">02</span>
         <h2 class="sec__title t-title">Work</h2>
       </header>
       <div class="well"><p class="t-lead">The page the panel is summoned over.</p></div>

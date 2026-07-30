@@ -47,6 +47,20 @@ em { font-style: normal; }
   outline-offset: 3px;
 }
 
+/* THE SCROLL LOCK MUST BE LAYOUT-NEUTRAL, and without this line it is not:
+   a classic scrollbar occupies ~15px of layout, so `overflow: hidden` used
+   to hand that width back — measured, the sheet shifted 4.33px left and
+   grew 24px the moment any overlay locked the body. No resize event fires
+   for a scrollbar toggle, so the automata's stored lattice phases went
+   stale; a resize landing WHILE locked (devtools, rotation, the mobile URL
+   bar) then baked the scrollbar-less geometry in, and closing the overlay
+   left every canvas a few px off the graph paper — the "two grids" defect,
+   worst far down the page where re-wrap deltas accumulate. `stable`
+   reserves the gutter whether or not the scrollbar is drawn: on a page
+   that always scrolls it changes nothing visually, and it makes every
+   body lock (is-locked, and the :has() locks of the menu and peek sheet)
+   a no-op for layout. Browsers without it keep today's behaviour. */
+html { scrollbar-gutter: stable; }
 body.is-locked { overflow: hidden; }
 
 /* ============ Typography scale ============ @component typography
@@ -468,7 +482,13 @@ body.is-locked { overflow: hidden; }
 
 /* ============ Nav (floating bar) ============ @component nav */
 .bar {
-  position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+  /* Centred by opposing insets + auto margins, NOT by translateX(-50%). The
+     old transform made the bar the containing block for every `fixed`
+     descendant, and the theme puck inside it needs `position: fixed` to reach
+     the viewport's bottom corner on narrow screens. Same geometry, no side
+     effects: left/right pin the available span, `width: max-content` keeps
+     the bar shrink-wrapped, the margins split the difference. */
+  position: fixed; top: 1rem; left: 0; right: 0; margin-inline: auto;
   z-index: 100;
   display: flex; align-items: stretch;
   width: max-content;
@@ -517,6 +537,67 @@ body.is-locked { overflow: hidden; }
   transition: background-color 0.2s, color 0.2s;
 }
 .bar__nav a:hover { background: var(--primary); color: var(--content-inverse); }
+/* ---- THE NAV'S MOBILE FORM ----
+   Below 700px the row of anchors gives way to ONE segment that summons the
+   full-screen menu (see the menu component). The breakpoint is the same one
+   that sends the theme puck to the viewport corner, so "mobile chrome" is a
+   single state rather than two half-states arriving at different widths — and
+   it retires cv's old 560px rule, which HID that page's links with nothing in
+   their place.
+
+   A word, not a hamburger, by the owner's decision: this bar is made of words,
+   and an icon would be the only picture in it besides the assistant's face.
+
+   Styled as a nav link (it IS the navigation, folded), not as an action —
+   the accent block stays unique. `aria-expanded` gets the pressed ink for the
+   same reason `.bar__action`'s does: the announcement and the lit state must
+   be one fact. */
+.bar__menu {
+  display: none;
+  align-items: center;
+  padding: 0 var(--space-5);
+  color: var(--chrome-label-strong);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: inset 1px 0 0 var(--chrome-border);
+  transition: background-color 0.2s, color 0.2s;
+}
+.bar__menu:hover,
+.bar__menu[aria-expanded="true"] { background: var(--primary); color: var(--content-inverse); }
+
+/* ---- BELOW 700px THE INSTRUMENT DOCKS ----
+   The floating pill was a desktop idea that mobile shrank: folding the links
+   into Menu left a 203.7px object covering 54% of a 375px viewport, with an
+   85.6px open gap either side and content scrolling visibly beneath both.
+   Docked, the bar spans edge to edge, nothing slides under its sides, and the
+   offset drop shadow gives way to a plain hairline underline — an object
+   flush with three edges is not "lying on" anything, so it stops pretending.
+
+   THE ROW IS: identity (growing), the page's non-chat action if it has one
+   (cv's Print), and Menu at the very right — the owner's order. The chat
+   action leaves the bar entirely on this side of the breakpoint: chat is
+   expected at the bottom corner on a phone, so Ask becomes the ask-fab
+   component there, and `[data-ask]` is the marker that says which action
+   goes. The theme satellite goes too — its mobile home is the menu sheet
+   (see the menu component), because the corner now belongs to the chat. */
+@media (max-width: 699px) {
+  .bar {
+    top: 0; margin: 0;
+    width: auto; max-width: none;
+    box-shadow: inset 0 -1px 0 var(--chrome-border-strong);
+  }
+  /* One step up the type ramp for the identity, mobile only — at --text-xs it
+     was the smallest text on the screen anchoring its widest element (the
+     owner picked this from the study's frame F). Desktop keeps --text-xs, so
+     every measured width in the nav spec's table stays true. The menu sheet's
+     title takes the same step: its head is a replica of this bar, and the two
+     heights must not drift apart. */
+  .bar__id { flex: 1; font-size: var(--text-sm); }
+  .bar__nav { display: none; }
+  .bar__menu { display: flex; }
+  .bar__action[data-ask] { display: none; }
+  .bar .theme { display: none; }
+}
 .bar__status {
   display: flex; align-items: center; gap: var(--space-2);
   padding: 0 var(--space-5);
@@ -668,11 +749,17 @@ body.is-locked { overflow: hidden; }
    600px clears the widest of those (cv's 551.8px needs a 576px viewport) with
    24px to spare. Keep the slack when editing, and note that the steps here are
    the SMALL end of the space ramp precisely because this is the one place where
-   4px matters. The toggle's own label survives to 480px rather than 600px: it
-   costs 63.9px and the arithmetic above has room for it. */
+   4px matters.
+
+   SINCE THE MOBILE MENU: everything above 600px in that history still holds,
+   but below 700px the links are folded into `.bar__menu`, so the row this
+   block tightens is now three segments (identity, Menu, action), not five.
+   The step is kept because the identity is the segment that gives way
+   (`min-width: 0` + `overflow: hidden`), and at 320px the full paddings would
+   still clip it; the measured figures above are the record of the bar this
+   rule was derived against. */
 @media (max-width: 600px) {
   .bar__id { padding: var(--space-3) var(--space-3); }
-  .bar__nav a { padding: 0 var(--space-2); }
   .bar__action { padding: 0 var(--space-2); }
 }
 
@@ -708,9 +795,9 @@ body.is-locked { overflow: hidden; }
    Slack at 375px is 14.39px against 14.36px before — the segment is free at
    the width that matters. `.bar__id`'s VERTICAL padding deliberately stays at
    space-3: it is what sets the bar's height, and dropping it would shrink the
-   whole instrument rather than tighten one seam. The toggle's own ≤480px rule
-   lives in the theme-toggle block below and moved in the same commit — the two
-   numbers only add up together.
+   whole instrument rather than tighten one seam. (The `.theme` figures above
+   are the historical record of that trade: the toggle has since left the
+   bar's row entirely, and its ≤480px padding rule went with it.)
 
    320px is the one width where this is not quite free, and it is worth stating
    rather than discovering. The bar has been clipping the identity there since
@@ -718,22 +805,24 @@ body.is-locked { overflow: hidden; }
    `.bar__id`'s `overflow: hidden` is for — and the overflow it absorbs is
    40.6px either way. What changes is how much NAME survives it: 95.2px before,
    87.2px after, one monospace character. The clip was already there; it is one
-   glyph deeper. */
+   glyph deeper.
+
+   SINCE THE MOBILE MENU that arithmetic is history rather than description:
+   the links this step squeezed are folded into `.bar__menu` below 700px, and
+   a three-segment bar at these paddings fits inside even a 320px box — the
+   identity clip is gone, not deeper. The step stays for the slack. */
 @media (max-width: 480px) {
   .bar__id { padding: var(--space-3) var(--space-2); }
-  .bar__nav a { padding: 0 var(--space-1); }
 }
 
 /* ============ Theme toggle ============ @component theme-toggle
-   Lives in the nav bar and inherits its mono/size, so it reads as one more
-   segment of the instrument rather than a widget stuck onto it. Three states
-   cycle, and the ORDER OF THAT CYCLE IS NOT FIXED — it is chosen by
-   js/theme.js against whatever the system is currently resolving to, so that
-   the first press always changes the page's colours. The note above the 480px
-   block has the arithmetic that forces this, and why there is no flash. The
-   label is the CURRENT state, not the next one — this is a readout you can
-   press, like the rest of the bar. */
-/* ---- IT IS NOT PART OF THE NAV ANY MORE ----
+   A satellite of the nav bar: in the DOM as its last child, positioned just
+   off its right edge, falling back to the viewport's bottom corner where the
+   bar leaves no room. EVERY PRESS CHANGES THE PAGE — js/theme.js always moves
+   to the opposite of whatever is currently rendered, and a press that lands
+   on the system's own theme stores auto rather than a pin, so the dead press
+   the old three-state ring carried does not exist. */
+/* ---- IT IS NOT A SEGMENT OF THE NAV ----
    The theme control used to be the bar's last segment. It is its own floating
    object now: same paper, same hairline, same drop shadow as the bar, sitting
    apart from it.
@@ -742,19 +831,33 @@ body.is-locked { overflow: hidden; }
    identity, navigation and the page's one primary action — things about THIS
    page. The theme is about how you read every page, it is set once and rarely
    touched, and while it sat inside the bar it took a full segment's width from
-   a row that was already 95.9% full at 375px. Out of the bar it costs the
-   nav nothing and stops competing with the accent block beside it.
+   a row that was already 95.9% full at 375px. Out of the bar's row it costs
+   the nav nothing and stops competing with the accent block beside it.
 
-   BOTTOM RIGHT, not top right, and that is measured rather than taste: the bar
-   is centred and 333px wide at a 375px viewport, so it spans x 21-354 and a
-   control at `top: 1rem; right: 1rem` would sit on top of it. The bottom
-   corner never collides at any width.
+   HANGING OFF THE BAR'S RIGHT EDGE, in the DOM as the bar's last child but
+   absolutely positioned outside its box — a satellite, not a segment. The gap
+   is what says "related, not attached": the puck keeps its own paper and its
+   own shadow, and the bar's hairline never touches it. Being a child is what
+   makes the anchoring possible at all — the bar is centred and shrink-wrapped,
+   so no viewport-anchored rule can know where its right edge is.
+
+   BELOW 700px THE SATELLITE HIDES AND THE MENU SHEET CARRIES THE CONTROL.
+   There is no room to the right of a docked full-width bar, and the bottom
+   corner — the puck's old fallback — now belongs to the chat (see ask-fab):
+   messages are expected there, a theme dial is not. The hide rule lives in
+   the nav's mobile block (`.bar .theme`), scoped to the bar so the second
+   rendering of this control inside `.menu__foot` survives it. One control,
+   two renderings, one visible per breakpoint; js/theme.js updates every
+   `[data-theme-toggle]` it finds, so the two cannot disagree.
 
    `z-index` sits under the drawer's, so an open panel covers it — a theme
    toggle floating over a modal surface is a control with nothing to act on. */
 .theme {
-  position: fixed;
-  bottom: 1rem; right: 1rem;
+  position: absolute;
+  left: calc(100% + 0.75rem);
+  /* Centred on the bar's midline by margin, not transform, so the hover's
+     translateY does not have to know about the centring. */
+  top: 50%; margin-top: -1.25rem;
   z-index: 90;
   display: flex; align-items: center; justify-content: center;
   width: 2.5rem; height: 2.5rem;
@@ -763,6 +866,17 @@ body.is-locked { overflow: hidden; }
   color: var(--chrome-label);
   box-shadow: inset 0 0 0 1px var(--chrome-border), 2px 2px 0 var(--shadow-drop);
   transition: background-color 0.2s, transform 0.2s;
+}
+/* The menu-sheet rendering: the same puck, sitting alone ABOVE the links —
+   no strip, no caption, and on top rather than under, all the owner's calls
+   (the first version put it last, the bar's utility-last order; the owner
+   judged it sits better leading the column). On the links' left edge; the
+   dial and the accessible name carry the state, as they do everywhere.
+   Everything else — the lamp, the states, the hover lift — is inherited
+   unchanged. */
+.menu__body .theme {
+  position: static; margin: 0 0 var(--space-6);
+  align-self: flex-start;
 }
 /* A QUIET HOVER, and that is the hierarchy rather than an oversight. The one
    control on the page that is supposed to look pressable is the accent block
@@ -820,42 +934,23 @@ body.is-locked { overflow: hidden; }
   .theme__lamp { transition: none; }
 }
 
-/* THERE IS NO PRESS-ACKNOWLEDGEMENT ANIMATION HERE, and the reason is worth
-   the paragraph because it is the obvious thing to reach for.
+/* THERE IS NO PRESS-ACKNOWLEDGEMENT ANIMATION HERE, and it is no longer even
+   tempting: js/theme.js flips the page's rendering on EVERY press — a press
+   that lands on the system's own theme stores auto instead of a pin, so the
+   no-op press the flash was invented for does not exist. The page itself is
+   the acknowledgement.
 
-   Three states map onto two renderings, so going round the ring must repeat a
-   rendering: somewhere in auto → X → Y → auto there is one press that leaves
-   the page's colours exactly as they were. That is arithmetic and cannot be
-   designed away without dropping a state. What CAN be chosen is WHICH press it
-   is, and js/theme.js chooses the last one — the deliberate return to auto —
-   instead of the first, which was the reported bug.
-
-   The tempting next move is to flash the lamp so the remaining no-op press
-   still feels answered. It does not work in CSS alone. An animation restarts
+   The mechanism is recorded anyway, because the flash was built once and the
+   reason it failed outlives the reason it was wanted. A CSS animation restarts
    only when its NAME changes, so it needs one keyframe name per state; and an
    element that enters the document already matching such a rule starts that
    animation immediately. Measured: the lamp fired `theme-ack-auto` at t≈111ms
    on a cold load with nothing stored and nothing pressed. A flash that happens
-   on every page load is not an acknowledgement, it is noise, and it devalues
-   the flash that does follow a press. Gating on `.theme:focus` suppresses the
-   load case correctly but silently does nothing in Safari, which does not
-   focus a button on click.
-
-   It is also unnecessary. The lamp fill and the word beside it already change
-   on every single press, including the no-op one, and the accessible name now
-   states the consequence BEFORE the press rather than acknowledging it after:
-   "Activate for auto (your system setting, currently light)." Announcing a
-   no-op in advance beats confirming it in retrospect. See
+   on every page load is not an acknowledgement, it is noise. Gating on
+   `.theme:focus` suppresses the load case correctly but silently does nothing
+   in Safari, which does not focus a button on click. See
    components/theme-toggle/spec.md. */
 
-@media (max-width: 480px) {
-  /* space-1, not space-2: see the 480px block in the nav above. The Ask
-     segment costs 40.0px at this width and the bar had 14.4px of slack, so
-     every neighbour gives up one step of the ramp. 8.0px of the 40 is here. */
-  .theme { padding: 0 var(--space-1); }
-  /* The theme label used to be dropped here to save width. There is no label
-     at any width now — the dial says it — so this block has one fewer job. */
-}
 
 /* ============ Section head ============ @component section-head */
 .sec { border-top: var(--rule-strong); }
@@ -878,24 +973,22 @@ body.is-locked { overflow: hidden; }
    what the `round(up, …)` on `.t-title` below guarantees. Written against the
    rem token rather than 24px so it survives a reader changing their root size.
 
-   `align-items: baseline` is why `.sec__no` needs `line-height: 1`. A baseline
-   row is max(above-baseline) + max(below-baseline) ACROSS its items, so the row
-   can exceed every item's own line box: at --text-xs x 1.6 the number's descent
-   beats the title's whenever the title is under ~29.9px, which is why the head
-   measured 59.969px at 375px instead of the 26.4 + 32 the arithmetic predicted. */
+   THE PLATE NUMBER IS GONE — `.sec__no`, the accent-coloured `01`–`07` that
+   led every head. The owner removed it: the sections are distinguishable by
+   name, and the number was plate decoration, not wayfinding. Worth recording
+   because it once bent this component's arithmetic: under `align-items:
+   baseline`, the number's descent could exceed the title's and stretch the
+   row past every item's own line box (measured 59.969px at 375px against a
+   predicted 26.4 + 32), which is why it carried `line-height: 1`. With two
+   items left — title and note — that failure mode has no carrier. */
 .sec__head {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: baseline;
   gap: var(--space-6);
   padding: calc(var(--space-3) - 2px) var(--pad) calc(var(--space-3) - 1px);
   border-bottom: var(--rule);
   background: var(--chrome-bg);
-}
-.sec__no {
-  font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.1em;
-  line-height: 1;
-  color: var(--accent);
 }
 /* The middle track of the head grid. Typography comes from `.t-title` beside
    it — this rule exists because the CELL needs something the utility cannot
@@ -917,6 +1010,10 @@ body.is-locked { overflow: hidden; }
   padding: var(--space-3) var(--space-5);
   border: 1px solid var(--content-primary);
   color: var(--content-primary);
+  /* Invisible at natural width (the box hugs the text), load-bearing when a
+     layout stretches two buttons to a shared width — the hero's stacked pair
+     is the case that added it. */
+  text-align: center;
   transition: background-color 0.2s, color 0.2s;
   white-space: nowrap;
   cursor: pointer;
@@ -983,26 +1080,27 @@ body.is-locked { overflow: hidden; }
    an eyebrow and a title at two lines, and the card carries nothing else. */
 .card--reveal { position: relative; height: calc(var(--space-6) * 6); }
 
-/* THE CARD KEEPS ITS IMAGE AND ITS DESCRIPTION, AND SHOWS NEITHER.
-   Both are real content and both stay in the markup, in reading order — so a
-   screen reader gets the full description with no hover to perform and js/peek.js
-   need not exist. They are visually removed rather than hidden, because
-   `display: none` would take them out of the accessibility tree and
-   `visibility: hidden` would take them out of it too.
+/* THE CARD KEEPS ITS IMAGE AND ITS DESCRIPTION, AND SHOWS NEITHER — at any
+   width, on any input. One rule, no media query: the collapsed card IS the
+   card, the owner's decision, and it is what lets the grid be nine boxes of
+   one fixed height everywhere. Both stay in the markup, in reading order,
+   visually clipped rather than display-hidden so a screen reader gets the
+   full description with no gesture to perform. Two consumers read them out:
+   the cursor panel on fine pointers, the peek sheet on coarse ones — both
+   are presentation over the same authored content.
 
-   js/peek.js reads them out of here and paints them into one panel that follows
-   the pointer. That is why this rule is inside `(hover: hover)`: where there is
-   no pointer to follow, the fallback below simply shows them in the card. */
-@media (hover: hover) and (pointer: fine) {
-  .card--reveal .card__media,
-  .card--reveal .card__note {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+   The honest cost, chosen over the override soup it replaces: a sighted
+   touch reader WITHOUT JS sees eyebrow + title and a dead trigger. The
+   content is still in the DOM, the accessibility tree and reader mode; the
+   detail view is the one thing that is JS's. */
+.card--reveal .card__media,
+.card--reveal .card__note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .card--reveal .card__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
@@ -1012,21 +1110,115 @@ body.is-locked { overflow: hidden; }
   color: var(--content-body);
 }
 
-/* NO POINTER, NO PANEL — so the card simply carries its own content. A touch
-   reader gets the image and the description in place rather than behind a
-   gesture their device cannot perform, and so does anyone whose JS failed. This
-   is the whole fallback, and it is why js/peek.js is allowed to be optional. */
-@media (hover: none), (pointer: coarse) {
-  .card--reveal { height: auto; }
-  .card--reveal .card__media {
-    display: block;
-    aspect-ratio: 8 / 5;
-    overflow: hidden;
-    margin-bottom: var(--space-4);
-    background-color: var(--chrome-grid);
-    box-shadow: inset 0 0 0 1px var(--chrome-border);
-  }
+/* THE TOUCH TRIGGER — a quiet link in the card's corner, the owner's spec.
+   It is authored in the card's markup like everything else; this block only
+   decides where it shows. Base = visible (the safe default for every device
+   without hover); the one override hides it exactly where the cursor panel
+   serves instead. js/peek.js wires it and injects nothing, so the page's
+   geometry after scripts is the geometry before them — the lattice
+   misalignment that JS-injected structure caused cannot recur. */
+.card__more {
+  position: absolute;
+  right: var(--pad); bottom: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+  padding: var(--space-2) 0;
+  color: var(--chrome-label-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
+.card__more:hover, .card__more:active { color: var(--accent); }
+@media (hover: hover) and (pointer: fine) {
+  .card__more { display: none; }
+}
+
+/* ---- THE PEEK SHEET (touch) ----
+   The mobile translation of the peek panel: one reusable surface, summoned
+   from the bottom, populated from whichever card was tapped. An inline
+   expansion was built first and read as stubborn — content shoving the grid
+   apart; a sheet keeps the grid a quiet list, exactly as the cursor panel
+   does on desktop. The head speaks the menu sheet's grammar: quiet title,
+   Close in the pressed ink, so "how an overlay closes" is one lesson
+   site-wide. Built by js/peek.js; exists in no markup. */
+.peek-sheet {
+  position: fixed; inset: 0;
+  /* Over the bar (100) and the menu (300), under the drawer (400) — see the
+     nav spec's map of the floating layer. */
+  z-index: 350;
+  visibility: hidden;
+  transition: visibility 0s linear 0.28s;
+}
+.peek-sheet[data-open] { visibility: visible; transition-delay: 0s; }
+body:has(.peek-sheet[data-open]) { overflow: hidden; }
+
+.peek-sheet__scrim {
+  position: absolute; inset: 0;
+  background: var(--scrim);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+.peek-sheet[data-open] .peek-sheet__scrim { opacity: 1; }
+
+.peek-sheet__panel {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  max-height: 80vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--surface-page);
+  box-shadow: inset 0 1px 0 var(--chrome-border-strong);
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.peek-sheet[data-open] .peek-sheet__panel { transform: none; }
+
+.peek-sheet__head {
+  display: flex; align-items: stretch; justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  background: var(--chrome-bg);
+  border-bottom: var(--rule-strong);
+}
+.peek-sheet__title {
+  display: flex; align-items: center;
+  padding: var(--space-3) var(--space-5);
+  color: var(--chrome-label);
+  min-width: 0;
+}
+.peek-sheet__close {
+  display: flex; align-items: center;
+  padding: 0 var(--space-5);
+  background: var(--primary);
+  color: var(--content-inverse);
+  box-shadow: inset 1px 0 0 var(--chrome-border);
+}
+
+.peek-sheet__body {
+  padding: var(--space-5);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.peek-sheet__frame img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 8 / 5;
+  object-fit: cover;
+  background-color: var(--chrome-grid);
+  box-shadow: inset 0 0 0 1px var(--chrome-border);
+  margin-bottom: var(--space-4);
+}
+.peek-sheet__note {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--content-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peek-sheet, .peek-sheet__panel, .peek-sheet__scrim { transition: none; }
+}
+@media print { .peek-sheet { display: none; } }
 
 /* ---- THE PEEK PANEL ----
    Built by js/peek.js, one per page, riding the pointer. It exists in no
@@ -1122,17 +1314,23 @@ body.is-locked { overflow: hidden; }
 
 /* ============ Row — project (work index) ============ @component row */
 .idx { list-style: none; }
+/* THE NUMBER SITS ABOVE THE CONTENT, at every width — the owner's call,
+   made first for mobile (where a 2.5rem gutter spent a fifth of a 312px
+   line on two digits) and then extended to the desktop row for one layout
+   instead of two. The index keeps its numbers where the section heads lost
+   theirs: rows are an ordered list, so here the digits are wayfinding. */
 .idx__row {
   display: grid;
-  grid-template-columns: 3.5rem 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: var(--space-flow);
+  gap: var(--space-2) var(--space-flow);
   width: 100%; text-align: left;
   padding: var(--space-flow) var(--pad);
   border-bottom: var(--rule);
   transition: background-color 0.2s;
   position: relative;
 }
+.idx__no { grid-column: 1 / -1; }
 .idx li:last-child .idx__row { border-bottom: 0; }
 .idx__row:hover, .idx__row:focus-visible { background: var(--surface-raised); }
 .idx__row::before {
@@ -1175,12 +1373,23 @@ body.is-locked { overflow: hidden; }
 }
 .idx__row:hover .idx__go { background: var(--primary); border-color: var(--primary); color: var(--content-inverse); }
 @media (max-width: 1080px) {
-  .idx__row { grid-template-columns: 3rem 1fr auto; }
+  .idx__row { grid-template-columns: minmax(0, 1fr) auto; }
   .idx__tags { display: none; }
 }
 @media (max-width: 560px) {
-  .idx__row { grid-template-columns: 2.5rem 1fr; }
-  .idx__go { display: none; }
+  /* One column (the number already stacks above at every width — the base
+     rule owns that): here the chip drops under the name too. The row's own
+     column-gap is --space-flow, sized for cells sitting beside each other;
+     stacked, it would put a paragraph's worth of air between an eyebrow and
+     its name — one step of the component ramp instead. */
+  .idx__row { grid-template-columns: 1fr; gap: var(--space-3); }
+  /* The chip used to be `display: none` here — dropped for space on exactly
+     the screens that have no hover, which left the rows with no affordance
+     at all: the owner reported them as "not feeling clickable on mobile",
+     and the audit agreed. It stays now, stacked under the name at its
+     natural width: the one bordered object in the row is what says "this is
+     a control". */
+  .idx__go { justify-self: start; }
 }
 
 /* ============ Entry — a dated record ============ @component entry
@@ -1602,6 +1811,213 @@ body.is-locked { overflow: hidden; }
   .chat__trace-ms { margin-left: 0; }
 }
 
+/* ============ Menu (full-screen nav) ============ @component menu
+   The bar's navigation, unfolded. Below 700px the row of anchors becomes one
+   `.bar__menu` segment (owned by the nav block), and THIS is what that segment
+   summons: a sheet that covers the whole viewport — bar included — with the
+   same links at a size a thumb can hit.
+
+   COVERING THE BAR IS THE SIMPLICITY, not a loss. The drawer already set the
+   precedent (it covers the bar too), and it makes menu and drawer mutually
+   exclusive BY CONSTRUCTION: each one's trigger lives under the other's sheet,
+   so no second overlay can be summoned and no layer arithmetic exists. The
+   page's primary action is deliberately NOT in here — the owner's rule is that
+   the chat is reachable without opening the menu; its mobile home is the
+   ask-fab at the bottom corner. The sheet carries navigation, plus the theme
+   control docked in its foot.
+
+   Same skeleton as the drawer: JS toggles exactly one attribute (`data-open`)
+   and never writes a style; `visibility` with a delayed flip is what closes it,
+   so the exit transition finishes before the layer stops existing for the tab
+   order and the accessibility tree.
+
+   THE SCROLL LOCK IS `:has()`, NOT A JS CLASS, and that is defensive rather
+   than fashionable: `body.is-locked` is bookkept by js/main.js from ITS layer
+   stack, and main.js does not load on every page this menu does. A selector
+   derived from `data-open` cannot disagree with the state that produced it. */
+.menu {
+  position: fixed; inset: 0;
+  /* Over the bar (100), under the drawer (400) — see the nav spec's map of
+     the floating layer. */
+  z-index: 300;
+  visibility: hidden;
+  transition: visibility 0s linear 0.28s;
+}
+.menu[data-open] { visibility: visible; transition-delay: 0s; }
+body:has(.menu[data-open]) { overflow: hidden; }
+
+.menu__sheet {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--surface-page);
+  opacity: 0;
+  transform: translateY(-0.75rem);
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.menu[data-open] .menu__sheet { opacity: 1; transform: none; }
+
+/* THE HEAD IS A REPLICA OF THE DOCKED BAR, not merely bar-flavoured — same
+   height (the title's space-3 vertical padding, the identity's own formula),
+   same chrome, and Close occupying THE EXACT SLOT the Menu trigger holds in
+   the bar beneath: a full-height segment flush at the very right, same
+   space-5 padding, seam on its left edge. The owner named the defect: the
+   trigger and the way back were in different places, so the thumb that
+   opened the sheet had to travel to leave it. Now the press point does not
+   move — Menu opens, and Close is under the same thumb. */
+.menu__head {
+  display: flex; align-items: stretch; justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  background: var(--chrome-bg);
+  border-bottom: var(--rule-strong);
+}
+.menu__title {
+  display: flex; align-items: center;
+  padding: var(--space-3) var(--space-5);
+  /* --text-sm, matching the bar identity's mobile step (the sheet only exists
+     below 700px): the head is a replica of the docked bar, and the title is
+     what sets its height — a size drift here would move Close out of the
+     trigger's slot. */
+  font-size: var(--text-sm);
+  color: var(--chrome-label);
+}
+.menu__close {
+  display: flex; align-items: center;
+  /* Same box as `.bar__menu`: the head's height (≈44px) clears the 44px
+     touch floor by construction, so no min-height is needed here. */
+  padding: 0 var(--space-5);
+  /* THE PRESSED INK, AT REST — the owner named the defect this fixes: the
+     head's title and its Close were the same quiet mono, a caption and a
+     control wearing one coat. Close now carries the exact state the Menu
+     trigger shows at `[aria-expanded="true"]` — you pressed the segment, it
+     went ink, and the sheet opened with that same ink segment in the same
+     slot, now reading Close. The passive title stays chrome-quiet; the one
+     pressable thing in the head is the one thing filled. */
+  background: var(--primary);
+  color: var(--content-inverse);
+  box-shadow: inset 1px 0 0 var(--chrome-border);
+  transition: background-color 0.2s, color 0.2s;
+}
+.menu__close:hover { background: var(--action-hover); }
+
+/* The body: links first, then the theme circle. One scroller for both, so
+   the utility can never be stranded off-screen apart from the list it
+   follows. */
+.menu__body {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: var(--space-5) var(--space-6);
+  overflow-y: auto;
+  /* iOS Safari ignores `overflow: hidden` on body, so the page behind the
+     sheet can rubber-band. Containing the chain here stops the common route:
+     a swipe that exhausts this scroller no longer hands its momentum to the
+     document. Not a complete lock — iOS has none this side of freezing the
+     body — but it closes the path a reader actually hits. */
+  overscroll-behavior: contain;
+}
+
+/* The links: the page's own compass at reading size. Centred as a group, not
+   as lines — a nav is a list, not a poem. */
+.menu__nav { display: flex; flex-direction: column; }
+.menu__nav a {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  line-height: 1.2;
+  color: var(--content-primary);
+  padding: var(--space-4) 0;
+  transition: color 0.2s;
+}
+.menu__nav a + a { border-top: var(--rule); }
+.menu__nav a:hover { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Arrive in one frame, not "no menu": the sheet is content, it simply stops
+     sliding. The delayed visibility flip goes with the transition, so close is
+     instant too. */
+  .menu, .menu__sheet { transition: none; }
+}
+@media print { .menu { display: none; } }
+
+/* ============ Ask FAB (floating chat pill) ============ @component ask-fab
+   The chat action's mobile form. Below 700px Ask leaves the docked bar for
+   the bottom-right corner — where messages are expected — as a floating
+   pill: the assistant's face at 2rem (a portrait's first step up from the
+   bar's 1.25rem mark) plus the full label. Past the top of the page the
+   label folds away and a circle with the face is what remains; js/fab.js
+   toggles `data-collapsed` and nothing else, so CSS owns the fold the same
+   way it owns every other state here.
+
+   THE BLUE IS THE GROUND, exactly as it is in the bar — the owner's call,
+   reversing an earlier version that dressed the pill in chrome with the
+   accent as a ring around the face. That version optimised for quietness,
+   and quiet was the wrong brief: this is the page's ONE primary action and
+   the only route to the assistant on a phone, and a solid brand-coloured
+   bubble is what a decade of chat widgets has taught readers to look for.
+   The system's own rule says it plainly — the primary action wears the
+   accent — and it should not stop being true at 699px.
+
+   No hairline, matching `.bar__action` (the bar's accent segment draws no
+   border either); the 2px offset shadow STAYS, because that shadow is what
+   makes a floating object one of this site's printed things rather than a
+   generic material FAB. Hover commits to the ink, same as the bar: blue at
+   rest is an invitation, ink is what it looks like once you are in it.
+
+   It replaces the theme puck at this corner; the puck's mobile home is the
+   menu sheet. Same z tier as the puck had: under the menu (300) and the
+   drawer (400), so an open sheet covers it. */
+.ask-fab {
+  position: fixed;
+  bottom: 1rem; right: 1rem;
+  z-index: 90;
+  display: none;
+  align-items: center; gap: var(--space-2);
+  /* 2px, not a space token: it is a rim, not a padding step — the face fills
+     the pill to within a hairline of blue, the owner's call. The right side
+     keeps a real step so the label can breathe. */
+  padding: 2px var(--space-4) 2px 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--content-inverse);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--shadow-drop);
+  transition: gap 0.28s, padding 0.28s, transform 0.2s, background-color 0.2s;
+}
+@media (max-width: 699px) { .ask-fab { display: flex; } }
+.ask-fab:hover { background: var(--primary); transform: translateY(-1px); }
+
+.ask-fab__face {
+  display: block;
+  /* 2.75rem: the 48px pill minus the 2px rim on each side. The face IS the
+     pill now — at 44px the drawing reads as a portrait outright, and the
+     blue survives as the rim, the label's ground and the collapsed ring. */
+  width: 2.75rem; height: 2.75rem;
+  flex: none;
+  border-radius: 50%;
+}
+
+/* The fold: max-width, not display — a label that vanishes in one frame
+   reads as a glitch, one that folds reads as the pill closing. 12rem is a
+   ceiling comfortably past the label's real width; the transition's visible
+   speed is set by the distance, so keep the ceiling honest if the label
+   changes. */
+.ask-fab__label {
+  max-width: 12rem;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s;
+}
+.ask-fab[data-collapsed] { gap: 0; padding: 2px; }
+.ask-fab[data-collapsed] .ask-fab__label { max-width: 0; opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-fab, .ask-fab__label { transition: none; }
+}
+@media print { .ask-fab { display: none; } }
+
 /* ============ Drawer (slide-in panel) ============ @component drawer
    A right-hand panel that slides over the page, with a scrim behind it. It
    HOSTS a surface; it is not one. Everything about a conversation still
@@ -1789,14 +2205,17 @@ body.is-locked { overflow: hidden; }
    layout unconditionally inside the drawer. They are the rules a container
    query would replace, and they are deliberately confined to the three
    components whose wide layout actually breaks at this width. */
-.drawer .idx__row { grid-template-columns: 3rem 1fr auto; }
+/* The row's number stacks above the content at every width now (see the row
+   block), so the drawer's narrow restatement no longer carries a gutter —
+   just the main column and the chip, tags dropped as before. */
+.drawer .idx__row { grid-template-columns: minmax(0, 1fr) auto; }
 .drawer .idx__tags { display: none; }
 .drawer .entry { grid-template-columns: 1fr; gap: var(--space-1); }
 .drawer .entry__span { grid-column: 1; grid-row: auto; text-align: left; }
 .drawer .profile { grid-template-columns: 1fr; }
 .drawer .profile > div:nth-child(odd) { padding-right: 0; }
 @media (max-width: 560px) {
-  .drawer .idx__row { grid-template-columns: 2.5rem 1fr; }
+  .drawer .idx__row { grid-template-columns: 1fr; }
   /* Same call `.sec__note` makes at 640px: the subtitle is chrome, and on a
      phone it wraps to two lines and pushes the title off its own baseline. */
   .drawer__note { display: none; }

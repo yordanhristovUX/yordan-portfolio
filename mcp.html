@@ -55,13 +55,48 @@
 
   <!-- ============ FLOATING NAV ============ -->
   <header class="bar">
-    <a class="bar__id" href="index.html">← Portfolio</a>
+    <a class="bar__id" href="index.html">← Home</a>
     <nav class="bar__nav" aria-label="Primary">
       <a href="#install">Install</a>
       <a href="#tools">Tools</a>
       <a href="#why">Why MCP</a>
     </nav>
+    <!-- The nav's mobile form — see index.html and components/menu/spec.md. -->
+    <button class="bar__menu" type="button" data-menu-open aria-controls="site-menu" aria-expanded="false">Menu</button>
+    <!-- A SATELLITE OF THE BAR, not a segment: absolutely positioned just off
+         the bar's right edge, its own paper and shadow, back to the viewport's
+         bottom corner below 700px where the bar leaves no room. In the DOM
+         here because the bar is centred and shrink-wrapped, so nothing outside
+         it can know where its right edge is. The label is deliberately vaguer
+         than anything js/theme.js produces: the script names what auto
+         currently RESOLVES to and static HTML cannot know the visitor's OS.
+         Replaced on the first apply(). -->
+    <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+    </button>
   </header>
+
+  <!-- The full-screen menu. The sheet covers the bar, so the way back rides
+       in it too. Links verbatim from this bar. See components/menu/spec.md. -->
+  <div class="menu" id="site-menu" data-menu>
+    <div class="menu__sheet" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
+      <div class="menu__head">
+        <span class="menu__title">Menu</span>
+        <button class="menu__close" type="button" data-menu-close>Close</button>
+      </div>
+      <div class="menu__body">
+        <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+          <span class="theme__lamp" aria-hidden="true"></span>
+        </button>
+        <nav class="menu__nav" aria-label="Menu">
+          <a href="index.html">Home</a>
+          <a href="#install">Install</a>
+          <a href="#tools">Tools</a>
+          <a href="#why">Why MCP</a>
+        </nav>
+      </div>
+    </div>
+  </div>
 
   <main id="top" class="sheet">
 
@@ -111,7 +146,6 @@
     <!-- ============ 01 · INSTALL ============ -->
     <section id="install" class="band sec" aria-labelledby="install-title">
       <header class="sec__head">
-        <span class="sec__no mono">01</span>
         <h2 id="install-title" class="sec__title t-title">Install</h2>
         <span class="sec__note">Streamable HTTP · no authentication</span>
       </header>
@@ -186,7 +220,6 @@
     <!-- ============ 02 · THE TOOLS ============ -->
     <section id="tools" class="band sec" aria-labelledby="tools-title">
       <header class="sec__head">
-        <span class="sec__no mono">02</span>
         <h2 id="tools-title" class="sec__title t-title">The tools</h2>
         <span class="sec__note">Six over the corpus, two over the design system — every one read-only</span>
       </header>
@@ -278,7 +311,6 @@
     <!-- ============ 03 · WHY MCP HERE ============ -->
     <section id="why" class="band sec sec--tint" aria-labelledby="why-title">
       <header class="sec__head">
-        <span class="sec__no mono">03</span>
         <h2 id="why-title" class="sec__title t-title">Why MCP</h2>
         <span class="sec__note">And where it deliberately is not used</span>
       </header>
@@ -329,7 +361,6 @@
     <!-- ============ 04 · LIMITS ============ -->
     <section id="limits" class="band sec" aria-labelledby="limits-title">
       <header class="sec__head">
-        <span class="sec__no mono">04</span>
         <h2 id="limits-title" class="sec__title t-title">Limits</h2>
         <span class="sec__note">What it will not do, stated up front</span>
       </header>
@@ -391,20 +422,8 @@
   </footer>
 
   <script src="js/theme.js" defer></script>
+  <script src="js/menu.js" defer></script>
   <script src="js/automata.js" defer></script>
-
-  <!-- NOT PART OF THE NAV. The bar is about THIS page — identity,
-       navigation, the one primary action. The theme is about every page,
-       is set once and rarely touched, and inside the bar it took a full
-       segment from a row already 95.9% full at 375px. Bottom right rather
-       than top right because the bar is centred and 333px wide at that
-       viewport, so a top-right control would sit on top of it.
-       The label is deliberately vaguer than anything js/theme.js produces:
-       the script names what auto currently RESOLVES to and static HTML
-       cannot know the visitor's OS. Replaced on the first apply(). -->
-  <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
-    <span class="theme__lamp" aria-hidden="true"></span>
-  </button>
 
 </body>
 </html>

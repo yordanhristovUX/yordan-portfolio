@@ -74,19 +74,78 @@
          link to an anchor: there is no `#ask` section to link to any more.
          `aria-expanded` is both the announcement and the lit state — the bar
          styles `[aria-expanded="true"]`, so the highlight cannot drift from
-         what a screen reader is told. Between `.bar__status` and `.theme`
+         what a screen reader is told. Last in flow, after `.bar__status`,
          because every seam is owned by the segment on its right
          (components/nav/spec.md). -->
     <!-- `aria-label` rather than relying on the visible text: below 860px the
          label is hidden to fit the bar and the face carries the segment alone,
          but the accessible name must not narrow with the viewport. -->
-    <button class="bar__action mono" type="button" aria-label="Ask my Bot"
+    <button class="bar__action mono" type="button" aria-label="Ask my Bot" data-ask
             data-drawer-open="ask-panel" aria-controls="ask-panel" aria-expanded="false">
       <img class="bar__face" src="design-system/assets/avatar.svg" alt="" aria-hidden="true"
            width="80" height="80" decoding="async">
       <span class="bar__action-label">Ask my Bot</span>
     </button>
+    <!-- The nav's mobile form: below 700px the links fold into this segment
+         and the full-screen menu it summons. A word, not a hamburger — the
+         owner's decision, as is its place at the VERY RIGHT of the docked
+         bar (which is why it sits after the action in the DOM: tab order and
+         visual order must agree). `data-ask` on the action above is what
+         hides it down there — the chat moves to the ask-fab at the corner,
+         so it never needs the menu opened to be reached. -->
+    <button class="bar__menu" type="button" data-menu-open aria-controls="site-menu" aria-expanded="false">Menu</button>
+    <!-- A SATELLITE OF THE BAR, not a segment: absolutely positioned just off
+         the bar's right edge, its own paper and shadow, back to the viewport's
+         bottom corner below 700px where the bar leaves no room. In the DOM
+         here because the bar is centred and shrink-wrapped, so nothing outside
+         it can know where its right edge is. The label is deliberately vaguer
+         than anything js/theme.js produces: the script names what auto
+         currently RESOLVES to and static HTML cannot know the visitor's OS.
+         Replaced on the first apply(). -->
+    <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+    </button>
   </header>
+
+  <!-- The full-screen menu the bar's mobile segment summons. Covers the bar —
+       the drawer's precedent — which makes menu and drawer mutually exclusive
+       by construction. Links are this bar's own, verbatim. js/menu.js toggles
+       data-open and nothing else; see components/menu/spec.md. -->
+  <div class="menu" id="site-menu" data-menu>
+    <div class="menu__sheet" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
+      <div class="menu__head">
+        <span class="menu__title">Menu</span>
+        <button class="menu__close" type="button" data-menu-close>Close</button>
+      </div>
+      <div class="menu__body">
+        <!-- The theme control's mobile home: the satellite puck hides below
+             700px (the corner belongs to the chat), and the same control sits
+             here above the links — just the circle, on top, the owner's
+             decisions. js/theme.js updates every [data-theme-toggle], so the
+             two renderings cannot disagree. -->
+        <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+          <span class="theme__lamp" aria-hidden="true"></span>
+        </button>
+        <nav class="menu__nav" aria-label="Menu">
+          <a href="#work">Work</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- The chat, where messages are expected on a phone: a floating pill at
+       the bottom corner, face + label near the top of the page, folding to
+       the face alone once scrolled (js/fab.js). Hidden ≥700px, where Ask is
+       a bar segment. Same drawer, same aria wiring — js/main.js binds every
+       [data-drawer-open]. -->
+  <button class="ask-fab" type="button" aria-label="Ask my Bot" data-ask-fab
+          data-drawer-open="ask-panel" aria-controls="ask-panel" aria-expanded="false">
+    <img class="ask-fab__face" src="design-system/assets/avatar.svg" alt="" aria-hidden="true"
+         width="80" height="80" decoding="async">
+    <span class="ask-fab__label">Ask my Bot</span>
+  </button>
 
   <main id="top" class="sheet">
 
@@ -138,7 +197,6 @@
     <!-- ============ 01 WHAT I DO ============ -->
     <section class="band sec" id="about">
       <header class="sec__head">
-        <span class="sec__no mono">01</span>
         <h2 class="sec__title t-title">What I do</h2>
       </header>
       <div class="well well--flush">
@@ -168,7 +226,6 @@
     <!-- ============ 02 SELECTED WORK ============ -->
     <section class="band sec" id="work">
       <header class="sec__head">
-        <span class="sec__no mono">02</span>
         <h2 class="sec__title t-title">Selected work</h2>
         <span class="sec__note">Click a project for the full case study</span>
       </header>
@@ -245,7 +302,6 @@
          bilingual catalogue. "More projects" read as an overflow bin. -->
     <section class="band sec" id="notable">
       <header class="sec__head">
-        <span class="sec__no mono">03</span>
         <h2 class="sec__title t-title">Notable Projects</h2>
       </header>
       <div class="well well--flush">
@@ -256,54 +312,63 @@
             <span class="card__type">Product &amp; Corporate Website</span>
             <h3 class="card__title">Spetema</h3>
             <p class="card__note">A 200+ product coffee catalogue serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model. Bilingual, live.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
           <article class="card card--reveal" data-reveal>
             <span class="card__media"><img src="content/assets/notable/ubistats-football.svg" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async"></span>
             <span class="card__type">Analytics platform</span>
             <h3 class="card__title">Ubistats Football</h3>
             <p class="card__note">Research → design system → UI → usability testing. Led to a Bulgarian Football Union partnership.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
           <article class="card card--reveal" data-reveal>
             <span class="card__media"><img src="content/assets/notable/mindromeda.svg" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async"></span>
             <span class="card__type">Marketplace · shipped</span>
             <h3 class="card__title">Mindromeda</h3>
             <p class="card__note">Connecting people to licensed therapists and coaches. Full design and IA: matching by need, booking, corporate vouchers. Live on Google Play.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
           <article class="card card--reveal" data-reveal>
             <span class="card__media"><img src="content/assets/notable/tax-advice-usd-accounts.svg" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async"></span>
             <span class="card__type">Fintech · cross-border</span>
             <h3 class="card__title">Tax Advice — USD Accounts</h3>
             <p class="card__note">The USD bank account feature for a cross-border tax refund service, designed end to end from proposition to launch.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
           <article class="card card--reveal" data-reveal>
             <span class="card__media"><img src="content/assets/notable/painted-auto-parts.svg" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async"></span>
             <span class="card__type">Internal order system</span>
             <h3 class="card__title">Painted Auto Parts</h3>
             <p class="card__note">Complex order and project management UI for a top US auto parts distributor.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
           <article class="card card--reveal" data-reveal>
             <span class="card__media"><img src="content/assets/notable/go-guide-app.svg" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async"></span>
             <span class="card__type">Consumer mobile app</span>
             <h3 class="card__title">Go Guide App</h3>
             <p class="card__note">First-ever mobile app for Bulgaria's leading lifestyle media brand. Shipped.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
           <article class="card card--reveal" data-reveal>
             <span class="card__media"><img src="content/assets/notable/payment-crypto-stocks.svg" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async"></span>
             <span class="card__type">Fintech</span>
             <h3 class="card__title">Payment / Crypto / Stocks</h3>
             <p class="card__note">Full IA for a unified crypto, fiat, and stocks platform. 50+ Figma components and variants.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
           <article class="card card--reveal" data-reveal>
             <span class="card__media"><img src="content/assets/notable/paraflow.svg" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async"></span>
             <span class="card__type">Corporate website</span>
             <h3 class="card__title">Paraflow</h3>
             <p class="card__note">Custom site with Laravel CMS for a leading enterprise IT integrator.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
           <article class="card card--reveal" data-reveal>
             <span class="card__media"><img src="content/assets/notable/generative-art-platform.svg" alt="" aria-hidden="true" width="640" height="400" loading="lazy" decoding="async"></span>
             <span class="card__type">NFT / Web3</span>
             <h3 class="card__title">Generative Art Platform</h3>
             <p class="card__note">Full-scope design for an artist discovery platform serving the NFT community.</p>
+            <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
           </article>
         </div>
         <!-- /content:more-projects -->
@@ -317,7 +382,6 @@
     <!-- ============ 04 BACKGROUND ============ -->
     <section class="band sec sec--tint" id="background">
       <header class="sec__head">
-        <span class="sec__no mono">04</span>
         <h2 class="sec__title t-title">Background</h2>
       </header>
       <div class="well">
@@ -335,7 +399,6 @@
     <!-- ============ 05 SKILLS ============ -->
     <section class="band sec">
       <header class="sec__head">
-        <span class="sec__no mono">05</span>
         <h2 class="sec__title t-title">Skills &amp; tools</h2>
       </header>
       <div class="well well--flush">
@@ -391,7 +454,6 @@
          anchor, so the site's can too without inventing a second name. -->
     <section class="band sec sec--tint" id="unexpected">
       <header class="sec__head">
-        <span class="sec__no mono">06</span>
         <h2 class="sec__title t-title">Unexpected facts</h2>
       </header>
       <div class="well">
@@ -421,7 +483,6 @@
     <!-- ============ 07 CONTACT ============ -->
     <section class="band sec sec--contact" id="contact">
       <header class="sec__head">
-        <span class="sec__no mono">07</span>
         <h2 class="sec__title t-title">Contact</h2>
       </header>
       <div class="well">
@@ -478,8 +539,15 @@
   <script src="js/vendor/gsap/gsap.min.js" defer></script>
   <script src="js/vendor/gsap/SplitText.min.js" defer></script>
   <script src="js/theme.js" defer></script>
-  <script src="js/automata.js" defer></script>
+  <script src="js/menu.js" defer></script>
+  <script src="js/fab.js" defer></script>
+  <!-- No script here changes the page's flow layout: the cards' triggers and
+       the peek sheet are authored markup, CSS decides their visibility, and
+       peek.js only wires them. That invariant is what keeps automata.js's
+       lattice measurements true — it was violated once, by injection, and
+       the slide is recorded in PROGRAMME-LOG. -->
   <script src="js/peek.js" defer></script>
+  <script src="js/automata.js" defer></script>
   <script src="js/main.js" defer></script>
   <!-- Classic defer, no modules, no bundler. answer-render.js must load
        before chat.js: chat.js consumes window.AnswerRender, and main.js
@@ -558,18 +626,25 @@
     </aside>
   </div>
 
-  <!-- NOT PART OF THE NAV. The bar is about THIS page — identity,
-       navigation, the one primary action. The theme is about every page,
-       is set once and rarely touched, and inside the bar it took a full
-       segment from a row already 95.9% full at 375px. Bottom right rather
-       than top right because the bar is centred and 333px wide at that
-       viewport, so a top-right control would sit on top of it.
-       The label is deliberately vaguer than anything js/theme.js produces:
-       the script names what auto currently RESOLVES to and static HTML
-       cannot know the visitor's OS. Replaced on the first apply(). -->
-  <button class="theme" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
-    <span class="theme__lamp" aria-hidden="true"></span>
-  </button>
+  <!-- THE PEEK SHEET — the notable cards' detail surface on touch, authored
+       here like the drawer above it, not injected: the page's geometry after
+       scripts must be its geometry before them (see PROGRAMME-LOG on the
+       lattice slide that JS-injected structure caused). Closed by visibility;
+       js/peek.js populates it from the tapped card and toggles data-open,
+       nothing else. z 350: over the bar and the menu, under the drawer. -->
+  <div class="peek-sheet" data-peek-sheet>
+    <div class="peek-sheet__scrim" data-sheet-close></div>
+    <div class="peek-sheet__panel" role="dialog" aria-modal="true" tabindex="-1">
+      <div class="peek-sheet__head">
+        <span class="peek-sheet__title"></span>
+        <button class="peek-sheet__close" type="button" data-sheet-close>Close</button>
+      </div>
+      <div class="peek-sheet__body">
+        <span class="peek-sheet__frame"><img alt="" decoding="async" hidden></span>
+        <p class="peek-sheet__note"></p>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

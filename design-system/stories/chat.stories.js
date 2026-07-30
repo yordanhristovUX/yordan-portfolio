@@ -29,7 +29,6 @@ const shell = (thread, extra = "") => `
   <main class="sheet">
     <section class="band sec">
       <header class="sec__head">
-        <span class="sec__no mono">07</span>
         <h2 class="sec__title t-title">Ask</h2>
         <span class="sec__note">Answers are built from the same source as the page</span>
       </header>

@@ -153,7 +153,7 @@ went stale twice, which is exactly the drift this system exists to prevent.
 - **values** — light + dark + print + wide authored values across those tokens (147). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
-- **components** — directories under `components/` (21)
+- **components** — directories under `components/` (23)
 - **dark** — tokens carrying a `dark` value (24)
 
 The dark count was added to the gate after it proved the point the hard way, and it has now

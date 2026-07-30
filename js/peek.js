@@ -30,11 +30,95 @@
   if (!cards.length) return;
 
   /* A coarse pointer has no hover to track and a reader who asked for less
-     motion should not be given a box that chases them. Both fall back to the
-     CSS, which shows everything in the card. */
+     motion should not be given a box that chases them. */
   const FINE = window.matchMedia("(hover: hover) and (pointer: fine)");
   const RMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
-  if (!FINE.matches) return;
+
+  /* ---------- Tap mode: the peek SHEET ----------
+     The mobile translation of the cursor panel: the grid stays a quiet list
+     of collapsed cards, and the detail arrives on ONE reusable bottom sheet.
+     THIS FILE CREATES NOTHING. The sheet is authored in index.html beside
+     the drawer, the trigger is authored in each card by the content build,
+     and CSS decides where the trigger shows — so the page's geometry after
+     scripts is the geometry before them. The first version injected both
+     and collapsed the cards from here, which changed heights AFTER
+     js/automata.js had measured the lattice and slid every band below the
+     cards off the grid. Structure in markup is the fix, not a preference.
+
+     The sheet is a real dialog where the cursor panel is deliberately not
+     one: it takes focus, traps Tab, closes on Escape, scrim tap or its
+     Close segment, and sets the background inert — the same modal contract
+     the menu holds. Close-on-scroll was considered and rejected: dismissing
+     a surface with the gesture used to read it is a trap, and the page
+     behind is scroll-locked anyway. A tap anywhere on a card delegates to
+     its trigger. */
+  if (!FINE.matches) {
+    const sheet = document.querySelector("[data-peek-sheet]");
+    const triggers = [...document.querySelectorAll("[data-card-more]")];
+    if (!sheet || !triggers.length) return;
+    const panel = sheet.querySelector(".peek-sheet__panel");
+    const sTitle = sheet.querySelector(".peek-sheet__title");
+    const sImg = sheet.querySelector(".peek-sheet__frame img");
+    const sNote = sheet.querySelector(".peek-sheet__note");
+    let returnTo = null;
+    const inerted = [];
+    const isOpen = () => sheet.hasAttribute("data-open");
+
+    function openSheet(card, trigger) {
+      const title = card.querySelector(".card__title")?.textContent.trim() ?? "";
+      const note = card.querySelector(".card__note")?.textContent.trim() ?? "";
+      const src = card.querySelector(".card__media img")?.getAttribute("src");
+      sTitle.textContent = title;
+      panel.setAttribute("aria-label", title);
+      if (src) { sImg.src = src; sImg.hidden = false; }
+      else { sImg.removeAttribute("src"); sImg.hidden = true; }
+      sNote.textContent = note;
+      returnTo = trigger;
+      sheet.setAttribute("data-open", "");
+      for (const el of document.body.children) {
+        if (el === sheet || el.tagName === "SCRIPT" || el.hasAttribute("inert")) continue;
+        el.setAttribute("inert", "");
+        inerted.push(el);
+      }
+      panel.focus({ preventScroll: true });
+    }
+
+    function closeSheet() {
+      if (!isOpen()) return;
+      sheet.removeAttribute("data-open");
+      while (inerted.length) inerted.pop().removeAttribute("inert");
+      if (returnTo && returnTo.isConnected) returnTo.focus();
+    }
+
+    sheet.addEventListener("click", (e) => {
+      if (e.target.closest("[data-sheet-close]")) closeSheet();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (!isOpen()) return;
+      if (e.key === "Escape") { closeSheet(); return; }
+      if (e.key !== "Tab") return;
+      const items = [...panel.querySelectorAll('a[href], button')];
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!panel.contains(document.activeElement) || document.activeElement === panel) {
+        (e.shiftKey ? last : first).focus(); e.preventDefault(); return;
+      }
+      if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+    });
+
+    for (const btn of triggers) {
+      const card = btn.closest(".card--reveal");
+      if (!card) continue;
+      btn.addEventListener("click", () => openSheet(card, btn));
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("[data-card-more]")) return;
+        btn.click();
+      });
+    }
+    return;
+  }
 
   const panel = document.createElement("div");
   panel.className = "peek";

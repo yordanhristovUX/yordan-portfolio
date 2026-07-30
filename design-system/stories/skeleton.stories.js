@@ -168,7 +168,6 @@ const band = (copy) => `
   <main class="sheet">
     <section class="band sec">
       <header class="sec__head">
-        <span class="sec__no mono">01</span>
         <h2 class="sec__title t-title">What I do</h2>
       </header>
       <div class="rail rail--l" aria-hidden="true"></div>
@@ -209,7 +208,6 @@ export const OneLattice = {
       <main class="sheet">
         <section class="band sec">
           <header class="sec__head">
-            <span class="sec__no mono">02</span>
             <h2 class="sec__title t-title">One grid, four windows</h2>
             <span class="sec__note">rail · well · rail · strip</span>
           </header>
