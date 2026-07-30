@@ -13,9 +13,9 @@ compromise — it is the distinction the content already draws. A project with
 
 ## Why pages, and why the usual argument is the weak one
 
-The usual case is "a dialog is bad for long-form". True, but not decisive.
+The usual case is "a modal is bad for long-form". True, but not decisive.
 
-**The decisive reason is that a dialog has no URL.** Today the Green Street audit cannot be
+**The decisive reason is that a modal has no URL.** Today the Green Street audit cannot be
 linked to, cannot be indexed, cannot be opened in a tab, cannot be printed on its own, and
 cannot be cited by anything — including the assistant, which can name the project but cannot
 point at it. For work whose entire premise is *"every claim here is inspectable"*, an
@@ -90,7 +90,15 @@ to do later, and the wrong thing to bundle into this.
 
 ## One renderer, not two
 
-**Retire the dialog. The rows become links.**
+**DECIDED by the owner: the modal goes, and navigation is native.** The rest of this section
+is the reasoning that was put to him and is kept because it records why, not to re-open it.
+
+A note on the word: the element carries `role="dialog"` and `aria-modal="true"`, and this
+document used to call it "the dialog" after the ARIA attribute. It is a **full-screen modal**,
+and that is what it should be called — the attribute is an accessibility mapping, not the name
+of the pattern.
+
+**Retire the modal. The rows become links.**
 
 `js/case-studies.js` renders a case study in JavaScript from `window.CASE_STUDIES`; a project
 page would render the same case study as HTML. Both from the same `content/projects/*.md`.
@@ -106,17 +114,30 @@ What the index row is today, and why there is no URL:
 
 It becomes an `<a href="/work/greenstreet-audit">`. That is the whole navigation change.
 
-**What is lost, stated plainly.** The dialog is recent, deliberate work: a focus trap, its own
+**What is lost, stated plainly.** The modal is recent, deliberate work: a focus trap, its own
 lattice root, `window.rebuildCaseSquares()`, and a keyboard trap that was found and closed in
 it. Retiring it deletes all of that, including the fix. It also loses "stay in the flow of the
 index", which was the reason it was built.
 
-**The alternative, if that flow is worth keeping.** Make the row a real link *and* intercept it
-in JS: the dialog opens, `history.pushState` gives it the URL, popstate closes it, and a reader
-without JS gets the page. That is proper progressive enhancement and it keeps every property
-above. It also keeps two renderers, which is the thing worth not having. **My recommendation is
-to retire it**, but this is the owner's call and it is the one decision in this document that
-is genuinely about feel rather than correctness.
+**The alternative that was considered and rejected.** Make the row a real link *and* intercept
+it in JS: the modal opens, `history.pushState` gives it the URL, popstate closes it, and a
+reader without JS gets the page. It keeps the flow and every property above — and it keeps two
+renderers, which is the thing worth not having. The owner's call was native navigation.
+
+**What retiring it deletes**, so the removal is a checklist rather than a hunt:
+
+| | |
+| --- | --- |
+| `js/case-studies.js` | generated; `build-content.mjs` stops emitting it |
+| `window.CASE_STUDIES` | its only consumer is `js/main.js:353` |
+| the modal open/close path | `js/main.js:412`, bound to `[data-project]` |
+| `.case`, `.case__backdrop`, `.case__well`, `.case__title` | markup in `index.html` and the block in `components.css` |
+| `window.rebuildCaseSquares()` | exists so the automata can re-measure after the modal lays out |
+| the second lattice root | `.band` outside a `.sheet` is its own root *because of* this modal — see `skeleton/spec.md`. With it gone, check whether any other surface still needs that rule before deleting it |
+
+The last row is the one to be careful with: it is a rule in the skeleton that exists for this
+modal, and removing a rule because its only caller went away is right *only* after confirming
+it has no other caller.
 
 ---
 
@@ -183,8 +204,8 @@ remember:
 
 ## Sequencing
 
-1. Decide routing (A or B) and the dialog question. Both are below.
-2. Emit the pages, retire or wire the dialog, convert the rows.
+1. Decide routing (A or B). The modal question is settled: native navigation.
+2. Emit the pages, retire the modal, convert the rows to links.
 3. Land the five gates.
 4. `npm run check` — nothing billed, no re-baseline, no vector rebuild.
 5. Deploy.
@@ -194,11 +215,12 @@ then.
 
 ---
 
-## The two decisions that need the owner
+## Decisions
 
-1. **Routing** — `/work/<id>` with a root-absolute check (recommended), or `/‹id›` at the root
-   with no new convention.
-2. **The dialog** — retire it (recommended: one renderer), or keep it as a JS enhancement over
-   real links (keeps the flow, keeps two renderers).
+1. ~~**The modal**~~ — **RESOLVED.** It goes; navigation is native. One renderer.
+2. **Routing** — the one still open. `/work/<id>` with a root-absolute check (recommended), or
+   `/<id>` at the root with no new convention. This is the decision worth not rushing: a URL is
+   the one thing here that outlives the code, and changing it later means redirects rather than
+   an edit.
 
 Everything else in this document follows from the content that already exists.
