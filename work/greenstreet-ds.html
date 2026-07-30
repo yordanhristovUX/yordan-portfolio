@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green Street — AI-ready design systems and Agentic workflows — Yordan Hristov</title>
+  <meta name="description" content="~35 components at 1:1 Figma-to-code parity, 100% token coverage, custom Claude skills, and a prototype pipeline the whole TPM team uses. Production navigation shipped.">
+  <link rel="canonical" href="https://yordan-portfolio.vercel.app/work/greenstreet-ds">
+  <meta property="og:title" content="Green Street — AI-ready design systems and Agentic workflows">
+  <meta property="og:description" content="~35 components at 1:1 Figma-to-code parity, 100% token coverage, custom Claude skills, and a prototype pipeline the whole TPM team uses. Production navigation shipped.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://yordan-portfolio.vercel.app/work/greenstreet-ds">
+  <meta name="twitter:card" content="summary">
+
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CreativeWork","@id":"https://yordan-portfolio.vercel.app/work/greenstreet-ds#work","name":"AI-ready design systems and Agentic workflows","headline":"Green Street — AI-ready design systems and Agentic workflows","abstract":"Infrastructure that lets AI generate production-faithful UI: 1:1 Figma-to-code parity, custom Claude skills, and a prototype pipeline for the whole TPM team.","description":"~35 components at 1:1 Figma-to-code parity, 100% token coverage, custom Claude skills, and a prototype pipeline the whole TPM team uses. Production navigation shipped.","keywords":["Senior Product Designer","Design Systems","AI Workflows","Figma-to-code","WCAG","Production code"],"url":"https://yordan-portfolio.vercel.app/work/greenstreet-ds","creator":{"@id":"https://yordan-portfolio.vercel.app/#person"}}</script>
+
+  <!-- Browser chrome. See index.html for why the pinned theme has to win here. -->
+  <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)" data-theme-color="light">
+  <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)" data-theme-color="dark">
+
+  <!-- Theme, before first paint. Must stay inline and blocking. -->
+  <script>
+    try {
+      var t = localStorage.getItem("theme");
+      if (t === "light" || t === "dark") {
+        document.documentElement.setAttribute("data-theme", t);
+        var m = document.querySelectorAll('meta[name="theme-color"]');
+        for (var i = 0; i < m.length; i++) {
+          m[i].media = m[i].getAttribute("data-theme-color") === t ? "all" : "not all";
+        }
+      }
+    } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }
+  </script>
+
+  <!-- ROOT-ABSOLUTE, not relative: this page is served one directory down. -->
+  <link rel="stylesheet" href="/css/fonts/fonts.css">
+  <link rel="stylesheet" href="/design-system/dist/tokens.css">
+  <link rel="stylesheet" href="/design-system/css/components.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <header class="bar">
+    <a class="bar__id" href="/#work">← Work</a>
+    <nav class="bar__nav" aria-label="Primary">
+      <a href="/#work">All work</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+    <button class="bar__action mono" type="button" aria-label="Ask my Bot" onclick="location.href='/#ask'">
+      <img class="bar__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">
+      <span class="bar__action-label">Ask my Bot</span>
+    </button>
+    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+      <span class="theme__label">Auto</span>
+    </button>
+  </header>
+
+  <main class="sheet" id="top">
+    <section class="band sec work" aria-labelledby="work-title">
+      <header class="sec__head">
+        <span class="sec__no mono">02</span>
+        <h1 class="sec__title t-title" id="work-title">AI-ready design systems and Agentic workflows</h1>
+        <span class="sec__note">Green Street</span>
+      </header>
+      <div class="well">
+        <p class="t-lead">Infrastructure that lets AI generate production-faithful UI: 1:1 Figma-to-code parity, custom Claude skills, and a prototype pipeline for the whole TPM team.</p>
+        <div class="chips"><span class="chip">Senior Product Designer</span><span class="chip">Design Systems</span><span class="chip">AI Workflows</span><span class="chip">Figma-to-code</span><span class="chip">WCAG</span><span class="chip chip--solid">Production code</span></div>
+        <figure class="ph"><span class="ph__label">Cover — design system overview, 1600×900</span></figure>
+
+        <h3>The problem</h3>
+        <p>Green Street is a leading commercial real estate data and analytics company. I was brought in to redesign the AI Assistant module, and found that PM wireframes, design files, and coded components lived in separate worlds — a component could look one way in Figma and behave completely differently in production.</p>
+        <ul>
+          <li><strong>Fragmented handoff.</strong> No enforced relationship between mockups, design, and code.</li>
+          <li><strong>AI couldn't read the system.</strong> Every AI-generated UI drifted from the actual components.</li>
+          <li><strong>No prototype pipeline.</strong> TPMs pulled design resources into every minor exploration.</li>
+        </ul>
+
+        <h3>The approach</h3>
+        <p><strong>Audit and architecture.</strong> A full audit of the component landscape — duplication, inconsistency, missing states, accessibility failures — then a token-first architecture with semantic naming. Every component exposes its full range of states, so AI and developers never need to guess.</p>
+        <p><strong>1:1 Figma-to-code parity.</strong> A Figma library of <strong>~35 components and growing</strong>, each mapping exactly to a coded component: same name, same props, same variants. I drove the alignment with engineering — attending standups and reviewing implementations to catch drift early.</p>
+        <p><strong>Tokens in the frontend, not just the design file.</strong> I implemented the tokens directly in the frontend component library, replacing every hardcoded value for <strong>100% token coverage across the module</strong>. A design system that only exists in Figma is a picture of a design system.</p>
+        <p><strong>A living style guide.</strong> Every token and every component, rendered from the real implementation — used for visual regression testing and for design-to-code comparison, so drift is something you can see rather than something you discover in review.</p>
+        <p><strong>Custom Claude skills.</strong> A persistent knowledge layer that teaches Claude to read the token structure, assemble the correct native components, respect spacing and hierarchy, and generate prototypes faithful to the real system. No drift. No invented components.</p>
+        <p><strong>TPM prototype pipeline.</strong> A PM describes a screen; the pipeline assembles a working interactive prototype from real system components. The feedback loop between product thinking and validated interaction went from days to minutes.</p>
+
+        <h3>Shipping production code</h3>
+        <p>I authored the complete responsive navigation component for the Green Street Analytics platform — built with Claude Code guided by the custom skills, reviewed and approved by the engineering team, and live in production. Not a prototype: production frontend code serving real users.</p>
+
+        <div class="ph-grid">
+          <figure class="ph"><span class="ph__label">Figma library — components &amp; tokens</span></figure>
+          <figure class="ph"><span class="ph__label">Shipped navigation, live in production</span></figure>
+        </div>
+
+        <h3>Outcomes</h3>
+        <ul>
+          <li>TPMs generate accurate prototypes without design involvement in every cycle.</li>
+          <li>A single source of truth between Figma and code — translation ambiguity eliminated.</li>
+          <li>Every new component added becomes immediately AI-accessible.</li>
+          <li>A design-to-code pipeline in progress: from Figma screen to reviewed frontend implementation.</li>
+        </ul>
+        <p>This work sits at the intersection of deep Figma craft, frontend architecture, and applied AI expertise — not using off-the-shelf tools, but building the tools themselves.</p>
+      </div>
+      <div class="term" aria-hidden="true"></div>
+    </section>
+
+    <div class="strip" aria-hidden="true"></div>
+
+    <section class="band sec" aria-label="More work">
+      <div class="well work__nav">
+        <a class="work__prev" href="/work/portfolio-system"><span class="mono">← Previous</span> Portfolio as a Product</a>
+        <a class="work__next" href="/work/greenstreet-audit"><span class="mono">Next →</span> UX &amp; Accessibility Audits</a>
+      </div>
+      <div class="term" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <script src="/js/theme.js" defer></script>
+  <script src="/js/automata.js" defer></script>
+</body>
+</html>

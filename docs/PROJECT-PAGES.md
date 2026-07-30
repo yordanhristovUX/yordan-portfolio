@@ -217,10 +217,16 @@ then.
 
 ## Decisions
 
-1. ~~**The modal**~~ — **RESOLVED.** It goes; navigation is native. One renderer.
-2. **Routing** — the one still open. `/work/<id>` with a root-absolute check (recommended), or
-   `/<id>` at the root with no new convention. This is the decision worth not rushing: a URL is
-   the one thing here that outlives the code, and changing it later means redirects rather than
-   an edit.
+Both are made. Nothing in this document is open.
 
-Everything else in this document follows from the content that already exists.
+1. ~~**The modal**~~ — **RESOLVED.** It goes; navigation is native. One renderer.
+2. ~~**Routing**~~ — **RESOLVED: `/work/<id>`**, with generated pages referencing assets
+   root-absolutely and a gate asserting they keep doing so. The subdirectory is the better
+   information architecture and the root namespace stays free for routes; the price is a
+   second reference convention, and the price of *that* is paid by a check rather than by a
+   paragraph asking people to remember.
+
+Migrating the four existing pages to one convention — which would retire the
+`trailingSlash: false` landmine entirely rather than routing around it — is explicitly **not**
+part of this. It touches four working pages to fix a problem none of them has today. It is the
+right follow-up and the wrong bundle.

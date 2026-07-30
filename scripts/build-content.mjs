@@ -445,6 +445,169 @@ function buildCaseStudiesJs() {
 }
 
 /* ============================================================
+   4b. work/<id>.html — one page per case study
+
+   THE WHOLE FILE IS GENERATED, not a set of regions. index.html and cv.html
+   are hand-authored skeletons with generated holes because their structure is
+   a design decision; a project page has no structure of its own beyond the
+   one below, and five hand-maintained copies of it would drift apart within a
+   month. So these join `outputs` and are byte-compared like every other
+   artefact — a hand-edit is caught, not overwritten.
+
+   ROOT-ABSOLUTE ASSET REFERENCES, AND THIS IS THE ONE THING TO GET RIGHT.
+   Every other page in this repo references CSS, JS and fonts RELATIVELY, and
+   `vercel.json`'s `trailingSlash: false` is what makes that work: served at
+   `/cv`, `design-system/dist/tokens.css` resolves against `/`. These pages are
+   served at `/work/<id>`, one directory down, where the same relative
+   reference resolves against `/work/` and 404s — the page would ship unstyled
+   and unscripted, and nothing in `npm run check` would notice, because every
+   generated file would still be byte-perfect.
+
+   So they use `/design-system/...` and the check below asserts it. That is a
+   second convention in the repo and it is deliberate; the alternative was to
+   migrate four working pages that have no such problem, which is the right
+   follow-up and the wrong bundle. See docs/PROJECT-PAGES.md.
+   ============================================================ */
+const WORK_DIR = "work";
+const workPath = (id) => `${WORK_DIR}/${id}.html`;
+const workUrl = (id) => `/${WORK_DIR}/${id}`;
+const ORIGIN = profile.contact.site.replace(/\/$/, "");
+
+/* A content author writes `[the evals](evals.html)` because that is correct
+   from the index, where the same prose also renders. It is wrong from
+   `/work/<id>`, one directory down. Rather than push that context into
+   `content/` — where it would be a rule every author has to remember, and
+   where the SAME sentence has to work in both places — the renderer rebases
+   it, because the renderer is the thing that knows where it is serving from.
+
+   Anchors, absolute URLs and mailto: are left exactly as written. */
+const rootRebase = (line) =>
+  line.replace(/(\s(?:href|src)=")(?!https?:|mailto:|tel:|#|\/)([^"]+)(")/g, "$1/$2$3");
+
+function workPage(project, prev, next) {
+  const subtitle = sectionText(project, "subtitle");
+  const summary = sectionText(project, "summary");
+  const label = `${project.client} — ${project.title}`;
+  const body = renderCaseContent(project).map(rootRebase);
+
+  const L = [];
+  L.push(`<!DOCTYPE html>`);
+  L.push(`<html lang="en">`);
+  L.push(`<head>`);
+  L.push(`  <meta charset="UTF-8">`);
+  L.push(`  <meta name="viewport" content="width=device-width, initial-scale=1.0">`);
+  L.push(`  <title>${escText(label)} — Yordan Hristov</title>`);
+  L.push(`  <meta name="description" content="${escAttr(summary)}">`);
+  L.push(`  <link rel="canonical" href="${escAttr(ORIGIN + workUrl(project.id))}">`);
+  L.push(`  <meta property="og:title" content="${escAttr(label)}">`);
+  L.push(`  <meta property="og:description" content="${escAttr(summary)}">`);
+  L.push(`  <meta property="og:type" content="article">`);
+  L.push(`  <meta property="og:url" content="${escAttr(ORIGIN + workUrl(project.id))}">`);
+  L.push(`  <meta name="twitter:card" content="summary">`);
+  L.push(``);
+  /* One CreativeWork node, the same shape site.jsonld already emits for this
+     project — but on the page that IS the work, which is where a crawler
+     expects to find it. */
+  L.push(`  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "@id": `${ORIGIN}${workUrl(project.id)}#work`,
+    name: project.title,
+    headline: label,
+    abstract: subtitle,
+    description: summary,
+    keywords: project.tags,
+    url: `${ORIGIN}${workUrl(project.id)}`,
+    creator: { "@id": `${ORIGIN}/#person` },
+  })}</script>`);
+  L.push(``);
+  L.push(`  <!-- Browser chrome. See index.html for why the pinned theme has to win here. -->`);
+  L.push(`  <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)" data-theme-color="light">`);
+  L.push(`  <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)" data-theme-color="dark">`);
+  L.push(``);
+  L.push(`  <!-- Theme, before first paint. Must stay inline and blocking. -->`);
+  L.push(`  <script>`);
+  L.push(`    try {`);
+  L.push(`      var t = localStorage.getItem("theme");`);
+  L.push(`      if (t === "light" || t === "dark") {`);
+  L.push(`        document.documentElement.setAttribute("data-theme", t);`);
+  L.push(`        var m = document.querySelectorAll('meta[name="theme-color"]');`);
+  L.push(`        for (var i = 0; i < m.length; i++) {`);
+  L.push(`          m[i].media = m[i].getAttribute("data-theme-color") === t ? "all" : "not all";`);
+  L.push(`        }`);
+  L.push(`      }`);
+  L.push(`    } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }`);
+  L.push(`  </script>`);
+  L.push(``);
+  L.push(`  <!-- ROOT-ABSOLUTE, not relative: this page is served one directory down. -->`);
+  L.push(`  <link rel="stylesheet" href="/css/fonts/fonts.css">`);
+  L.push(`  <link rel="stylesheet" href="/design-system/dist/tokens.css">`);
+  L.push(`  <link rel="stylesheet" href="/design-system/css/components.css">`);
+  L.push(`  <link rel="stylesheet" href="/css/style.css">`);
+  L.push(`</head>`);
+  L.push(`<body>`);
+  L.push(``);
+  L.push(`  <header class="bar">`);
+  L.push(`    <a class="bar__id" href="/#work">← Work</a>`);
+  L.push(`    <nav class="bar__nav" aria-label="Primary">`);
+  L.push(`      <a href="/#work">All work</a>`);
+  L.push(`      <a href="/#contact">Contact</a>`);
+  L.push(`    </nav>`);
+  L.push(`    <button class="bar__action mono" type="button" aria-label="Ask my Bot" onclick="location.href='/#ask'">`);
+  L.push(`      <img class="bar__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">`);
+  L.push(`      <span class="bar__action-label">Ask my Bot</span>`);
+  L.push(`    </button>`);
+  L.push(`    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">`);
+  L.push(`      <span class="theme__lamp" aria-hidden="true"></span>`);
+  L.push(`      <span class="theme__label">Auto</span>`);
+  L.push(`    </button>`);
+  L.push(`  </header>`);
+  L.push(``);
+  L.push(`  <main class="sheet" id="top">`);
+  L.push(`    <section class="band sec work" aria-labelledby="work-title">`);
+  L.push(`      <header class="sec__head">`);
+  L.push(`        <span class="sec__no mono">${String(project.index).padStart(2, "0")}</span>`);
+  L.push(`        <h1 class="sec__title t-title" id="work-title">${inline(project.title)}</h1>`);
+  L.push(`        <span class="sec__note">${escText(project.client)}</span>`);
+  L.push(`      </header>`);
+  L.push(`      <div class="well">`);
+  L.push(`        <p class="t-lead">${inline(subtitle)}</p>`);
+  L.push(`        <div class="chips">${project.tags
+    .map((t) => `<span class="chip${t === project.accentTag ? " chip--solid" : ""}">${inline(t)}</span>`)
+    .join("")}</div>`);
+  L.push(...indent(8, body));
+  L.push(`      </div>`);
+  L.push(`      <div class="term" aria-hidden="true"></div>`);
+  L.push(`    </section>`);
+  L.push(``);
+  L.push(`    <div class="strip" aria-hidden="true"></div>`);
+  L.push(``);
+  /* Prev / next in `index` order, so the five read as a set rather than as
+     five unrelated documents a reader has to return to the index to leave. */
+  L.push(`    <section class="band sec" aria-label="More work">`);
+  L.push(`      <div class="well work__nav">`);
+  if (prev) L.push(`        <a class="work__prev" href="${escAttr(workUrl(prev.id))}"><span class="mono">← Previous</span> ${inline(prev.title)}</a>`);
+  if (next) L.push(`        <a class="work__next" href="${escAttr(workUrl(next.id))}"><span class="mono">Next →</span> ${inline(next.title)}</a>`);
+  L.push(`      </div>`);
+  L.push(`      <div class="term" aria-hidden="true"></div>`);
+  L.push(`    </section>`);
+  L.push(`  </main>`);
+  L.push(``);
+  L.push(`  <script src="/js/theme.js" defer></script>`);
+  L.push(`  <script src="/js/automata.js" defer></script>`);
+  L.push(`</body>`);
+  L.push(`</html>`);
+  return L.join("\n") + "\n";
+}
+
+function buildWorkPages() {
+  return caseStudies.map((p, i) => [
+    workPath(p.id),
+    workPage(p, caseStudies[i - 1] ?? null, caseStudies[i + 1] ?? null),
+  ]);
+}
+
+/* ============================================================
    5. Page regions
 
    The generator owns the inner HTML of each `<!-- content:NAME -->` region and
@@ -1333,12 +1496,60 @@ const outputs = [
   ["js/case-studies.js", buildCaseStudiesJs()],
   ["index.html", applyRegions(read("index.html"), indexRegions, "index.html")],
   ["cv.html", applyRegions(read("cv.html"), cvRegions, "cv.html")],
+  ...buildWorkPages(),
   ["content/dist/content.json", buildContentJson()],
   ["content/dist/site.jsonld", buildJsonLd() + "\n"],
   ["llms.txt", buildLlmsTxt()],
 ];
 
+/* ---------- the project pages' own gates ----------
+   Three things nothing else can catch, checked here because this is the only
+   place that knows both the page list and what is in each page. */
+{
+  const problems = [];
+  const pages = buildWorkPages();
+
+  /* 1. COVERAGE, both directions. Every case study has a page and every page
+        has a case study — the second half is what stops a renamed project
+        leaving an orphan serving stale prose at a live URL. */
+  const wanted = caseStudies.map((p) => workPath(p.id)).sort();
+  const got = pages.map(([rel]) => rel).sort();
+  if (wanted.join("|") !== got.join("|")) {
+    problems.push(`page coverage: expected ${wanted.join(", ")} and would write ${got.join(", ")}`);
+  }
+
+  /* 2. ROOT-ABSOLUTE REFERENCES. The silent one. A relative href on a page
+        served from /work/ resolves against /work/ and 404s, and every gate in
+        this repo still passes because the file is byte-perfect. */
+  const REF = /\s(?:href|src)="(?!https?:|mailto:|#|\/)([^"]+)"/g;
+  for (const [rel, html] of pages) {
+    for (const m of html.matchAll(REF)) {
+      problems.push(
+        `${rel} references \`${m[1]}\` relatively. This page is served one directory down, so that ` +
+          `resolves against /work/ and 404s — the page ships unstyled and no other gate can see it. ` +
+          `Use a root-absolute path.`
+      );
+    }
+  }
+
+  /* 3. LINK INTEGRITY. Every internal /work/ link on any generated page points
+        at a page this run actually writes. A dead link between the five is the
+        worst possible place for one. */
+  const live = new Set(caseStudies.map((p) => workUrl(p.id)));
+  for (const [rel, html] of pages) {
+    for (const m of html.matchAll(/href="(\/work\/[^"#?]+)"/g)) {
+      if (!live.has(m[1])) problems.push(`${rel} links to ${m[1]}, which is not a page this build writes`);
+    }
+  }
+
+  if (problems.length) {
+    console.error(`✗ work pages check failed:\n  - ${problems.join("\n  - ")}`);
+    process.exit(1);
+  }
+}
+
 mkdirSync(join(root, "content", "dist"), { recursive: true });
+mkdirSync(join(root, WORK_DIR), { recursive: true });
 
 if (CHECK) {
   const stale = [];
@@ -1397,6 +1608,7 @@ if (CHECK) {
 } else {
   for (const [rel, text] of outputs) writeFileSync(join(root, rel), lf(text));
   console.log(`✓ js/case-studies.js     (${caseStudies.length} case studies)`);
+  console.log(`✓ ${WORK_DIR}/*.html           (${caseStudies.length} project pages, root-absolute refs)`);
   console.log(`✓ index.html             (${Object.keys(indexRegions).length} regions)`);
   console.log(`✓ cv.html                (${Object.keys(cvRegions).length} regions)`);
   console.log(`✓ content/dist/content.json (${chunks.length} chunks, ${Object.keys(df).length} terms)`);

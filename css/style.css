@@ -135,6 +135,45 @@ html { scroll-behavior: smooth; }
   .rail, .strip, .term { display: none; }
 }
 
+/* ============ Project page: previous / next ============
+   Layout only, and it lives here rather than in components.css for a reason
+   worth stating: a design-system component owes the build a `spec.md` and a
+   story, and this is two links in a row on one page type. It is page layout in
+   the same sense the hero's stacking is, so it sits with the page styles and
+   composes tokens like everything else here.
+
+   `space-between` with `margin-inline-start: auto` on the next link means the
+   FIRST and LAST case studies — which have only one neighbour each — still put
+   their single link on the correct side, with no `:only-child` rule and no
+   emitter branch. */
+.work__nav { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.work__next { margin-inline-start: auto; text-align: right; }
+.work__prev,
+.work__next {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 20rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sub);
+  line-height: 1.15;
+  color: var(--content-primary);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.work__prev span,
+.work__next span {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--chrome-label);
+  text-transform: none;
+}
+.work__prev:hover,
+.work__next:hover { color: var(--accent); }
+
 /* ============ Reduced motion ============ */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

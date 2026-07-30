@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Municipality of Malko Tarnovo — Municipal Mobile App — Yordan Hristov</title>
+  <meta name="description" content="Civic app serving tourists and older residents at once. White-label token system. Live on the App Store and Google Play.">
+  <link rel="canonical" href="https://yordan-portfolio.vercel.app/work/malko-tarnovo">
+  <meta property="og:title" content="Municipality of Malko Tarnovo — Municipal Mobile App">
+  <meta property="og:description" content="Civic app serving tourists and older residents at once. White-label token system. Live on the App Store and Google Play.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://yordan-portfolio.vercel.app/work/malko-tarnovo">
+  <meta name="twitter:card" content="summary">
+
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CreativeWork","@id":"https://yordan-portfolio.vercel.app/work/malko-tarnovo#work","name":"Municipal Mobile App","headline":"Municipality of Malko Tarnovo — Municipal Mobile App","abstract":"End-to-end design of a cross-platform civic app serving two opposing audiences — tourists and older residents — live on the App Store and Google Play.","description":"Civic app serving tourists and older residents at once. White-label token system. Live on the App Store and Google Play.","keywords":["Product Designer","Shipped","Design System","iOS & Android","White-label","Accessibility"],"url":"https://yordan-portfolio.vercel.app/work/malko-tarnovo","creator":{"@id":"https://yordan-portfolio.vercel.app/#person"}}</script>
+
+  <!-- Browser chrome. See index.html for why the pinned theme has to win here. -->
+  <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)" data-theme-color="light">
+  <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)" data-theme-color="dark">
+
+  <!-- Theme, before first paint. Must stay inline and blocking. -->
+  <script>
+    try {
+      var t = localStorage.getItem("theme");
+      if (t === "light" || t === "dark") {
+        document.documentElement.setAttribute("data-theme", t);
+        var m = document.querySelectorAll('meta[name="theme-color"]');
+        for (var i = 0; i < m.length; i++) {
+          m[i].media = m[i].getAttribute("data-theme-color") === t ? "all" : "not all";
+        }
+      }
+    } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }
+  </script>
+
+  <!-- ROOT-ABSOLUTE, not relative: this page is served one directory down. -->
+  <link rel="stylesheet" href="/css/fonts/fonts.css">
+  <link rel="stylesheet" href="/design-system/dist/tokens.css">
+  <link rel="stylesheet" href="/design-system/css/components.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <header class="bar">
+    <a class="bar__id" href="/#work">← Work</a>
+    <nav class="bar__nav" aria-label="Primary">
+      <a href="/#work">All work</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+    <button class="bar__action mono" type="button" aria-label="Ask my Bot" onclick="location.href='/#ask'">
+      <img class="bar__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">
+      <span class="bar__action-label">Ask my Bot</span>
+    </button>
+    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+      <span class="theme__label">Auto</span>
+    </button>
+  </header>
+
+  <main class="sheet" id="top">
+    <section class="band sec work" aria-labelledby="work-title">
+      <header class="sec__head">
+        <span class="sec__no mono">05</span>
+        <h1 class="sec__title t-title" id="work-title">Municipal Mobile App</h1>
+        <span class="sec__note">Municipality of Malko Tarnovo</span>
+      </header>
+      <div class="well">
+        <p class="t-lead">End-to-end design of a cross-platform civic app serving two opposing audiences — tourists and older residents — live on the App Store and Google Play.</p>
+        <div class="chips"><span class="chip">Product Designer</span><span class="chip chip--solid">Shipped</span><span class="chip">Design System</span><span class="chip">iOS &amp; Android</span><span class="chip">White-label</span><span class="chip">Accessibility</span></div>
+        <figure class="ph"><span class="ph__label">Cover — app screens on device, 1600×900</span></figure>
+
+        <h3>The challenge</h3>
+        <p>Two audiences with almost opposing needs. <strong>Tourists</strong> are explorers — visual richness, maps, discovery flows. <strong>Local residents</strong>, many of them older, need municipal services: waste schedules, announcements, contacts — with large touch targets, minimal cognitive load, and zero ambiguity.</p>
+
+        <h3>The dual colour logic</h3>
+        <p><strong>Green</strong> encodes everything tourism — nature reserves, trails, gastronomy — connecting to the Strandzha region's identity. <strong>Blue</strong> encodes everything administrative, carrying the institutional calm of government services.</p>
+        <p>This is not decoration; it's a wayfinding system. A user glancing at a card knows instantly whether it's a tourist recommendation or a municipal service — before reading a word. For older users, colour becomes a cognitive shortcut.</p>
+
+        <h3>White-label design system</h3>
+        <ul>
+          <li><strong>Semantic colour tokens</strong> — swap the green/blue for any municipality's brand and it cascades through the entire system.</li>
+          <li><strong>Spacing and rounding tokens</strong> — no arbitrary values anywhere in the library.</li>
+          <li><strong>Typography system</strong> — Comfortaa, tokenised scale, friendly yet official.</li>
+          <li><strong>Icon system</strong> — municipal logo redesigned on a 64×80 grid, coherent from app icon to in-app header.</li>
+        </ul>
+
+        <h3>Accessibility by default</h3>
+        <ul>
+          <li>Touch targets exceeding WCAG's 44×44px minimum throughout.</li>
+          <li>WCAG 2.1 AA contrast across both colour contexts.</li>
+          <li>Hierarchy through size, weight, and spacing — never colour alone.</li>
+          <li>Progressive disclosure for dense municipal content.</li>
+        </ul>
+
+        <div class="ph-grid">
+          <figure class="ph"><span class="ph__label">Tourism flow — green context</span></figure>
+          <figure class="ph"><span class="ph__label">Municipal services — blue context</span></figure>
+        </div>
+
+        <h3>Outcomes</h3>
+        <p>Launched on iOS and Android, publicly available on both stores. The white-label system is a reusable product — any Bulgarian municipality can deploy it with brand-token changes alone. The dual colour logic became a reference model for designing civic services for mixed-age audiences.</p>
+        <a class="btn btn--solid" href="https://apps.apple.com/bg/app/malko-tarnovo-municipality/id6742865585" target="_blank" rel="noopener">View on the App Store ↗</a>
+      </div>
+      <div class="term" aria-hidden="true"></div>
+    </section>
+
+    <div class="strip" aria-hidden="true"></div>
+
+    <section class="band sec" aria-label="More work">
+      <div class="well work__nav">
+        <a class="work__prev" href="/work/domestina"><span class="mono">← Previous</span> Cleaning Service Marketplace</a>
+      </div>
+      <div class="term" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <script src="/js/theme.js" defer></script>
+  <script src="/js/automata.js" defer></script>
+</body>
+</html>

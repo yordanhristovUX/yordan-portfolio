@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green Street — UX &amp; Accessibility Audits — Yordan Hristov</title>
+  <meta name="description" content="WCAG 2.1 AA audits of two product surfaces — editorial and data-dense analytics. 200+ issue instances catalogued with severity ratings and a prioritised remediation roadmap.">
+  <link rel="canonical" href="https://yordan-portfolio.vercel.app/work/greenstreet-audit">
+  <meta property="og:title" content="Green Street — UX &amp; Accessibility Audits">
+  <meta property="og:description" content="WCAG 2.1 AA audits of two product surfaces — editorial and data-dense analytics. 200+ issue instances catalogued with severity ratings and a prioritised remediation roadmap.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://yordan-portfolio.vercel.app/work/greenstreet-audit">
+  <meta name="twitter:card" content="summary">
+
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CreativeWork","@id":"https://yordan-portfolio.vercel.app/work/greenstreet-audit#work","name":"UX & Accessibility Audits","headline":"Green Street — UX & Accessibility Audits","abstract":"End-to-end WCAG 2.1 AA audits of two distinct product surfaces — an editorial platform and a data-dense analytics platform — with severity-rated, annotated remediation roadmaps.","description":"WCAG 2.1 AA audits of two product surfaces — editorial and data-dense analytics. 200+ issue instances catalogued with severity ratings and a prioritised remediation roadmap.","keywords":["Senior Product Designer","Accessibility","UX Audit","WCAG 2.1 AA","Two products"],"url":"https://yordan-portfolio.vercel.app/work/greenstreet-audit","creator":{"@id":"https://yordan-portfolio.vercel.app/#person"}}</script>
+
+  <!-- Browser chrome. See index.html for why the pinned theme has to win here. -->
+  <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)" data-theme-color="light">
+  <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)" data-theme-color="dark">
+
+  <!-- Theme, before first paint. Must stay inline and blocking. -->
+  <script>
+    try {
+      var t = localStorage.getItem("theme");
+      if (t === "light" || t === "dark") {
+        document.documentElement.setAttribute("data-theme", t);
+        var m = document.querySelectorAll('meta[name="theme-color"]');
+        for (var i = 0; i < m.length; i++) {
+          m[i].media = m[i].getAttribute("data-theme-color") === t ? "all" : "not all";
+        }
+      }
+    } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }
+  </script>
+
+  <!-- ROOT-ABSOLUTE, not relative: this page is served one directory down. -->
+  <link rel="stylesheet" href="/css/fonts/fonts.css">
+  <link rel="stylesheet" href="/design-system/dist/tokens.css">
+  <link rel="stylesheet" href="/design-system/css/components.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <header class="bar">
+    <a class="bar__id" href="/#work">← Work</a>
+    <nav class="bar__nav" aria-label="Primary">
+      <a href="/#work">All work</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+    <button class="bar__action mono" type="button" aria-label="Ask my Bot" onclick="location.href='/#ask'">
+      <img class="bar__face" src="/design-system/assets/avatar.svg" alt="" aria-hidden="true" width="80" height="80" decoding="async">
+      <span class="bar__action-label">Ask my Bot</span>
+    </button>
+    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
+      <span class="theme__lamp" aria-hidden="true"></span>
+      <span class="theme__label">Auto</span>
+    </button>
+  </header>
+
+  <main class="sheet" id="top">
+    <section class="band sec work" aria-labelledby="work-title">
+      <header class="sec__head">
+        <span class="sec__no mono">03</span>
+        <h1 class="sec__title t-title" id="work-title">UX &amp; Accessibility Audits</h1>
+        <span class="sec__note">Green Street</span>
+      </header>
+      <div class="well">
+        <p class="t-lead">End-to-end WCAG 2.1 AA audits of two distinct product surfaces — an editorial platform and a data-dense analytics platform — with severity-rated, annotated remediation roadmaps.</p>
+        <div class="chips"><span class="chip">Senior Product Designer</span><span class="chip">Accessibility</span><span class="chip">UX Audit</span><span class="chip chip--solid">WCAG 2.1 AA</span><span class="chip">Two products</span></div>
+        <figure class="ph"><span class="ph__label">Cover — annotated audit findings, 1600×900</span></figure>
+
+        <h3>Why it matters here</h3>
+        <p>Green Street's users are professional analysts, investors, and brokers making high-stakes financial decisions — many across multiple screens for hours, some with assistive technologies. For a data company, an unlabelled filter or a contrast failure isn't just an accessibility issue. It's a credibility gap.</p>
+
+        <h3>Green Street News — editorial</h3>
+        <ul>
+          <li><strong>Colour contrast</strong> — systematic review against WCAG 2.1 AA thresholds across article bodies, bylines, timestamps, and navigation.</li>
+          <li><strong>Semantic structure</strong> — heading hierarchy that means something to a screen reader, not just visually.</li>
+          <li><strong>Keyboard navigation</strong> — focus traps, missing indicators, mouse-only elements.</li>
+          <li><strong>Labelling</strong> — icon-only buttons, ambiguous "read more" links, unlabelled form controls.</li>
+        </ul>
+
+        <h3>Analytics &amp; Research Platform — data-dense</h3>
+        <ul>
+          <li><strong>Data tables</strong> — header scope, captions, sortable column accessibility, nested headers.</li>
+          <li><strong>Charts</strong> — text alternatives, colour-only encoding, keyboard-accessible data views.</li>
+          <li><strong>Filters &amp; faceted search</strong> — keyboard operability, focus management, live region announcements.</li>
+          <li><strong>Dynamic content</strong> — explicit focus management for async loading, panels, and modals.</li>
+          <li><strong>Full AA sweep</strong> — criterion-by-criterion review of all 50 AA success criteria.</li>
+        </ul>
+
+        <h3>Deliverables</h3>
+        <p><span class="stat">200+</span></p>
+        <p>Issue instances catalogued across the two surfaces. Every finding documented with a severity rating (Critical / Major / Minor), WCAG criterion reference, annotated screenshot, recommended fix, and estimated engineering effort — plus a mapping to the platform workflow it affects, so engineering unblocks the most-used analytical paths first. The output is a prioritised remediation roadmap, not a list of complaints.</p>
+
+        <div class="ph-grid">
+          <figure class="ph"><span class="ph__label">Findings report — severity ratings</span></figure>
+          <figure class="ph"><span class="ph__label">Annotated Figma documentation</span></figure>
+        </div>
+
+        <h3>Outcomes</h3>
+        <ul>
+          <li>Both products now have a clear, actionable roadmap to WCAG 2.1 AA compliance.</li>
+          <li>Cross-product observations shaped component prioritisation in the AI-ready design system — the most inconsistent patterns became the first to be standardised.</li>
+          <li>A repeatable audit methodology for every new product surface as the platform grows.</li>
+        </ul>
+      </div>
+      <div class="term" aria-hidden="true"></div>
+    </section>
+
+    <div class="strip" aria-hidden="true"></div>
+
+    <section class="band sec" aria-label="More work">
+      <div class="well work__nav">
+        <a class="work__prev" href="/work/greenstreet-ds"><span class="mono">← Previous</span> AI-ready design systems and Agentic workflows</a>
+        <a class="work__next" href="/work/domestina"><span class="mono">Next →</span> Cleaning Service Marketplace</a>
+      </div>
+      <div class="term" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <script src="/js/theme.js" defer></script>
+  <script src="/js/automata.js" defer></script>
+</body>
+</html>
