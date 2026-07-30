@@ -90,7 +90,19 @@
     /* Placed before it is revealed, or the first frame paints at the previous
        card's position and the panel appears to jump across the screen. */
     place();
-    requestAnimationFrame(() => panel.setAttribute("data-open", ""));
+    /* A style flush, not a rAF. The transition needs a resolved `opacity: 0`
+       to start from, and un-hiding plus setting the attribute in one task
+       gives it none — the panel would snap rather than fade. Reading a layout
+       property forces that resolution synchronously.
+
+       rAF was the obvious way to get the same frame boundary and it is the
+       wrong one: it does not fire in a tab that is not compositing, which
+       leaves the panel populated, un-hidden and permanently transparent. That
+       is unreachable for a real reader — you cannot hover an unrendered tab —
+       but a reveal that depends on a frame being painted in order to become
+       visible is a circular dependency, and this costs nothing to remove. */
+    void panel.offsetWidth;
+    panel.setAttribute("data-open", "");
   }
 
   function hide() {
