@@ -22,7 +22,7 @@
        `media` so the pinned one always matches, and js/theme.js then replaces the
        literal with the real --surface-page. The literals stay because they are the
        only value available before the stylesheet is parsed, and they are what a
-       reader with JS off gets â€” for whom the OS query is the right answer anyway. -->
+       reader with JS off gets — for whom the OS query is the right answer anyway. -->
   <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)" data-theme-color="light">
   <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)" data-theme-color="dark">
 
@@ -32,7 +32,17 @@
   <script>
     try {
       var t = localStorage.getItem("theme");
-      if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      if (t === "light" || t === "dark") {
+        document.documentElement.setAttribute("data-theme", t);
+        /* Same frame, same script: the browser chrome has to agree with the
+           paper, and a deferred fix would be a visible flash of the wrong
+           chrome rather than a wrong colour forever. `not all` never matches,
+           `all` always does, so the pinned tag wins whatever the OS says. */
+        var m = document.querySelectorAll('meta[name="theme-color"]');
+        for (var i = 0; i < m.length; i++) {
+          m[i].media = m[i].getAttribute("data-theme-color") === t ? "all" : "not all";
+        }
+      }
     } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }
   </script>
 
@@ -67,8 +77,15 @@
          what a screen reader is told. Between `.bar__status` and `.theme`
          because every seam is owned by the segment on its right
          (components/nav/spec.md). -->
-    <button class="bar__action mono" type="button"
-            data-drawer-open="ask-panel" aria-controls="ask-panel" aria-expanded="false">Ask</button>
+    <!-- `aria-label` rather than relying on the visible text: below 860px the
+         label is hidden to fit the bar and the face carries the segment alone,
+         but the accessible name must not narrow with the viewport. -->
+    <button class="bar__action mono" type="button" aria-label="Ask my Bot"
+            data-drawer-open="ask-panel" aria-controls="ask-panel" aria-expanded="false">
+      <img class="bar__face" src="design-system/assets/avatar.svg" alt="" aria-hidden="true"
+           width="80" height="80" decoding="async">
+      <span class="bar__action-label">Ask my Bot</span>
+    </button>
     <!-- Deliberately vaguer than anything js/theme.js produces: the script's
          name for `auto` states what auto currently RESOLVES to, and static
          HTML cannot know the visitor's OS. A name that guessed would be

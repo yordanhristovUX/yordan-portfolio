@@ -1277,8 +1277,20 @@ function buildLlmsTxt() {
   L.push(`## The design system`);
   L.push(``);
   L.push(
-    `${system.tokens} tokens carrying ${system.values} values across light, dark and print · ` +
-      `${system.components} components, each enforced as CSS + spec.md + Storybook story.`
+    /* The tier list is derived, not typed. It read "light, dark and print" and
+       stayed that way when the `wide` tier landed, which made the sentence
+       attribute a four-tier total to three tiers. Building it from the counts
+       means a fifth tier cannot go unmentioned here either. */
+    `${system.tokens} tokens carrying ${system.values} values across ` +
+      [
+        "light",
+        system.dark ? "dark" : null,
+        system.print ? "print" : null,
+        system.wide ? "wide" : null,
+      ]
+        .filter(Boolean)
+        .reduce((s, t, i, a) => s + (i === 0 ? "" : i === a.length - 1 ? " and " : ", ") + t, "") +
+      ` · ${system.components} components, each enforced as CSS + spec.md + Storybook story.`
   );
   L.push(``);
   return L.join("\n");

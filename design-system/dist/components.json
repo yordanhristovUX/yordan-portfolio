@@ -479,7 +479,6 @@
         "--space-4",
         "--space-5",
         "--surface-page",
-        "--surface-portrait",
         "--text-2xs",
         "--text-sub"
       ]
@@ -711,16 +710,20 @@
       "classes": [
         ".bar",
         ".bar__action",
+        ".bar__action-label",
         ".bar__clock",
         ".bar__dot",
+        ".bar__face",
         ".bar__id",
         ".bar__nav",
         ".bar__status"
       ],
       "elements": [
         "__action",
+        "__action-label",
         "__clock",
         "__dot",
+        "__face",
         "__id",
         "__nav",
         "__status"
@@ -729,10 +732,12 @@
       "selectors": [
         ".bar",
         ".bar__action",
+        ".bar__action-label",
         ".bar__action:hover",
         ".bar__action[aria-expanded=\"true\"]",
         ".bar__clock",
         ".bar__dot",
+        ".bar__face",
         ".bar__id",
         ".bar__nav",
         ".bar__nav a",
@@ -750,6 +755,7 @@
         "--content-primary",
         "--font-mono",
         "--primary",
+        "--primary-hover",
         "--shadow-drop",
         "--space-1",
         "--space-2",

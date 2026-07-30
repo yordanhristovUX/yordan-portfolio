@@ -50,7 +50,7 @@ them, the system owns its own chrome.
 
 ## Theming (light / dark)
 
-The whole theme is 24 re-aliased semantic tokens. Nothing else in the system knows a theme
+The whole theme is 23 re-aliased semantic tokens. Nothing else in the system knows a theme
 exists — that is the design, and it is what proves the semantic tier is real rather than
 decorative.
 
@@ -149,21 +149,33 @@ READMEs, the **dark count**. Those figures are a claim the site makes about itse
 public, so they get the same enforcement as component coverage — during one session they
 went stale twice, which is exactly the drift this system exists to prevent.
 
-- **tokens** — entries in `tokens.json` (84)
-- **values** — light + dark + print + wide authored values across those tokens (149). Note this is
+- **tokens** — entries in `tokens.json` (83)
+- **values** — light + dark + print + wide authored values across those tokens (147). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
 - **components** — directories under `components/` (21)
 - **dark** — tokens carrying a `dark` value (24)
 
-The dark count was added to the gate after it proved the point the hard way. Deleting one
-unused token (`surface-inverse`) took the theme from 24 re-aliased tokens to 23, and the
-sentence "the entire dark theme is 24 re-aliased tokens" survived in four files because
-nothing asserted it. The count is 24 again today — `surface-portrait` brought it back — and
-that coincidence is worth naming: a number that returns to a stale value is exactly the case
-a human reviewer cannot catch and a gate does not care about. The same sentence in
-`../content/profile.json` is now `{{dark}}` and is interpolated by
-`../scripts/build-content.mjs`, so it has one source like everything else.
+The dark count was added to the gate after it proved the point the hard way, and it has now
+made the same point three times. Deleting one unused token (`surface-inverse`) took the theme
+from 24 re-aliased tokens to 23, and the sentence "the entire dark theme is 24 re-aliased
+tokens" survived in four files because nothing asserted it. Adding `surface-portrait` later
+put the count back to 24 — **a number returning to a stale value is exactly the case a human
+reviewer cannot catch**, because the prose was true again for reasons that had nothing to do
+with why it was written. Deleting `surface-portrait` has now taken it back to 23.
+
+Twice the figure moved and the prose did not; both times the gate is what said so. The same
+sentence in `../content/profile.json` is `{{dark}}` and is interpolated by
+`../scripts/build-content.mjs`, so it has one source like everything else — the two READMEs
+are the copies the gate exists to police.
+
+`surface-portrait` is worth a line on its own, because deleting it was not tidying. It was a
+plate that stayed light in both themes so a transparent portrait would not lose its hair on a
+dark page — good reasoning, and the wrong drawing: the owner's illustration already carries
+its own near-black tile, and a previous pass had stripped that tile out of the SVG to make
+room for the plate. Restoring the tile left the token consumed by nothing, and this system's
+own rule is that **a semantic tier earns its keep by being consumed** — the same rule that
+retired `action`.
 
 ## The doc arithmetic gate
 

@@ -535,25 +535,63 @@ body.is-locked { overflow: hidden; }
 /* An action segment — same cell as a nav link, but it does something to the
    page rather than navigating. Styled identically on purpose: the bar is one
    instrument, and a button that announced itself would break the row. */
+/* ---- THE BAR HAS A HIERARCHY, AND IT IS STATED ----
+   Left to right, every page, no exceptions:
+
+     identity → navigation → context → PRIMARY ACTION → utility
+
+   The primary action is the one thing a page most wants pressed: `Ask my Bot`
+   on the portfolio, `Print / PDF` on the CV. The utility — the theme toggle —
+   is always last, because it is the least of them and a reader looking for it
+   should always look in the same place.
+
+   THIS IS A CORRECTION, and the defect was the same on both pages. The primary
+   action was `--chrome-label-strong` on no ground: character-for-character the
+   colour and hover of `.bar__nav a`. So the site's most distinctive feature
+   read as a fourth navigation link, and on the CV the print control — the
+   whole reason a CV page has a bar — sat AFTER the theme toggle, so the
+   utility outranked the action.
+
+   It is a solid segment now. That is the same idea `.btn--solid` encodes and
+   the same rule `scripts/check-css.mjs` enforces for buttons: one primary
+   action per view, wearing the primary ink. */
 .bar__action {
-  display: flex; align-items: center;
+  display: flex; align-items: center; gap: var(--space-2);
   padding: 0 var(--space-5);
-  color: var(--chrome-label-strong);
+  background: var(--primary);
+  color: var(--content-inverse);
   box-shadow: inset 1px 0 0 var(--chrome-border);
   letter-spacing: 0.04em;
   white-space: nowrap;
   transition: background-color 0.2s, color 0.2s;
 }
-.bar__action:hover { background: var(--primary); color: var(--content-inverse); }
-/* An action that opens something and leaves it open wears the hover state for
+.bar__action:hover { background: var(--primary-hover); }
+/* An action that opens something and leaves it open wears a distinct state for
    as long as it is open. This is the segment's ONLY link to the drawer: the
    bar knows a button can be expanded, it does not know what it expanded.
    `aria-expanded` is the state a screen reader is already being told about, so
    styling it costs no new attribute and cannot drift from the announcement —
    which is what a `.is-open` class beside it would eventually do. A plain
    `.bar__action` (cv's Print / PDF) never carries the attribute and is
-   unaffected. */
-.bar__action[aria-expanded="true"] { background: var(--primary); color: var(--content-inverse); }
+   unaffected.
+
+   It reads as PRESSED rather than as lit, which is the inversion the old rule
+   could not express: when the resting state was quiet, "open" could be the
+   solid one. Now that resting is solid, open has to be the deeper one. */
+.bar__action[aria-expanded="true"] { background: var(--primary-hover); }
+
+/* The assistant's face, in the bar. It is the same drawing as the drawer's
+   portrait and it is NOT a portrait here — at 1.25rem the 408 paths collapse
+   to a mark, which is the point: it makes the segment recognisable as the
+   thing the drawer opens, without pretending to be a likeness at a size that
+   cannot carry one. `aria-hidden` because the label beside it already says
+   what it is. */
+.bar__face {
+  display: block;
+  width: 1.25rem; height: 1.25rem;
+  flex: none;
+  box-shadow: inset 0 0 0 1px var(--chrome-border-strong);
+}
 .bar__dot {
   width: 8px; height: 8px;
   background: var(--accent);
@@ -615,6 +653,21 @@ body.is-locked { overflow: hidden; }
   .bar__id { padding: var(--space-3) var(--space-3); }
   .bar__nav a { padding: 0 var(--space-2); }
   .bar__action { padding: 0 var(--space-2); }
+}
+
+/* THE LABEL GOES, THE FACE STAYS. `Ask my Bot` is a far wider segment than the
+   `Ask` it replaces, and the arithmetic below was already tight enough that a
+   fifth segment had to be paid for out of three neighbours' padding. So below
+   860px the words drop and the portrait carries the segment alone — it is a
+   20px mark against a solid primary ground, which is legible as a target even
+   where it is not legible as a face.
+
+   The accessible name does not go with it: the button keeps `aria-label`, so a
+   screen reader and a voice-control user still get "Ask my Bot" at every width.
+   A control whose name disappears with its label is the failure this avoids. */
+@media (max-width: 860px) {
+  .bar__action-label { display: none; }
+  .bar__action { gap: 0; }
 }
 
 /* THE FIFTH SEGMENT IS PAID FOR HERE, one step down the ramp per neighbour.
@@ -1587,26 +1640,32 @@ body.is-locked { overflow: hidden; }
   border-bottom: var(--rule-strong);
 }
 
-/* The portrait, and the whole reason `--surface-portrait` exists. The
-   illustration is transparent line-art: dark strokes over light fills. On the
-   light theme it needs no help; on the dark one it would lose its hair and its
-   jacket and leave a face floating in the dark, so it is printed on a plate
-   that stays light in both themes. The token carries that judgement — there is
-   no theme query here, and there is no `filter: invert()` either, which is the
-   other obvious move and makes an uncanny negative of a human face.
+/* THE PORTRAIT CARRIES ITS OWN GROUND, and that is the owner's decision
+   rather than a derivation from contrast arithmetic.
+
+   The illustration is dark line-art over light fills drawn on a near-black
+   tile. A previous pass removed that tile from the SVG and replaced it with a
+   CSS plate that stayed light in both themes — the reasoning was sound (on a
+   dark page the ink collapses and a face is left floating) but the result was
+   not the drawing the owner made. The tile is back, byte-identical to
+   `content/assets/avatar.svg`, and the plate token it justified is gone.
+
+   So on the light theme this is a black square on pale chrome. That contrast
+   is intended: it is a printed object on the sheet, not a tint of it.
+
+   On dark the tile is near-black on near-black, so the EDGE is the only thing
+   left to say where the object stops — hence the stroke, which is a token with
+   a `dark` value rather than a theme query. `chrome-border-strong` measures
+   2.48:1 against the light head and 7.11:1 against the dark one, which is the
+   right way round: the theme that needs the edge gets the stronger one.
 
    3.5rem because the drawing is 408 paths in an 80-unit box: at 40px its
    features fall under a pixel and it reads as a smudge, at 56px it reads as a
-   face. That is also why it is not in the nav bar. */
+   face. The nav bar uses it far smaller and deliberately — see `.bar__face`,
+   where it is a mark rather than a portrait. */
 .drawer__portrait {
   display: block;
   width: 3.5rem; height: 3.5rem;
-  background: var(--surface-portrait);
-  /* `chrome-border-strong`, not `chrome-border`: on the light theme the plate
-     is stone-50 on a slate-100 head, which is 1.05:1 — the plate itself is
-     invisible and the frame is the only thing that says "card". At the softer
-     border that frame measures 1.42:1 and does not say it; at the strong one
-     2.48:1 in light and 7.11:1 in dark. */
   box-shadow: inset 0 0 0 1px var(--chrome-border-strong);
 }
 .drawer__portrait img { display: block; width: 100%; height: 100%; }

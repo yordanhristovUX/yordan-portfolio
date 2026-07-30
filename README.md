@@ -28,11 +28,11 @@ generations. "An old sketchbook with machines that help."
 - **Repo-first tokens** — [`tokens/tokens.json`](design-system/tokens/tokens.json) is the
   only place a colour, a type size or a spacing step is born; a zero-dependency script
   generates the CSS variables the site loads and a flat JSON that AI agents and the Figma
-  push read. 84 tokens carrying 149 values across light, dark, print and wide, in two tiers
+  push read. 83 tokens carrying 147 values across light, dark, print and wide, in two tiers
   (raw ramps → semantic layer).
 - **Light, dark and paper from one source** — a themed token carries its `dark` value (and,
   where it matters, its `print` value) beside its light one; the build emits the media
-  query, the pinned-theme override, and the print block. The entire dark theme is 24
+  query, the pinned-theme override, and the print block. The entire dark theme is 23
   re-aliased semantic tokens and **zero** per-component dark rules — the sharpest test a
   semantic tier can be put to. No stylesheet anywhere contains a colour for print, and
   since the type scale landed, none contains a literal `font-size` either: paper gets its

@@ -22,7 +22,7 @@
        `media` so the pinned one always matches, and js/theme.js then replaces the
        literal with the real --surface-page. The literals stay because they are the
        only value available before the stylesheet is parsed, and they are what a
-       reader with JS off gets â€” for whom the OS query is the right answer anyway. -->
+       reader with JS off gets — for whom the OS query is the right answer anyway. -->
   <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)" data-theme-color="light">
   <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)" data-theme-color="dark">
 
@@ -30,7 +30,17 @@
   <script>
     try {
       var t = localStorage.getItem("theme");
-      if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      if (t === "light" || t === "dark") {
+        document.documentElement.setAttribute("data-theme", t);
+        /* Same frame, same script: the browser chrome has to agree with the
+           paper, and a deferred fix would be a visible flash of the wrong
+           chrome rather than a wrong colour forever. `not all` never matches,
+           `all` always does, so the pinned tag wins whatever the OS says. */
+        var m = document.querySelectorAll('meta[name="theme-color"]');
+        for (var i = 0; i < m.length; i++) {
+          m[i].media = m[i].getAttribute("data-theme-color") === t ? "all" : "not all";
+        }
+      }
     } catch (e) { /* storage disabled — fall through to prefers-color-scheme */ }
   </script>
 
@@ -53,6 +63,11 @@
       <a href="#experience">Experience</a>
       <a href="#skills">Skills</a>
     </nav>
+    <!-- PRIMARY ACTION BEFORE UTILITY, which is the bar's stated order on every
+         page (components/nav/spec.md). This button used to sit AFTER the theme
+         toggle, so the one control a CV page exists to offer was the last thing
+         in the bar and the least prominent thing in it. -->
+    <button class="bar__action mono" data-print>Print / PDF</button>
     <!-- Deliberately vaguer than anything js/theme.js produces — see the note
          in index.html and components/theme-toggle/spec.md. Replaced on the
          first apply(). -->
@@ -60,7 +75,6 @@
       <span class="theme__lamp" aria-hidden="true"></span>
       <span class="theme__label">Auto</span>
     </button>
-    <button class="bar__action mono" data-print>Print / PDF</button>
   </header>
 
   <main id="top" class="sheet">
@@ -105,8 +119,8 @@
       <div class="well">
         <!-- content:open-source -->
         <p>Tokens are born in the repo, not in Figma. One <code>tokens.json</code> builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and <strong>the build fails if any of the three is missing</strong>, so parity is enforced rather than maintained by hand.</p>
-        <p>Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 24 re-aliased tokens with zero per-component rules.</p>
-        <p class="cv-facts mono">84 tokens carrying 149 values across light, dark &amp; print · 21 components · 0 axe violations across 21 Storybook stories · MIT licensed</p>
+        <p>Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is 23 re-aliased tokens with zero per-component rules.</p>
+        <p class="cv-facts mono">83 tokens carrying 147 values across light, dark &amp; print · 21 components · 0 axe violations across 21 Storybook stories · MIT licensed</p>
         <div class="link-grid">
           <a href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener">GitHub repo ↗</a>
           <a href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener">Storybook ↗</a>

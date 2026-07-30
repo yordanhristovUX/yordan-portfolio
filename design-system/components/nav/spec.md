@@ -49,15 +49,37 @@ inside it is exactly what was there before.
 | `.bar__status` | Passive readout (availability, clock). Hidden under 1200px |
 | `.bar__clock` | The separator + `<time>` inside the status. Hidden under 1280px |
 | `.theme` | The theme toggle — see `components/theme-toggle/spec.md` |
-| `.bar__action` | A button that acts on the page (Print / PDF, Ask), styled as a nav cell |
+| `.bar__action` | **The page's one primary action** (Ask my Bot, Print / PDF). Solid primary ink |
+| `.bar__face` | The assistant's portrait inside `.bar__action`, 1.25rem. A mark, not a likeness |
+| `.bar__action-label` | The action's words. Hidden under 860px; the accessible name is not |
 
-`.bar__action` deliberately looks identical to a `.bar__nav` link. The bar reads as one
-instrument; a segment that announced itself as a button would break the row. Use it only
-for page-level actions, never for navigation — that is what `.bar__nav` is for.
+## The bar has a hierarchy, and it is stated
+
+Left to right, on every page, no exceptions:
+
+> identity → navigation → context → **primary action** → utility
+
+The primary action is the one thing a page most wants pressed. The utility — the theme
+toggle — is always last, because it is the least of them and a reader looking for it should
+always find it in the same place.
+
+**This corrects a decision, and the old one is worth reading because it was reasonable.**
+This file used to say that `.bar__action` *deliberately* looked identical to a `.bar__nav`
+link, so the bar would read as one instrument. The cost of that was not visible from inside
+the rule: the site's most distinctive feature — the assistant — was a three-letter word in
+nav-link grey, and on the CV the print control sat *after* the theme toggle, so the one
+action that page exists to offer was both the last segment and the quietest. A row that
+reads as one instrument is worth less than a row where the thing to press is obvious.
+
+It is a solid segment now, and that is the same rule `scripts/check-css.mjs` already enforces
+for `.btn--solid`: **one primary action per view, wearing the primary ink.** The bar still
+reads as one instrument because the seam rule below is unchanged — the promotion is a fill,
+not a shape.
 
 An action that opens something and leaves it open styles
-`.bar__action[aria-expanded="true"]` as the hover state, so the segment stays lit while its
-panel is open. That is the segment's **only** link to what it opens: the bar knows a button
+`.bar__action[aria-expanded="true"]` as a *pressed* state rather than a lit one — the
+inversion the old rule could not express. When resting was quiet, "open" could be the solid
+one; now that resting is solid, open has to be the deeper one. That is the segment's **only** link to what it opens: the bar knows a button
 can be expanded, not what it expanded. `aria-expanded` is the state a screen reader is
 already being told about, so styling it costs no new attribute and cannot drift from the
 announcement, which is what a hand-toggled "is open" class beside it would eventually do. A
@@ -75,8 +97,12 @@ segment for the link's right edge to butt against.
 
 `--accent` (dot), `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`,
 `--chrome-label`, `--chrome-label-strong`, `--content-inverse`, `--content-primary`,
-`--font-mono`, `--primary`, `--shadow-drop` (the offset drop shadow), `--text-xs`,
-`--space-1`, `--space-2`, `--space-3`, `--space-5`
+`--font-mono`, `--primary`, `--primary-hover`, `--shadow-drop` (the offset drop shadow),
+`--text-xs`, `--space-1`, `--space-2`, `--space-3`, `--space-5`
+
+`--primary-hover` is the primary action's hover **and** its open state. It exists precisely
+for this: the token file calls it "a state, not the brand", which is what a segment that is
+already solid primary needs in order to have anywhere left to go.
 
 ## Behaviour
 

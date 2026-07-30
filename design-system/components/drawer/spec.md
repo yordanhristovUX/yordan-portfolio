@@ -156,34 +156,39 @@ query would replace; when the skeleton grows `container-type`, delete them.
 `80 80` viewBox, served as an `<img src>` and never inlined (160 KB of path data in every
 page is worse than one cached request).
 
-It is a derivative of `content/assets/avatar.svg`, which is untouched, and the derivation is
-exactly two edits: the root `width`/`height` are dropped so CSS sizes it from the `viewBox`,
-and the **first subpath of the first path** — the dark rounded tile the figure was drawn on
-— is removed. Not the whole path: that path also carries six sub-pixel detail fragments
-after the tile's `Z`, and all 408 paths and every mark survive. The 408 paths are not to be
-touched.
+**It is the owner's file, byte for byte.** It was briefly a *derivative*: the root
+`width`/`height` were dropped and the first subpath of the first path — the near-black tile
+the figure is drawn on — was removed, so a CSS plate could take the tile's place. The
+reasoning was sound and the result was not the drawing. **The tile is back and the plate is
+gone**, on the owner's instruction, and `design-system/assets/avatar.svg` is now identical to
+`content/assets/avatar.svg`. Do not re-derive it. The 408 paths are not to be touched.
 
-**The plate is the whole point of `--surface-portrait`.** The portrait is dark line-art over
-light fills. On the light theme it needs no help; on the dark one the ink collapses and the
-fills take over, so the hair and the jacket disappear and a face is left floating. Measured,
-on `--surface-page`:
+What the plate was solving is real, and the tile solves it instead — the portrait is dark
+line-art over light fills, so without *some* ground it loses its hair and its jacket on a dark
+page and leaves a face floating. Measured on `--surface-page`:
 
-| Portrait fill | On the plate (light / dark) | With no plate, on a dark page |
+| Portrait fill | On the tile | With no ground, on a dark page |
 | --- | --- | --- |
-| `#020303` outline | 19.77:1 / 18.93:1 | 1.09:1 |
-| `#2F3031` line-art | 12.66:1 / 12.12:1 | 1.32:1 |
-| `#09128F` collar | 13.45:1 / 12.88:1 | 1.24:1 |
-| `#DDDCDE` dominant fill | 1.31:1 / 1.25:1 | 12.80:1 |
+| `#020303` outline | 19.77:1 | 1.09:1 |
+| `#2F3031` line-art | 12.66:1 | 1.32:1 |
+| `#09128F` collar | 13.45:1 | 1.24:1 |
+| `#DDDCDE` dominant fill | 1.31:1 | 12.80:1 |
 
-So the plate stays light in **both** themes, which reads as a printed portrait card lying on
-a dark page — the same "object on the sheet" language as the nav bar's drop shadow. It is
-stone-100 in dark rather than stone-50 because at 3.5rem on near-black the brightest paper
-in the ramp is a light source rather than a card. **Do not reach for `filter: invert()`:** it
-makes an uncanny negative of a human face and turns his blue collar orange.
+The tile carries its own contrast in both themes because it travels with the image. What it
+cannot carry is its own **edge**: near-black on a near-black page, the object has no visible
+boundary. That is the one job left for CSS, and it is a `chrome-border-strong` stroke — a
+token with a `dark` value, not a theme query. It measures 2.48:1 against the light head and
+7.11:1 against the dark one, which is the right way round.
 
-3.5rem, and not smaller, because 408 paths in an 80-unit box put every feature under a pixel
-by 40px. That is also why the portrait is **not** in the nav bar: at 18px it is a smudge, and
-the bar has no room for it either (see the bar cost below).
+On the light theme this is a black square on pale chrome, and that contrast is intended: a
+printed object on the sheet rather than a tint of it. **Do not reach for `filter: invert()`:**
+it makes an uncanny negative of a human face and turns his blue collar orange.
+
+3.5rem here, because 408 paths in an 80-unit box put every feature under a pixel by 40px and
+this is the panel that introduces the assistant. The nav bar carries the same file at
+1.25rem, and that is not a contradiction — see `.bar__face` in `components/nav/spec.md`,
+where it is deliberately a **mark** rather than a likeness: it identifies the segment without
+claiming to be a portrait at a size that cannot be one.
 
 `alt=""`. The heading beside it carries the meaning and the illustration is chrome; if the
 title ever stops naming what this panel is, the alt should carry it instead.
@@ -201,12 +206,13 @@ Numbers and the 375px arithmetic: `components/nav/spec.md`.
 
 `--chrome-bg`, `--chrome-border-strong`, `--chrome-label`, `--content-primary`,
 `--font-display`, `--font-mono`, `--rule-strong`, `--scrim`, `--surface-page`,
-`--surface-portrait`, `--text-2xs`, `--text-sub`, `--space-1`, `--space-3`, `--space-4`,
-`--space-5`
+`--text-2xs`, `--text-sub`, `--space-1`, `--space-3`, `--space-4`, `--space-5`
 
 No `prefers-color-scheme` anywhere in this block, and no colour in any `@media print`. The
-plate's refusal to invert is a `dark` value in `tokens.json`, which is the only place that
-judgement can live.
+portrait's edge is a `dark` value on `chrome-border-strong` in `tokens.json`, which is the
+only place that judgement can live. The surface-portrait token used to be in this list and
+has been deleted from the system: restoring the tile left it consumed by nothing, and a
+semantic tier earns its keep by being consumed — the same rule that retired `action`.
 
 The drawer is hidden on paper by a layout rule in each page stylesheet
 (`css/style.css`, `css/cv.css`, `css/mcp.css`, `css/evals.css`). A fixed overlay printed is
