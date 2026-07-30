@@ -708,7 +708,6 @@
         "--content-primary",
         "--font-mono",
         "--primary",
-        "--primary-hover",
         "--shadow-drop",
         "--space-1",
         "--space-2",
@@ -1065,30 +1064,30 @@
       ],
       "classes": [
         ".theme",
-        ".theme__label",
         ".theme__lamp"
       ],
       "elements": [
-        "__label",
         "__lamp"
       ],
       "variants": [],
       "selectors": [
         ".theme",
         ".theme:hover",
+        ".theme:hover .theme__lamp",
+        ".theme[data-state=\"auto\"] .theme__lamp",
         ".theme[data-state=\"dark\"] .theme__lamp",
         ".theme[data-state=\"light\"] .theme__lamp",
-        ".theme__label",
         ".theme__lamp"
       ],
       "tokens": [
+        "--chrome-bg-strong",
         "--chrome-border",
         "--chrome-label",
-        "--content-inverse",
-        "--primary",
+        "--chrome-label-on-strong",
+        "--content-primary",
         "--space-1",
-        "--space-2",
-        "--space-4"
+        "--space-4",
+        "--surface-page"
       ]
     },
     {

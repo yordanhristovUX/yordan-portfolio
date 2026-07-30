@@ -27,10 +27,14 @@ edges (no border) and a hard 5px offset shadow. Identity / links / availability 
     <span>Available for work — Sofia<span class="bar__clock">, <time id="local-time">--:--</time></span></span>
   </div>
   <button class="bar__action mono" type="button"
-          data-drawer-open="ask-panel" aria-controls="ask-panel" aria-expanded="false">Ask</button>
+          data-drawer-open="ask-panel" aria-controls="ask-panel" aria-expanded="false"
+          aria-label="Ask my Bot">
+    <img class="bar__face" src="design-system/assets/avatar.svg" alt="" aria-hidden="true"
+         width="80" height="80" decoding="async">
+    <span class="bar__action-label">Ask my Bot</span>
+  </button>
   <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
     <span class="theme__lamp" aria-hidden="true"></span>
-    <span class="theme__label">Auto</span>
   </button>
 </header>
 ```
@@ -97,12 +101,19 @@ segment for the link's right edge to butt against.
 
 `--accent` (dot), `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`,
 `--chrome-label`, `--chrome-label-strong`, `--content-inverse`, `--content-primary`,
-`--font-mono`, `--primary`, `--primary-hover`, `--shadow-drop` (the offset drop shadow),
+`--accent`, `--font-mono`, `--primary`, `--shadow-drop` (the offset drop shadow),
 `--text-xs`, `--space-1`, `--space-2`, `--space-3`, `--space-5`
 
-`--primary-hover` is the primary action's hover **and** its open state. It exists precisely
-for this: the token file calls it "a state, not the brand", which is what a segment that is
-already solid primary needs in order to have anywhere left to go.
+**`--accent` is the primary action's ground**, and this is the only place in the system where
+the accent is a ground rather than a mark. A solid ink segment carried the right hierarchy and
+the wrong weight — at that size a near-black block reads as a hole punched in the bar. Blue
+also separates the action from the ink-coloured identity on the left *and* from the
+chrome-grey navigation between them, which no shade of grey does at once. Measured: the label
+sits at 6.63:1 on it in light and 5.21:1 in dark, and the block itself stands off the bar at
+6.60:1 and 5.32:1.
+
+`--primary` is then hover **and** the open state. Blue at rest is an invitation; ink is what it
+looks like once you are in it, and "you are in it" is one state however you arrived.
 
 ## Behaviour
 

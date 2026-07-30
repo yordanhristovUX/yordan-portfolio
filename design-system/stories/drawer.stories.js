@@ -135,7 +135,6 @@ const page = (expanded) => `
             aria-controls="ask-panel" aria-expanded="${expanded}">Ask</button>
     <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto.">
       <span class="theme__lamp" aria-hidden="true"></span>
-      <span class="theme__label">Auto</span>
     </button>
   </header>
   <main class="sheet">

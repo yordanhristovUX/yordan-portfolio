@@ -92,7 +92,6 @@
          wrong half the time. Replaced on the first apply(). -->
     <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
       <span class="theme__lamp" aria-hidden="true"></span>
-      <span class="theme__label">Auto</span>
     </button>
   </header>
 
@@ -460,6 +459,16 @@
            mid-cell. -->
       <div class="term" aria-hidden="true"></div>
     </section>
+
+    <!-- THE SHEET CLOSES ON A STRIP, like every other section boundary.
+         The rule used to be "a separator separates two things, so there is
+         none after the last section" — which is true of the sections and wrong
+         about the page: the last one is a boundary too, between the sheet and
+         the footer's chrome, and without it the contact section ended flush
+         against a dark bar with nothing under it. Four cells, the same as
+         every other boundary, because the one thing this rhythm cannot afford
+         is an exception at the end where it is most visible. -->
+    <div class="strip" aria-hidden="true"></div>
 
   </main>
 

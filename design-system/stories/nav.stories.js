@@ -18,7 +18,6 @@ export const FloatingBar = {
                 aria-controls="ask-panel" aria-expanded="false">Ask</button>
         <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
           <span class="theme__lamp" aria-hidden="true"></span>
-          <span class="theme__label">Auto</span>
         </button>
       </header>
     </div>`,
@@ -50,7 +49,6 @@ const bar = (extra = "") => `
             aria-controls="ask-panel" aria-expanded="${extra === "open" ? "true" : "false"}">Ask</button>
     <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
       <span class="theme__lamp" aria-hidden="true"></span>
-      <span class="theme__label">Auto</span>
     </button>
   </header>`;
 

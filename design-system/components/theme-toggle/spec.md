@@ -9,25 +9,53 @@
 
 # Theme toggle
 
-Tri-state theme control. Sits in the nav bar as one more segment of the instrument, and
-reads as a labelled readout you can press rather than a switch.
+Tri-state theme control. Sits in the nav bar as the bar's **utility** segment — the least of
+its parts, and always last — and it carries no text at all.
 
 ## Pattern
 
 ```html
 <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">
   <span class="theme__lamp" aria-hidden="true"></span>
-  <span class="theme__label">Auto</span>
 </button>
 ```
 
-`data-state`, `.theme__label` and `aria-label` are all rewritten by `js/theme.js` on every
-change. The markup above is the pre-script state, and it is deliberately **vaguer** than
-anything the script produces: the script's `auto` label names what auto is currently
-resolving to, and static HTML cannot know the visitor's OS preference. So the initial
-value says only what is true under both — it is replaced within a frame of the script
-running. An initial label that named a resolution would be wrong half the time, which is
-worse than being general.
+`data-state` and `aria-label` are rewritten by `js/theme.js` on every change. The markup above
+is the pre-script state, and the label is deliberately **vaguer** than anything the script
+produces: the script's `auto` name says what auto is currently resolving to, and static HTML
+cannot know the visitor's OS preference. So the initial value says only what is true under
+both. A name that guessed a resolution would be wrong half the time.
+
+## The dial, and why it lost its words
+
+It used to read `AUTO` / `LIGHT` / `DARK` beside a small square lamp. Three words are three
+widths in a bar with no room to spare, and — the deciding reason — **the thing they described
+is a two-sided object that can simply show which side it is on.**
+
+One circle, permanently half dark and half light. The state is its ANGLE:
+
+| State | The dial |
+| --- | --- |
+| `dark` | the ink half faces up — `rotate(0)` |
+| `light` | the paper half faces up — `rotate(180deg)` |
+| `auto` | **it is still turning**, a slow endless rotation |
+
+Auto being in motion is the whole idea rather than an embellishment. The other two states are
+a decision — the dial has landed — and auto is the *absence* of one: the page is following
+something else, so the dial never settles. That distinction reads without a legend, which is
+what let the words go.
+
+The two halves are `--content-primary` and `--surface-page`, so the dial is literally "the two
+themes" and it inverts with the theme like everything else. There is no theme query in this
+block and nothing in it knows which theme is live.
+
+**Under `prefers-reduced-motion` auto stops turning and rests at 45°** — still visibly neither
+settled angle, so the state survives the loss of the motion that usually carries it. A
+perpetually spinning object is exactly what that query exists for.
+
+**The hover is deliberately quiet.** This was a full ink-fill until the bar gained a
+hierarchy; the segment beside it is now a solid accent block, and a utility that also filled
+solid on hover would compete with the one control on the page that is meant to look pressable.
 
 ## The cycle is not a fixed ring
 
@@ -98,8 +126,12 @@ in advance beats acknowledging it in retrospect.
 
 ## Tokens
 
-`--chrome-border`, `--chrome-label`, `--content-inverse`, `--primary`, `--space-1`,
-`--space-2`, `--space-4`
+`--chrome-bg-strong`, `--chrome-border`, `--chrome-label`, `--chrome-label-on-strong`,
+`--content-primary`, `--surface-page`, `--space-4`
+
+`--content-primary` and `--surface-page` are the dial's two halves, which is why this
+component consumes a *surface* token without drawing a surface: the circle is a picture of
+the two themes, so it has to be made of them.
 
 The lamp is drawn in `currentColor` on purpose, so it inverts with the button on hover
 without a second colour token.

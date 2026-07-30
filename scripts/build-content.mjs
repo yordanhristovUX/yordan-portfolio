@@ -559,7 +559,6 @@ function workPage(project, prev, next) {
   L.push(`    </button>`);
   L.push(`    <button class="theme mono" data-theme-toggle data-state="auto" aria-label="Theme: auto, following your system setting. Activate to change the theme.">`);
   L.push(`      <span class="theme__lamp" aria-hidden="true"></span>`);
-  L.push(`      <span class="theme__label">Auto</span>`);
   L.push(`    </button>`);
   L.push(`  </header>`);
   L.push(``);

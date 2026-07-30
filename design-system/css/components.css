@@ -558,14 +558,28 @@ body.is-locked { overflow: hidden; }
 .bar__action {
   display: flex; align-items: center; gap: var(--space-2);
   padding: 0 var(--space-5);
-  background: var(--primary);
+  /* THE ACCENT, NOT THE INK. A solid ink segment carried the right hierarchy
+     and the wrong weight — at this size a near-black block reads as a hole
+     punched in the bar rather than as the thing to press. Blue is the site's
+     one brand colour and it earns its keep here: it separates the action from
+     the ink-coloured identity on the left AND from the chrome-grey navigation
+     between them, which no shade of grey could do at once.
+
+     Measured, both themes, so the promotion does not cost legibility:
+
+       light   label on accent   6.63:1     accent on the bar   6.60:1
+       dark    label on accent   5.21:1     accent on the bar   5.32:1
+
+     Hover and the open state commit to the ink. Blue at rest is an invitation;
+     ink is what it looks like once you are in it. 16.74:1 on light. */
+  background: var(--accent);
   color: var(--content-inverse);
   box-shadow: inset 1px 0 0 var(--chrome-border);
   letter-spacing: 0.04em;
   white-space: nowrap;
   transition: background-color 0.2s, color 0.2s;
 }
-.bar__action:hover { background: var(--primary-hover); }
+.bar__action:hover { background: var(--primary); }
 /* An action that opens something and leaves it open wears a distinct state for
    as long as it is open. This is the segment's ONLY link to the drawer: the
    bar knows a button can be expanded, it does not know what it expanded.
@@ -577,8 +591,9 @@ body.is-locked { overflow: hidden; }
 
    It reads as PRESSED rather than as lit, which is the inversion the old rule
    could not express: when the resting state was quiet, "open" could be the
-   solid one. Now that resting is solid, open has to be the deeper one. */
-.bar__action[aria-expanded="true"] { background: var(--primary-hover); }
+   solid one. Now that resting is the accent, open is the ink — the same place
+   hover goes, because "you are in it" is one state however you got there. */
+.bar__action[aria-expanded="true"] { background: var(--primary); }
 
 /* The assistant's face, in the bar. It is the same drawing as the drawer's
    portrait and it is NOT a portrait here — at 1.25rem the 408 paths collapse
@@ -590,6 +605,13 @@ body.is-locked { overflow: hidden; }
   display: block;
   width: 1.25rem; height: 1.25rem;
   flex: none;
+  /* THE TILE IN THE SVG IS A ROUNDED SQUARE, so the stroke around it has to be
+     one too. Read off the drawing rather than guessed: the first path's top
+     edge runs from x=14.2387 to x=65.8209 in an 80-unit box, so the corner
+     radius is 14.2387/80 = 17.8%. A square stroke around it read as a stray
+     border, which is what it was. Percentage, not px, so it stays right at the
+     1.25rem here and the 3.5rem in the drawer. */
+  border-radius: 17.8%;
   box-shadow: inset 0 0 0 1px var(--chrome-border-strong);
 }
 .bar__dot {
@@ -713,27 +735,58 @@ body.is-locked { overflow: hidden; }
    label is the CURRENT state, not the next one — this is a readout you can
    press, like the rest of the bar. */
 .theme {
-  display: flex; align-items: center; gap: var(--space-2);
+  display: flex; align-items: center;
   padding: 0 var(--space-4);
   color: var(--chrome-label);
   box-shadow: inset 1px 0 0 var(--chrome-border);
-  letter-spacing: 0.08em; text-transform: uppercase;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.2s;
 }
-.theme:hover { background: var(--primary); color: var(--content-inverse); }
+/* A QUIET HOVER, and that is the hierarchy rather than an oversight. This is
+   the bar's utility segment and the segment beside it is now a solid accent
+   block; a toggle that also filled solid on hover would compete with the one
+   thing on the page that is supposed to look pressable. It was a full
+   ink-fill until the bar gained a hierarchy. */
+.theme:hover { background: var(--chrome-bg-strong); }
+.theme:hover .theme__lamp { box-shadow: inset 0 0 0 1px var(--chrome-label-on-strong); }
 
-/* The state lamp: an outline that fills as the theme is pinned. Auto reads
-   as half-lit — following something, not set. */
+/* ---- THE DIAL ----
+   One circle, permanently half dark and half light, and the STATE IS ITS
+   ANGLE. There is no text: three words in the bar were three widths, and the
+   thing they described is a two-sided object that can simply show which side
+   it is on.
+
+     light   the paper half faces up      rotate(180deg)
+     dark    the ink half faces up        rotate(0)
+     auto    it is still turning          a slow, endless rotation
+
+   Auto being IN MOTION is the whole idea. The other two states are a
+   decision — the dial has landed — and auto is the absence of one: the page
+   is following something else, so the dial never settles. That reads without
+   a legend, which is what let the label go.
+
+   The two halves are `--content-primary` and `--surface-page`, so the dial is
+   literally "the two themes" and it inverts with the theme like everything
+   else. No theme query, and nothing here knows which theme is live. */
 .theme__lamp {
-  width: 9px; height: 9px;
+  width: 14px; height: 14px;
   flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--content-primary) 0 50%, var(--surface-page) 50% 100%);
   box-shadow: inset 0 0 0 1px currentColor;
-  background: linear-gradient(to right, currentColor 50%, transparent 50%);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
 }
-.theme[data-state="light"] .theme__lamp { background: none; }
-.theme[data-state="dark"] .theme__lamp { background: currentColor; }
+.theme[data-state="dark"] .theme__lamp { transform: rotate(0deg); }
+.theme[data-state="light"] .theme__lamp { transform: rotate(180deg); }
+.theme[data-state="auto"] .theme__lamp { animation: theme-dial 9s linear infinite; }
+@keyframes theme-dial { to { transform: rotate(360deg); } }
 
-.theme__label { min-width: 3.2em; text-align: left; } /* AUTO/LIGHT/DARK must not shift the bar */
+@media (prefers-reduced-motion: reduce) {
+  /* Auto stops turning and rests at the diagonal — still visibly neither of
+     the two settled angles, so the state survives without the motion that
+     usually carries it. A spinning object is exactly what this query is for. */
+  .theme[data-state="auto"] .theme__lamp { animation: none; transform: rotate(45deg); }
+  .theme__lamp { transition: none; }
+}
 
 /* THERE IS NO PRESS-ACKNOWLEDGEMENT ANIMATION HERE, and the reason is worth
    the paragraph because it is the obvious thing to reach for.
@@ -768,7 +821,8 @@ body.is-locked { overflow: hidden; }
      segment costs 40.0px at this width and the bar had 14.4px of slack, so
      every neighbour gives up one step of the ramp. 8.0px of the 40 is here. */
   .theme { padding: 0 var(--space-1); }
-  .theme__label { display: none; } /* the lamp alone; aria-label still speaks */
+  /* The theme label used to be dropped here to save width. There is no label
+     at any width now — the dial says it — so this block has one fewer job. */
 }
 
 /* ============ Section head ============ @component section-head */
@@ -1635,6 +1689,9 @@ body.is-locked { overflow: hidden; }
 .drawer__portrait {
   display: block;
   width: 3.5rem; height: 3.5rem;
+  /* Matches the rounded tile inside the drawing — see `.bar__face` for where
+     17.8% comes from. */
+  border-radius: 17.8%;
   box-shadow: inset 0 0 0 1px var(--chrome-border-strong);
 }
 .drawer__portrait img { display: block; width: 100%; height: 100%; }
