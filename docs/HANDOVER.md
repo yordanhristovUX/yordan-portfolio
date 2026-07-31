@@ -4,12 +4,15 @@ Written at the end of a long session. Everything here was measured, not remember
 
 **Branch:** `main` · **HEAD:** the docs commit sitting on `c84ddf9`.
 
-**Merged is not deployed, and this is the first thing to know.** `main` is **24 commits ahead
-of `origin/main`** — the whole contract-gaps + second-site programme is committed locally and
-**nothing of it is pushed or deployed**. `yordan-portfolio.vercel.app` is serving `9da8576`,
-the previous session's HEAD, and it is healthy (`/`, `/cv`, `/evals`, `/work/<id>` all 200).
-Everything the earlier sections of this file call "deployed" still is; everything in the
-programme section below is not.
+**Merged is not deployed, and this is the first thing to know.** `main` is **well ahead of
+`origin/main`** — the whole contract-gaps + second-site programme (24 commits) plus the
+documentation pass that closes it, committed locally and **not pushed, not deployed**. Ask
+git for the exact figure rather than this sentence, which cannot interpolate one:
+`git rev-list --count origin/main..main`.
+
+`yordan-portfolio.vercel.app` is serving `9da8576`, the previous session's HEAD, and it is
+healthy (`/`, `/cv`, `/evals`, `/work/<id>` all 200). Everything the earlier sections of this
+file call "deployed" still is; everything in the programme section below is not.
 
 ---
 
@@ -40,7 +43,7 @@ programme section below is not.
 
 ```
 HEAD            docs commit on c84ddf9, main — NOT pushed, NOT deployed
-deployed        9da8576 — origin/main, 24 commits behind local main
+deployed        9da8576 — origin/main, the whole programme behind local main
 tests           146 / 146
 gates           all green — `npm run check` exits 0 end to end
 corpus          9530564fdc07971c · 70 chunks · 967 terms      (unmoved)
@@ -317,7 +320,7 @@ Everything in this block is live. It is listed so a new session does not re-prop
 
 ### Uncommitted right now
 
-Nothing on `main` — the tree is clean. But `main` is **24 commits ahead of `origin/main`**
+Nothing on `main` — the tree is clean. But `main` is **well ahead of `origin/main`**
 and therefore ahead of production, and six worktrees carry uncommitted work of their own; see
 open item (d).
 

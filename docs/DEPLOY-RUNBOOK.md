@@ -18,8 +18,9 @@ material and is never served.
 
 ### Step zero: push
 
-At the time of writing, local `main` is **24 commits ahead of `origin/main`**, so none of the
-work these steps configure is on the deployment yet. Production is serving the commit before
+Local `main` is **ahead of `origin/main` by the whole of Phases 1–8**, so none of the work
+these steps configure is on the deployment yet (`git rev-list --count origin/main..main` for
+the current figure). Production is serving the commit before
 this programme started — checked from outside: `/apps/next/package.json` and
 `/apps/next/next.config.mjs` both 404 on the live site, which is what a deployment that
 predates `apps/next` looks like *and* what the `.vercelignore` fix is meant to produce. The
