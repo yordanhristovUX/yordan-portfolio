@@ -1,0 +1,19 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# EVERYTHING BELOW IS A COPY, written by scripts/sync-artifacts.mjs from the
+# slice that owns it. Committing a copy is how a fork starts: the copy stops
+# tracking its source, someone edits it because it is right there, and the two
+# surfaces drift while every gate in the repo stays green. `npm run sync`
+# rebuilds all of it in under a second, and next.config.mjs runs it at config
+# load, so a clean checkout needs no extra step.
+public/fonts/
+public/corpus/
+public/assets/
+src/styles/site/
+
+# Local env overrides (NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_CHAT_ENDPOINT)
+.env*.local

@@ -1,0 +1,28 @@
+{
+  "name": "@yordan/next-site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The second surface: the same portfolio, rendered by Next.js + React from the same generated artefacts as the vanilla site. Standalone — its own lockfile, no root workspace. See .claude/agents/next-app.md.",
+  "scripts": {
+    "sync": "node scripts/sync-artifacts.mjs",
+    "prebuild": "node scripts/sync-artifacts.mjs",
+    "predev": "node scripts/sync-artifacts.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "serve": "npx --yes serve out -l 3100 --no-clipboard"
+  },
+  "dependencies": {
+    "@yordan/design-system": "file:../../design-system",
+    "next": "16.2.12",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "typescript": "6.0.3"
+  }
+}
