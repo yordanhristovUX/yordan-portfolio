@@ -7,6 +7,12 @@
       "runtimeArgs": ["--yes", "serve", ".", "--no-clipboard"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "next-out",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "serve", "apps/next/out", "-l", "4100", "--no-clipboard"],
+      "port": 4100
     }
   ]
 }
