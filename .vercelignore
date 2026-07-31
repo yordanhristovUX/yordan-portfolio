@@ -63,3 +63,43 @@ docs/
 # design-system/scripts/, which is a separate judgement nobody has made here.
 /test/
 /scripts/
+
+# The second site's SOURCE TREE. apps/next is a SEPARATE Vercel project — its
+# own Root Directory, its own lockfile, its own static export — and no file
+# under it belongs to this deployment. Without this entry the vanilla domain
+# would publish apps/next/src/**, next.config.mjs, tsconfig.json and
+# package-lock.json as fetchable static files at /apps/next/..., because
+# outputDirectory is "." and buildCommand is "" — whatever is uploaded is
+# served, verbatim, with no build step in between to leave it behind. A CLI
+# deploy would add apps/next/out/ on top: a duplicate of the entire second
+# site, unversioned and silently stale, on the wrong domain. (A Git deploy
+# would not — out/ is gitignored — which is exactly the kind of difference
+# between the two deploy paths this file should not leave to chance.)
+#
+# CHECKED BEFORE EXCLUDING, the way the vectors.json note above demands,
+# because this removes the path from the UPLOAD and not merely from serving:
+#   - nothing in api/ or lib/knowledge/ reads, imports or fetches any path
+#     under apps/ at runtime,
+#   - no page or client script here references it (no /apps/ in any .html at
+#     the repo root or in js/),
+#   - vercel.json declares no routes, rewrites or redirects, and no
+#     functions.includeFiles, so there is no second path by which a request to
+#     this deployment could reach apps/ content.
+# The dependency runs the other way and stays there: apps/next reads ../../css,
+# ../../content/dist, ../../evals/dist and the design system at build time, in
+# ITS build, from ITS project.
+#
+# Anchored, for the same reason as /test/ and /scripts/: this names the one
+# apps/ at the repo root, not a directory of that name inside some slice.
+#
+# READ THIS BEFORE CONFIGURING THE apps/next PROJECT.
+# That project needs "Include files outside the Root Directory" ON — three of
+# its four inputs live above apps/next. With that setting on, the build context
+# is the whole repository, which means this file is plausibly read by that
+# project's upload as well, and `/apps/` would then exclude that project's own
+# source from its own build. It cannot be patched around from here: gitignore
+# semantics do not allow re-including a path whose parent directory is
+# excluded, so a trailing `!/apps/next/` would do nothing. Confirm on a preview
+# deployment of the second project before trusting this; if it does apply, the
+# fix belongs in that project's configuration, not in a weaker pattern here.
+/apps/
