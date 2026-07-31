@@ -24,8 +24,9 @@
     "release": "node scripts/contract-diff.mjs --release",
     "storybook": "npm run build && storybook dev -p 6006 --no-open",
     "build-storybook": "npm run build && storybook build",
-    "//test": "Both gates build storybook-static when it is stale, serve it on an ephemeral port and drive @storybook/test-runner against it — no dev server, and no http-server/wait-on/concurrently. CI needs `npx playwright install --with-deps chromium` first. NEITHER joins the root `npm run check`: that gate is offline, browser-free and dependency-light, and these two need Chromium. test:visual is REPORT-ONLY until 2026-09-01 — see .storybook/test-runner.js.",
+    "//test": "The story gates build storybook-static when it is stale, serve it on an ephemeral port and drive @storybook/test-runner against it — no dev server, and no http-server/wait-on/concurrently. test:a11y:pages serves the REPO ROOT instead and runs axe over the four shipped pages in both themes with no exemptions — it exists because five matrix stories exempt the document-scope landmark rules, so the single-banner assertion lives there and nowhere else (see scripts/page-a11y.mjs). CI needs `npx playwright install --with-deps chromium` first. NONE of these joins the root `npm run check`: that gate is offline, browser-free and dependency-light, and all three need Chromium. test:visual is REPORT-ONLY until 2026-09-01 — see .storybook/test-runner.cjs.",
     "test:a11y": "node scripts/storybook-gates.mjs --mode a11y",
+    "test:a11y:pages": "node scripts/page-a11y.mjs",
     "test:visual": "node scripts/storybook-gates.mjs --mode visual"
   },
   "devDependencies": {
