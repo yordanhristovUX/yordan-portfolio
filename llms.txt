@@ -28,7 +28,7 @@ Metrics: 0 accessibility violations
 
 ### 02 · Green Street — AI-ready design systems and Agentic workflows
 
-~35 components at 1:1 Figma-to-code parity, 100% token coverage, custom Claude skills, and a prototype pipeline the whole TPM team uses. Production navigation shipped.
+Green Street's first design system, and the steps that took it from a Figma library into production: a shipped navigation component, an AI prototype pipeline for the TPM team, and a product module rebuilt at 1:1 Figma parity with 100% token coverage.
 
 Tags: Senior Product Designer, Design Systems, AI Workflows, Figma-to-code, WCAG, Production code
 
