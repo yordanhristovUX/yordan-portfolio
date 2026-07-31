@@ -26,7 +26,7 @@
 #             would not load, a browser that died — because report-only is
 #             about images, not about the harness. The flip is written down in
 #             two places that both name the date:
-#             design-system/scripts/test-storybook.mjs and
+#             design-system/scripts/storybook-gates.mjs and
 #             design-system/.storybook/test-runner.cjs (.cjs is deliberate —
 #             the test-runner config is CommonJS).
 #

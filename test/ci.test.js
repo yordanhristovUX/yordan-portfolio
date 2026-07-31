@@ -201,12 +201,14 @@ const NODE_DEFAULT_PATTERNS = [
    Each one is a live trip-hazard: `npm test` is safe because the runner passes
    explicit paths, but a bare `node --test` — the documented Node idiom, and
    what a contributor types without thinking — still executes these.
-   The fix is a rename in the owning slice, not another entry here. */
-const NOT_A_TEST_DESPITE_THE_NAME = {
-  "design-system/scripts/test-storybook.mjs":
-    "the Storybook a11y/visual harness. Matches `**/test-*.mjs`, builds storybook-static and drives Chromium. " +
-    "Owned by design-system; wants renaming to something outside the pattern (storybook-gates.mjs), after which this entry goes.",
-};
+   The fix is a rename in the owning slice, not another entry here.
+
+   Empty, and worth keeping empty. It held one entry —
+   design-system/scripts/test-storybook.mjs, the Chromium-driving Storybook
+   harness — until 90bb7df renamed it storybook-gates.mjs, which is what an
+   entry here is meant to provoke. The staleness assertion below is why the
+   entry could not outlive the rename. */
+const NOT_A_TEST_DESPITE_THE_NAME = {};
 
 test("nothing outside test/ can rejoin the suite by being named like one", () => {
   /* The guard for the next one. A file called `test-anything.mjs`, or any
