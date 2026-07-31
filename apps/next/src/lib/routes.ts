@@ -11,10 +11,6 @@
 
    THE LABEL IS THE OWNER'S AND IS NEVER TOUCHED; only the destination is this
    app's decision.
-
-   `/evals` does not exist yet — the eval page is a later phase. The link is
-   left pointing at where it will be rather than removed, because removing it
-   would edit the contact block's copy, which is not this app's to edit.
    ============================================================ */
 const ROUTES: Record<string, string> = {
   "index.html": "/",
@@ -39,16 +35,9 @@ export const workUrl = (id: string): string => `/work/${id}`;
    navigation at all. src/components/AppLink.tsx is the only caller. */
 export const isRoute = (raw: string): boolean => /^\/(?!\/)/.test(raw);
 
-/* Routes this app links to and does not build yet. `/evals` is Phase 6; the
-   label is the owner's and the link stays pointing at where the page will be.
-
-   Nothing reads this today, because src/components/AppLink.tsx turns prefetch
-   off for EVERY route — see the measurement in its header. It is written down
-   rather than dropped because the two reasons are independent: when Next fixes
-   its export/prefetch separator mismatch and that blanket line can go, this
-   route must still never be prefetched, or the fix ships a 404 on every page
-   that carries the link. Delete this when the eval page lands. */
-export const UNBUILT_ROUTES = ["/evals"];
-
-export const isUnbuilt = (raw: string): boolean =>
-  UNBUILT_ROUTES.some((r) => raw === r || raw.startsWith(`${r}#`) || raw.startsWith(`${r}/`));
+/* THE UNBUILT-ROUTE EXCEPTION IS GONE, because there is no unbuilt route left:
+   `/evals` was the only entry and it is now a page. What stays is the blanket
+   `prefetch={false}` in src/components/AppLink.tsx, and it stays for its own
+   reason — Next 16.2.12's segment-cache prefetch and its `output: export`
+   writer disagree about a separator, measured there. The two were always
+   independent; this one has simply run out. */

@@ -41,10 +41,9 @@
    Next's to fix; `experimental.clientSegmentCache: false` is not a way out
    either — Next 16 rejects the key as invalid.
 
-   The `/evals` case that this file used to special-case is now covered by the
-   same line, and the reasoning survives in UNBUILT_ROUTES in src/lib/routes.ts:
-   that route does not exist until Phase 6, so it must never be prefetched even
-   when the line above can be deleted. */
+   The `/evals` case that this file used to special-case has expired rather
+   than been folded in: that route is a built page now, so when Next fixes the
+   separator and the line above can go, it prefetches like any other. */
 import Link from "next/link";
 import type { AnchorHTMLAttributes } from "react";
 
