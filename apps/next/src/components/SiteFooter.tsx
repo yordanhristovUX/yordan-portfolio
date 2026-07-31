@@ -4,6 +4,7 @@
    the CV and the MCP page point back at the portfolio. The copyright line is
    the same on all three, and the year in the middle of it is live — see
    src/components/Year.tsx. */
+import { AppLink } from "@/components/AppLink";
 import { Year } from "@/components/Year";
 import { href } from "@/lib/routes";
 import type { Link } from "@/lib/vanilla-copy";
@@ -18,12 +19,9 @@ export function SiteFooter({ link }: { link: Link }) {
         <Year fallback={FOOTER.fallbackYear} />
         {after}
       </span>
-      <a
-        href={href(link.href)}
-        {...(link.external ? { target: "_blank", rel: "noopener" } : {})}
-      >
+      <AppLink href={href(link.href)} {...(link.external ? { target: "_blank", rel: "noopener" } : {})}>
         {link.label}
-      </a>
+      </AppLink>
     </footer>
   );
 }

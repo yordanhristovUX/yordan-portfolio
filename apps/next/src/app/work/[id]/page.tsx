@@ -39,6 +39,7 @@ import { Fragment } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { AppLink } from "@/components/AppLink";
 import { AskAction, AskDrawer, AskFab } from "@/components/Ask";
 import { Btn, Chips, Strip, Term } from "@/components/primitives";
 import { SiteBar } from "@/components/SiteBar";
@@ -213,14 +214,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <section className="band sec" aria-label="More work">
           <div className="well work__nav">
             {prev ? (
-              <a className="work__prev" href={workUrl(prev.id)}>
+              <AppLink className="work__prev" href={workUrl(prev.id)}>
                 <span className="mono">{WORK_PAGER.prev}</span> {prev.title}
-              </a>
+              </AppLink>
             ) : null}
             {next ? (
-              <a className="work__next" href={workUrl(next.id)}>
+              <AppLink className="work__next" href={workUrl(next.id)}>
                 <span className="mono">{WORK_PAGER.next}</span> {next.title}
-              </a>
+              </AppLink>
             ) : null}
           </div>
           <Term />

@@ -16,6 +16,7 @@
    ============================================================ */
 import type { Metadata } from "next";
 
+import { AppLink } from "@/components/AppLink";
 import { AskAction, AskDrawer, AskFab } from "@/components/Ask";
 import { Btn, Chips, GridLink, Strip, Term } from "@/components/primitives";
 import { LocalTime } from "@/components/LocalTime";
@@ -154,8 +155,9 @@ export default function Page() {
                 <li key={p.id}>
                   {/* AN ANCHOR, NOT A BUTTON: a case study that cannot be
                       linked to, opened in a tab or bookmarked is the constraint
-                      the modal used to impose. */}
-                  <a className="idx__row" href={workUrl(p.id)}>
+                      the modal used to impose. `AppLink` renders exactly that
+                      `a`, and routes it through the client router. */}
+                  <AppLink className="idx__row" href={workUrl(p.id)}>
                     <span className="idx__no mono">{String(p.index).padStart(2, "0")}</span>
                     <span className="idx__main">
                       <h3 className="idx__name">
@@ -173,7 +175,7 @@ export default function Page() {
                     <span className="idx__go mono" aria-hidden="true">
                       {INDEX_ROW_GO}
                     </span>
-                  </a>
+                  </AppLink>
                 </li>
               ))}
             </ul>

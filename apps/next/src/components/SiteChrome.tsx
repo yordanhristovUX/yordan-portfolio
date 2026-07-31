@@ -20,8 +20,20 @@
 
    Each init returns its own teardown. That is the port's addition: the
    originals never removed a listener because the only teardown a page script
-   has is a navigation. */
+   has is a navigation.
+
+   AND THAT TEARDOWN IS WHY THIS RE-RUNS ON EVERY PATHNAME CHANGE. A client
+   navigation keeps the root layout — this component with it — and replaces
+   `{children}`, which is where the bar, the menu, the drawer, the fab and the
+   cards all live. Their elements are NEW after a transition, so listeners bound
+   to the old ones are pointing at detached nodes: without this dependency the
+   menu would open on the first page of a visit and on no other. Re-init is the
+   whole fix, and it is cheap — four querySelector guards and a handful of
+   listeners — because every port already knows how to take itself off the page
+   it was bound to. */
 import { useEffect } from "react";
+
+import { usePathname } from "next/navigation";
 
 import { initDrawer } from "@/lib/vanilla/drawer";
 import { initFab } from "@/lib/vanilla/fab";
@@ -29,12 +41,14 @@ import { initMenu } from "@/lib/vanilla/menu";
 import { initPeek } from "@/lib/vanilla/peek";
 
 export function SiteChrome() {
+  const pathname = usePathname();
+
   useEffect(() => {
     const teardown = [initMenu(), initFab(), initPeek(), initDrawer()];
     return () => {
       for (const off of teardown) off();
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }

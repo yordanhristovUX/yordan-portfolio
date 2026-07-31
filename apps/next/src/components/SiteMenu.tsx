@@ -15,6 +15,7 @@
    nothing here opens it yet — that is the port of js/menu.js, which toggles
    `data-open` on [data-menu] and nothing else visual. The markup, the id and
    the aria wiring are already what it expects. */
+import { AppLink } from "@/components/AppLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Link } from "@/lib/vanilla-copy";
 import { MENU } from "@/lib/vanilla-copy";
@@ -31,11 +32,17 @@ export function SiteMenu({ nav }: { nav: Link[] }) {
         </div>
         <div className="menu__body">
           <ThemeToggle />
+          {/* The port closes the sheet on a click on `.menu__nav a`, and a
+              <Link> IS an `a` — the delegated listener on `.menu` runs on the
+              same click that starts the transition, so the menu closes and the
+              route changes without a reload. Verified in a browser rather than
+              reasoned about: a menu left open over its own destination is the
+              exact failure this rule exists to prevent. */}
           <nav className="menu__nav" aria-label={MENU.title}>
             {nav.map((l) => (
-              <a key={l.href + l.label} href={l.href}>
+              <AppLink key={l.href + l.label} href={l.href}>
                 {l.label}
-              </a>
+              </AppLink>
             ))}
           </nav>
         </div>

@@ -3,6 +3,7 @@
    no spec.md and no story, and are not new classes either): each is one
    element the pages already write by hand, given a name here so that the page
    files read as their own structure rather than as a list of divs. */
+import { AppLink } from "@/components/AppLink";
 import { href } from "@/lib/routes";
 import type { Link } from "@/lib/vanilla-copy";
 
@@ -27,23 +28,23 @@ export function Btn({ link, className, style }: { link: Link; className?: string
     .filter(Boolean)
     .join(" ");
   return (
-    <a
+    <AppLink
       className={classes}
       href={href(link.href)}
       style={style}
       {...(link.external ? { target: "_blank", rel: "noopener" } : {})}
     >
       {link.label}
-    </a>
+    </AppLink>
   );
 }
 
 /** A plain link inside a `.link-grid` — no `.btn`, same external handling. */
 export function GridLink({ link }: { link: Link }) {
   return (
-    <a href={href(link.href)} {...(link.external ? { target: "_blank", rel: "noopener" } : {})}>
+    <AppLink href={href(link.href)} {...(link.external ? { target: "_blank", rel: "noopener" } : {})}>
       {link.label}
-    </a>
+    </AppLink>
   );
 }
 

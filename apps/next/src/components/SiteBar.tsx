@@ -17,6 +17,7 @@
    right edge is. */
 import type { ReactNode } from "react";
 
+import { AppLink } from "@/components/AppLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Link } from "@/lib/vanilla-copy";
 import { MENU } from "@/lib/vanilla-copy";
@@ -34,14 +35,14 @@ export function SiteBar({
 }) {
   return (
     <header className="bar">
-      <a className="bar__id" href={id.href}>
+      <AppLink className="bar__id" href={id.href}>
         {id.label}
-      </a>
+      </AppLink>
       <nav className="bar__nav" aria-label="Primary">
         {nav.map((l) => (
-          <a key={l.href + l.label} href={l.href}>
+          <AppLink key={l.href + l.label} href={l.href}>
             {l.label}
-          </a>
+          </AppLink>
         ))}
       </nav>
       {status}

@@ -30,3 +30,25 @@ export function href(raw: string): string {
 }
 
 export const workUrl = (id: string): string => `/work/${id}`;
+
+/* ---------- what this app's router owns ----------
+   A reference is this app's route when it starts with a single `/`: `/cv`,
+   `/work/<id>`, and `/#work`, which is the index plus a fragment. Everything
+   else belongs to somewhere else — an absolute URL, a mailto:, a tel:, or a
+   bare `#anchor`, which is a position on the page already open and not a
+   navigation at all. src/components/AppLink.tsx is the only caller. */
+export const isRoute = (raw: string): boolean => /^\/(?!\/)/.test(raw);
+
+/* Routes this app links to and does not build yet. `/evals` is Phase 6; the
+   label is the owner's and the link stays pointing at where the page will be.
+
+   Nothing reads this today, because src/components/AppLink.tsx turns prefetch
+   off for EVERY route — see the measurement in its header. It is written down
+   rather than dropped because the two reasons are independent: when Next fixes
+   its export/prefetch separator mismatch and that blanket line can go, this
+   route must still never be prefetched, or the fix ships a 404 on every page
+   that carries the link. Delete this when the eval page lands. */
+export const UNBUILT_ROUTES = ["/evals"];
+
+export const isUnbuilt = (raw: string): boolean =>
+  UNBUILT_ROUTES.some((r) => raw === r || raw.startsWith(`${r}#`) || raw.startsWith(`${r}/`));

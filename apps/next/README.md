@@ -76,6 +76,20 @@ without the fab. `AutomataLayer` owns the engine's lifetime and re-scans on a pa
 change. `window.automataStats()` is the engine's own cost report and the handle a browser
 parity sweep can compare against the vanilla page.
 
+## Navigation
+
+Internal routes go through `next/link` via `src/components/AppLink.tsx`; anchors, `mailto:`,
+`tel:` and absolute URLs stay plain `<a>`. `<Link>` renders an `<a>`, so every DS class and
+attribute is the string it was.
+
+A client transition keeps the root layout and replaces `{children}` — which is where the
+bar, the menu, the drawer and the cards live. **Both `SiteChrome` and `AutomataLayer`
+therefore re-run on `usePathname()`**: the ports re-bind to the new elements and the engine
+adopts the new rails. Removing either dependency ships a page whose menu opens once.
+
+Prefetch is off for every link, and the reason is measured rather than stylistic — see the
+header of `AppLink.tsx`.
+
 ## Not here yet
 
 The chat client (the drawer's body is an empty mount point) and the eval page. Motion is

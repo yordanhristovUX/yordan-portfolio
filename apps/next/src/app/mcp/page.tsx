@@ -21,6 +21,7 @@
    ============================================================ */
 import type { Metadata } from "next";
 
+import { AppLink } from "@/components/AppLink";
 import { Strip, Term } from "@/components/primitives";
 import { SiteBar } from "@/components/SiteBar";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -223,7 +224,7 @@ export default function Page() {
             <div className="link-grid">
               <a href="#install">Install it</a>
               <a href="#tools">See the tools</a>
-              <a href="/evals">Retrieval evaluation</a>
+              <AppLink href="/evals">Retrieval evaluation</AppLink>
               <a href={profile.contact.repo} target="_blank" rel="noopener">
                 Source ↗
               </a>
@@ -383,8 +384,8 @@ export default function Page() {
                   Both surfaces share the core, so a tool bug cannot exist in one and not the other.
                 </strong>{" "}
                 That equivalence is the argument for the boundary being where it is — and it is also
-                why the retrieval underneath got <a href="/evals">measured and published</a> rather
-                than asserted.
+                why the retrieval underneath got{" "}
+                <AppLink href="/evals">measured and published</AppLink> rather than asserted.
               </p>
             </div>
           </div>
