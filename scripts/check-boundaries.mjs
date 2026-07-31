@@ -57,6 +57,23 @@
      forms above are the ones that express *this module depends on that file*
      and that resolve from the text alone.
 
+   WHERE A REFERENCE POINTS IS NOT WHAT IT SAYS. `../../lib/x` is the repo's
+   lib/ when it is written in apps/next/foo.ts and apps/next/src/lib/x when it
+   is written in apps/next/src/app/page.tsx. Same eleven characters, two
+   different files, and no regex over the text can tell them apart: the
+   difference is the DEPTH of the file that wrote it, which the text does not
+   carry. That was harmless while every slice sat at the repo root and shared no
+   directory names with it. apps/next has its own scripts/, its own lib/ and its
+   own port of js/, so it stopped being harmless.
+
+   So every relative reference is resolved against its own file's directory into
+   a repo-relative path before any rule sees it, and a rule that anchors at `^`
+   then means the repo root and nothing else. Non-relative specifiers are left
+   alone — a bare name is a package (already skipped), and a plain
+   `content/dist/content.json` handed to readFileSync is already root-relative,
+   because the generator holding it runs from the root. The MESSAGE still quotes
+   what the author wrote, because that is the string they will search for.
+
    Comments are blanked before scanning (offsets preserved, so reported line
    numbers stay true). A path quoted in a comment is documentation, not a
    dependency — the same call scripts/check-css.mjs makes.
@@ -134,6 +151,41 @@ const RULES = [
     why: "the site consumes design-system/dist, css/, generated regions and api/ over HTTP — never a server slice's source",
   },
   {
+    /* apps/next — the second site. ARCHITECTURE.md ranks it with the site root,
+       one level below js/: a pure consumer, whose entire point is to prove "one
+       source, many surfaces". It stops proving that the instant it reaches a
+       source instead of an artefact, so the four inputs its charter names are
+       the four it gets — the design system as a PACKAGE (a bare specifier, so
+       the module form skips it before any rule runs), content/dist, evals/dist,
+       and /api/chat over HTTP. css/ and content/dist arrive by copy at build
+       time via its own scripts/sync-artifacts.mjs, which is why neither is here.
+
+       js/ is banned as CODE, and that is the interesting one. Its components
+       are PORTS of js/menu.js, js/fab.js, js/chat.js — copies carrying a
+       provenance header that names the source file and the commit it was taken
+       at. A copy you can re-take from upstream is a boundary you can audit; an
+       import is a second consumer of a file that was never written to have one,
+       and a browser-global-dependent one at that.
+
+       These patterns anchor at `^` where the older rules above do not, and the
+       anchor is load-bearing rather than tidy. References are resolved against
+       their own file first (see the header), so `^scripts/` is the repo's
+       generators while `./scripts/sync-artifacts.mjs` — this app's own, and a
+       file that will exist — resolves to apps/next/scripts/… and matches
+       nothing. Unanchored, it would ban the app from itself. */
+    slice: "apps/next",
+    banned: [
+      /^lib\//,
+      /^api\//,
+      /^js\//,
+      /^scripts\//,
+      /^evals\/(?!dist\/)/,
+      /^content\/[^"']*\.md/,
+      /^content\/(projects|experience)\//,
+    ],
+    why: "the second site consumes content/dist, evals/dist, css/ and the design-system package — never another slice's source",
+  },
+  {
     slice: "scripts",
     banned: [/(^|\/)lib\//, /(^|\/)api\//, /(^|\/)evals\//],
     why: "the generators run before those slices exist and must not depend on them",
@@ -148,8 +200,15 @@ const RULES = [
 ];
 
 /* Nothing outside design-system/ may reach into its internals: the site and every
-   other slice consume dist/ and css/, which are its published surface. */
-const DS_INTERNALS = [/design-system\/(tokens|components|stories|scripts|figma)\//];
+   other slice consume dist/ and css/, which are its published surface.
+
+   Anchored at `^`, and only able to be since references are resolved first. It
+   used to float, which meant it read any path with `design-system/tokens/` in
+   it as THE design system — and a consumer that keeps its React ports in
+   src/design-system/, which is what you would call that folder, would have been
+   told its own components/ directory was private to a package it does not
+   contain. The rule is about one directory at the repo root; now it says so. */
+const DS_INTERNALS = [/^design-system\/(tokens|components|stories|scripts|figma)\//];
 const DS_INTERNAL_ALLOWED = ["design-system", "ARCHITECTURE.md", "CLAUDE.md", "README.md", "content/CLAUDE.md"];
 
 /* ---------- the crossings the architecture is built on ----------
@@ -168,7 +227,45 @@ const CROSSINGS = [
   ["scripts/check-css.mjs", "js/automata.js", "the site script the DOM-budget rule measures"],
   ["js/answer-render.js", "content/dist/content.json", "the published corpus the client renders from"],
   ["evals/run.mjs", "content/dist/content.json", "the generated index the eval measures against"],
+
+  /* apps/next, pinned before the app exists. Section 3 pattern-tests these
+     against the rules and never touches the disk, so a pin can precede its
+     file — and pinning first is the point: the rule above and these four lines
+     are what the scaffold is built AGAINST, rather than what gets retrofitted
+     around whatever it happened to import. What is pinned is the class of
+     crossing, a consumer climbing out of apps/next onto a published surface.
+     The depths are counted from the paths in .claude/agents/next-app.md, not
+     observed; if the scaffold lands a file elsewhere, correct the spec here —
+     and the surface check below is what will tell you that you must. */
+  [
+    "apps/next/src/lib/content.ts",
+    "../../../../content/dist/content.json",
+    "the corpus, read at build time by the second site",
+  ],
+  [
+    "apps/next/scripts/sync-artifacts.mjs",
+    "../../../content/dist/content.json",
+    "the published corpus, copied into public/ for the client",
+  ],
+  ["apps/next/scripts/sync-artifacts.mjs", "../../../css/style.css", "the page stylesheets, synced not imported"],
+  [
+    "apps/next/src/app/evals/page.tsx",
+    "../../../../../evals/dist/page.json",
+    "the eval page data, one more serialization of the same numbers",
+  ],
 ];
+
+/* The surfaces a resolved crossing is allowed to land on. Every line above
+   reaches a generated artefact or a slice's published files; check-css.mjs
+   reading js/automata.js is the one that is neither dist/ nor css/, and it is
+   there because the DOM-budget rule measures the site script it governs.
+
+   This exists to catch a pin whose `../` count is wrong, which is the failure
+   mode of writing a pin before its file: a miscounted spec resolves somewhere
+   harmless, matches no ban, and sails through section 3 having asserted
+   nothing at all. A pin that proves nothing is worse than no pin, because it
+   reads like coverage. */
+const CROSSING_SURFACES = /^(content\/dist|design-system\/(dist|css)|evals\/dist|css|js)\//;
 
 /* The generated artefacts that make those crossings possible must exist, or the
    graph is a diagram rather than an architecture. */
@@ -180,8 +277,27 @@ const ARTEFACTS = [
   "content/dist/content.json",
 ];
 
-const SKIP_DIRS = new Set(["node_modules", ".git", "dist", "generated", "storybook-static", ".claude", "vendor"]);
-const CODE = /\.(mjs|js|cjs|ts)$/;
+/* `out` is `next build`'s static export — apps/next/out/, bundled JS whose
+   string literals are every path any dependency ever mentioned. `.next` and the
+   app's own node_modules are already covered, the first by the dot rule below,
+   the second by name. */
+const SKIP_DIRS = new Set([
+  "node_modules",
+  ".git",
+  "dist",
+  "out",
+  "generated",
+  "storybook-static",
+  ".claude",
+  "vendor",
+]);
+
+/* `.tsx` is here for apps/next, and it applies everywhere, including the
+   repo-wide design-system-internals walk in section 2. That is intended: a
+   React component reaching into design-system/components/ is the same
+   violation as a script doing it, and there is no reason the file extension
+   should decide. `.ts$` does not match `.tsx`, hence the separate alternative. */
+const CODE = /\.(mjs|js|cjs|ts|tsx)$/;
 
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
@@ -205,6 +321,9 @@ const blankComments = (s) =>
 
 const lineAt = (src, index) => src.slice(0, index).split("\n").length;
 const posix = (p) => p.split(sep).join("/");
+
+/** Where a reference written in `fileRel` actually points, repo-relative. */
+const resolveFrom = (fileRel, spec) => (spec.startsWith(".") ? posix(join(dirname(fileRel), spec)) : spec);
 
 /* ---------- the four reference forms ----------
    `module` specifiers go through Node's resolver, so a bare name is a package
@@ -261,7 +380,8 @@ for (const rule of RULES) {
     scanned++;
     const rel = posix(relative(root, file));
     for (const { spec, verb, line } of references(readFileSync(file, "utf8"))) {
-      if (rule.banned.some((banned) => banned.test(spec))) {
+      const target = resolveFrom(rel, spec);
+      if (rule.banned.some((banned) => banned.test(target))) {
         problems.push(`${rel}:${line}  ${verb} "${spec}" — ${rule.why}`);
       }
     }
@@ -273,7 +393,7 @@ for (const file of walk(root).filter((f) => CODE.test(f))) {
   const rel = posix(relative(root, file));
   if (DS_INTERNAL_ALLOWED.some((p) => rel === p || rel.startsWith(p + "/"))) continue;
   for (const { spec, verb, line } of references(readFileSync(file, "utf8"))) {
-    if (DS_INTERNALS.some((re) => re.test(spec))) {
+    if (DS_INTERNALS.some((re) => re.test(resolveFrom(rel, spec)))) {
       problems.push(
         `${rel}:${line}  ${verb} "${spec}" — the design system publishes dist/ and css/; its internals are private`
       );
@@ -283,14 +403,22 @@ for (const file of walk(root).filter((f) => CODE.test(f))) {
 
 /* ---------- 3. the rules still permit the real crossings ---------- */
 for (const [from, spec, what] of CROSSINGS) {
+  const target = resolveFrom(from, spec);
   const rule = RULES.filter((r) => from === r.slice || from.startsWith(r.slice + "/"))
     .sort((a, b) => b.slice.length - a.slice.length)[0];
   const hit = [
-    ...(rule?.banned ?? []).filter((b) => b.test(spec)).map(() => `the \`${rule.slice}\` rule`),
-    ...DS_INTERNALS.filter((b) => b.test(spec) && !DS_INTERNAL_ALLOWED.some((p) => from.startsWith(p))).map(
+    ...(rule?.banned ?? []).filter((b) => b.test(target)).map(() => `the \`${rule.slice}\` rule`),
+    ...DS_INTERNALS.filter((b) => b.test(target) && !DS_INTERNAL_ALLOWED.some((p) => from.startsWith(p))).map(
       () => "the design-system internals rule"
     ),
   ];
+  if (!CROSSING_SURFACES.test(target)) {
+    problems.push(
+      `the pinned crossing ${from} → "${spec}" resolves to "${target}", which is not a surface a crossing may land on. ` +
+        `A crossing reaches a published artefact; if this one does not, the \`../\` depth in the pin is wrong and the ` +
+        `pin has been asserting nothing. Fix the spec in scripts/check-boundaries.mjs.`
+    );
+  }
   if (hit.length) {
     problems.push(
       `${hit[0]} now bans "${spec}", which ${from} needs — ${what}. ` +

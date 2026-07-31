@@ -8,16 +8,24 @@
     "under test is the shipped gate rather than a copy of its regexes.",
     "",
     "WHY THIS IS JSON AND NOT A .mjs MODULE. The sources below contain deliberate",
-    "boundary violations. check-boundaries.mjs scans every .mjs/.js/.cjs/.ts file in",
-    "the repo and cannot tell a string containing `import \"../lib/x.js\"` from an",
-    "import — so holding these cases in a JavaScript file would fail the very gate",
-    "they exist to test. A .json file is not scanned. That is also the honest",
-    "shape: this is a table, and it reads as one.",
+    "boundary violations. check-boundaries.mjs scans every .mjs/.js/.cjs/.ts/.tsx",
+    "file in the repo and cannot tell a string containing `import \"../lib/x.js\"`",
+    "from an import — so holding these cases in a JavaScript file would fail the",
+    "very gate they exist to test. A .json file is not scanned. That is also the",
+    "honest shape: this is a table, and it reads as one.",
     "",
     "`expect.exit` 1 means the case must FAIL the gate; `expect.exit` 0 means it",
     "must PASS. The passing cases are not filler — a rule that bans css/ or",
     "design-system/ from js/, or that reads a path out of a comment, breaks the",
-    "pages and the css gate, and nothing else in the repo would notice."
+    "pages and the css gate, and nothing else in the repo would notice.",
+    "",
+    "READ THE apps/next PAIR TOGETHER. `import \"../../js/main.js\"` appears twice",
+    "below, byte for byte: once from apps/next/port.ts, where it escapes to the",
+    "repo's js/ and must fail, and once from apps/next/src/app/page.tsx, where it",
+    "lands on apps/next/src/js/ — the app's own port directory — and must pass.",
+    "The two cases differ only in which file holds the string. That is the whole",
+    "argument for resolving a reference before matching it, and neither case means",
+    "anything without the other."
   ],
 
   "base": {
@@ -30,7 +38,9 @@
     "lib/knowledge/tools.js": "export const content = {};\n",
     "api/chat.js": "export default async function handler() {}\n",
     "evals/run.mjs": "console.log(\"eval\");\n",
-    "scripts/build-content.mjs": "console.log(\"build\");\n"
+    "scripts/build-content.mjs": "console.log(\"build\");\n",
+    "apps/next/src/lib/content.ts": "import { readFileSync } from \"node:fs\";\nexport const corpus = JSON.parse(\n  readFileSync(new URL(\"../../../../content/dist/content.json\", import.meta.url), \"utf8\")\n);\n",
+    "apps/next/scripts/sync-artifacts.mjs": "import { readFileSync } from \"node:fs\";\nexport const sheet = readFileSync(new URL(\"../../../css/style.css\", import.meta.url), \"utf8\");\n"
   },
 
   "cases": [
@@ -145,10 +155,165 @@
       "expect": { "exit": 0 }
     },
     {
+      "name": "evals/ may read the generated index it measures against",
+      "form": "control — the pinned crossing evals/run.mjs → content/dist/content.json",
+      "files": {
+        "evals/run.mjs": "import { readFileSync } from \"node:fs\";\nimport { search } from \"../lib/knowledge/index.js\";\nconst corpus = JSON.parse(readFileSync(new URL(\"../content/dist/content.json\", import.meta.url), \"utf8\"));\nconsole.log(search, corpus);\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
       "name": "a bare package specifier is a dependency, not a slice",
       "form": "control — `import { z } from \"zod\"` must not read as a path",
       "files": {
         "api/chat.js": "import Anthropic from \"@anthropic-ai/sdk\";\nimport { readFileSync } from \"node:fs\";\nexport default async function handler() { return [Anthropic, readFileSync]; }\n"
+      },
+      "expect": { "exit": 0 }
+    },
+
+    {
+      "name": "apps/next: a .tsx component imports lib/knowledge",
+      "form": "static import from a .tsx — the extension the gate could not see until apps/next existed",
+      "files": {
+        "apps/next/src/app/page.tsx": "import { headers } from \"next/headers\";\nimport { search } from \"../../../../lib/knowledge/index.js\";\nexport default function Page() {\n  return search(headers().get(\"q\"));\n}\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "apps/next/src/app/page.tsx:2",
+        "contains": ["imports \"../../../../lib/knowledge/index.js\"", "never another slice's source"]
+      }
+    },
+    {
+      "name": "apps/next: the second site reads content/ source instead of the corpus",
+      "form": "fs read of a bare string path, from a .ts",
+      "files": {
+        "apps/next/src/lib/content.ts": "import { readFileSync } from \"node:fs\";\nexport const md = readFileSync(\"../../../../content/projects/green-street.md\", \"utf8\");\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "apps/next/src/lib/content.ts:2",
+        "contains": ["reads \"../../../../content/projects/green-street.md\"", "never another slice's source"]
+      }
+    },
+    {
+      "name": "apps/next: a port that imports its source instead of copying it",
+      "form": "static import — the failure mode the ports exist to avoid",
+      "files": {
+        "apps/next/port.ts": "/* copied from js/main.js @ <commit> — except it is not copied, it is imported */\nimport \"../../js/main.js\";\nexport const ported = true;\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "apps/next/port.ts:2",
+        "contains": ["imports \"../../js/main.js\"", "never another slice's source"]
+      }
+    },
+    {
+      "name": "apps/next: the second site imports a generator",
+      "form": "static import — the repo's scripts/, not the app's own",
+      "files": {
+        "apps/next/next.config.mjs": "import { build } from \"../../scripts/build-content.mjs\";\nexport default { output: \"export\", build };\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "apps/next/next.config.mjs:1",
+        "contains": ["imports \"../../scripts/build-content.mjs\"", "never another slice's source"]
+      }
+    },
+    {
+      "name": "apps/next: the eval page reads evals/ source rather than evals/dist",
+      "form": "fs read — the `evals/ except evals/dist/` lookahead, failing half",
+      "files": {
+        "apps/next/src/app/evals/page.tsx": "import { readFileSync } from \"node:fs\";\nconst src = readFileSync(\"../../../../../evals/run.mjs\", \"utf8\");\nexport default function Page() {\n  return src.length;\n}\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "apps/next/src/app/evals/page.tsx:2",
+        "contains": ["reads \"../../../../../evals/run.mjs\"", "never another slice's source"]
+      }
+    },
+    {
+      "name": "apps/next: the chat client imports the route instead of calling it over HTTP",
+      "form": "static import — api/ as code",
+      "files": {
+        "apps/next/src/lib/chat.ts": "import handler from \"../../../../api/chat.js\";\nexport const send = handler;\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "apps/next/src/lib/chat.ts:1",
+        "contains": ["imports \"../../../../api/chat.js\"", "never another slice's source"]
+      }
+    },
+    {
+      "name": "apps/next: design-system internals, reached from a .tsx",
+      "form": "dynamic import — proof the repo-wide internals walk now sees .tsx too",
+      "files": {
+        "apps/next/src/app/theme.tsx": "export async function Theme() {\n  const t = await import(\"../../../../design-system/tokens/tokens.json\");\n  return t.default;\n}\n"
+      },
+      "expect": {
+        "exit": 1,
+        "at": "apps/next/src/app/theme.tsx:2",
+        "contains": ["its internals are private"]
+      }
+    },
+
+    {
+      "name": "apps/next: the same `../../js/main.js` that fails from port.ts passes from src/app/",
+      "form": "control — the pair. Identical text, different depth; only resolution can tell them apart",
+      "files": {
+        "apps/next/src/js/automata.ts": "export const boot = () => {};\n",
+        "apps/next/src/lib/format.ts": "export const fmt = (s) => s;\n",
+        "apps/next/src/app/page.tsx": "/* ports and helpers, all inside apps/next — nothing here leaves the slice */\nimport \"../../js/main.js\";\nimport { boot } from \"../../js/automata.ts\";\nimport { fmt } from \"../../lib/format.ts\";\nexport default function Page() {\n  return [boot, fmt];\n}\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "apps/next: a src/design-system/ of its own is not the design system",
+      "form": "control — the internals rule names one directory at the repo root, not every directory spelled that way",
+      "files": {
+        "apps/next/src/design-system/tokens/theme.ts": "export const readToken = (n) => getComputedStyle(document.documentElement).getPropertyValue(n);\n",
+        "apps/next/src/design-system/components/Button.tsx": "import \"@yordan/design-system/components.css\";\nimport { readToken } from \"../tokens/theme.ts\";\nexport const Button = () => readToken(\"--colour-accent\");\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "apps/next: the static export is output, not source",
+      "form": "control — apps/next/out/ is what `next build` writes, and a bundle mentions every path it ever inlined",
+      "files": {
+        "apps/next/out/_next/static/chunks/main.js": "\"use strict\";\n(self.webpackChunk=self.webpackChunk||[]).push([[1],{42:(e,t,r)=>{const s=readFileSync(\"lib/knowledge/index.js\");const c=readFileSync(\"api/chat.js\");e.exports=[s,c]}}]);\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "apps/next: a self-reference into its own scripts/ is not a reference to the repo's",
+      "form": "control — `(^|/)scripts/` would ban the app from its own sync script",
+      "files": {
+        "apps/next/scripts/local.mjs": "export const local = true;\n",
+        "apps/next/next.config.mjs": "import { local } from \"./scripts/local.mjs\";\nexport default { output: \"export\", local };\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "apps/next: the published corpus and the eval page data are what it may read",
+      "form": "control — the gaps in the rule are the architecture; closing them would break the app",
+      "files": {
+        "apps/next/corpus.mjs": "import { readFileSync } from \"node:fs\";\nexport const corpus = JSON.parse(readFileSync(\"../../content/dist/content.json\", \"utf8\"));\n",
+        "apps/next/src/app/evals/page.tsx": "import { readFileSync } from \"node:fs\";\nconst data = JSON.parse(\n  readFileSync(new URL(\"../../../../../evals/dist/page.json\", import.meta.url), \"utf8\")\n);\nexport default function Page() {\n  return data;\n}\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "apps/next: the design system arrives as a package, and the package name contains \"design-system\"",
+      "form": "control — a bare specifier is resolved by Node, not by this gate, however it is spelled",
+      "files": {
+        "apps/next/src/app/layout.tsx": "import \"@yordan/design-system/tokens.css\";\nimport \"@yordan/design-system/components.css\";\nimport components from \"@yordan/design-system/components.json\";\nimport type { Metadata } from \"next\";\nimport React from \"react\";\nexport const metadata: Metadata = { title: String(components.length) };\nexport default function Layout({ children }) {\n  return React.createElement(\"html\", null, children);\n}\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "apps/next: the sync script copies css/ rather than importing it",
+      "form": "control — css/ is absent from the ban list on purpose; sync-artifacts.mjs is why",
+      "files": {
+        "apps/next/scripts/sync-artifacts.mjs": "import { readFileSync } from \"node:fs\";\nexport const sheets = [\n  readFileSync(new URL(\"../../../css/style.css\", import.meta.url), \"utf8\"),\n  readFileSync(new URL(\"../../../css/cv.css\", import.meta.url), \"utf8\"),\n  readFileSync(new URL(\"../../../content/dist/content.json\", import.meta.url), \"utf8\"),\n];\n"
       },
       "expect": { "exit": 0 }
     }
