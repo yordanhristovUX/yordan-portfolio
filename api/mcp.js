@@ -263,7 +263,17 @@ function buildServer() {
 /* Public and unauthenticated on purpose: the point of the endpoint is that a
    stranger can install it. `*` is therefore correct rather than lazy — there is
    no credential, no cookie and no per-caller state for an origin check to
-   protect. */
+   protect.
+
+   AND IT STAYS `*` NOW THAT api/chat.js HAS AN ALLOWLIST. A guard on one
+   surface is always a question about the other, so: chat.js gained
+   CHAT_ALLOWED_ORIGINS because it spends ANTHROPIC_API_KEY against a shared
+   daily budget, which makes "who may call this from a browser" a question with
+   a cost attached. This endpoint spends no inference — the caller's own client
+   pays — and every tool on it is read-only by construction, so the same
+   question has no cost behind it and an allowlist here would restrict the one
+   property the endpoint exists to have. Same reasoning, opposite answer; not
+   an oversight. */
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");

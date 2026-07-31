@@ -390,9 +390,147 @@ const betterOf = (first, retry) =>
 const appendWithinCap = (blocks, extra) => [...blocks.slice(0, MAX_BLOCKS - 1), extra];
 
 /* ============================================================
+   CORS — an allowlist, because this is the surface that spends
+
+   WHY IT EXISTS. A second site — a static Next app on its own domain — calls
+   THIS endpoint rather than proxying through one of its own. That was chosen
+   over a proxy for four reasons that all point the same way: one Redis token
+   budget covering both sites instead of two that cannot see each other, the
+   per-IP WAF rule still seeing the real caller's IP, no doubled
+   function-seconds for the same answer, and the Next app staying fully static.
+   The price is exactly one cross-origin surface, and this is it.
+
+   WHY IT IS NOT `*`, WHEN api/mcp.js IS. The charter rule is that a guard on
+   one surface is a question about the other, so here is the answer written
+   down where a reader will look for it. api/mcp.js already sends
+   `Access-Control-Allow-Origin: *` and should keep doing so: it is
+   unauthenticated on purpose, every tool on it is read-only by construction,
+   and it spends NO inference — the caller's own client pays. There is nothing
+   an origin check there would protect. This endpoint is the opposite on the
+   one axis that matters: it spends ANTHROPIC_API_KEY against a shared daily
+   budget, so "who may call this from a browser" is a real question here and a
+   vacuous one there. Same reasoning, two different answers, which is why
+   mcp.js gets no allowlist rather than being overlooked.
+
+   WHAT IT DOES NOT DO. No `Access-Control-Allow-Credentials`: there is no
+   cookie, no session and no per-caller state on this endpoint, so allowing
+   credentials would buy nothing and turn a reflected origin into ambient
+   authority. And an `Origin` that is not on the list is NOT rejected — see
+   the note at the branch itself.
+
+   FAILING CLOSED HERE MEANS BEING INVISIBLE. Unset env, or an origin not on
+   the list, produces no CORS headers at all — byte-identical to the day
+   before this landed, for same-origin traffic and for curl. A 403 that says
+   "you are not on the allowlist" would be a worse answer: it tells a stranger
+   an allowlist exists, and it changes the response a non-browser client gets
+   for a header a browser attaches on its own.
+   ============================================================ */
+const CORS_ALLOW_METHODS = "POST, OPTIONS";
+/* `content-type` is the one that MATTERS: application/json is not a
+   CORS-safelisted value, so without it the preflight fails and no message is
+   ever sent. `accept` is listed because an SSE client that sets
+   `accept: text/event-stream` is the expected shape of this caller and a
+   safelisted-header rule is a thin thing to bet a deploy on. */
+const CORS_ALLOW_HEADERS = "content-type, accept";
+const CORS_MAX_AGE = "86400";
+
+/* Read from the environment PER REQUEST, not at module load. A Vercel function
+   instance outlives a deploy's environment only in theory, but the property
+   that matters is testability: the allowlist is the input this file is being
+   tested on, and an import-time read makes every case need its own process.
+   The parse is memoised on the raw string, so the steady state is one string
+   comparison. */
+let allowlistSource = null;
+let allowlistParsed = [];
+function allowlist() {
+  const raw = process.env.CHAT_ALLOWED_ORIGINS ?? "";
+  if (raw !== allowlistSource) {
+    allowlistSource = raw;
+    /* `.filter(Boolean)` drops the empty entries that `""`, `","` and a
+       trailing comma all produce, so the list can never hold a member that
+       would match a falsy Origin. Belt and braces rather than load-bearing —
+       `allowedOrigin` rejects an empty header before it ever gets here, and a
+       mutation run confirmed no test can tell the two guards apart. It is kept
+       because they fail independently: this one is about what the environment
+       can say, that one about what a client can send. */
+    allowlistParsed = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  return allowlistParsed;
+}
+
+/**
+ * The allowlist entry this request's `Origin` matches, or null.
+ *
+ * EXACT STRING EQUALITY, scheme + host + port, with trim as the only
+ * normalisation — and it is applied to the CONFIGURED value, never to the
+ * header. Anything looser is an escape hatch: a substring test lets
+ * `https://evil-example.com` through a listed `https://example.com`, a prefix
+ * test lets `https://example.com.evil.test` through, and a host-only test
+ * ignores the scheme and the port.
+ *
+ * It returns the LIST ENTRY rather than the header, so the string that reaches
+ * the wire came out of configuration. They are equal by construction; the
+ * point is that "never echo an arbitrary Origin" is true by shape rather than
+ * by argument. (Node joins duplicate request headers with ", ", so two Origin
+ * headers arrive as one string that matches nothing — which is the right
+ * answer.)
+ */
+function allowedOrigin(req) {
+  const origin = req.headers?.origin;
+  if (typeof origin !== "string" || !origin) return null;
+  return allowlist().find((entry) => entry === origin) ?? null;
+}
+
+/* ============================================================
    Handler
    ============================================================ */
 export default async function handler(req, res) {
+  /* CORS goes first — in front of the method check and, crucially, in front of
+     checkBudget(). A preflight is a browser asking permission; it must never
+     cost a Redis round trip, and a preflight that could touch the token budget
+     would let a page bleed the daily cap without ever asking a question.
+
+     setHeader before writeHead is safe: Node merges the two and the SSE
+     writeHead below does not name these, so they survive onto the stream. */
+  const origin = allowedOrigin(req);
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    /* The response genuinely differs by Origin, so any shared cache must key on
+       it. /api/* is `Cache-Control: no-store` in vercel.json and the SSE and
+       error paths set it again themselves, so nothing should be caching these
+       anyway — Vary is here for the case where something between us and the
+       reader is less careful than we are. */
+    res.setHeader("Vary", "Origin");
+  }
+
+  if (req.method === "OPTIONS" && origin) {
+    res.statusCode = 204;
+    res.setHeader("Access-Control-Allow-Methods", CORS_ALLOW_METHODS);
+    res.setHeader("Access-Control-Allow-Headers", CORS_ALLOW_HEADERS);
+    res.setHeader("Access-Control-Max-Age", CORS_MAX_AGE);
+    res.end();
+    return;
+  }
+
+  /* THERE IS DELIBERATELY NO `else` HERE, and this is the decision worth
+     arguing about. A POST carrying an unlisted Origin is processed exactly as
+     it is today and simply gets no CORS headers back; it is not rejected
+     early, even though rejecting would save the budget.
+
+     Rejecting would mean treating `Origin` as authorisation. It is a hint a
+     browser attaches — spoofable by anything that is not a browser — so a
+     guard built on it stops nobody who matters while changing the answer for
+     every non-browser caller that happens to send one: curl -H, a server-side
+     fetch, evals/groundedness.mjs. That is a behaviour change bought with a
+     false sense of a gate, and a request-shaped gate is precisely the
+     limiter-shaped object api/CLAUDE.md rules out: cost is bounded by the WAF
+     rate limit at the edge and by the daily token budget, not by this file
+     guessing who a caller is.
+
+     Withholding the header IS the mechanism. The browser refuses to hand the
+     response to the page, which is the whole of what CORS promises; it never
+     promised to stop the request from being made. */
+
   if (req.method !== "POST") {
     res.statusCode = 405;
     res.setHeader("Allow", "POST");
