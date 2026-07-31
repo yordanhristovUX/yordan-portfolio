@@ -41,7 +41,7 @@ Metrics: 200+ Issue instances catalogued
 
 ### 04 · Domestina.bg — Cleaning Service Marketplace
 
-Multi-year, research-led UX. Front page, flows, onboarding, loyalty — bounce rate down 40%, retention up.
+Multi-year, research-led UX on Bulgaria's leading cleaning marketplace. Front page, flows, onboarding, loyalty: bounce rate down 40%, retention up.
 
 Tags: UX Researcher & Designer, UX Research, Data-driven, Marketplace, Multi-year
 Metrics: −40% reduction in front page bounce rate
