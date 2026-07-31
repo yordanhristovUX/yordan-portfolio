@@ -453,23 +453,29 @@
             case "notice":
               /* The gates, made visible. A dropped block or a stripped
                  citation is the system working, so it belongs in the
-                 trace next to the tool calls rather than being silent. */
-              trace({
-                tool: data.kind === "retry" ? "retry" : "validate",
-                input: {},
-                summary:
-                  data.kind === "retry"
-                    ? data.reason
-                    : [
-                        data.dropped?.length ? `${data.dropped.length} block(s) dropped` : null,
-                        data.strippedSources?.length
-                          ? `${data.strippedSources.length} citation(s) stripped — not returned by a tool this turn`
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · "),
-                ms: 0,
-              });
+                 trace next to the tool calls rather than being silent.
+                 `count: false` for the same reason as `meta`: a gate
+                 firing is not a tool call, and the count must stay a
+                 count of tool calls. */
+              trace(
+                {
+                  tool: data.kind === "retry" ? "retry" : "validate",
+                  input: {},
+                  summary:
+                    data.kind === "retry"
+                      ? data.reason
+                      : [
+                          data.dropped?.length ? `${data.dropped.length} block(s) dropped` : null,
+                          data.strippedSources?.length
+                            ? `${data.strippedSources.length} citation(s) stripped — not returned by a tool this turn`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · "),
+                  ms: 0,
+                },
+                { count: false }
+              );
               settle();
               break;
             case "error":
