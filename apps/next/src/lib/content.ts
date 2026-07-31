@@ -134,6 +134,23 @@ export function skillRows(surface: "site" | "cv"): SkillGroupSurface[] {
   );
 }
 
+/* ---------- the assistant's address ----------
+   The chat API is a function on the VANILLA deployment, and it stays there
+   whatever origin this app is served from — the same reasoning the MCP page
+   uses for its endpoint. So the default is the corpus's own site, not
+   `siteUrl`: pointing at this app's origin would be pointing at a static
+   export with no /api anything.
+
+   Cross-origin by construction, therefore. api/chat.js reflects an allowed
+   Origin from CHAT_ALLOWED_ORIGINS and sends no `Allow-Credentials`, which is
+   why this client sends no credentials either.
+
+   `NEXT_PUBLIC_CHAT_ENDPOINT` overrides it, and a same-origin development run
+   NEEDS that: `next dev` on localhost has no /api/chat of its own, so point it
+   at a deployment (or at a mock) rather than at itself. */
+export const chatEndpoint: string =
+  process.env.NEXT_PUBLIC_CHAT_ENDPOINT || `${profile.contact.site.replace(/\/$/, "")}/api/chat`;
+
 /* ---------- the site's own address ----------
    The canonical origin is the owner's, and it is IN the corpus — so the second
    surface does not get to invent one, and a deploy that lives somewhere else

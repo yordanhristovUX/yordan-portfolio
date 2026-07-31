@@ -171,6 +171,24 @@ export interface ExperienceEntry {
   bullets?: string[];
 }
 
+/* A retrieval chunk. The pages never render one; the CITATION LIST does — a
+   `sources` block names chunk ids and the client resolves each to the passage
+   it came from. `tf` and `len` are the BM25 index's and are deliberately not
+   typed here: this app ranks nothing. */
+export interface Chunk {
+  id: string;
+  entity: string;
+  kind: string;
+  heading?: string;
+  text: string;
+  cite?: {
+    page?: string;
+    anchor?: string;
+    project?: string;
+    label?: string;
+  };
+}
+
 export interface Corpus {
   version: number;
   system: SystemCounts;
@@ -181,4 +199,5 @@ export interface Corpus {
   facts: Fact[];
   projects: Project[];
   experience: ExperienceEntry[];
+  chunks: Chunk[];
 }

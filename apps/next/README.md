@@ -45,7 +45,14 @@ it, followed by a re-sync — never an edit here.
 | Variable | Default | What it does |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | `profile.contact.site` from the corpus | canonical and `og:url` for every page |
-| `NEXT_PUBLIC_CHAT_ENDPOINT` | — | where the chat client will POST; it lands with the chat run |
+| `NEXT_PUBLIC_CHAT_ENDPOINT` | `profile.contact.site` + `/api/chat` | where the chat client POSTs |
+
+The chat endpoint defaults to the **vanilla deployment's** origin, not to `siteUrl`: the API
+is a function over there and stays there whatever origin this app is served from. That makes
+every request cross-origin, which is what `CHAT_ALLOWED_ORIGINS` on the API exists for.
+
+**A same-origin development run needs the variable set.** `next dev` on localhost has no
+`/api/chat` of its own, so point it at a deployment that allows your origin — or at a mock.
 
 ## Where the words come from
 
@@ -75,6 +82,20 @@ one of them returns immediately when its markup is absent, which is how `/cv` ge
 without the fab. `AutomataLayer` owns the engine's lifetime and re-scans on a pathname
 change. `window.automataStats()` is the engine's own cost report and the handle a browser
 parity sweep can compare against the vanilla page.
+
+## The assistant
+
+`src/lib/chat/` and `src/components/chat/` are the port of `js/chat.js` and
+`js/answer-render.js`: `sse.ts` (framing), `corpus.ts` (the published corpus, indexed in the
+browser), `useChat.ts` (the conversation), `blocks.tsx` (answer blocks → design-system
+markup) and `ChatClient.tsx` (composer, thread, trace). The four invariants are documented
+where they are implemented — verbatim replay, the 45s deadline, the block-vs-corpus queue,
+and "what is on screen decides the wording".
+
+Two rules are worth repeating here because they are the whole point of the feature:
+**`prose` is the only block carrying model-authored text**, and it is rendered as text; and
+**an id that does not resolve renders nothing** — not a placeholder, not a broken link, and
+not counted toward "did anything survive".
 
 ## Navigation
 
