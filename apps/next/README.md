@@ -34,7 +34,8 @@ deletes the copies. `next.config.mjs` calls the sync at config load, so a bare
 | the corpus, again | copied to `public/corpus/` for the browser | `scripts/sync-artifacts.mjs` |
 | `css/{style,cv,mcp,evals}.css` | copied to `src/styles/site/` | same |
 | `css/fonts/*`, the plates, the avatar | copied to `public/` | same |
-| the chat API | `fetch` over HTTP, `NEXT_PUBLIC_CHAT_ENDPOINT` | not built yet |
+| the chat API | `fetch` over HTTP, `NEXT_PUBLIC_CHAT_ENDPOINT` | `src/lib/chat/useChat.ts` |
+| the eval page's numbers | a build-time import of `evals/dist/page.json` | `src/app/evals/page.tsx` |
 
 Everything under `public/fonts/`, `public/corpus/`, `public/assets/` and `src/styles/site/`
 is a **copy** and is gitignored. If one of them is wrong, the fix is in the slice that owns
@@ -61,7 +62,8 @@ corpus. Everything *around* those regions — the page titles, the bar, the sect
 the contact block, the footer — is authored in `content/profile.md` and never reaches
 `content/dist/content.json`, so it is reproduced verbatim in `src/lib/vanilla-copy.ts`,
 which names its source file and commit and explains the upstream fix that would delete it.
-`src/app/mcp/page.tsx` does the same for `mcp.html`, which is hand-authored end to end.
+`src/app/mcp/page.tsx` does the same for `mcp.html`, which is hand-authored end to end, and
+`src/app/evals/page.tsx` for the skeleton `evals.html` carries around its generated regions.
 
 No sentence in this app was written for this app.
 
@@ -97,6 +99,23 @@ Two rules are worth repeating here because they are the whole point of the featu
 **an id that does not resolve renders nothing** — not a placeholder, not a broken link, and
 not counted toward "did anything survive".
 
+## The eval page
+
+`/evals` renders from `evals/dist/page.json` — the structured serialization `evals/run.mjs`
+writes beside `results.json` and beside the HTML regions of `evals.html`, from one run.
+`src/lib/evals.ts` types it, `src/components/evals-regions.tsx` renders the five regions and
+`src/app/evals/page.tsx` holds the pinned import and asserts the file's shape.
+
+**Not one figure is typed here, and none is derived either** — a rate, a half-width, a
+p-value or a sample size this app computed would be a second opinion about a measurement. n
+comes from `summary.questions`, the interval method from `summary.confidence`, each `half`
+from beside the value it belongs to. Every string under `regions` is HTML the run already
+escaped, so it is rendered as markup and never escaped again; `region.html` is typed and
+never read, because it is the *proof handle*, not the source. What proves the two renderers
+agree is a byte diff of the export against `evals.html`'s regions: all five appear verbatim
+once the generator's line breaks and indent are removed, and inside them the rendered side
+needs no normalisation at all.
+
 ## Navigation
 
 Internal routes go through `next/link` via `src/components/AppLink.tsx`; anchors, `mailto:`,
@@ -111,9 +130,28 @@ adopts the new rails. Removing either dependency ships a page whose menu opens o
 Prefetch is off for every link, and the reason is measured rather than stylistic — see the
 header of `AppLink.tsx`.
 
-## Not here yet
+## What is still absent
 
-The chat client (the drawer's body is an empty mount point) and the eval page. Motion is
-deliberately out: no GSAP here, and `[data-rise]`/`[data-reveal]` are hidden only under the
-`js` class that only a confirmed GSAP load adds — so this app renders the static page that
-contract promises.
+Every page and every behaviour the vanilla site has is here: `/`, `/cv`, `/work/<id>`,
+`/mcp`, `/evals`, the chrome, and the assistant in the drawer. What remains is three things,
+and none of them is a half-finished feature.
+
+**Motion, deliberately.** No GSAP here. On the vanilla site `[data-rise]`/`[data-reveal]` are
+hidden only under the `js` class that a *confirmed* GSAP load adds, so a load failure shows
+the static page rather than a blank one. This app is that same degradation contract with the
+load never attempted: it renders the page GSAP's absence is supposed to produce. The motion
+hooks themselves — `data-rise`, `data-reveal`, `data-lines` — are markup and are kept, so a
+port later has somewhere to land without a single element moving.
+
+**The Tier 2 cross-origin verification, pending a deploy.** The chat client is built and the
+API's CORS branch is tested locally by `test/chat-cors.test.js`, but no Vercel project serves
+this app yet, so the checklist in [`docs/DEPLOY-RUNBOOK.md`](../../docs/DEPLOY-RUNBOOK.md)
+§4 — preflight reflected byte for byte, no credentials, no budget spent before the CORS
+branch — has never been run against a real second origin. Until it has, "the assistant works
+cross-origin" is a local assertion, not an observation.
+
+**The JSON-LD block.** `content/dist/site.jsonld` is emitted into the `content:meta` region
+of `index.html` and `cv.html`, and this app emits none, so its structured data is thinner
+than the vanilla site's. It is a published artefact and reading it would be legal, but it is
+a crossing this app does not make today — one to pin at a phase boundary rather than add
+quietly.
