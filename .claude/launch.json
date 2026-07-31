@@ -13,6 +13,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "serve", "apps/next/out", "-l", "4100", "--no-clipboard"],
       "port": 4100
+    },
+    {
+      "name": "storybook",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "design-system", "run", "storybook"],
+      "port": 6006
     }
   ]
 }
