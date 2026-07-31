@@ -22,8 +22,9 @@
    ============================================================ */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { globSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { testFiles } from "./run.mjs";
 
 const root = new URL("../", import.meta.url);
 const pkg = JSON.parse(readFileSync(new URL("package.json", root), "utf8"));
@@ -141,17 +142,98 @@ test("every CI gate carries a name", () => {
   assert.deepEqual(unnamed, [], `CI steps without a name: ${unnamed.join(", ")}`);
 });
 
-test("the test script takes no path argument", () => {
-  /* `node --test test/` exits 1 on Node 24 — it resolves the argument as a
-     test named `test` rather than as a directory — while passing on 20 and 22.
-     Bare `node --test` uses the built-in discovery pattern, which already
-     includes everything under test/, and behaves the same on all three.
-     Pinned because the failure looks like a broken test, not a broken flag. */
+test("the test script runs the scoped runner, not bare discovery", () => {
+  /* This line has now been wrong in both directions, so both are written down.
+
+     It used to be a bare `node --test`, because `node --test test/` exits 1 on
+     Node 24 — 24 reads a positional as a glob, `test/` matches no file, and it
+     tries to execute a module named `test`, running ZERO tests — while passing
+     on 20 and 22. That much is still true and still measured.
+
+     What made bare wrong is that "the built-in discovery pattern already
+     includes everything under test/" was only half of it: the pattern is not
+     rooted at test/. `**​/test-*.?(c|m)js` matches anywhere in the repo, so
+     design-system/scripts/test-storybook.mjs joined the suite the day it was
+     written and `npm run check` started building Storybook and launching
+     Chromium — inside the gate whose entire promise is that it does neither.
+
+     A glob argument would fix the scope on 24 and break Node 20, which is what
+     CI pins. An explicit list of files is the one form every version accepts,
+     so test/run.mjs reads the directory and passes the files by name. */
   assert.equal(
     pkg.scripts.test,
-    "node --test",
-    "keep the test script argument-free — see the comment in test/ci.test.js"
+    "node test/run.mjs",
+    "keep `npm test` on the scoped runner — see the comment in test/ci.test.js"
   );
+});
+
+test("the runner runs every test file, and only test files", () => {
+  /* ARTEFACT COMPARISON. The runner builds its list by reading the directory;
+     this rebuilds it from the directory independently and demands exact
+     agreement. A test file that stops being run is the quietest possible
+     regression — the suite still passes, with less behind it. */
+  const dir = fileURLToPath(new URL("./", import.meta.url));
+  const onDisk = readdirSync(dir, { withFileTypes: true, recursive: true })
+    .filter((e) => e.isFile() && e.name.endsWith(".test.js"))
+    .map((e) => `test/${e.name}`)
+    .sort();
+
+  assert.ok(onDisk.length >= 11, `found only ${onDisk.length} test files — the directory shape changed`);
+  assert.deepEqual(testFiles().sort(), onDisk, "test/run.mjs and the directory disagree about what the suite is");
+
+  /* And this file is in it — the cheapest possible proof the list is not just
+     internally consistent but actually the thing being executed right now. */
+  assert.ok(onDisk.includes("test/ci.test.js"), "sanity: the running file should be in the list");
+});
+
+/* Node's documented default discovery patterns — what a bare `node --test`
+   would sweep up. None of them is rooted anywhere; every one is `**​/`. */
+const NODE_DEFAULT_PATTERNS = [
+  "**/*.test.?(c|m)js",
+  "**/*-test.?(c|m)js",
+  "**/*_test.?(c|m)js",
+  "**/test-*.?(c|m)js",
+  "**/test.?(c|m)js",
+  "**/test/**/*.?(c|m)js",
+];
+
+/* Files outside test/ that match a default pattern by name but are NOT tests.
+   Each one is a live trip-hazard: `npm test` is safe because the runner passes
+   explicit paths, but a bare `node --test` — the documented Node idiom, and
+   what a contributor types without thinking — still executes these.
+   The fix is a rename in the owning slice, not another entry here. */
+const NOT_A_TEST_DESPITE_THE_NAME = {
+  "design-system/scripts/test-storybook.mjs":
+    "the Storybook a11y/visual harness. Matches `**/test-*.mjs`, builds storybook-static and drives Chromium. " +
+    "Owned by design-system; wants renaming to something outside the pattern (storybook-gates.mjs), after which this entry goes.",
+};
+
+test("nothing outside test/ can rejoin the suite by being named like one", () => {
+  /* The guard for the next one. A file called `test-anything.mjs`, or any
+     `.mjs` under a directory called `test/` in another slice, is one bare
+     `node --test` away from running inside a gate that promises to be offline.
+     Known cases are listed above with an owner; a new one fails here. */
+  const root = fileURLToPath(new URL("../", import.meta.url));
+  const found = new Set();
+  for (const pattern of NODE_DEFAULT_PATTERNS) {
+    for (const hit of globSync(pattern, { cwd: root, exclude: (n) => n === "node_modules" })) {
+      const rel = hit.split("\\").join("/");
+      if (!rel.startsWith("test/") && !rel.includes("node_modules/")) found.add(rel);
+    }
+  }
+
+  const unexplained = [...found].filter((f) => !NOT_A_TEST_DESPITE_THE_NAME[f]).sort();
+  assert.deepEqual(
+    unexplained,
+    [],
+    `these match Node's default test discovery but are not tests: ${unexplained.join(", ")}.\n` +
+      `  A bare \`node --test\` executes them. Rename the file out of the pattern, or — if it really is a ` +
+      `test — move it under test/ so the runner picks it up.`
+  );
+
+  /* The other direction, so an entry cannot outlive the file it excuses. */
+  const stale = Object.keys(NOT_A_TEST_DESPITE_THE_NAME).filter((f) => !found.has(f));
+  assert.deepEqual(stale, [], `NOT_A_TEST_DESPITE_THE_NAME still lists ${stale.join(", ")}, which no longer matches — delete the entry.`);
 });
 
 test("every script the docs and the scaffolds invoke exists", () => {
