@@ -1,7 +1,15 @@
 # Blueprint portfolio
 
-Static site (no build step) + its design system. Two pages: `index.html` (portfolio) and
-`cv.html` (print-native CV, served at `/cv`).
+Static site (no build step) + its design system. Four hand-skeletoned pages —
+`index.html` (portfolio), `cv.html` (print-native CV, served at `/cv`), `mcp.html` and
+`evals.html` — plus five `work/<id>.html` case studies that are generated **whole** from
+`content/`.
+
+There is also a **second front end**, `apps/next/` — the same nine pages in Next.js + React
++ TypeScript, built from the same published artefacts and deployed as a separate Vercel
+project. It is a consumer at the bottom of the graph and owns nothing; read
+`ARCHITECTURE.md`'s "The second site" section before touching it, and its charter is
+`.claude/agents/next-app.md`.
 
 Run it locally with `npx serve .` — or the `site` config in `.claude/launch.json`.
 
@@ -38,13 +46,20 @@ slice you actually need.
 - GSAP is vendored in `js/vendor/gsap/` — do not swap it back to a CDN, and keep the
   `HAS_GSAP` guard in `js/main.js`: it is what stops a load failure from leaving the page
   blank. Details in `js/vendor/gsap/README.md`.
-- **Copy is generated too.** Every word on both pages is authored in `content/` and compiled
-  by `scripts/build-content.mjs` into `js/case-studies.js`, the `<!-- content:… -->` regions
-  of `index.html`/`cv.html`, `content/dist/`, and `llms.txt`. Never hand-edit those; edit
+- **Copy is generated too.** Every word on the pages is authored in `content/` and compiled
+  by `scripts/build-content.mjs` into the `<!-- content:… -->` regions of
+  `index.html`/`cv.html`, the five `work/<id>.html` pages, `content/dist/`, and `llms.txt`
+  — ten files, and `--check` byte-compares all of them. Never hand-edit those; edit
   `content/` and re-run. Copy is moved verbatim, never rewritten — see `content/CLAUDE.md`.
   Run order is `design-system/scripts/build.mjs` (it emits the counts) then
-  `scripts/build-content.mjs` (it interpolates them).
+  `scripts/build-content.mjs` (it interpolates them). (`js/case-studies.js` used to be on
+  that list and is **gone** — the modal it fed was retired when the case studies got real
+  pages.)
 - Figma sync is one-way repo → Figma: `design-system/figma/push-guide.md`.
-- Storybook: `npm run storybook` in `design-system/` (port 6006).
+- Storybook: `npm run storybook` in `design-system/` (port 6006). Two browser gates —
+  `npm run test:a11y` and `npm run test:visual` — live there too and deliberately do **not**
+  join the root `npm run check`, which stays offline and browser-free.
+- Deploying anything (env vars, the second Vercel project, response headers) is
+  `docs/DEPLOY-RUNBOOK.md`. Nothing about it is committable, which is why it is written down.
 - `generated/` is a read-only reference (the complex design system this one simplifies) —
   never edit or build it.

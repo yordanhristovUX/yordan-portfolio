@@ -308,6 +308,128 @@ Two related notes for anyone mutation-testing a gate here:
   doc-arithmetic set, one did the same. A mutation suite where everything behaves first time
   probably is not testing much.
 
+---
+
+## The contract-gaps + second-site programme — what got in the way
+
+Eight phases, one session. The shape was the same as before: slice-scoped agents, barriers
+between phases, `check-boundaries.mjs` doubling as the check that nobody reached out of their
+lane. What is recorded here is only the part a fresh session would otherwise rediscover.
+
+### A gate that had quietly grown a browser
+
+`npm test` had been building Storybook and downloading Chromium for weeks, inside a gate
+whose whole contract is *offline, browser-free, a few seconds*. Nobody added it. Node's
+default test discovery includes `**/test-*.?(c|m)js`, and **that glob is not rooted at
+`test/`** — it matches any depth, anywhere in the repo — so
+`design-system/scripts/test-storybook.mjs` joined the suite on the day it was created, purely
+because of its name.
+
+The tell was not a failure. It was that `check` had got slow: 46s where it used to be
+seconds. A gate getting slower is a symptom nobody triages.
+
+Three things are worth carrying forward:
+
+- **The obvious fix is wrong.** `node --test test/` works on Node 20 and 22 and on **24 runs
+  zero tests and exits 1** — 24 reads a positional as a glob, `test/` matches no file, and the
+  runner tries to execute a module called `test`. The glob form `'test/**/*.test.js'` is the
+  mirror image: fine on 24, unavailable before 21, and CI pins 20. `node --test <file> <file>`
+  is the only portable form, which is why there is a `test/run.mjs` at all.
+- **A runner that finds nothing must never exit 0.** Every glob form that matched no file
+  reported success. That is a green suite that ran zero tests — strictly worse than a red one.
+  `test/run.mjs` refuses to report success on an empty list, and `test/ci.test.js` rebuilds
+  the list from the directory and demands agreement.
+- **Fence it *and* remove it.** The runner made `npm test` safe; a bare `node --test` typed at
+  the repo root was still broken, and that is what a contributor actually types. The harness
+  was renamed (`test-storybook.mjs` → `storybook-gates.mjs`) so nothing in the repo answers to
+  the pattern any more.
+
+`check` went 46s → 6.4s; the suite 39.4s → 3.0s.
+
+### An allowlist entry outliving the file it excused
+
+`test/ci.test.js` carried the Storybook harness by name, in a map of "not a test despite the
+name". When the file was renamed, the entry should have become dead weight — instead the
+**staleness half** of that assertion went red on the next run and named the entry. That is
+the property to copy: an exemption that cannot notice its own subject disappearing is an
+exemption that outlives its reason forever.
+
+### The router changed what the ports were standing on
+
+`apps/next`'s internal links became `next/link`, which is as close to a no-op as a change
+gets: `<Link>` renders an `<a>`, so every design-system class and attribute is the string it
+was, and the only difference anywhere in the export was attribute *order* on hash-only links.
+
+The substance was somewhere else entirely. **A client transition keeps the root layout and
+replaces `{children}`** — which is where the bar, the menu, the drawer, the fab and the cards
+live. Every element the ported listeners had bound to is detached afterwards. Without
+re-initialising on `usePathname()`, the commit ships a page whose menu opens exactly once and
+whose cards peek only until you visit a case study. Nothing in the diff looks like that; it
+was found by driving the static export in Chromium and checking that a window marker survived
+a round trip.
+
+**The general form:** a change that is provably markup-neutral can still be lifecycle-fatal.
+Ask what the change does to *element identity*, not just to output.
+
+### `.vercelignore` removes a file from the UPLOAD, and that cuts both ways
+
+The second site's source tree was one deploy from being public. The vanilla project has
+`outputDirectory: "."` and `buildCommand: ""` — **whatever is uploaded is served, verbatim,
+with no build step in between to leave anything behind** — so `apps/next/src/**`,
+`next.config.mjs`, `tsconfig.json` and the lockfile would have been fetchable at
+`/apps/next/…`. A CLI deploy would have added `out/` on top: a stale duplicate of the entire
+second site on the wrong domain. (A Git deploy would not, because `out/` is gitignored, which
+is its own reason not to leave the two deploy paths differing.)
+
+Adding `/apps/` fixed it and created the risk that is now the second project's first
+configuration step. That project needs *"Include files outside the Root Directory"* ON — three
+of its four inputs live above `apps/next` — and with that setting on, the build context is the
+whole repository, so this same file is **plausibly read by that project's upload as well**, in
+which case `/apps/` excludes that project's own source from its own build.
+
+It cannot be patched from the root file: **gitignore semantics do not allow re-including a
+path whose parent directory is excluded**, so a trailing `!/apps/next/` does nothing. The
+escape hatch that looks available is not. Confidence in the risk is medium-high and it is
+**untested**, because testing it requires creating the project — so the runbook makes a
+preview deployment the mandatory first step and says exactly what the failure looks like.
+
+The rule underneath, which that file already states about `content/dist/vectors.json` and
+about `/test/` and `/scripts/`: **before excluding anything, check whether a function, a page
+or a script reads it at runtime** — `.vercelignore` removes it from the upload, and
+`functions.includeFiles` cannot bring back a file that was never uploaded.
+
+### Pin ahead of the scaffold, and check the pins with a second mechanism
+
+`apps/next`'s slice rule and its first crossings were written **before the app had a file** —
+"a rule written after the first import is a rule negotiated with the code it is supposed to
+govern". That worked, and it has one failure mode: a pin whose `../` count is wrong resolves
+somewhere harmless, matches no ban, and **passes while asserting nothing**. A pin that proves
+nothing is worse than no pin, because it reads like coverage. `CROSSING_SURFACES` — every
+resolved crossing must land on a published surface — is what catches it, and it caught two
+miscounted fixture cases while it was being written.
+
+The other half arrived a phase later, and the gap is the interesting part: section 3 proved
+every pin was still *legal*, and **nothing proved every crossing was still pinned**. A sixth
+stylesheet could have arrived into silence. The census test now reads
+`sync-artifacts.mjs`, resolves every literal the way the gate would, and requires each one
+that leaves the app to appear in `CROSSINGS`.
+
+### Two documents that were false for exactly as long as nobody re-read them
+
+- **`ARCHITECTURE.md`'s "honest gap" paragraph** described a hole that `d67a2bf` had closed —
+  four commits of the repo's most-read document telling readers that a hand-edit to
+  `dist/tokens.css` would be silently overwritten, when the drift gate had started catching
+  it. The document was *right when written*, which is the whole failure mode: prose describing
+  a gap does not know when the gap is filled.
+- **`README.md` published `yordan-design-system.vercel.app` as "Storybook".** It serves this
+  portfolio — checked from outside: `/cv` resolves there and `/index.json` 404s. It is a second
+  domain on the vanilla project. Nobody mistyped anything; a link was written for a plan and
+  the plan did not happen, and a URL that returns 200 never looks stale.
+
+**The instrument lesson: `curl` the claim.** Both of these were cheap to check and neither had
+ever been checked, because both *look* verified — one sits beside a gate, the other returns
+200.
+
 ## The one structural lesson
 
 Four audits verified that the documentation matched the code. It did. **Nothing verified that the

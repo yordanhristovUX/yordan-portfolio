@@ -3,7 +3,8 @@
 ## What this owns
 
 **The evidence for the retrieval decision.** A golden question set, six retriever arms
-measured on it, a committed baseline, and the numbers published on `/evals`. The plan
+measured on it, a committed baseline, and the numbers published on `/evals` — on both
+surfaces, from one run's artefacts. The plan
 recommends structured retrieval over a vector database; this directory is what makes that a
 finding rather than an assertion, and it is explicitly allowed to overturn it. It has
 overturned it.
@@ -14,10 +15,12 @@ overturned it.
 model, so `run.mjs` is free, offline, deterministic and runs in CI on every commit — which
 is the only reason an eval suite survives a year.
 
-Answer-level metrics need a live model. `evals/groundedness.mjs` is that measurement and it
-is quarantined rather than absent: manual, billed, **refuses to run when `$CI` is set**, and
-imported by nothing. See "The one file that calls a model" below. Everything else here holds
-the original rule.
+Two questions here do need a live model, and both are quarantined rather than absent:
+manual, billed, **refuse to run when `$CI` is set**, imported by nothing.
+`evals/groundedness.mjs` asks whether the assistant's prose follows from what it cited;
+`evals/generation.mjs` asks whether a model handed the design system's published contract can
+produce markup that obeys it. See "The two files that call a model" below. Everything else
+here holds the original rule.
 
 ## What this consumes
 
@@ -37,8 +40,20 @@ the original rule.
 | stdout | the comparison table, the paired tests, the per-class and per-shape tables |
 | `evals/results.json` | the machine-readable run, including every interval and every paired test |
 | the `<!-- content:evals-* -->` regions of `evals.html` | the published page — **five** of them |
+| `evals/dist/page.json` | the same five regions **as data**, for the second renderer |
 | `evals/vectors.json` | the embeddings cache, rebuilt only with `VOYAGE_API_KEY` |
 | `evals/groundedness.json` | the answer-level measurement, written only by a manual run |
+| `evals/generation.json` | the design-system generation measurement, same — and gated by nothing |
+
+`evals/dist/page.json` exists because `apps/next/` needed `/evals` and the alternative was
+for it to parse `evals.html`. A page that scrapes another page's markup for its numbers is
+one whitespace change away from publishing something the runner never produced, and it would
+put a second copy of the placeholder substitution in a slice that is forbidden to import this
+one. So each region builder returns a **model** and renders its own markup from that model;
+`page.json` carries the models the HTML was rendered from, in the same pass, so there is no
+path by which the two can disagree. `apps/next/src/app/evals/page.tsx` types the file and
+asserts its shape, so a region that changes kind fails that build naming itself rather than
+rendering an empty table under a heading that promises numbers.
 
 `evals.html` is therefore **partly generated**, on the same contract as `index.html`: the
 skeleton is hand-authored, five regions are written by `run.mjs`, and `--check` fails if any
@@ -191,8 +206,9 @@ question vectors.
 
 **A count cannot see a reword, and it missed one.** A corpus rebuild that renamed an entity
 and reworded its chunks left 76 cached vectors against 76 live chunks; the arm scored against
-text that no longer existed and every gate stayed green. `--check` now covers the cache and
-reports three artefacts, not two.
+text that no longer existed and every gate stayed green. `--check` now covers the cache too,
+and reports **four** artefacts: `results.json`, `dist/page.json`, `evals.html` and
+`vectors.json` at the corpus hash it was built for.
 
 > **The separator in the corpus digest is a NUL byte, written as `"\u0000"`.** A literal one
 > renders as a space in every editor, in `git diff` and in a plain file read. Reimplementing
@@ -202,9 +218,11 @@ reports three artefacts, not two.
 > `run.mjs`'s preflight **reconciles** its own digest against the shipped one — the same
 > treatment `verifyTokeniser` gives the tokeniser.
 
-## The one file that calls a model
+## The two files that call a model
 
-`evals/groundedness.mjs` answers the question `hit@k` cannot: **does the prose follow from
+### `evals/groundedness.mjs`
+
+It answers the question `hit@k` cannot: **does the prose follow from
 the chunks it cites?** A fabricated claim wearing a validated citation passes all three
 gates, and nothing measured how often that happens.
 
@@ -237,6 +255,54 @@ node --env-file=.env evals/groundedness.mjs       # billed, manual
 node evals/groundedness.mjs --dry-run             # print the plan, spend nothing
 node evals/groundedness.mjs --from turns.jsonl    # re-judge a capture, no chat spend
 ```
+
+### `evals/generation.mjs`
+
+It answers the question the other two do not touch: **can a model handed this design
+system's published contract build markup that obeys it?** `get_design_system` and
+`get_component` publish that contract and `api/mcp.js` serves it to somebody else's agent —
+the repo's argument that a design system can be *consumed* by a model rather than only read
+by a person. An argument with no measurement behind it is a claim.
+
+- Ten fixed briefs, driven through the **shipped** `TOOLS` array, and **no LLM judge
+  anywhere.** That is the design, not a shortcut: "does this sentence follow from that
+  passage" has no closed form and needs a judge; "is this class published" does not. All four
+  gates — published classes, published custom properties, no raw colour/font/spacing literal,
+  and a per-brief accessibility table — are set-membership tests or regexes, so two runs can
+  disagree about the markup and cannot disagree about whether a fragment passed.
+- Gate 4's table is fixed and hand-derived rather than computed, because `a11y` in
+  `components.json` is one authored English sentence per component. Deriving a check from it
+  would mean parsing prose, which is the judge this file exists without.
+- It reads `design-system/dist/components.json` and `tokens.flat.json` **directly**. The
+  `evals` rule bans the design system's *source* directories and says nothing about `dist/`,
+  which is the published artefact every consumer is meant to read — so both reads are pinned
+  in `CROSSINGS`, because that kind of silence is what the pin table exists to make audible.
+- **There is no baseline and no `--check`, deliberately.** The measured object is a model,
+  which moves under you without a commit; a floor over it would be a floor over somebody
+  else's release schedule.
+- `--self-test` proves the gates before any of this is believed: two fixtures, one that must
+  pass everything and one that must fail everything in a named way, and a vacuous pass is
+  rejected.
+
+**What the number is about, said before anyone quotes it.** One model, this tool surface, ten
+briefs. At n=10 the 95% Wilson interval is wider than 30 percentage points, and every rate is
+published with that interval attached for exactly that reason. The model under test defaults
+to `claude-sonnet-4-5` — **not** the `claude-haiku-4-5` that `api/chat.js` runs — so this
+measures the contract's legibility to a capable agent and is not a statement about the site's
+own assistant.
+
+```sh
+node evals/generation.mjs --self-test          # prove the GATES, spend nothing
+node evals/generation.mjs --dry-run            # print the plan, spend nothing
+node --env-file=.env evals/generation.mjs      # billed, manual, writes the artefact
+```
+
+`evals/generation.json` is committed evidence and is covered by **nothing** — not `npm run
+check`, not `run.mjs --check`, not a boundary pin, and `test/boundaries.test.js` asserts that
+absence in both directions so it cannot be mistaken for an oversight. It can only change when
+a human spends money, so a staleness gate could only ever be silenced by a billed run. Read
+it as dated: `contract.componentsDigest` and `contract.tokensDigest` say which contract it
+was measured against, and `briefs.briefsHash` says whether the briefs have moved.
 
 ## How to verify in isolation
 
@@ -301,4 +367,9 @@ A regression means one of three things, in rough order of likelihood:
   quarantined, and it must never be imported from the commit path.
 - **Never quote a comparison between two arms that do not ship as a justification for one
   that does.**
-- **Never hand-edit the `<!-- content:evals-* -->` regions of `evals.html`.** Run `run.mjs`.
+- **Never hand-edit the `<!-- content:evals-* -->` regions of `evals.html`, or
+  `evals/dist/page.json`.** Run `run.mjs`. Two surfaces publish these numbers now, and both
+  read what that one run wrote.
+- **Never let the second surface compute a figure.** `apps/next` renders `page.json`; a rate,
+  a half-width or a sample size it derived would be a second opinion about a measurement,
+  which is the one thing a second renderer must never be.

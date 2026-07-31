@@ -3,8 +3,8 @@
 ## What this owns
 
 **Every word on the site and the CV.** If a sentence renders anywhere on
-`index.html`, `cv.html`, or inside a case-study dialog, its source is a file in this
-directory. Nothing else is a source of copy.
+`index.html`, `cv.html`, or on one of the five `work/<id>.html` case-study pages, its source
+is a file in this directory. Nothing else is a source of copy.
 
 **Two shipped pages are outside that.** `evals.html`'s numbers-bearing regions are written
 by `evals/run.mjs` (from the template in `content/evals.json` — see below), and `mcp.html` is
@@ -37,9 +37,10 @@ the wording is the owner's decision to make, not an agent's.
 Two generated files from the design system, both emitted by
 `design-system/scripts/build.mjs` and neither ever hand-edited:
 
-- `content/system.generated.json` — `{tokens, values, components, light, dark, print}`.
-  Prose interpolates it with `{{tokens}}`, `{{values}}`, `{{components}}` and `{{dark}}`, so
-  the numbers the site advertises about itself have exactly one source.
+- `content/system.generated.json` — `{tokens, values, light, dark, print, wide, components,
+  componentNames[]}`. Prose interpolates four of them — `{{tokens}}`, `{{values}}`,
+  `{{components}}`, `{{dark}}` — so the numbers the site advertises about itself have exactly
+  one source.
 - `design-system/dist/components.json` — the derived component contract. This build folds it
   into `content/dist/content.json` under `designSystem`, **verbatim**, and reformats nothing.
   It is how the design system reaches the retrieval tools without anything importing it; the
@@ -55,18 +56,26 @@ typing one of these four figures into a sentence, that is the bug reproducing.
 
 Via `scripts/build-content.mjs`:
 
-- `js/case-studies.js` — `window.CASE_STUDIES`, unchanged API
 - the `<!-- content:NAME -->` regions of `index.html` and `cv.html`
+- `work/<id>.html` — the five case studies, **whole files** rather than regions, with every
+  reference root-absolute because they are served one directory down
 - `content/dist/content.json` — the retrieval index, plus `designSystem` (the component
   contract, folded in verbatim) and `evalsPage` (the `/evals` prose, shipped with its
   `{{evals:…}}` placeholders still in it for `evals/run.mjs` to fill)
 - `content/dist/site.jsonld` — schema.org `Person` + `CreativeWork`
 - `llms.txt`
 
-`node scripts/build-content.mjs --check` compares all six against `content/` and fails on a
-byte of drift. It also asserts that no HTML comment on any of the four shipped pages contains
-a nested `<!--`, because comments do not nest and one that does put a paragraph of developer
-prose live on the homepage.
+`node scripts/build-content.mjs --check` compares all **ten** generated files against
+`content/` and fails on a byte of drift. It also asserts that no HTML comment on any of the
+four shipped pages contains a nested `<!--`, because comments do not nest and one that does
+put a paragraph of developer prose live on the homepage.
+
+**`js/case-studies.js` used to head this list and is gone.** It shipped
+`window.CASE_STUDIES` so a modal could render a case study in JavaScript; the five have real
+pages now, so it had become a second renderer for content already rendered as HTML — exactly
+the drift this pipeline exists to remove. Nothing in `js/` reads it any more, and the
+design-system counts gate that used to assert against it now asserts against
+`work/portfolio-system.html`, where that paragraph moved.
 
 ## File format
 
@@ -203,7 +212,12 @@ drift the pipeline exists to remove.
 - `.entry__span` — `"Jan 2026 – Present · Sofia · Hybrid"` is formatted from
   `period: {start, end, note, location, mode}`.
 - the `·`-joined education and language strings — formatted from the arrays.
-- `"02 / Green Street"` in `js/case-studies.js` — formatted from `index` + `client`.
+- the work-index row's `01`, `02`, … in `index.html` — formatted from `index`, and paired
+  with the row's own name and client rather than concatenated into one string. (This bullet
+  used to read `"02 / Green Street"` in `js/case-studies.js`. Both halves of that are gone:
+  the file was retired with the modal, and the owner removed the section plate numbers from
+  every page. The ordinal survives only in the work index, because those rows are an ordered
+  list.)
 
 ## Divergences that are deliberate
 
@@ -243,7 +257,7 @@ it is only as true as the last person to read `skills.json` beside it.
 node design-system/scripts/build.mjs      # refresh system.generated.json first
 node scripts/build-content.mjs            # write every artefact
 node scripts/build-content.mjs --check    # the CI gate — fails if anything is stale
-npx serve .                               # open /, open all six case studies, print /cv
+npx serve .                               # open /, open all five case studies, print /cv
 ```
 
 ## What this must never do

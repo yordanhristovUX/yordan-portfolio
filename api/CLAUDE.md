@@ -86,6 +86,24 @@ does *not* update for free. Adding a tool means adding a line there; nothing enf
 
 ### `api/chat.js` — the agent loop and the SSE stream
 
+| Property | Value |
+| --- | --- |
+| Protocol | SSE — `text/event-stream`, one JSON payload per named event |
+| Session | none — the whole history is POSTed every turn |
+| Methods | `POST` only; `OPTIONS` answered `204` **when, and only when, the request's `Origin` is on the allowlist**; everything else `405` + `Allow: POST` + `{"error":"method_not_allowed"}` |
+| CORS | an allowlist — see below. `api/mcp.js` sends `*` and should keep doing so |
+| Auth | none; cost is bounded by the WAF rule and the daily token budget instead |
+| Wall clock | `MAX_WALL_MS` = 35 s, under the 60 s `maxDuration` `vercel.json` gives this function |
+
+**The `OPTIONS` row is the one difference from `mcp.js`'s otherwise identical row, and the
+condition in it is deliberate.** A preflight from an unlisted origin is not a preflight this
+endpoint has anything to say to, so it falls through to the same `405` any other stray method
+gets — no CORS headers, no acknowledgement that an allowlist exists. Both branches sit **in
+front of** `checkBudget()`, which is the load-bearing part: a browser asking permission must
+never cost a Redis round trip, and a preflight that could touch the token budget would let a
+page bleed the daily cap without ever asking a question. `test/chat-cors.test.js` drives the
+real handler over HTTP against a stub Upstash for exactly that assertion.
+
 The contract it must hold: it calls `lib/knowledge/` **in process**, never through
 `/api/mcp`. Routing the chat through the MCP endpoint would make the function call itself
 over HTTP once per tool call — an extra hop, a second cold-start path and a self-referential
@@ -109,6 +127,56 @@ fabrication**: degrading those answers would trade correct ones for refusals. Th
 verdict is compared on completeness, not on `blocks.length` — taking it on length alone is
 the defect `test/chat-retry.test.js` was written against, and that suite drives this file's
 real default export over a socket rather than testing an extracted helper.
+
+## Cross-origin access — `CHAT_ALLOWED_ORIGINS`
+
+**This is not a spend control and does not belong in the table below.** It answers a
+different question — *which other page may read this endpoint's answers in a browser* — and
+it exists because a second site (`apps/next/`, on its own Vercel project and its own origin)
+calls this function rather than proxying through one of its own. That was chosen over a proxy
+for four reasons that all point the same way: one Redis token budget covering both sites
+instead of two that cannot see each other, the per-IP WAF rule still seeing the real caller's
+IP, no doubled function-seconds for the same answer, and the second site staying fully
+static. The price is exactly one cross-origin surface, and this is it.
+
+| | |
+| --- | --- |
+| Where | Vercel project environment variable, on the **vanilla** project — not in this repo |
+| Shape | comma-separated **exact origins**: scheme + host + port, no path, no trailing slash |
+| Unset | **fully supported and costs nothing.** No CORS header is emitted, which is byte-identical to the day before this landed — same-origin traffic and `curl` cannot tell it exists |
+| Read | per request, memoised on the raw string — not at module load, so a test can vary it without a new process |
+
+Matching is **exact string equality**, and what goes on the wire is the *configured* entry
+rather than the request header — so "never echo an arbitrary `Origin`" is true by shape
+rather than by argument. Anything looser is an escape hatch with a name: a substring test
+admits `https://evil-example.com` through a listed `https://example.com`, a prefix test
+admits `https://example.com.evil.test`, a host-only test ignores the scheme and the port.
+
+A matched request gets `Access-Control-Allow-Origin: <entry>` and `Vary: Origin`. There is no
+`Access-Control-Allow-Credentials`: this endpoint has no cookie, no session and no per-caller
+state, so allowing credentials would buy nothing and would turn a reflected origin into
+ambient authority.
+
+**An unlisted `Origin` on a `POST` is processed, not rejected**, and that is the decision in
+this file worth arguing about. Rejecting would treat `Origin` as authorisation. It is a hint
+a browser attaches and anything that is not a browser can set, so a guard built on it stops
+nobody who matters while changing the answer for every non-browser caller that happens to
+send one — `curl -H`, a server-side fetch, `evals/groundedness.mjs`. Withholding the header
+**is** the mechanism: the browser refuses to hand the response to the page, which is the
+whole of what CORS ever promised; it never promised to stop the request being made. Cost
+stays where the rest of this file puts it, on the WAF rate limit and the daily token budget.
+
+**Why `api/mcp.js` keeps `*` and is not an oversight.** The rule in this slice is that a
+guard on one surface is a question about the other, so the answer is written down in both
+places — at this file's CORS banner in `api/chat.js`, and beside the header in `api/mcp.js`.
+That endpoint is unauthenticated on purpose, every tool on it is read-only by construction,
+and it spends **no inference**: the caller's own client pays. There is nothing an origin
+check there would protect. This endpoint is the opposite on the one axis that matters — it
+spends `ANTHROPIC_API_KEY` against a shared daily budget — so "who may call this from a
+browser" is a real question here and a vacuous one there. Same reasoning, two answers.
+
+The owner-side steps (which project, which value, and the redeploy an environment change
+needs) are in `docs/DEPLOY-RUNBOOK.md`.
 
 ## Spend control — what is code and what is dashboard
 

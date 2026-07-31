@@ -1,6 +1,10 @@
 # Yordan Hristov — Portfolio, built on its own design system
 
-**Live site:** https://yordan-portfolio.vercel.app · **Storybook:** https://yordan-design-system.vercel.app
+**Live site:** https://yordan-portfolio.vercel.app · **Storybook:** run it locally —
+`npm run storybook` in `design-system/`. There is no public Storybook deployment yet:
+`yordan-design-system.vercel.app` is currently a second domain on the portfolio project and
+serves this same site (checked — `/cv` resolves there). Standing it up is one Vercel project
+away; the steps are in [`docs/DEPLOY-RUNBOOK.md`](docs/DEPLOY-RUNBOOK.md).
 
 A senior product designer's portfolio that doesn't just *describe* AI-ready design systems —
 it runs on one. Static HTML/CSS/JS with **no build step**, consuming an AI-first, repo-first
@@ -10,6 +14,8 @@ agents, renders in Storybook, and pushes its tokens to Figma.
 ```
 tokens/tokens.json ──▶ build.mjs ──▶ dist/tokens.css ────▶ the site (2 <link> tags)
    (source of truth)     (zero deps)   dist/tokens.flat.json ─▶ AI agents · Figma push
+                                       dist/tokens.dtcg.json ─▶ a consumer with its own
+                                       dist/tokens.d.ts          token pipeline · a TS build
                                        css/components.css ──▶ site + Storybook
 components/*/spec.md  ◀── every component = CSS + AI spec + story (build-enforced)
 ```
@@ -43,15 +49,20 @@ generations. "An old sketchbook with machines that help."
 - **AI-first** — [`CLAUDE.md`](CLAUDE.md) routes agents to
   [`design-system/README.md`](design-system/README.md); every spec carries canonical HTML
   patterns and do/don't rules written for machine consumption.
+- **A package, not a folder** — `@yordan/design-system` at a real version, with an `exports`
+  map naming exactly six subpaths and `RELEASED.json` as the published contract.
+  `contract-diff.mjs` classifies every change against it — added name MINOR, changed value
+  PATCH, removed or renamed MAJOR — and fails when the version bump does not cover the class.
 - **Figma is an output** — one-way repo→Figma variables push, executed by an AI agent via
   the Figma MCP: [`figma/push-guide.md`](design-system/figma/push-guide.md).
-- **Storybook** — vanilla-HTML stories over the very CSS the site ships, with the a11y
-  addon on every story (0 violations).
+- **Storybook** — vanilla-HTML stories over the very CSS the site ships. axe runs over every
+  story in CI and a violation fails the job, so "accessible stories" is a gate rather than a
+  claim; a screenshot of each story is captured beside it, report-only until 2026-09-01.
 
 ## Run it
 
 ```sh
-npx serve .                      # the site — no build step; / and /cv
+npx serve .                      # the site — no build step; /, /cv, /mcp, /evals, /work/<id>
 cd design-system
 npm install
 npm run build                    # tokens → dist + coverage check
@@ -60,6 +71,18 @@ npm run storybook                # Storybook on :6006
 
 `/cv` is the CV: same tokens, same components, light and dark on screen, and a real print
 stylesheet — the colour half of which lives in `tokens.json`, not in the page.
+
+## A second front end, from the same artefacts (`apps/next/`)
+
+The same nine pages exist a second time in `apps/next/` — Next.js, React and TypeScript,
+statically exported — and not one of them reads a source file from anywhere else in the
+repo. The design system arrives as an installed package, the words arrive as
+`content/dist/content.json`, the eval figures arrive as `evals/dist/page.json`, and the
+assistant is a `fetch` to the other deployment's `/api/chat`. It is there because "one
+source, many surfaces" is easy to assert and cheap to check: a second renderer either builds
+from the published artefacts or it does not, and `scripts/check-boundaries.mjs` is what
+decides which. Details in [`ARCHITECTURE.md`](ARCHITECTURE.md); it runs standalone, with its
+own lockfile, and `npm ci` at the repo root installs none of it.
 
 ## The MCP server (`api/mcp.js`)
 

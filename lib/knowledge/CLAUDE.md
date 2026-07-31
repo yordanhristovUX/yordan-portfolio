@@ -34,7 +34,7 @@ the per-request query embedding, which fails to BM25 rather than throwing.
 The shape it relies on:
 
 ```
-{ version, system: {tokens, values, components, light, dark, print},
+{ version, system: {tokens, values, components, light, dark, print, wide},
   profile: {identity, availability, contact, rows, prose},
   capabilities[]: {id, title, …}, skills: {order, groups}, education, facts[],
   projects[]:   {id, index, order, title, client, indexClient, indexTitle, cardType,
@@ -231,9 +231,11 @@ Both belong to `scripts/build-content.mjs`, not to this slice. Recorded here bec
 reader of this module will otherwise assume neither exists.
 
 - **Chunk ids are unique — FIXED in `299b67c`, this note kept as history.** The id was
-  `entity#kind` and kinds repeat, so 6 of 76 ids named two chunks each. `addChunk()` now
-  appends an ordinal to later collisions (`…#approach`, `…#approach-2`), and all 76 ids are
-  distinct. `resolve.chunks(id)` still returns an **array** for compatibility, but it is now
+  `entity#kind` and kinds repeat, so 6 of the 76 ids in that corpus named two chunks each.
+  `addChunk()` now appends an ordinal to later collisions (`…#approach`, `…#approach-2`), and
+  every id is distinct — the corpus has been rewritten since and is 70 chunks today, which is
+  why the count is not repeated as a live figure.
+  `resolve.chunks(id)` still returns an **array** for compatibility, but it is now
   always length 0 or 1 — the one-to-many `byChunkId` map in `tools.js` is dead weight and
   can be simplified whenever that file is next touched. **A citation now identifies a
   passage**, which is what the provenance gate needs in order to prove anything.
