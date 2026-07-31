@@ -1,0 +1,99 @@
+# The second surface's gate — the one job in this repo that installs a framework.
+#
+# It is a SEPARATE workflow for the same reason design-system.yml is. ci.yml and
+# `npm run check` are held byte-for-byte equal by test/ci.test.js, and the
+# contract behind that equality is that every step in it runs with no network,
+# no key and no heavy dependency, so a contributor who is green locally cannot
+# break CI. apps/next is STANDALONE — its own package.json, its own lockfile, no
+# root workspace — and the root `npm ci` installs not one byte of Next, React or
+# TypeScript. Bolting `next build` onto that job would mean every contributor
+# who wants to run `check` first installs a second application's node_modules,
+# which is how a local gate becomes a gate nobody runs. So it gets its own file,
+# its own trigger and its own install.
+#
+# The path filter is `apps/next/**`, plus this file. The app is a CONSUMER at
+# the bottom of the graph (ARCHITECTURE.md): it reads the design system as a
+# package and copies published artefacts in at build time, so a change to those
+# upstream slices is already gated by ci.yml and by design-system.yml, and a
+# framework build on every content commit is three minutes nobody reads. This
+# file is in the list because a workflow that cannot re-run itself after an edit
+# is a workflow you debug by guessing.
+#
+# NO KEY, AND THAT IS CHECKED RATHER THAN ASSUMED. `next build` runs
+# apps/next/scripts/sync-artifacts.mjs — from next.config.mjs at config load as
+# well as from `prebuild` — which COPIES css/, content/dist/content.json and the
+# plates out of the checkout. Files, not fetches. The app's two environment
+# variables (NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_CHAT_ENDPOINT) both default to
+# values read out of the corpus, so an unset variable is a working build rather
+# than a skipped one. Nothing here reads a secret, and nothing here may start.
+#
+# Each step answers one question:
+#   types  — does the app still typecheck? It runs first because it is seconds
+#            rather than minutes, and because `next build` type-checks too: a
+#            type error found there arrives after a compile, wearing a build
+#            failure's clothes.
+#   build  — does the static export still come out? This is the whole claim the
+#            app exists to make — one source, many surfaces — and it fails on
+#            everything the typecheck cannot see: a sync source that moved, a
+#            server-only import pulled into a client component, a route that
+#            cannot be statically exported.
+#
+# NO LINT STEP, deliberately. apps/next carries no eslint config and no `lint`
+# script (checked, not assumed — read its package.json), and CI is not the place
+# to introduce a tool the app has never run. If the app adopts one, this is
+# where it goes, between the two steps below.
+name: next
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/next/**"
+      - ".github/workflows/next.yml"
+  pull_request:
+    paths:
+      - "apps/next/**"
+      - ".github/workflows/next.yml"
+  # Unfiltered on purpose: the manual trigger is how you prove the app still
+  # builds after an upstream slice moved, without pushing a no-op commit into
+  # apps/next/.
+  workflow_dispatch:
+
+env:
+  # Next's anonymous telemetry is Enabled by default (`next telemetry status`),
+  # and it is the only thing in this job that would talk to anyone but the npm
+  # registry. Off, so the job's network surface is the install and nothing else.
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # `next@16.2.12` declares `engines.node: >=20.9.0`; `"20"` resolves to the
+      # latest 20.x, which is above that floor and is the same major ci.yml and
+      # design-system.yml pin. One Node across three workflows.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # apps/next has a lockfile of its own, and `file:../../design-system` in
+      # it — which npm resolves against the checkout, so the design system this
+      # build compiles against is the one in this commit rather than a published
+      # version. That is the point of the app: it consumes the package surface,
+      # from the same tree.
+      - name: "install: the second surface's own dependencies"
+        run: npm ci
+        working-directory: apps/next
+
+      # The two commands .claude/agents/next-app.md names as the app's exit
+      # gate, in its order, so a contributor who ran the documented gate ran
+      # what CI runs.
+      - name: "types: tsc over the app"
+        run: npx tsc --noEmit
+        working-directory: apps/next
+
+      - name: "build: the static export"
+        run: npx next build
+        working-directory: apps/next

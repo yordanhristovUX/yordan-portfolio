@@ -219,6 +219,75 @@ test("boundaries: every read that leaves apps/next is pinned in CROSSINGS", () =
   );
 });
 
+test("boundaries: every design-system read in evals/generation.mjs is pinned in CROSSINGS", () => {
+  /* The same census, one slice over. evals/generation.mjs reads the component
+     contract straight out of design-system/dist, and it PASSES the gate today
+     by silence — the `evals` rule bans the design system's source directories
+     and says nothing about dist/. Silence is what CROSSINGS exists to make
+     audible: without a pin, tightening that rule to `^design-system/` (which
+     reads as a tidy-up) would turn the eval red and the gate would blame the
+     eval rather than the line that changed.
+
+     Derived from the source, not hard-coded, so a third read cannot arrive
+     unpinned. These are `join(root, "design-system", "dist", …)` calls — a form
+     the checker deliberately does not resolve (see its header on `join`), which
+     is precisely why nothing else would ever notice them.
+
+     What is asserted is the INPUTS. evals/generation.json — the output — is
+     covered by nothing on purpose, and the assertion below is that it stays
+     that way: a pin naming it would be a staleness claim only a billed run
+     could satisfy. */
+  const gate = readFileSync(CHECKER, "utf8");
+  const genRel = "evals/generation.mjs";
+  const gen = readFileSync(new URL(`../${genRel}`, import.meta.url), "utf8");
+
+  /* Comments stripped on both sides. Both tables explain in prose what they
+     deliberately leave out — this pin's own note quotes generation.json in
+     order to say it is NOT pinned — so a reader that could not tell an entry
+     from the sentence about the absence of one would forbid the explanation.
+     Same call the gate itself makes before scanning a source. */
+  const code = (s) => (s ?? "").replace(/\/\*[\s\S]*?\*\//g, "");
+
+  const block = gate.match(/const CROSSINGS = \[([\s\S]*?)\n\];/);
+  assert.ok(block, "the CROSSINGS table is no longer recognisable in scripts/check-boundaries.mjs");
+  const pinned = new Set(
+    [...code(block[1]).matchAll(/"evals\/generation\.mjs",\s*"([^"]+)"/g)].map((m) => m[1])
+  );
+
+  const reads = [
+    ...code(gen).matchAll(/join\(\s*root\s*,\s*"design-system"\s*,\s*"dist"\s*,\s*"([^"]+)"\s*\)/g),
+  ].map((m) => `design-system/dist/${m[1]}`);
+  assert.ok(
+    reads.length >= 2,
+    `only ${reads.length} design-system/dist reads found in ${genRel} — this test has lost its subject, ` +
+      `or the file now reaches the contract some other way. Retarget it before deleting it.`
+  );
+
+  for (const target of reads) {
+    assert.ok(
+      pinned.has(target),
+      `${genRel} reads "${target}", which leaves evals/ for another slice's published surface, and no line of ` +
+        `CROSSINGS says so. Add it to scripts/check-boundaries.mjs — an unpinned crossing is one nobody has agreed to.`
+    );
+  }
+
+  /* The other direction, so a pin cannot outlive the read it describes. */
+  const stale = [...pinned].filter((p) => !reads.includes(p));
+  assert.deepEqual(stale, [], `CROSSINGS still pins ${genRel} → ${stale.join(", ")}, which it no longer reads.`);
+
+  /* And the output stays outside every gate, which is the file's own stated
+     position: "covered by NOTHING … no boundary pin names it". */
+  assert.ok(
+    !code(block[1]).includes("generation.json"),
+    "generation.json is committed evidence from a billed manual run, not an artefact a gate can reproduce — " +
+      "pinning it would assert a freshness nobody can restore without spending money. See its header."
+  );
+  assert.ok(
+    !code(gate.match(/const ARTEFACTS = \[([\s\S]*?)\n\];/)?.[1]).includes("generation.json"),
+    "generation.json must not join ARTEFACTS either — same reason"
+  );
+});
+
 test("boundaries: the apps/next rule and the charter that promises it say the same thing", () => {
   /* The gate is written before the app, so for one whole phase
      .claude/agents/next-app.md is the ONLY thing the scaffolding agent reads

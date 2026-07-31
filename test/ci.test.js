@@ -318,16 +318,20 @@ test("engines.node covers the --env-file flag those scripts use", () => {
    ============================================================ */
 const dsYml = readFileSync(new URL(".github/workflows/design-system.yml", root), "utf8");
 
-/** The steps of the one job, each as its raw YAML block. */
-function jobSteps(source) {
+/** The steps of the one job, each as its raw YAML block.
+ *
+ * `dir` is the working-directory the caller expects every run step to carry —
+ * design-system.yml and next.yml each drive a standalone package with its own
+ * lockfile, and both fail in the same confusing way without it. */
+function jobSteps(source, { dir = "design-system", min = 5, file = "design-system.yml" } = {}) {
   const at = source.indexOf("\n    steps:\n");
-  assert.notEqual(at, -1, "design-system.yml has no `steps:` — the workflow shape changed");
+  assert.notEqual(at, -1, `${file} has no \`steps:\` — the workflow shape changed`);
   const blocks = source.slice(at).split(/^ {6}- /m).slice(1);
-  assert.ok(blocks.length >= 5, `parsed only ${blocks.length} steps — the workflow shape changed`);
+  assert.ok(blocks.length >= min, `parsed only ${blocks.length} steps out of ${file} — the workflow shape changed`);
   return blocks.map((b) => ({
     run: b.match(/(?:^|\n)\s*run: (.*)/)?.[1]?.trim() ?? null,
     uses: b.match(/(?:^|\n)\s*uses: (.*)/)?.[1]?.trim() ?? null,
-    dir: /(?:^|\n)\s*working-directory: design-system\s*$/m.test(b),
+    dir: new RegExp(`(?:^|\\n)\\s*working-directory: ${dir}\\s*$`, "m").test(b),
     named: /(?:^|\n)\s*name: /.test(b),
   }));
 }
@@ -346,9 +350,19 @@ test("the browser gates stay out of the root check and out of ci.yml", () => {
   assert.match(dsYml, /npm run test:visual/, "design-system.yml no longer runs the visual gate");
 });
 
-/** The `on:` block, split into one chunk per trigger name. */
+/** The `on:` block, split into one chunk per trigger name.
+ *
+ * The region ends at the next COLUMN-0 key, not at `jobs:`. `on:` is not always
+ * the last thing before the job list — next.yml carries a top-level `env:` —
+ * and cutting at `jobs:` swept that block in, where its one 2-space-indented
+ * key was then read as a fourth trigger. A parser that finds MORE than the
+ * shape it understands has to say so, same as one that finds less. */
 function triggers(source) {
-  const region = source.slice(source.indexOf("\non:\n"), source.indexOf("\njobs:"));
+  const start = source.indexOf("\non:\n");
+  assert.notEqual(start, -1, "the workflow has no `on:` block — the shape changed");
+  const rest = source.slice(start + 1);
+  const end = rest.search(/\n(?=\S)/);
+  const region = `\n${rest.slice(0, end === -1 ? undefined : end)}`;
   const out = {};
   let name = null;
   for (const line of region.split("\n")) {
@@ -426,6 +440,191 @@ test("the workflow states the report-only window the runner actually enforces", 
     `design-system.yml never mentions ${date}, the date test-runner.cjs flips the visual gate to enforcing. ` +
       `A reader seeing a green run full of mismatches has nothing to tell them that is deliberate.`
   );
+});
+
+/* ============================================================
+   The second surface's workflow
+
+   apps/next is standalone — its own package.json, its own lockfile,
+   no root workspace — so `next build` cannot join the job above
+   without asking every contributor who runs `npm run check` to first
+   install a second application's node_modules. Same separation as the
+   browser gates, same reason, third file:
+   .github/workflows/next.yml, path-filtered to apps/next/**.
+
+   What is guarded here is narrower than the design-system section,
+   because fewer things about it are invariants. `npx tsc` and
+   `npx next build` are perfectly fine in a workflow — they are not
+   browser gates and there is nothing to keep out. What matters is
+   that the job is scoped (a path filter, so a content commit does not
+   install a framework), that every step is scoped (a
+   working-directory, because the root package.json has no TypeScript
+   and no Next — `npx tsc` there would silently DOWNLOAD one), that it
+   reads no secret, and that it stays out of the equality contract
+   above.
+   ============================================================ */
+const nextYml = readFileSync(new URL(".github/workflows/next.yml", root), "utf8");
+
+/** A workflow's executable half — full-line `#` comments dropped.
+ *
+ * The two assertions below are about what a job DOES, and both of them would
+ * otherwise be tripped by prose explaining the very separation they enforce:
+ * ci.yml's header says the behavioural suite deletes VOYAGE_API_KEY, and the
+ * day ci.yml explains where the Next build lives it will have to name it. A
+ * rule that forbids the explanation of itself is a rule people route around. */
+const uncommented = (s) =>
+  s
+    .split(/\r?\n/)
+    .filter((l) => !/^\s*#/.test(l))
+    .join("\n");
+
+test("every workflow in the repo is one this file knows about", () => {
+  /* A census, so a fourth workflow cannot arrive with nothing standing over it.
+     The whole argument of this file is that a gate nobody checks is a gate that
+     drifts; that applies first to the gates themselves.
+
+     The direction it is really for is ARRIVAL. A workflow that DISAPPEARS is
+     already loud — every section above reads its file at module load, so
+     deleting one fails this whole file with an ENOENT naming the path, before
+     any assertion runs. What has nothing behind it is a new .yml nobody wrote a
+     section for. */
+  const known = ["ci.yml", "design-system.yml", "next.yml"];
+  const onDisk = readdirSync(fileURLToPath(new URL(".github/workflows", root))).sort();
+  assert.deepEqual(
+    onDisk,
+    known.slice().sort(),
+    "a workflow arrived or left. Add it to this list and give it a section below — a workflow with no test " +
+      "over it is one that path-filters itself into never running and nobody notices."
+  );
+});
+
+test("the three workflows pin the same Node", () => {
+  /* Derived from the files, not written down twice. Three jobs on three
+     different majors is three different sets of language features, and the one
+     that breaks is whichever is not the one anybody runs locally. `next@16`
+     declares engines.node >=20.9.0, which is the tightest floor of the three
+     and is what "20" has resolved above since 20.9 shipped. */
+  const versions = [
+    ["ci.yml", yml],
+    ["design-system.yml", dsYml],
+    ["next.yml", nextYml],
+  ].map(([name, src]) => [name, src.match(/node-version:\s*"([^"]+)"/)?.[1]]);
+  for (const [name, v] of versions) assert.ok(v, `${name} no longer pins a node-version`);
+  assert.equal(
+    new Set(versions.map(([, v]) => v)).size,
+    1,
+    `the workflows disagree about Node: ${versions.map(([n, v]) => `${n}=${v}`).join(", ")}`
+  );
+});
+
+test("the next app's build stays out of the root check and out of ci.yml", () => {
+  /* The equality contract. `next build` in either of these would mean a
+     contributor cannot run `check` without installing apps/next's dependencies,
+     and a `check` nobody runs is the failure this whole file exists to prevent.
+     Matched on the app's path and on the framework's own CLI rather than on the
+     word "next", which is too common in English to assert anything. */
+  for (const [what, source] of [
+    ["package.json `check`", pkg.scripts.check],
+    ["ci.yml", uncommented(yml)],
+  ]) {
+    assert.doesNotMatch(
+      source,
+      /apps\/next|next build|tsc\b/,
+      `${what} reaches into apps/next. That app is standalone with its own lockfile — putting its build here ` +
+        `means every contributor installs Next before they can run the root gate. It belongs in next.yml.`
+    );
+  }
+  /* And the other direction, so the separation cannot be resolved by deletion. */
+  assert.match(nextYml, /npx tsc --noEmit/, "next.yml no longer typechecks the app");
+  assert.match(nextYml, /npx next build/, "next.yml no longer builds the app");
+});
+
+test("the next workflow only fires on apps/next changes", () => {
+  const on = triggers(nextYml);
+  assert.deepEqual(
+    Object.keys(on).sort(),
+    ["pull_request", "push", "workflow_dispatch"],
+    "the trigger set changed"
+  );
+  for (const name of ["push", "pull_request"]) {
+    const block = on[name];
+    assert.match(block, /paths:/, `the \`${name}\` trigger has no path filter — every commit would install Next`);
+    assert.match(block, /- "apps\/next\/\*\*"/, `the \`${name}\` trigger does not watch apps/next/**`);
+    assert.match(
+      block,
+      /- "\.github\/workflows\/next\.yml"/,
+      `the \`${name}\` trigger does not watch its own file — an edit to the workflow would not re-run it`
+    );
+  }
+  assert.doesNotMatch(on.workflow_dispatch, /paths:/, "workflow_dispatch takes no path filter");
+});
+
+test("every next step runs in apps/next, and carries a name", () => {
+  /* `npx tsc --noEmit` from the repo root does not fail: the root has no
+     TypeScript, so npx FETCHES one from the registry and typechecks a project
+     that does not exist there. A missing `working-directory` is therefore a
+     green step that measured nothing, which is worse than a red one. */
+  const steps = jobSteps(nextYml, { dir: "apps/next", min: 5, file: "next.yml" });
+  const missing = steps.filter((s) => s.run && !s.dir).map((s) => s.run);
+  assert.deepEqual(missing, [], `next.yml steps without \`working-directory: apps/next\`: ${missing.join(", ")}`);
+
+  const unnamed = steps.filter((s) => s.run && !s.named).map((s) => s.run);
+  assert.deepEqual(unnamed, [], `next.yml steps without a name: ${unnamed.join(", ")}`);
+
+  /* The install is what makes the other two mean anything: without it `npx`
+     resolves nothing locally and goes to the registry for both. */
+  const runs = steps.filter((s) => s.run).map((s) => s.run);
+  assert.ok(runs.includes("npm ci"), `next.yml never installs the app's own dependencies: ${runs.join(", ")}`);
+});
+
+test("the next workflow typechecks before it builds", () => {
+  /* Cheapest first, and it is not only about seconds: `next build` type-checks
+     too, so with the order reversed a type error arrives after a full compile
+     wearing a build failure's clothes. This is also the order
+     .claude/agents/next-app.md gives as the app's exit gate, so a contributor
+     who ran the documented commands ran what CI runs. */
+  const runs = jobSteps(nextYml, { dir: "apps/next", min: 5, file: "next.yml" })
+    .filter((s) => s.run)
+    .map((s) => s.run);
+  const install = runs.indexOf("npm ci");
+  const types = runs.findIndex((c) => c.includes("tsc"));
+  const build = runs.findIndex((c) => c.includes("next build"));
+  assert.ok(types !== -1 && build !== -1, `both steps should be present, got: ${runs.join(", ")}`);
+  assert.ok(install < types, "the install must precede the typecheck, or npx fetches TypeScript from the registry");
+  assert.ok(types < build, "npx tsc --noEmit must precede npx next build — see the comment above this assertion");
+});
+
+test("no workflow reaches for a secret", () => {
+  /* The repo's whole CI story is that it runs offline and keyless: every gate
+     reads a committed artefact, and evals/groundedness.mjs and
+     evals/generation.mjs refuse to run when $CI is set. A workflow that
+     referenced `secrets.` would be the first step back, and it would be
+     invisible in review — `env:` blocks are skimmed. next.yml is the one most
+     at risk, because apps/next has two NEXT_PUBLIC_ variables and both have
+     corpus-derived defaults, so wiring them up would look like configuration
+     rather than like a policy change.
+
+     Comments are stripped first — see `uncommented` above. Naming a key in
+     order to say it is unset is the documentation working; what is asserted is
+     the executable half. */
+  for (const [name, source] of [
+    ["ci.yml", uncommented(yml)],
+    ["design-system.yml", uncommented(dsYml)],
+    ["next.yml", uncommented(nextYml)],
+  ]) {
+    assert.doesNotMatch(
+      source,
+      /\$\{\{\s*secrets\./,
+      `${name} reads a repository secret. Every gate in this repo runs on committed artefacts; a step that ` +
+        `needs a key is a step that is skipped on a fork and dead the day the key expires.`
+    );
+    assert.doesNotMatch(
+      source,
+      /API_KEY|--env-file/,
+      `${name} names an API key or loads .env. CI has no .env, so a gate whose behaviour depends on one ` +
+        `means something different locally than it does here.`
+    );
+  }
 });
 
 /* ============================================================

@@ -228,6 +228,39 @@ const CROSSINGS = [
   ["js/answer-render.js", "content/dist/content.json", "the published corpus the client renders from"],
   ["evals/run.mjs", "content/dist/content.json", "the generated index the eval measures against"],
 
+  /* evals/generation.mjs reads the component contract out of design-system/dist
+     directly, and its own header spends a section on why: the `evals` rule bans
+     the design system's SOURCE dirs — tokens, components, stories, scripts,
+     figma — and says nothing about dist/, which is the published artefact every
+     consumer is meant to read. That silence is the permission, and silence is
+     exactly what this table exists to make audible. The alternative route,
+     content.json's folded-in `content.designSystem`, carries components.json and
+     NOT tokens.flat.json, so reading one gate's input from the corpus and the
+     other from dist/ would leave two sources that drift by one build; both are
+     read from dist/ so the gate is measured against what the design system
+     actually published.
+
+     Two lines because it is two files. This is a CENSUS — the reads are
+     `join(root, "design-system", "dist", …)` rather than one relative literal,
+     and a census that summarised them as "design-system/dist" would not notice
+     the day a third one arrives.
+
+     What is NOT here, deliberately, is evals/generation.json. Its header says so
+     in as many words: it is committed evidence covered by nothing, changeable
+     only by a human spending money, so a pin naming it would be a staleness
+     claim only a billed run could satisfy. The INPUTS are pinned; the output is
+     dated evidence. */
+  [
+    "evals/generation.mjs",
+    "design-system/dist/components.json",
+    "the published class contract gate 1 measures generated markup against",
+  ],
+  [
+    "evals/generation.mjs",
+    "design-system/dist/tokens.flat.json",
+    "the published token table gate 2 measures generated markup against",
+  ],
+
   /* apps/next, pinned before the app exists. Section 3 pattern-tests these
      against the rules and never touches the disk, so a pin can precede its
      file — and pinning first is the point: the rule above and these four lines
