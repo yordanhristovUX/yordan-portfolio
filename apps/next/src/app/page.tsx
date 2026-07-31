@@ -19,6 +19,7 @@ import type { Metadata } from "next";
 import { AskAction, AskDrawer, AskFab } from "@/components/Ask";
 import { Btn, Chips, GridLink, Strip, Term } from "@/components/primitives";
 import { LocalTime } from "@/components/LocalTime";
+import { PeekSheet } from "@/components/PeekSheet";
 import { SiteBar } from "@/components/SiteBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteMenu } from "@/components/SiteMenu";
@@ -323,12 +324,11 @@ export default function Page() {
 
       <SiteFooter link={FOOTER.index} />
 
-      {/* MOUNT POINT: <PeekSheet /> — the notable cards' detail surface on
-          touch, authored markup rather than injected, because the page's
-          geometry after scripts must be its geometry before them. It arrives
-          with the port of js/peek.js, together with the listener that fills it
-          from the tapped card. */}
       <AskDrawer />
+
+      {/* Authored here, like the drawer above it, and for the stated reason:
+          the page's geometry after scripts must be its geometry before them. */}
+      <PeekSheet />
     </>
   );
 }

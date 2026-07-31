@@ -22,6 +22,8 @@
    ============================================================ */
 import type { Metadata } from "next";
 
+import { AutomataLayer } from "@/components/AutomataLayer";
+import { SiteChrome } from "@/components/SiteChrome";
 import { siteUrl } from "@/lib/content";
 import { NO_FLASH_THEME, THEME_COLORS } from "@/lib/theme-script";
 
@@ -62,7 +64,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH_THEME }} />
         <link rel="stylesheet" href="/fonts/fonts.css" />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* The behaviours, last in the body for the same reason the vanilla
+            pages put their scripts there: everything they bind to is already
+            parsed. Neither renders any DOM — the chrome's markup is the pages'
+            own, and the automata's rails are the engine's to inject. */}
+        <SiteChrome />
+        <AutomataLayer />
+      </body>
     </html>
   );
 }

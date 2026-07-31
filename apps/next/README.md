@@ -58,10 +58,27 @@ which names its source file and commit and explains the upstream fix that would 
 
 No sentence in this app was written for this app.
 
+## The ports
+
+`src/lib/vanilla/` holds five copies of the vanilla site's client behaviour — `menu.ts`,
+`fab.ts`, `peek.ts`, `drawer.ts` (the layer stack out of `js/main.js`) and `automata.ts`.
+Each carries a provenance header naming its source file and the commit it was taken at, and
+each lists what the port changed and nothing else: an IIFE became an exported `init…()`
+returning a teardown, because a React effect owes the next unmount its listeners back.
+
+**A bug found in a port is reported upstream, fixed there by its owner, and re-copied —
+never fixed only here.** `automata.ts` documents the one line of `js/automata.js` it does
+not reproduce and why.
+
+`SiteChrome` mounts the first four in the root layout, in the vanilla's script order; every
+one of them returns immediately when its markup is absent, which is how `/cv` gets the menu
+without the fab. `AutomataLayer` owns the engine's lifetime and re-scans on a pathname
+change. `window.automataStats()` is the engine's own cost report and the handle a browser
+parity sweep can compare against the vanilla page.
+
 ## Not here yet
 
-The menu, the chat drawer, the peek sheet and the automata are markup with no behaviour —
-every one of them is marked `MOUNT POINT` in the component that renders it. The ports of
-`js/menu.js`, `js/fab.js`, `js/peek.js`, `js/automata.js` and `js/chat.js` land in later
-runs, and a port carries a provenance header naming its source file and commit: a bug found
-in a copy is fixed upstream and re-copied, never fixed here.
+The chat client (the drawer's body is an empty mount point) and the eval page. Motion is
+deliberately out: no GSAP here, and `[data-rise]`/`[data-reveal]` are hidden only under the
+`js` class that only a confirmed GSAP load adds — so this app renders the static page that
+contract promises.

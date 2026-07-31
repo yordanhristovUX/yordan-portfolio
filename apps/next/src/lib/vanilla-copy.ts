@@ -221,5 +221,8 @@ export const WORK_PAGER = { prev: "← Previous", next: "Next →" } as const;
 /** The touch trigger on a Notable Projects card — build-content.mjs's own. */
 export const CARD_MORE = "Tap for details";
 
+/** The peek sheet's one control. Its title and note are the tapped card's. */
+export const PEEK = { close: "Close" } as const;
+
 /** The right-hand column of a work index row. */
 export const INDEX_ROW_GO = "View →";
