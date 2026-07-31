@@ -18,7 +18,7 @@ evidence before the verdict.
 Two things flip on that date, together:
 
 - the `try`/`catch` around the matcher in `.storybook/test-runner.js`;
-- the exit-code override at the end of `scripts/test-storybook.mjs`.
+- the exit-code override at the end of `scripts/storybook-gates.mjs`.
 
 Both carry the date in a comment beside them. Nothing else changes — a genuine test failure
 (a story that throws, a browser that dies) fails the run today already; only the *image*

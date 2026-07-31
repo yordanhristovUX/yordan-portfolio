@@ -25,8 +25,8 @@
     "storybook": "npm run build && storybook dev -p 6006 --no-open",
     "build-storybook": "npm run build && storybook build",
     "//test": "Both gates build storybook-static when it is stale, serve it on an ephemeral port and drive @storybook/test-runner against it — no dev server, and no http-server/wait-on/concurrently. CI needs `npx playwright install --with-deps chromium` first. NEITHER joins the root `npm run check`: that gate is offline, browser-free and dependency-light, and these two need Chromium. test:visual is REPORT-ONLY until 2026-09-01 — see .storybook/test-runner.js.",
-    "test:a11y": "node scripts/test-storybook.mjs --mode a11y",
-    "test:visual": "node scripts/test-storybook.mjs --mode visual"
+    "test:a11y": "node scripts/storybook-gates.mjs --mode a11y",
+    "test:visual": "node scripts/storybook-gates.mjs --mode visual"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^9.1.5",

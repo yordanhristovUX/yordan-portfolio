@@ -1,8 +1,17 @@
 #!/usr/bin/env node
 /* The driver behind `npm run test:a11y` and `npm run test:visual`.
  *
- *   node scripts/test-storybook.mjs --mode a11y     [--no-build] [-- <test-storybook args>]
- *   node scripts/test-storybook.mjs --mode visual   [--no-build] [-- <test-storybook args>]
+ *   node scripts/storybook-gates.mjs --mode a11y     [--no-build] [-- <test-storybook args>]
+ *   node scripts/storybook-gates.mjs --mode visual   [--no-build] [-- <test-storybook args>]
+ *
+ * THE NAME IS LOAD-BEARING, AND IT USED TO BE `test-storybook.mjs`. Node's
+ * default test discovery matches `test-*.?(c|m)js` in ANY directory — the glob
+ * is not rooted at `test/` — so a bare `node --test` typed anywhere swept this file
+ * up as a test and ran the whole browser harness — a Storybook build and
+ * Chromium — inside a gate whose entire contract is offline and dependency-
+ * light. `npm test` was made immune separately (an explicit-file runner), but
+ * the bare idiom is what a contributor actually types, so the hazard is retired
+ * at the source instead: nothing here starts with `test-`. Do not rename it back.
  *
  * It does three things the two gates would otherwise each need a dependency for:
  *
