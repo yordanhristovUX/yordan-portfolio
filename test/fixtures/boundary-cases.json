@@ -25,7 +25,12 @@
     "lands on apps/next/src/js/ — the app's own port directory — and must pass.",
     "The two cases differ only in which file holds the string. That is the whole",
     "argument for resolving a reference before matching it, and neither case means",
-    "anything without the other."
+    "anything without the other.",
+    "",
+    "`evals/dist/page.json` in `base` sits inside a directory the gate's file WALK",
+    "skips, which is the point of removing it in a case of its own: the artefact",
+    "check stats named paths and never walks, so if the two were ever confused the",
+    "removal would pass and nothing else in this matrix would notice."
   ],
 
   "base": {
@@ -34,6 +39,7 @@
     "design-system/dist/components.json": "{ \"components\": [] }\n",
     "content/system.generated.json": "{}\n",
     "content/dist/content.json": "{ \"version\": 1 }\n",
+    "evals/dist/page.json": "{ \"arms\": [] }\n",
     "js/main.js": "/* site entry */\nwindow.addEventListener(\"load\", () => {});\n",
     "lib/knowledge/tools.js": "export const content = {};\n",
     "api/chat.js": "export default async function handler() {}\n",
@@ -118,6 +124,16 @@
       "expect": {
         "exit": 1,
         "contains": ["design-system/dist/components.json is missing"]
+      }
+    },
+    {
+      "name": "a missing eval page artefact",
+      "form": "artefact existence, inside a directory the file walk skips",
+      "files": {},
+      "remove": ["evals/dist/page.json"],
+      "expect": {
+        "exit": 1,
+        "contains": ["evals/dist/page.json is missing", "schema-bearing artefact for a boundary crossing"]
       }
     },
 
@@ -314,6 +330,22 @@
       "form": "control — css/ is absent from the ban list on purpose; sync-artifacts.mjs is why",
       "files": {
         "apps/next/scripts/sync-artifacts.mjs": "import { readFileSync } from \"node:fs\";\nexport const sheets = [\n  readFileSync(new URL(\"../../../css/style.css\", import.meta.url), \"utf8\"),\n  readFileSync(new URL(\"../../../css/cv.css\", import.meta.url), \"utf8\"),\n  readFileSync(new URL(\"../../../content/dist/content.json\", import.meta.url), \"utf8\"),\n];\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "apps/next: the sync script copies the plates the cards reference",
+      "form": "control — content/assets/ is not content source; the content bans cover .md, projects/ and experience/, and must not creep",
+      "files": {
+        "apps/next/scripts/sync-artifacts.mjs": "import { readdirSync, readFileSync } from \"node:fs\";\nexport const plates = readdirSync(new URL(\"../../../content/assets/notable\", import.meta.url));\nexport const diagram = readFileSync(new URL(\"../../../content/assets/pipeline.svg\", import.meta.url), \"utf8\");\n"
+      },
+      "expect": { "exit": 0 }
+    },
+    {
+      "name": "apps/next: the avatar arrives through its own node_modules, and the gate stays quiet",
+      "form": "control — a resolved path under apps/next/node_modules/ is the resolver's business, not a crossing, however much of the word \"design-system\" is in it",
+      "files": {
+        "apps/next/scripts/sync-avatar.mjs": "import { readFileSync } from \"node:fs\";\nexport const avatar = readFileSync(\n  new URL(\"../node_modules/@yordan/design-system/assets/avatar.svg\", import.meta.url),\n  \"utf8\"\n);\n"
       },
       "expect": { "exit": 0 }
     }

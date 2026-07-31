@@ -83,8 +83,8 @@ test("boundaries: every reference form in the matrix is exercised in both direct
      than deleting an assertion inside one. */
   const failing = MATRIX.cases.filter((c) => c.expect.exit === 1);
   const passing = MATRIX.cases.filter((c) => c.expect.exit === 0);
-  assert.ok(failing.length >= 13, `only ${failing.length} failing cases — one per reference form, plus the artefacts`);
-  assert.ok(passing.length >= 13, `only ${passing.length} passing cases — the controls are what stop over-blocking`);
+  assert.ok(failing.length >= 14, `only ${failing.length} failing cases — one per reference form, plus the artefacts`);
+  assert.ok(passing.length >= 16, `only ${passing.length} passing cases — the controls are what stop over-blocking`);
 
   const text = JSON.stringify(MATRIX.cases);
   for (const form of ["await import(", "new URL(", "readFileSync(", "import {"]) {
@@ -166,6 +166,57 @@ test("boundaries: a pinned crossing with the wrong ../ depth is rejected, not si
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("boundaries: every read that leaves apps/next is pinned in CROSSINGS", () => {
+  /* The pin table is a CENSUS, and a census is only worth the thing it was
+     counted against. Section 3 asserts that each pin is still legal; nothing
+     asserted that each real crossing is still pinned — so the sync script could
+     grow a sixth stylesheet, a second asset directory, a read of anything else
+     published, and the gate would go on cheerfully proving five old lines.
+     That is the same silence CROSSINGS exists to break, one level up.
+
+     So: read the source of truth — apps/next/scripts/sync-artifacts.mjs, the
+     one file whose whole job is reaching out of the app — resolve each of its
+     quoted `new URL(…, import.meta.url)` specs the way the gate would, and
+     require every one that LEAVES apps/next to appear in the table. The
+     leaving test is what exempts `../node_modules/@yordan/design-system/…`
+     without naming it: that resolves to apps/next's own node_modules, is the
+     package's published `files` surface reached through the resolver, and is
+     not a path across the repo. It is asserted below to still resolve inward,
+     because the day it does not it is a crossing and belongs in the table. */
+  const gate = readFileSync(CHECKER, "utf8");
+  const syncRel = "apps/next/scripts/sync-artifacts.mjs";
+  const sync = readFileSync(new URL(`../${syncRel}`, import.meta.url), "utf8");
+
+  const block = gate.match(/const CROSSINGS = \[([\s\S]*?)\n\];/);
+  assert.ok(block, "the CROSSINGS table is no longer recognisable in scripts/check-boundaries.mjs");
+  const pinned = new Set(
+    [...block[1].matchAll(/"apps\/next\/scripts\/sync-artifacts\.mjs",\s*"([^"]+)"/g)].map((m) => m[1])
+  );
+
+  /* Same resolution rule as the gate: a spec is relative to its own file's
+     directory. Only double-quoted literals — the template forms in that script
+     build DESTINATIONS out of variables, and a write is not a dependency. */
+  const specs = [...sync.matchAll(/new URL\(\s*"(\.[^"]*)"\s*,\s*import\.meta\.url\s*\)/g)].map((m) => m[1]);
+  assert.ok(specs.length >= 8, `only ${specs.length} literal sources in ${syncRel} — has it stopped writing them out?`);
+
+  const resolve = (spec) => join(dirname(syncRel), spec).split("\\").join("/");
+  const leaving = specs.filter((s) => !resolve(s).startsWith("apps/next/"));
+  const inward = specs.filter((s) => resolve(s).startsWith("apps/next/"));
+
+  for (const spec of leaving) {
+    assert.ok(
+      pinned.has(spec),
+      `${syncRel} reads "${spec}" (→ ${resolve(spec)}), which leaves the app, and no line of CROSSINGS says so. ` +
+        `Add it to scripts/check-boundaries.mjs — an unpinned crossing is one nobody has agreed to.`
+    );
+  }
+  assert.ok(leaving.length >= 8, `only ${leaving.length} crossings found in ${syncRel} — this test has lost its subject`);
+  assert.ok(
+    inward.some((s) => s.includes("node_modules")),
+    "the avatar no longer resolves inside apps/next/node_modules — if it now reaches across the repo, pin it"
+  );
 });
 
 test("boundaries: the apps/next rule and the charter that promises it say the same thing", () => {

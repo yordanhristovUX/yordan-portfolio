@@ -247,7 +247,51 @@ const CROSSINGS = [
     "../../../content/dist/content.json",
     "the published corpus, copied into public/ for the client",
   ],
+
+  /* The sync script's remaining reads, listed one per file even though the four
+     stylesheets are one crossing spelled four times. This table is a CENSUS —
+     "each real crossing is written down here" — and a census that summarises is
+     a census you cannot audit against the source. Open sync-artifacts.mjs's
+     SOURCES map beside these lines and they correspond, which is the only way to
+     notice that a sixth stylesheet arrived unpinned.
+
+     `css/fonts` is a directory, not a file, and is the one of these that asserts
+     something the others do not: the surface pattern below has to admit a bare
+     directory under a published surface, because what is copied is fonts.css
+     TOGETHER with the woff2 files it names by relative url(). */
   ["apps/next/scripts/sync-artifacts.mjs", "../../../css/style.css", "the page stylesheets, synced not imported"],
+  ["apps/next/scripts/sync-artifacts.mjs", "../../../css/cv.css", "the CV stylesheet, same copy, same reason"],
+  ["apps/next/scripts/sync-artifacts.mjs", "../../../css/mcp.css", "the /mcp stylesheet"],
+  ["apps/next/scripts/sync-artifacts.mjs", "../../../css/evals.css", "the /evals stylesheet"],
+  [
+    "apps/next/scripts/sync-artifacts.mjs",
+    "../../../css/fonts",
+    "fonts.css and its woff2 files, copied whole so the relative url()s still resolve",
+  ],
+
+  /* content/assets/ — the one pin that needed a new surface, and the argument
+     for it is that index.html has been doing this for longer than apps/next has
+     existed: `<img src="content/assets/notable/spetema.svg">`, served straight
+     off the repo root, and content.json names those plates by derivation rather
+     than by URL. So the directory is published in practice whatever it is
+     called, and a second surface fetching the same bytes is copying what the
+     first one links. What is NOT pinned, deliberately, is the same script's
+     `../node_modules/@yordan/design-system/assets/avatar.svg`: that resolves
+     inside apps/next's own node_modules, it is the package's `files` surface
+     reached through the resolver rather than a path across the repo, and pinning
+     a node_modules path would assert that a directory nobody commits is a
+     boundary. test/fixtures/boundary-cases.json holds a control proving the
+     gate stays quiet about it. */
+  [
+    "apps/next/scripts/sync-artifacts.mjs",
+    "../../../content/assets/notable",
+    "the Notable Projects plates the cards reference, copied into public/",
+  ],
+  [
+    "apps/next/scripts/sync-artifacts.mjs",
+    "../../../content/assets/pipeline.svg",
+    "the pipeline diagram the portfolio-system case study shows",
+  ],
   [
     "apps/next/src/app/evals/page.tsx",
     "../../../../../evals/dist/page.json",
@@ -264,17 +308,36 @@ const CROSSINGS = [
    mode of writing a pin before its file: a miscounted spec resolves somewhere
    harmless, matches no ban, and sails through section 3 having asserted
    nothing at all. A pin that proves nothing is worse than no pin, because it
-   reads like coverage. */
-const CROSSING_SURFACES = /^(content\/dist|design-system\/(dist|css)|evals\/dist|css|js)\//;
+   reads like coverage.
+
+   `content/assets` is here for the sync script and is the only entry that is
+   not a dist/, a stylesheet or a script — see the pin above for why the plates
+   count as published: the vanilla pages serve them by URL off the repo root.
+   Note the shape of this pattern rather than its contents: a surface is a
+   DIRECTORY PREFIX, so admitting content/assets admits the plates and the
+   diagram and nothing in content/ that is a source. */
+const CROSSING_SURFACES = /^(content\/(dist|assets)|design-system\/(dist|css)|evals\/dist|css|js)\//;
 
 /* The generated artefacts that make those crossings possible must exist, or the
-   graph is a diagram rather than an architecture. */
+   graph is a diagram rather than an architecture.
+
+   These are existence checks, not walk results, which is why `dist` sitting in
+   SKIP_DIRS below does not hide them: SKIP_DIRS governs which SOURCES get
+   scanned for references — a bundle under a dist/ mentions every path it ever
+   inlined — while this loop stats one named path each. content/dist/content.json
+   has been listed here since the first version of this gate, which skipped `dist`
+   in the walk for just as long; the two have never been in each other's way. */
 const ARTEFACTS = [
   "design-system/dist/tokens.css",
   "design-system/dist/tokens.flat.json",
   "design-system/dist/components.json",
   "content/system.generated.json",
   "content/dist/content.json",
+  /* The eval page's data, committed and re-derived by `evals/run.mjs --check`.
+     It is the second serialization of numbers evals.html already carries, and
+     the moment apps/next/src/app/evals/page.tsx reads it, its absence stops
+     being a missing convenience and becomes a page that cannot render. */
+  "evals/dist/page.json",
 ];
 
 /* `out` is `next build`'s static export — apps/next/out/, bundled JS whose
