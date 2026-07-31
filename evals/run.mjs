@@ -5,6 +5,8 @@
    evals/questions.json  →  a six-arm comparison table
                          →  evals/results.json
                          →  the <!-- content:evals-* --> regions of evals.html
+                         →  evals/dist/page.json  (those same regions as data,
+                            for the second renderer that must not scrape them)
 
    `node evals/run.mjs`                   run, print, write the artefacts
    `node evals/run.mjs --check`           run and fail if any artefact is stale (CI)
@@ -39,7 +41,7 @@
        choice, and it now says so and exits instead of republishing a table
        with the embeddings arms quietly deleted from it.
    ============================================================ */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -959,7 +961,7 @@ for (const r of results) {
 }
 
 /* ============================================================
-   9. Artefacts — results.json and the evals.html regions
+   9. Artefacts — results.json, the evals.html regions, dist/page.json
    ============================================================ */
 function round(x) {
   return Number(x.toFixed(4));
@@ -1035,39 +1037,70 @@ const summary = {
   })),
 };
 
-/* ---------- evals.html regions ---------- */
+/* ---------- evals.html regions, and evals/dist/page.json ----------
+
+   Each region builder returns a MODEL — the region's content as data — and
+   RENDERS its own HTML from that model. The two are not computed twice: the
+   HTML is a function of the model, so `evals/dist/page.json` cannot carry a
+   number the page does not show, which is the whole reason a second consumer
+   is allowed a second serialization at all.
+
+   Every string a model carries is the string that lands in evals.html, already
+   HTML-escaped. Escaping happens when the model is BUILT, never when it is
+   rendered — esc() is not idempotent, so a renderer that escaped again would
+   double-encode the first ampersand anyone writes. */
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const best = (key) => Math.max(...results.map((r) => r[key].p ?? r[key]));
+
+/** A `<p class="ev-note">` block. The model carries the prose lines unindented;
+ *  this is the only place the two-space body indent is written. */
+const noteHtml = (lines) => [`<p class="ev-note">`, ...lines.map((l) => `  ${l}`), `</p>`];
 
 const summaryRegion = () => {
   const b = results.reduce((a, r) => (r.mrr.p > a.mrr.p ? r : a));
   const top = results.reduce((a, r) => (r.hit3.p > a.hit3.p ? r : a));
-  const cells = [
-    [String(content.chunks.length), "", "Corpus", "Chunks in the whole index — the entire corpus fits in a system prompt."],
-    [String(QUESTIONS.length), "", "Questions", `${RETRIEVAL.length} retrieval, ${ABSTAIN.length} abstention. Every expected id verified against content.json.`],
-    [
+  const fact = (value, unit, title, label) => ({
+    value: esc(value),
+    unit: esc(unit),
+    title: esc(title),
+    label,
+  });
+  const facts = [
+    fact(String(content.chunks.length), "", "Corpus", "Chunks in the whole index — the entire corpus fits in a system prompt."),
+    fact(
+      String(QUESTIONS.length),
+      "",
+      "Questions",
+      `${RETRIEVAL.length} retrieval, ${ABSTAIN.length} abstention. Every expected id verified against content.json.`
+    ),
+    fact(
       pct(top.hit3.p).replace("%", ""),
       "%",
       "Best hit@3",
-      `${esc(top.arm)} — 95% CI ${pct(top.hit3.lo)} to ${pct(top.hit3.hi)} on ${RETRIEVAL.length} questions. Best MRR is ${esc(b.arm)}.`,
+      `${esc(top.arm)} — 95% CI ${pct(top.hit3.lo)} to ${pct(top.hit3.hi)} on ${RETRIEVAL.length} questions. Best MRR is ${esc(b.arm)}.`
+    ),
+    fact(String(results.length), "", "Arms", `Measured offline, no model. ${esc(embeddingsNote)}`),
+  ];
+  return {
+    kind: "facts",
+    facts,
+    html: [
+      `<div class="facts">`,
+      ...facts.flatMap((f) => [
+        `  <div class="fact">`,
+        `    <span class="fact__num">${f.value}${f.unit ? `<small>${f.unit}</small>` : ""}</span>`,
+        `    <span class="fact__title">${f.title}</span>`,
+        `    <span class="fact__label">${f.label}</span>`,
+        `  </div>`,
+      ]),
+      `</div>`,
     ],
-    [String(results.length), "", "Arms", `Measured offline, no model. ${esc(embeddingsNote)}`],
-  ];
-  return [
-    `<div class="facts">`,
-    ...cells.flatMap(([n, unit, title, label]) => [
-      `  <div class="fact">`,
-      `    <span class="fact__num">${esc(n)}${unit ? `<small>${esc(unit)}</small>` : ""}</span>`,
-      `    <span class="fact__title">${esc(title)}</span>`,
-      `    <span class="fact__label">${label}</span>`,
-      `  </div>`,
-    ]),
-    `</div>`,
-  ];
+  };
 };
 
-const metricCell = (label, value, half, isBest) =>
-  `<span class="chip${isBest ? " chip--solid" : ""}">${esc(label)} ${esc(value)}${half ? ` ${esc(half)}` : ""}</span>`;
+/** A chip built from an already-escaped model row. */
+const chip = (text, isBest) => `<span class="chip${isBest ? " chip--solid" : ""}">${text}</span>`;
+const metricChip = (m) => chip(`${m.label} ${m.value}${m.half ? ` ${m.half}` : ""}`, m.best);
 
 /* One `.chip--solid` per row marks the single best value in that column — the
    chip spec allows exactly one emphasised chip per group, so the row can carry
@@ -1080,149 +1113,237 @@ const solidFor = (r) => {
   return led[0] ?? null;
 };
 
+/* The seven metric columns, in the order the page prints them. One list, read
+   by both the model and the renderer, so a column cannot appear in the JSON and
+   not on the page. */
+const METRIC_COLUMNS = [
+  ["hit1", "hit@1", (r) => pct(r.hit1.p), (r) => pp(r.hit1.half)],
+  ["hit3", "hit@3", (r) => pct(r.hit3.p), (r) => pp(r.hit3.half)],
+  ["hit5", "hit@5", (r) => pct(r.hit5.p), (r) => pp(r.hit5.half)],
+  ["ent1", "ent@1", (r) => pct(r.ent1.p), (r) => pp(r.ent1.half)],
+  ["ent3", "ent@3", (r) => pct(r.ent3.p), (r) => pp(r.ent3.half)],
+  ["mrr", "MRR", (r) => num(r.mrr.p), (r) => `±${r.mrr.half.toFixed(3)}`],
+  ["abstain", "abstain", (r) => pct(r.abstain.p), (r) => pp(r.abstain.half)],
+];
+
 const tableRegion = () => {
-  const out = [`<dl class="tools">`];
-  for (const r of results) {
+  const arms = results.map((r) => {
     const solid = solidFor(r);
-    const counterfactual = r.arm === "tools-gated" || r.arm === "gated-embeddings";
-    out.push(
+    return {
+      arm: esc(r.arm),
+      counterfactual: r.arm === "tools-gated" || r.arm === "gated-embeddings",
+      best: solid,
+      metrics: METRIC_COLUMNS.map(([key, label, value, half]) => ({
+        key,
+        label: esc(label),
+        value: esc(value(r)),
+        half: esc(half(r)),
+        best: solid === key,
+      })),
+    };
+  });
+
+  /* A skipped arm is a truthful row, never a substituted number. When the
+     embeddings cache is absent this row says so in place of a metric row, and
+     page.json carries the same row rather than a shorter table. */
+  const skipped = has("embeddings")
+    ? null
+    : {
+        arm: esc("embeddings"),
+        text: `${esc(embeddingsNote)} — the arm is implemented and cache-gated, never faked. Anthropic has no embeddings endpoint; Voyage is the partner model.`,
+      };
+
+  const armsNote = [
+    `Every ± is the half-width of a two-sided 95% Wilson interval on ${RETRIEVAL.length} retrieval or`,
+    `${ABSTAIN.length} abstention questions — one question moves a retrieval rate by ${(100 / RETRIEVAL.length).toFixed(1)}pp.`,
+    `Two arms whose intervals overlap are not separated by this table, which is what the paired`,
+    `tests below are for. tools-gated and gated-embeddings are counterfactuals: since the entity`,
+    `gate moved above the tool it annotates rather than filters, so the deployed ranking is the`,
+    `ungated one with a coverage note attached.`,
+  ];
+
+  const paired = significance.map((s) => ({
+    a: esc(s.a),
+    b: esc(s.b),
+    wins: s.wins,
+    losses: s.losses,
+    discordant: s.discordant,
+    counts: `${s.wins}–${s.losses} of ${s.discordant} discordant`,
+    p: `p ${esc(pval(s.p))}`,
+    significant: s.p < 0.05,
+    verdict: esc(s.p < 0.05 ? "significant" : "not significant"),
+    note: esc(s.note),
+  }));
+
+  const pairedNote = [
+    `Exact two-sided McNemar on hit@3, paired question by question. Only discordant questions —`,
+    `ones the two arms disagree about — carry information, so the counts are small even where the`,
+    `margin is large. Five discordant pairs cannot reach p&lt;0.05 under an exact test; 0.0625 is`,
+    `the floor. A significant result here is a real difference; a non-significant one is a`,
+    `difference this question set is too small to detect, not a demonstration of equality.`,
+  ];
+
+  const separability = results.map((r) => {
+    const d = r.separabilityDetail;
+    const share = (n) => `${((n / (d.pairs || 1)) * 100).toFixed(0)}%`;
+    return {
+      arm: esc(r.arm),
+      allPairs: num(r.separability),
+      emptyDriven: share(d.emptyDriven),
+      tied: share(d.tied),
+      lostByRefusingAnAnswer: share(d.lostByRefusingAnAnswer),
+      scored: r.separabilityScored === null ? null : num(r.separabilityScored),
+    };
+  });
+
+  const separabilityNote = [
+    `separability is the fraction of (answerable, unanswerable) pairs that any top-1 score cut`,
+    `orders correctly, ties counted half. It was previously printed beside abstain as independent`,
+    `corroboration and it is not: for an arm that refuses, most pairs are won by the refusal rather`,
+    `than by the score, which is why two arms with completely different score scales reported the`,
+    `same figure. Only the last chip on each row is about ranking.`,
+  ];
+
+  const html = [`<dl class="tools">`];
+  for (const a of arms) {
+    html.push(
       `  <div class="tools__row">`,
-      `    <dt>${esc(r.arm)}${counterfactual ? ` <span class="chip">counterfactual</span>` : ""}</dt>`,
+      `    <dt>${a.arm}${a.counterfactual ? ` <span class="chip">counterfactual</span>` : ""}</dt>`,
       `    <dd class="chips">`,
-      `      ${metricCell("hit@1", pct(r.hit1.p), pp(r.hit1.half), solid === "hit1")}`,
-      `      ${metricCell("hit@3", pct(r.hit3.p), pp(r.hit3.half), solid === "hit3")}`,
-      `      ${metricCell("hit@5", pct(r.hit5.p), pp(r.hit5.half), solid === "hit5")}`,
-      `      ${metricCell("ent@1", pct(r.ent1.p), pp(r.ent1.half), solid === "ent1")}`,
-      `      ${metricCell("ent@3", pct(r.ent3.p), pp(r.ent3.half), solid === "ent3")}`,
-      `      ${metricCell("MRR", num(r.mrr.p), `±${r.mrr.half.toFixed(3)}`, solid === "mrr")}`,
-      `      ${metricCell("abstain", pct(r.abstain.p), pp(r.abstain.half), solid === "abstain")}`,
+      ...a.metrics.map((m) => `      ${metricChip(m)}`),
       `    </dd>`,
       `  </div>`
     );
   }
-  if (!has("embeddings")) {
-    out.push(
+  if (skipped) {
+    html.push(
       `  <div class="tools__row">`,
-      `    <dt>embeddings</dt>`,
-      `    <dd>${esc(embeddingsNote)} — the arm is implemented and cache-gated, never faked. Anthropic has no embeddings endpoint; Voyage is the partner model.</dd>`,
+      `    <dt>${skipped.arm}</dt>`,
+      `    <dd>${skipped.text}</dd>`,
       `  </div>`
     );
   }
-  out.push(`</dl>`);
+  html.push(`</dl>`, ...noteHtml(armsNote));
 
-  out.push(
-    `<p class="ev-note">`,
-    `  Every ± is the half-width of a two-sided 95% Wilson interval on ${RETRIEVAL.length} retrieval or`,
-    `  ${ABSTAIN.length} abstention questions — one question moves a retrieval rate by ${(100 / RETRIEVAL.length).toFixed(1)}pp.`,
-    `  Two arms whose intervals overlap are not separated by this table, which is what the paired`,
-    `  tests below are for. tools-gated and gated-embeddings are counterfactuals: since the entity`,
-    `  gate moved above the tool it annotates rather than filters, so the deployed ranking is the`,
-    `  ungated one with a coverage note attached.`,
-    `</p>`
-  );
-
-  if (significance.length) {
-    out.push(`<dl class="tools">`);
-    for (const s of significance) {
-      const verdict = s.p < 0.05 ? "significant" : "not significant";
-      out.push(
+  if (paired.length) {
+    html.push(`<dl class="tools">`);
+    for (const s of paired) {
+      html.push(
         `  <div class="tools__row">`,
-        `    <dt>${esc(s.a)} vs ${esc(s.b)}</dt>`,
+        `    <dt>${s.a} vs ${s.b}</dt>`,
         `    <dd class="chips">`,
-        `      <span class="chip">${s.wins}–${s.losses} of ${s.discordant} discordant</span>`,
-        `      <span class="chip${s.p < 0.05 ? " chip--solid" : ""}">p ${esc(pval(s.p))}</span>`,
-        `      <span class="chip">${esc(verdict)}</span>`,
-        `      <span class="chip">${esc(s.note)}</span>`,
+        `      ${chip(s.counts, false)}`,
+        `      ${chip(s.p, s.significant)}`,
+        `      ${chip(s.verdict, false)}`,
+        `      ${chip(s.note, false)}`,
         `    </dd>`,
         `  </div>`
       );
     }
-    out.push(`</dl>`);
-    out.push(
-      `<p class="ev-note">`,
-      `  Exact two-sided McNemar on hit@3, paired question by question. Only discordant questions —`,
-      `  ones the two arms disagree about — carry information, so the counts are small even where the`,
-      `  margin is large. Five discordant pairs cannot reach p&lt;0.05 under an exact test; 0.0625 is`,
-      `  the floor. A significant result here is a real difference; a non-significant one is a`,
-      `  difference this question set is too small to detect, not a demonstration of equality.`,
-      `</p>`
-    );
+    html.push(`</dl>`, ...noteHtml(pairedNote));
   }
 
-  out.push(`<dl class="tools">`);
-  for (const r of results) {
-    const d = r.separabilityDetail;
-    const share = (n) => `${((n / (d.pairs || 1)) * 100).toFixed(0)}%`;
-    out.push(
+  html.push(`<dl class="tools">`);
+  for (const s of separability) {
+    html.push(
       `  <div class="tools__row">`,
-      `    <dt>separability · ${esc(r.arm)}</dt>`,
+      `    <dt>separability · ${s.arm}</dt>`,
       `    <dd class="chips">`,
-      `      <span class="chip">all pairs ${num(r.separability)}</span>`,
-      `      <span class="chip">${share(d.emptyDriven)} won by returning nothing</span>`,
-      `      <span class="chip">${share(d.tied)} tied empty</span>`,
-      `      <span class="chip">${share(d.lostByRefusingAnAnswer)} lost by refusing an answerable one</span>`,
-      `      <span class="chip">${r.separabilityScored === null ? "no scored pairs" : `scored pairs only ${num(r.separabilityScored)}`}</span>`,
+      `      ${chip(`all pairs ${s.allPairs}`, false)}`,
+      `      ${chip(`${s.emptyDriven} won by returning nothing`, false)}`,
+      `      ${chip(`${s.tied} tied empty`, false)}`,
+      `      ${chip(`${s.lostByRefusingAnAnswer} lost by refusing an answerable one`, false)}`,
+      `      ${chip(s.scored === null ? "no scored pairs" : `scored pairs only ${s.scored}`, false)}`,
       `    </dd>`,
       `  </div>`
     );
   }
-  out.push(`</dl>`);
-  out.push(
-    `<p class="ev-note">`,
-    `  separability is the fraction of (answerable, unanswerable) pairs that any top-1 score cut`,
-    `  orders correctly, ties counted half. It was previously printed beside abstain as independent`,
-    `  corroboration and it is not: for an arm that refuses, most pairs are won by the refusal rather`,
-    `  than by the score, which is why two arms with completely different score scales reported the`,
-    `  same figure. Only the last chip on each row is about ranking.`,
-    `</p>`
-  );
+  html.push(`</dl>`, ...noteHtml(separabilityNote));
 
-  return out;
+  return { kind: "arms", arms, skipped, armsNote, paired, pairedNote, separability, separabilityNote, html };
 };
 
 const categoryRegion = () => {
-  const out = [`<dl class="tools">`];
-  for (const c of cats) {
+  const categories = cats.map((c) => {
     const g0 = results[0].byCategory[c];
     const n = g0.abstention ? g0.nAbstention : g0.nRetrieval;
     const top = Math.max(...results.map((r) => r.byCategory[c]?.score ?? 0));
     /* At most one `--solid` chip per group (chip spec): the FIRST arm to reach
        the top score wears it, not every arm tied at the top. */
     const leader = top > 0 ? results.find((r) => (r.byCategory[c]?.score ?? 0) === top)?.arm : null;
-    out.push(
+    return {
+      category: esc(c),
+      n,
+      nLabel: `${n} ${n === 1 ? "question" : "questions"}`,
+      abstention: Boolean(g0.abstention),
+      metric: g0.abstention ? "abstention rate" : "hit@3",
+      leader: leader ?? null,
+      arms: results.map((r) => ({
+        key: r.arm,
+        label: esc(r.arm),
+        value: esc(pct(r.byCategory[c]?.score ?? 0)),
+        half: esc(pp(r.byCategory[c]?.interval.half ?? 0)),
+        best: r.arm === leader,
+      })),
+    };
+  });
+
+  const note = [
+    `Each ± is a 95% Wilson half-width at that class's n. The smallest classes here carry intervals`,
+    `wider than 40 percentage points, so a class winner is a direction to investigate rather than a`,
+    `result. The per-class table decides nothing on its own.`,
+  ];
+
+  const html = [`<dl class="tools">`];
+  for (const g of categories) {
+    html.push(
       `  <div class="tools__row">`,
-      `    <dt>${esc(c)}</dt>`,
+      `    <dt>${g.category}</dt>`,
       `    <dd class="chips">`,
-      `      <span class="chip">${n} ${n === 1 ? "question" : "questions"}</span>`,
-      `      <span class="chip">${g0.abstention ? "abstention rate" : "hit@3"}</span>`,
-      ...results.map(
-        (r) =>
-          `      ${metricCell(r.arm, pct(r.byCategory[c]?.score ?? 0), pp(r.byCategory[c]?.interval.half ?? 0), r.arm === leader)}`
-      ),
+      `      ${chip(g.nLabel, false)}`,
+      `      ${chip(g.metric, false)}`,
+      ...g.arms.map((a) => `      ${metricChip(a)}`),
       `    </dd>`,
       `  </div>`
     );
   }
-  out.push(`</dl>`);
-  out.push(
-    `<p class="ev-note">`,
-    `  Each ± is a 95% Wilson half-width at that class's n. The smallest classes here carry intervals`,
-    `  wider than 40 percentage points, so a class winner is a direction to investigate rather than a`,
-    `  result. The per-class table decides nothing on its own.`,
-    `</p>`
-  );
-  return out;
+  html.push(`</dl>`, ...noteHtml(note));
+  return { kind: "categories", categories, note, html };
 };
 
-const corpusRegion = () => [
-  `<dl class="tools">`,
-  `  <div class="tools__row"><dt>Chunks</dt><dd>${content.chunks.length} — one per authored section, across ${content.projects.length} projects and ${content.experience.length} roles.</dd></div>`,
-  `  <div class="tools__row"><dt>Terms</dt><dd>${Object.keys(content.bm25.df).length} distinct terms, mean chunk length ${content.bm25.avgdl} tokens.</dd></div>`,
-  `  <div class="tools__row"><dt>Manifest</dt><dd>${JSON.stringify(content.manifest).length} characters — every id, title and one-line summary. The complete table of contents fits in a system prompt.</dd></div>`,
-  `  <div class="tools__row"><dt>Fingerprint</dt><dd>corpus <code>${corpusHash}</code> · questions <code>${questionsHash}</code> — both vector caches carry the corpus digest, so rewording a chunk invalidates them instead of being missed by a count.</dd></div>`,
-  `  <div class="tools__row"><dt>Index size</dt><dd>Term statistics are precomputed at build time, so a query is a loop and a lookup — no service, no round trip, no idle cost.</dd></div>`,
-  `</dl>`,
-];
+const corpusRegion = () => {
+  const rows = [
+    {
+      term: "Chunks",
+      definition: `${content.chunks.length} — one per authored section, across ${content.projects.length} projects and ${content.experience.length} roles.`,
+    },
+    {
+      term: "Terms",
+      definition: `${Object.keys(content.bm25.df).length} distinct terms, mean chunk length ${content.bm25.avgdl} tokens.`,
+    },
+    {
+      term: "Manifest",
+      definition: `${JSON.stringify(content.manifest).length} characters — every id, title and one-line summary. The complete table of contents fits in a system prompt.`,
+    },
+    {
+      term: "Fingerprint",
+      definition: `corpus <code>${corpusHash}</code> · questions <code>${questionsHash}</code> — both vector caches carry the corpus digest, so rewording a chunk invalidates them instead of being missed by a count.`,
+    },
+    {
+      term: "Index size",
+      definition: `Term statistics are precomputed at build time, so a query is a loop and a lookup — no service, no round trip, no idle cost.`,
+    },
+  ];
+  return {
+    kind: "definitions",
+    rows,
+    html: [
+      `<dl class="tools">`,
+      ...rows.map((r) => `  <div class="tools__row"><dt>${r.term}</dt><dd>${r.definition}</dd></div>`),
+      `</dl>`,
+    ],
+  };
+};
 
 /* ---------- the reading region: content-authored prose, eval-supplied numbers ----------
 
@@ -1301,7 +1422,12 @@ const readingRegion = () => {
     );
     process.exit(1);
   }
-  return html.split("\n");
+  /* One authored paragraph per line, exactly as content/evals.json holds them
+     and exactly as they land on the page. This region is PROSE: it carries the
+     owner's own markup (`<strong>`, `<em>`, `<code>`, curly quotes) with the
+     numbers substituted in, and there is nothing tabular in it to structure. */
+  const paragraphs = html.split("\n");
+  return { kind: "prose", paragraphs, html: paragraphs };
 };
 
 function applyRegions(html, regions) {
@@ -1328,7 +1454,7 @@ function applyRegions(html, regions) {
   return out;
 }
 
-const REGIONS = {
+const REGION_MODELS = {
   "evals-summary": summaryRegion(),
   "evals-table": tableRegion(),
   "evals-categories": categoryRegion(),
@@ -1336,8 +1462,58 @@ const REGIONS = {
   "evals-corpus": corpusRegion(),
 };
 
+/** What applyRegions() writes between each pair of markers in evals.html — the
+ *  `html` a region model already rendered from itself, never a second build. */
+const REGIONS = Object.fromEntries(Object.entries(REGION_MODELS).map(([name, m]) => [name, m.html]));
+
+/* ============================================================
+   9b. evals/dist/page.json — the same regions, for a second renderer
+
+   apps/next/ publishes /evals too, and the alternative was for it to parse
+   evals.html. A page that scrapes another page's markup for numbers is one
+   whitespace change away from publishing something the runner never produced,
+   and it would put a second copy of the substitution logic in a slice that
+   cannot import this one.
+
+   So this is a SERIALIZATION, not a second computation. Every value here is the
+   object the region builder above already rendered its HTML from, which is why
+   `regions[name].html` and the corresponding block of evals.html are the same
+   array of strings — one indented to its marker column, one not. Nothing in
+   this file is re-worded, re-rounded or re-derived, and there is no code path
+   by which page.json can disagree with the page: both come from REGION_MODELS.
+   ============================================================ */
+const PAGE = {
+  $schema: "evals/page.schema — see evals/CLAUDE.md",
+  $doc: [
+    "Generated by evals/run.mjs alongside evals/results.json and the <!-- content:evals-* --> regions of evals.html. Do not edit; `node evals/run.mjs --check` byte-compares this file and names it when it is stale.",
+    "This is a serialization of the SAME numbers those two artefacts carry, structured so a renderer does not have to parse HTML or re-derive anything. Every figure was computed once, by the run that wrote all three.",
+    "EVERY STRING UNDER `regions` IS HTML, already escaped exactly as it appears in evals.html. Render it as markup (dangerouslySetInnerHTML or equivalent), not as plain text, or an entity such as `&lt;` in the paired-test note will render literally. Do not escape it again.",
+    "`regions[name].html` is the exact line array written between that region's markers in evals.html, for byte-verification. evals.html indents each line to its marker's column; these lines carry only their own relative indent. Prefer the structured fields beside it for rendering — `html` exists so a second renderer can prove it is showing the same thing.",
+    "`regions['evals-reading']` is PROSE, authored in content/evals.json by the repo owner and substituted here. It has no structure to recover: ship each paragraph verbatim. Never re-word it, never re-flow a sentence around a number.",
+    "n is small and the intervals are wide. Read `summary.confidence`, `summary.questions` and the per-metric `half` strings out of this file — never hard-code a sample size or a half-width into a page or a document, because both have moved before.",
+    "A skipped arm is `regions['evals-table'].skipped` and a shorter `arms` array. It is never a substituted number from elsewhere; render the skip.",
+  ],
+  generatedBy: "evals/run.mjs — do not edit",
+  version: 2,
+  contentVersion: content.version,
+  corpusHash,
+  questionsHash,
+  source: { page: "evals.html", results: "evals/results.json" },
+  summary: {
+    corpus: summary.corpus,
+    questions: summary.questions,
+    depth: summary.depth,
+    confidence: summary.confidence,
+    arms: results.map((r) => r.arm),
+    embeddings: summary.embeddings,
+    embeddingsMeasured: has("embeddings"),
+  },
+  regions: REGION_MODELS,
+};
+
 const outputs = [
   ["evals/results.json", JSON.stringify(summary, null, 2) + "\n"],
+  ["evals/dist/page.json", JSON.stringify(PAGE, null, 2) + "\n"],
   ["evals.html", applyRegions(read("evals.html"), REGIONS)],
 ];
 
@@ -1477,11 +1653,13 @@ if (CHECK) {
     process.exit(1);
   }
   console.log(
-    `✓ eval artefacts         (3 up to date: results.json, evals.html, vectors.json @ corpus ${corpusHash})`
+    `✓ eval artefacts         (4 up to date: results.json, dist/page.json, evals.html, vectors.json @ corpus ${corpusHash})`
   );
 } else {
+  mkdirSync(join(here, "dist"), { recursive: true });
   for (const [rel, text] of outputs) writeFileSync(join(root, rel), lf(text));
   console.log(`✓ evals/results.json     (${results.length} arms, ${significance.length} paired tests)`);
+  console.log(`✓ evals/dist/page.json   (${Object.keys(REGION_MODELS).length} regions + summary)`);
   console.log(`✓ evals.html             (${Object.keys(REGIONS).length} regions)`);
 }
 
