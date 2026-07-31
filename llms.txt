@@ -34,7 +34,7 @@ Tags: Senior Product Designer, Design Systems, AI Workflows, Figma-to-code, WCAG
 
 ### 03 · Green Street — UX & Accessibility Audits
 
-WCAG 2.1 AA audits of two product surfaces — editorial and data-dense analytics. 200+ issue instances catalogued with severity ratings and a prioritised remediation roadmap.
+UX and WCAG 2.1 AA audits of two product surfaces: an editorial platform and a data-dense analytics platform. 200+ issue instances covering accessibility, consistency, visual hierarchy, and UI patterns, ordered into a remediation roadmap.
 
 Tags: Senior Product Designer, Accessibility, UX Audit, WCAG 2.1 AA, Two products
 Metrics: 200+ Issue instances catalogued
