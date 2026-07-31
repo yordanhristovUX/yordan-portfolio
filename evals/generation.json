@@ -1,0 +1,586 @@
+{
+  "$generatedBy": "evals/generation.mjs — manual, billed, never in CI",
+  "$question": "Given the tool surface api/mcp.js serves, can a model generate markup that honours the published design-system contract?",
+  "$notGated": "This file is covered by NOTHING. `npm run check` does not read it, `evals/run.mjs --check` does not know it exists, and no boundary pin names it. It can only change when a human spends money, so a staleness gate could only be silenced by a billed run. Read it as dated: contract.componentsDigest and contract.tokensDigest say which contract it was measured against, and briefs.briefsHash says whether the briefs have moved.",
+  "generatedAt": "2026-07-31T11:49:15.241Z",
+  "model": "claude-sonnet-4-5",
+  "modelCaveat": "The model under test is claude-sonnet-4-5. api/chat.js runs claude-haiku-4-5, so this is NOT a measurement of the site's own assistant — it measures whether the published contract is legible to a capable agent, which is the claim api/mcp.js makes to somebody else's tooling. n is 10; every rate below carries a two-sided 95% Wilson interval and the half-widths are wider than 15 percentage points. One brief moves a rate by 10pp. Read the intervals, not the point estimates.",
+  "toolSurface": {
+    "tools": [
+      "list_projects",
+      "get_project",
+      "list_experience",
+      "get_profile",
+      "get_system_facts",
+      "search_content",
+      "get_design_system",
+      "get_component"
+    ],
+    "source": "lib/knowledge/index.js TOOLS — the same array api/mcp.js maps into MCP descriptors and api/chat.js spreads into its request",
+    "harnessTool": "submit_markup — this file's answer channel, not part of the design-system contract"
+  },
+  "contract": {
+    "source": "design-system/dist/components.json + design-system/dist/tokens.flat.json, read directly",
+    "components": 23,
+    "publishedClasses": 149,
+    "publishedTokens": 83,
+    "componentLocalVars": [
+      "--rail-track",
+      "--term-slack"
+    ],
+    "componentLocalVarsNote": "Consumed by components.css and defined in it, so they are published by the contract without being design tokens. Allowed by gate 2 because a gate that rejected them would reject the shipped stylesheet.",
+    "componentsDigest": "715ea9814555dc58",
+    "tokensDigest": "54b36bb1d8fdc819"
+  },
+  "briefs": {
+    "n": 10,
+    "run": 10,
+    "published": 9,
+    "unpublished": 1,
+    "unpublishedNote": "`form-row` names work this design system does not publish a component for. Inventing a class for it fails gate 1 by naming the class, which is the measurement working rather than the brief being unfair. Reported separately.",
+    "briefsHash": "e900e04661d6dd3f"
+  },
+  "gates": [
+    {
+      "id": "classes",
+      "what": "every class attribute token is published by components.json",
+      "judge": "set membership"
+    },
+    {
+      "id": "tokens",
+      "what": "every var(--x) is a published token or a component-local custom property",
+      "judge": "set membership"
+    },
+    {
+      "id": "literals",
+      "what": "no raw colour, font-size or spacing literal",
+      "judge": "regex, reimplemented from scripts/check-css.mjs rules 1 and 3 plus spacing"
+    },
+    {
+      "id": "a11y",
+      "what": "the fixed per-brief table in generation.mjs, derived by hand from each component's a11y sentence",
+      "judge": "deterministic checks over the element list"
+    }
+  ],
+  "totals": {
+    "outcomes": {
+      "submitted": 10
+    },
+    "allGates": {
+      "pass": 8,
+      "n": 10,
+      "value": 0.8,
+      "lo": 0.4902,
+      "hi": 0.9433,
+      "half": 0.2266
+    },
+    "perGate": {
+      "classes": {
+        "pass": 10,
+        "n": 10,
+        "value": 1,
+        "lo": 0.7225,
+        "hi": 1,
+        "half": 0.1388
+      },
+      "tokens": {
+        "pass": 10,
+        "n": 10,
+        "value": 1,
+        "lo": 0.7225,
+        "hi": 1,
+        "half": 0.1388
+      },
+      "literals": {
+        "pass": 10,
+        "n": 10,
+        "value": 1,
+        "lo": 0.7225,
+        "hi": 1,
+        "half": 0.1388
+      },
+      "a11y": {
+        "pass": 8,
+        "n": 10,
+        "value": 0.8,
+        "lo": 0.4902,
+        "hi": 0.9433,
+        "half": 0.2266
+      }
+    },
+    "byCoverage": {
+      "published": {
+        "pass": 7,
+        "n": 9,
+        "value": 0.7778,
+        "lo": 0.4526,
+        "hi": 0.9368,
+        "half": 0.2421
+      },
+      "unpublished": {
+        "pass": 1,
+        "n": 1,
+        "value": 1,
+        "lo": 0.2065,
+        "hi": 1,
+        "half": 0.3967
+      }
+    }
+  },
+  "usage": {
+    "calls": 35,
+    "inputTokens": 168608,
+    "outputTokens": 6463
+  },
+  "detail": [
+    {
+      "id": "card-grid",
+      "coverage": "published",
+      "brief": "A grid of three project cards for the work index. Each card shows the kind of project it is, its name, and a one-line note underneath. The cards sit in a section of their own.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "list_projects",
+        "get_component",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "section-head",
+        "card"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 8,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": true,
+          "checked": 2,
+          "failures": [],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": true,
+      "markup": "<section class=\"sec\">\n  <div class=\"sec__head\">\n    <h2 class=\"sec__title\">Work</h2>\n  </div>\n  <div class=\"card-grid\">\n    <article class=\"card\">\n      <span class=\"card__type\">Designer & Builder</span>\n      <h3 class=\"card__title\">Portfolio as a Product</h3>\n      <p class=\"card__note\">An AI-ready design system that ships itself: repo-first tokens, Storybook, one-way Figma push, auto-deploys — all open source.</p>\n    </article>\n    <article class=\"card\">\n      <span class=\"card__type\">Senior Product Designer</span>\n      <h3 class=\"card__title\">AI-ready design systems and Agentic workflows</h3>\n      <p class=\"card__note\">~35 components at 1:1 Figma-to-code parity, 100% token coverage, custom Claude skills, and a prototype pipeline the whole TPM team uses. Production navigation shipped.</p>\n    </article>\n    <article class=\"card\">\n      <span class=\"card__type\">Senior Product Designer</span>\n      <h3 class=\"card__title\">UX & Accessibility Audits</h3>\n      <p class=\"card__note\">WCAG 2.1 AA audits of two product surfaces — editorial and data-dense analytics. 200+ issue instances catalogued with severity ratings and a prioritised remediation roadmap.</p>\n    </article>\n  </div>\n</section>"
+    },
+    {
+      "id": "stat-band",
+      "coverage": "published",
+      "brief": "A band of four figures for the top of a results page: a big number, what it is called, and a sentence of context under each. One of the four is a percentage.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "get_component",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "fact"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 5,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": true,
+          "checked": 1,
+          "failures": [],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": true,
+      "markup": "<div class=\"facts\">\n  <div class=\"fact\">\n    <div class=\"fact__num\">1,247</div>\n    <div class=\"fact__title\">Total conversions</div>\n    <div class=\"fact__label\">Tracked across all campaigns in Q4 2024</div>\n  </div>\n  <div class=\"fact\">\n    <div class=\"fact__num\">68<small>%</small></div>\n    <div class=\"fact__title\">Completion rate</div>\n    <div class=\"fact__label\">Users who finished the onboarding flow</div>\n  </div>\n  <div class=\"fact\">\n    <div class=\"fact__num\">3.2</div>\n    <div class=\"fact__title\">Average session</div>\n    <div class=\"fact__label\">Minutes spent per visit, up from 2.8 last quarter</div>\n  </div>\n  <div class=\"fact\">\n    <div class=\"fact__num\">429</div>\n    <div class=\"fact__title\">Active users</div>\n    <div class=\"fact__label\">Daily active users measured over the past 30 days</div>\n  </div>\n</div>"
+    },
+    {
+      "id": "chip-row",
+      "coverage": "published",
+      "brief": "A row of seven small metric readouts under a heading — each one a short label and its value. One of the seven is the leader and should read as emphasised; the rest are plain.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "get_component",
+        "get_component",
+        "get_component",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "section-head",
+        "fact",
+        "typography"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 8,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": false,
+          "checked": 2,
+          "failures": [
+            {
+              "rule": "chip-is-a-span",
+              "from": "chip: Display-only <span>. Anything that responds to a click is a Button instead.",
+              "problems": [
+                "no .chip in the markup — vacuous"
+              ]
+            },
+            {
+              "rule": "one-emphasised-chip",
+              "from": "chip --solid, and the one-per-group rule scripts/check-css.mjs rule 5 enforces for .btn--solid.",
+              "problems": [
+                "no .chip in the markup — vacuous"
+              ]
+            }
+          ],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": false,
+      "markup": "<section class=\"sec\">\n  <div class=\"sec__head\">\n    <h2 class=\"sec__title\">Metrics</h2>\n  </div>\n  <div class=\"facts\">\n    <div class=\"fact\">\n      <div class=\"fact__title\">Revenue</div>\n      <div class=\"fact__num t-statement\">$2.4M</div>\n    </div>\n    <div class=\"fact\">\n      <div class=\"fact__title\">Users</div>\n      <div class=\"fact__num\">18,500</div>\n    </div>\n    <div class=\"fact\">\n      <div class=\"fact__title\">Conversion</div>\n      <div class=\"fact__num\">3.2%</div>\n    </div>\n    <div class=\"fact\">\n      <div class=\"fact__title\">Sessions</div>\n      <div class=\"fact__num\">142K</div>\n    </div>\n    <div class=\"fact\">\n      <div class=\"fact__title\">Bounce rate</div>\n      <div class=\"fact__num\">28%</div>\n    </div>\n    <div class=\"fact\">\n      <div class=\"fact__title\">Avg. duration</div>\n      <div class=\"fact__num\">4:23</div>\n    </div>\n    <div class=\"fact\">\n      <div class=\"fact__title\">Countries</div>\n      <div class=\"fact__num\">47</div>\n    </div>\n  </div>\n</section>"
+    },
+    {
+      "id": "section-shell",
+      "coverage": "published",
+      "brief": "The shell of a new page section: its title, a short note beside the title that is not essential to understanding the section, and an empty content area ready to take content.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "section-head"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 5,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": true,
+          "checked": 1,
+          "failures": [],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": true,
+      "markup": "<section class=\"sec\">\n  <header class=\"sec__head\">\n    <h2 class=\"sec__title\">Section title</h2>\n    <span class=\"sec__note\">Optional note</span>\n  </header>\n  <div class=\"well\">\n    <!-- Content goes here -->\n  </div>\n</section>"
+    },
+    {
+      "id": "experience-entry",
+      "coverage": "published",
+      "brief": "One role in an employment history: the job title, the employer, the dates it ran, a sentence introducing it, and three bullet points of what was done.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "list_experience",
+        "get_design_system",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "entry"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 6,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": true,
+          "checked": 2,
+          "failures": [],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": true,
+      "markup": "<article class=\"entry\">\n  <h3 class=\"entry__role\">Senior Product Designer</h3>\n  <p class=\"entry__org\">Green Street</p>\n  <p class=\"entry__span\">Jan 2026 – Present · Sofia · Hybrid</p>\n  <p class=\"entry__lede\">Commercial real estate data and analytics</p>\n  <ul class=\"entry__list\">\n    <li>Redesigned the AI Assistant module and built its design system end to end: a Figma library at 1:1 parity with the coded components (~35 and growing), tokens implemented directly in the frontend component library replacing every hardcoded value for 100% token coverage, and a living style guide used for visual testing and design-to-code comparison.</li>\n    <li>Wrote custom Claude skills that let AI agents assemble UI from the real design system without drift. The TPM team uses them to generate interactive prototypes.</li>\n    <li>Wrote and shipped the responsive navigation for the Analytics platform — reviewed and merged by engineering, live in production.</li>\n  </ul>\n</article>"
+    },
+    {
+      "id": "profile-pairs",
+      "coverage": "published",
+      "brief": "A compact profile block listing four labelled details about a person — location, availability, focus, contact.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "profile"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 2,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": true,
+          "checked": 1,
+          "failures": [],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": true,
+      "markup": "<dl class=\"profile\">\n  <div>\n    <dt>Location</dt>\n    <dd>London, United Kingdom</dd>\n  </div>\n  <div>\n    <dt>Availability</dt>\n    <dd class=\"is-ok\">Available</dd>\n  </div>\n  <div>\n    <dt>Focus</dt>\n    <dd>Design systems & scalable UI</dd>\n  </div>\n  <div>\n    <dt>Contact</dt>\n    <dd>hello@example.com</dd>\n  </div>\n</dl>"
+    },
+    {
+      "id": "link-grid-external",
+      "coverage": "published",
+      "brief": "A grid of three links out to other sites — a repository, a published article, and a live demo. They open away from this page.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "link-grid"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 1,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": true,
+          "checked": 2,
+          "failures": [],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": true,
+      "markup": "<nav class=\"link-grid\">\n  <a href=\"https://github.com/example/repository\" target=\"_blank\" rel=\"noopener\">Repository →</a>\n  <a href=\"https://example.com/article\" target=\"_blank\" rel=\"noopener\">Published article →</a>\n  <a href=\"https://demo.example.com\" target=\"_blank\" rel=\"noopener\">Live demo →</a>\n</nav>"
+    },
+    {
+      "id": "sources-list",
+      "coverage": "published",
+      "brief": "A numbered list of three cited sources under a small heading, each with its identifier and a link to the passage it came from.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "get_component",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "source"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 7,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": true,
+          "checked": 1,
+          "failures": [],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": true,
+      "markup": "<div class=\"sources\">\n  <h2 class=\"sources__title\">Sources</h2>\n  <ol class=\"sources__list\">\n    <li class=\"source\">\n      <span class=\"source__id\">1</span>\n      <span class=\"source__ref\">\n        <a href=\"#chunk-42\" class=\"source__link\">Design system implementation strategy</a>\n      </span>\n    </li>\n    <li class=\"source\">\n      <span class=\"source__id\">2</span>\n      <span class=\"source__ref\">\n        <a href=\"#chunk-87\" class=\"source__link\">User research findings on navigation patterns</a>\n      </span>\n    </li>\n    <li class=\"source\">\n      <span class=\"source__id\">3</span>\n      <span class=\"source__ref\">\n        <a href=\"#chunk-156\" class=\"source__link\">Accessibility audit recommendations</a>\n      </span>\n    </li>\n  </ol>\n</div>"
+    },
+    {
+      "id": "media-figure",
+      "coverage": "published",
+      "brief": "A pair of images side by side for a case study — one wide, one tall — each with a caption strip naming what it shows.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "media"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 4,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 0,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": false,
+          "checked": 1,
+          "failures": [
+            {
+              "rule": "images-have-meaningful-alt",
+              "from": "media: Every real <img> needs meaningful alt text describing the content, never 'screenshot'.",
+              "problems": [
+                "<img src=\"\"> has an empty alt on a content image",
+                "<img src=\"\"> has an empty alt on a content image"
+              ]
+            }
+          ],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": false,
+      "markup": "<div class=\"ph-grid\">\n  <figure class=\"ph\">\n    <img src=\"\" alt=\"\">\n    <figcaption class=\"ph__label\">Wide image description</figcaption>\n  </figure>\n  <figure class=\"ph ph--tall\">\n    <img src=\"\" alt=\"\">\n    <figcaption class=\"ph__label\">Tall image description</figcaption>\n  </figure>\n</div>"
+    },
+    {
+      "id": "form-row",
+      "coverage": "unpublished",
+      "brief": "A single row of a settings form: a text field with its label, and a button that saves it. The button is the primary action of the row.",
+      "outcome": "submitted",
+      "toolCalls": [
+        "get_design_system",
+        "get_component",
+        "get_component",
+        "get_component",
+        "get_component"
+      ],
+      "componentsUsed": [
+        "button",
+        "typography"
+      ],
+      "gates": {
+        "classes": {
+          "pass": true,
+          "checked": 3,
+          "offenders": [],
+          "what": "every class attribute token is published by design-system/dist/components.json"
+        },
+        "tokens": {
+          "pass": true,
+          "checked": 7,
+          "offenders": [],
+          "what": "every var(--x) is a token in design-system/dist/tokens.flat.json, or one of the two component-local custom properties components.css defines"
+        },
+        "literals": {
+          "pass": true,
+          "checked": 13,
+          "offenders": [],
+          "what": "no raw colour, font-size or spacing literal — reimplemented from scripts/check-css.mjs rules 1 and 3, plus spacing"
+        },
+        "a11y": {
+          "pass": true,
+          "checked": 1,
+          "failures": [],
+          "what": "the fixed per-brief expectations in this file, derived by hand from each component's a11y sentence"
+        }
+      },
+      "passedAll": true,
+      "markup": "<div style=\"display: flex; gap: var(--space-3); align-items: end;\">\n  <div style=\"flex: 1;\">\n    <label for=\"setting-field\" class=\"t-label\" style=\"display: block; margin-bottom: var(--space-2);\">Setting name</label>\n    <input \n      type=\"text\" \n      id=\"setting-field\" \n      name=\"setting-field\"\n      style=\"width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--chrome-border); background: var(--surface-page); color: var(--content-primary); font-family: var(--font-mono); font-size: var(--text-base);\"\n    />\n  </div>\n  <button type=\"submit\" class=\"btn btn--solid\">Save</button>\n</div>"
+    }
+  ]
+}
