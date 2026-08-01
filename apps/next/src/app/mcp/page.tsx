@@ -20,7 +20,16 @@
    fail to do, four times over, silently.
    ============================================================ */
 import type { Metadata } from "next";
-import { Chip, ChipGroup } from "@yordan/design-system/react";
+import { Card, CardGrid, CardTitle } from "@yordan/design-system/react/card";
+import { Chip, ChipGroup } from "@yordan/design-system/react/chip";
+import { DefinitionRow, DefinitionRowRow } from "@yordan/design-system/react/definition-row";
+import { LinkGrid } from "@yordan/design-system/react/link-grid";
+import {
+  SectionHead,
+  SectionHeadHead,
+  SectionHeadNote,
+  SectionHeadTitle,
+} from "@yordan/design-system/react/section-head";
 
 import { AppLink } from "@/components/AppLink";
 import { Strip, Term } from "@/components/primitives";
@@ -222,14 +231,19 @@ export default function Page() {
                 class that does not exist.
               </p>
             </div>
-            <div className="link-grid">
+            {/* `.mcp-head` is this page's own band, not a `.sec` — mcp.css
+                gives it its own head. So the section element stays a plain
+                <section>; only the four `.sec` bands below are section-head's.
+                `.link-grid` keeps its class: `.mcp-head .link-grid` spaces it
+                and the print block hides it. */}
+            <LinkGrid className="link-grid">
               <a href="#install">Install it</a>
               <a href="#tools">See the tools</a>
               <AppLink href="/evals">Retrieval evaluation</AppLink>
               <a href={profile.contact.repo} target="_blank" rel="noopener">
                 Source ↗
               </a>
-            </div>
+            </LinkGrid>
           </div>
           <Term />
         </section>
@@ -237,13 +251,13 @@ export default function Page() {
         <Strip />
 
         {/* ============ 01 · INSTALL ============ */}
-        <section id="install" className="band sec" aria-labelledby="install-title">
-          <header className="sec__head">
-            <h2 id="install-title" className="sec__title t-title">
+        <SectionHead id="install" className="band sec" aria-labelledby="install-title">
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle id="install-title" className="t-title">
               Install
-            </h2>
-            <span className="sec__note">Streamable HTTP · no authentication</span>
-          </header>
+            </SectionHeadTitle>
+            <SectionHeadNote>Streamable HTTP · no authentication</SectionHeadNote>
+          </SectionHeadHead>
           <div className="well">
             <div className="mcp-endpoint">
               <span className="mcp-endpoint__label mono">Endpoint</span>
@@ -307,29 +321,29 @@ export default function Page() {
             </pre>
           </div>
           <Term />
-        </section>
+        </SectionHead>
 
         <Strip />
 
         {/* ============ 02 · THE TOOLS ============ */}
-        <section id="tools" className="band sec" aria-labelledby="tools-title">
-          <header className="sec__head">
-            <h2 id="tools-title" className="sec__title t-title">
+        <SectionHead id="tools" className="band sec" aria-labelledby="tools-title">
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle id="tools-title" className="t-title">
               The tools
-            </h2>
-            <span className="sec__note">
+            </SectionHeadTitle>
+            <SectionHeadNote>
               Six over the corpus, two over the design system — every one read-only
-            </span>
-          </header>
+            </SectionHeadNote>
+          </SectionHeadHead>
           <div className="well">
-            <dl className="tools">
+            <DefinitionRow>
               {TOOLS.map((t) => (
-                <div className="tools__row" key={t.name}>
+                <DefinitionRowRow className="tools__row" key={t.name}>
                   <dt>{t.name}</dt>
                   <dd>{t.body}</dd>
-                </div>
+                </DefinitionRowRow>
               ))}
-            </dl>
+            </DefinitionRow>
 
             <p className="mcp-note">
               Every tool declares readOnlyHint · destructiveHint false · openWorldHint false — the
@@ -337,18 +351,18 @@ export default function Page() {
             </p>
           </div>
           <Term />
-        </section>
+        </SectionHead>
 
         <Strip />
 
         {/* ============ 03 · WHY MCP HERE ============ */}
-        <section id="why" className="band sec sec--tint" aria-labelledby="why-title">
-          <header className="sec__head">
-            <h2 id="why-title" className="sec__title t-title">
+        <SectionHead variant="tint" id="why" className="band sec" aria-labelledby="why-title">
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle id="why-title" className="t-title">
               Why MCP
-            </h2>
-            <span className="sec__note">And where it deliberately is not used</span>
-          </header>
+            </SectionHeadTitle>
+            <SectionHeadNote>And where it deliberately is not used</SectionHeadNote>
+          </SectionHeadHead>
           <div className="well">
             <div className="mcp-prose">
               <p>
@@ -391,30 +405,42 @@ export default function Page() {
             </div>
           </div>
           <Term />
-        </section>
+        </SectionHead>
 
         <Strip />
 
         {/* ============ 04 · LIMITS ============ */}
-        <section id="limits" className="band sec" aria-labelledby="limits-title">
-          <header className="sec__head">
-            <h2 id="limits-title" className="sec__title t-title">
+        <SectionHead id="limits" className="band sec" aria-labelledby="limits-title">
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle id="limits-title" className="t-title">
               Limits
-            </h2>
-            <span className="sec__note">What it will not do, stated up front</span>
-          </header>
+            </SectionHeadTitle>
+            <SectionHeadNote>What it will not do, stated up front</SectionHeadNote>
+          </SectionHeadHead>
           <div className="well">
-            <div className="card-grid">
+            {/* `.card` and `.card-grid` stay: css/mcp.css gives the card
+                `break-inside: avoid` in print, and four of card's seven
+                authored gaps are the grid's hairline arithmetic — the
+                `:nth-child(3n)` right rule, the orphan-row pair, and the whole
+                two-column restatement at 960px. None of those can be a class
+                attribute, so they come from components.css and need the names.
+                `.card--ruled` rides BESIDE `variant="ruled"` for the reason
+                src/app/page.tsx spells out: the variant is an effect-only
+                modifier whose whole effect is `.card--ruled .card__title`, and
+                Tailwind compiles that arbitrary variant to `.card title`
+                because `_` means a space in one. Upstream defect; the class
+                keeps the ink bar drawn until it is fixed. */}
+            <CardGrid className="card-grid">
               {LIMITS.map((l) => (
-                <article className="card card--ruled" key={l.title}>
-                  <h3 className="card__title">{l.title}</h3>
+                <Card variant="ruled" className="card card--ruled" key={l.title}>
+                  <CardTitle className="card__title">{l.title}</CardTitle>
                   <p>{l.body}</p>
-                </article>
+                </Card>
               ))}
-            </div>
+            </CardGrid>
           </div>
           <Term />
-        </section>
+        </SectionHead>
       </main>
 
       <SiteFooter link={FOOTER.cv} />

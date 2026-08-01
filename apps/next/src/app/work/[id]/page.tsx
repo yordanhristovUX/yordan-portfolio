@@ -38,7 +38,15 @@ import { Fragment } from "react";
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Stat } from "@yordan/design-system/react";
+import { CaseBody } from "@yordan/design-system/react/case-body";
+import { Media, MediaGrid, MediaLabel } from "@yordan/design-system/react/media";
+import {
+  SectionHead,
+  SectionHeadHead,
+  SectionHeadNote,
+  sectionHeadTitle,
+} from "@yordan/design-system/react/section-head";
+import { Stat } from "@yordan/design-system/react/stat";
 
 import { AppLink } from "@/components/AppLink";
 import { AskAction, AskDrawer, AskFab } from "@/components/Ask";
@@ -77,12 +85,22 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 /* An empty plate with a caption — what a placeholder image degrades to when
-   the real photograph has not been taken yet. */
+   the real photograph has not been taken yet.
+
+   BOTH CLASSES STAY, and neither is for components.css's sake. `.ph` is named
+   by `.ph-grid .ph` — a frame inside the gallery gives up its own vertical
+   margin — and `.ph__label` by `.ph:has(img) .ph__label`, the rule that hides
+   the caption once real artwork arrives. Both are the media component's own
+   scoped rules, and a scoped rule addresses its SINK by class even when its
+   host is a utility: `[&_.ph]:m-0` on the grid, `[&:has(img)_.ph__label]:hidden`
+   on the frame. That is the one thing about the React tier this cutover had to
+   learn — the tier can express the relation but not the name it needs at the
+   other end, so the name is written here. */
 function Placeholder({ media }: { media: ProjectMedia }) {
   return (
-    <figure className="ph">
-      <span className="ph__label">{media.caption}</span>
-    </figure>
+    <Media className="ph">
+      <MediaLabel className="ph__label">{media.caption}</MediaLabel>
+    </Media>
   );
 }
 
@@ -149,17 +167,25 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <AskFab />
 
       <main className="sheet" id="top">
-        <section className="band sec work" aria-labelledby="work-title">
-          <header className="sec__head">
-            <h1 className="sec__title t-title" id="work-title">
+        <SectionHead className="band sec work" aria-labelledby="work-title">
+          {/* THE TITLE IS AN <h1> HERE AND `SectionHeadTitle` RENDERS AN <h2>,
+              because the canonical HTML in components/section-head/spec.md is
+              the index page's — a section heading under a page heading. A case
+              study's section head IS the page heading, which is a document
+              fact rather than an appearance one, so the class map is applied
+              to this page's own element via `sectionHeadTitle()`. That is the
+              same reconciliation `Btn` makes for `href`, and the cva function
+              is exported beside the component precisely for it. */}
+          <SectionHeadHead className="sec__head">
+            <h1 className={sectionHeadTitle({ className: "t-title" })} id="work-title">
               {project.title}
             </h1>
-            {project.client ? <span className="sec__note">{project.client}</span> : null}
-          </header>
+            {project.client ? <SectionHeadNote>{project.client}</SectionHeadNote> : null}
+          </SectionHeadHead>
           <div className="well">
             <p className="t-lead">{project.subtitle}</p>
             <Chips tags={project.tags} accent={project.accentTag} />
-            <div className="case-body">
+            <CaseBody>
               {cover ? <Placeholder media={cover} /> : null}
 
               {project.sections.map((s) => (
@@ -174,11 +200,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                       every vanilla page that has one, so it is rendered above
                       this heading rather than under it. */}
                   {s === lastSection && orphanPlates.length ? (
-                    <div className="ph-grid">
+                    <MediaGrid>
                       {orphanPlates.map((m) => (
                         <Placeholder key={m.slot} media={m} />
                       ))}
-                    </div>
+                    </MediaGrid>
                   ) : null}
                   <h3>{s.heading}</h3>
                   {s === firstOutcome
@@ -205,14 +231,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   ) : null}
                 </Fragment>
               ))}
-            </div>
+            </CaseBody>
           </div>
           <Term />
-        </section>
+        </SectionHead>
 
         <Strip />
 
-        <section className="band sec" aria-label="More work">
+        <SectionHead className="band sec" aria-label="More work">
           <div className="well work__nav">
             {prev ? (
               <AppLink className="work__prev" href={workUrl(prev.id)}>
@@ -226,7 +252,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             ) : null}
           </div>
           <Term />
-        </section>
+        </SectionHead>
       </main>
 
       <AskDrawer />

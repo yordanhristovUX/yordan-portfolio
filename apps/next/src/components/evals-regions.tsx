@@ -37,6 +37,22 @@
    same fact from the other side: this file reproduces an artefact's markup, so
    the artefact's generator is where a class name changes first. These stay on
    components.css until it does.
+
+   R5 CUT THE WHOLE APP OVER TO THE REACT TIER AND DELIBERATELY LEFT THIS FILE
+   BEHIND, on exactly that argument. The cutover's claim is that every
+   APP-AUTHORED element consumes the generated components; this file authors
+   nothing — it renders an artefact, and an artefact's markup belongs to its
+   generator. `components.css` is still imported by src/app/layout.tsx and is
+   what styles every class named above, which is not a leftover either: six
+   design-system blocks have no React form and never will, so the stylesheet
+   was never going away. Two things follow and neither is optional. The class
+   names here may only change when `evals/run.mjs` changes them, upstream; and
+   the byte diff stays the gate for this page while the rest of the app is
+   measured by computed style instead.
+
+   The page AROUND these regions — its `.sec` bands and `.sec__head`s in
+   src/app/evals/page.tsx — IS app-authored and did swap. The boundary is the
+   region, exactly where evals.html draws it.
    ============================================================ */
 import type {
   ArmsRegion,

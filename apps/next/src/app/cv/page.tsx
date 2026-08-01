@@ -11,8 +11,27 @@
    strip after the head and after Skills, and none between 01/02 or 03/04/05.
    The strips hold structural positions, so they did not travel with the
    sections when the owner reordered them. Reproduced rather than regularised.
+
+   PRINT IS ALSO WHY THIS PAGE KEEPS THE MOST DESIGN-SYSTEM CLASSES OF ANY OF
+   THE FIVE. css/cv.css's `@media print` block is the largest single consumer
+   of them in the repo: it hides `.bar`, `.drawer`, `.foot`, `.link-grid` and
+   `.fact__label`, rewrites `.sec__head`, `.entry`, `.entry__list`, `.facts`,
+   `.fact`, `.fact__num` and `.fact__title`, and it is a page stylesheet — the
+   one thing on this surface this app may not edit. So every one of those names
+   stays on its element beside the generated component that now renders it.
+   README.md states the rule once; this page is where it earns its keep.
    ============================================================ */
 import type { Metadata } from "next";
+import { DefinitionRow, DefinitionRowRow } from "@yordan/design-system/react/definition-row";
+import { Entry, EntryList, EntryOrg, EntryRole, EntrySpan } from "@yordan/design-system/react/entry";
+import { Fact, FactFact, FactLabel, FactTitle } from "@yordan/design-system/react/fact";
+import { LinkGrid } from "@yordan/design-system/react/link-grid";
+import {
+  SectionHead,
+  SectionHeadHead,
+  SectionHeadNote,
+  SectionHeadTitle,
+} from "@yordan/design-system/react/section-head";
 
 import { PrintButton } from "@/components/PrintButton";
 import { GridLink, Strip, Term } from "@/components/primitives";
@@ -97,119 +116,125 @@ export default function Page() {
         <Strip />
 
         {/* ============ 01 EXPERIENCE ============ */}
-        <section className="band sec" id={S.experience.id}>
-          <header className="sec__head">
-            <h2 className="sec__title t-title">{S.experience.title}</h2>
-          </header>
+        <SectionHead className="band sec" id={S.experience.id}>
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle className="t-title">{S.experience.title}</SectionHeadTitle>
+          </SectionHeadHead>
           <div className="well well--flush">
             {experience.map((e) => (
-              <article className="entry" key={e.id}>
-                <h3 className="entry__role">{e.role}</h3>
+              /* `.entry` and `.entry__list` are cv.css's on paper; `.entry`
+                 and `.entry__span` are additionally the drawer's, which
+                 re-lays-out an entry it hosts by name. `.entry__role` and
+                 `.entry__org` are named by nothing else and left. */
+              <Entry className="entry" key={e.id}>
+                <EntryRole>{e.role}</EntryRole>
                 {/* FORMATTED from {start, end, location, mode} by the
                     generator, never authored — the corpus ships the rendering. */}
-                <p className="entry__span">{e.span}</p>
-                <p className="entry__org">
+                <EntrySpan className="entry__span">{e.span}</EntrySpan>
+                <EntryOrg>
                   {e.org}
                   {e.descriptor ? <em> — {e.descriptor}</em> : null}
-                </p>
+                </EntryOrg>
                 {e.bullets?.length ? (
-                  <ul className="entry__list">
+                  <EntryList className="entry__list">
                     {e.bullets.map((b) => (
                       <li key={b.slice(0, 40)}>{b}</li>
                     ))}
-                  </ul>
+                  </EntryList>
                 ) : null}
-              </article>
+              </Entry>
             ))}
           </div>
           <Term />
-        </section>
+        </SectionHead>
 
         {/* ============ 02 SKILLS ============ */}
-        <section className="band sec" id={S.skills.id}>
-          <header className="sec__head">
-            <h2 className="sec__title t-title">{S.skills.title}</h2>
-          </header>
+        <SectionHead className="band sec" id={S.skills.id}>
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle className="t-title">{S.skills.title}</SectionHeadTitle>
+          </SectionHeadHead>
           <div className="well well--flush">
-            <dl className="tools">
+            <DefinitionRow>
               {skillRows("cv").map((row) => (
-                <div className="tools__row" key={row.term}>
+                <DefinitionRowRow className="tools__row" key={row.term}>
                   <dt>{row.term}</dt>
                   <dd>{row.text}</dd>
-                </div>
+                </DefinitionRowRow>
               ))}
-            </dl>
+            </DefinitionRow>
           </div>
           <Term />
-        </section>
+        </SectionHead>
 
         <Strip />
 
         {/* ============ 03 OPEN SOURCE ============ */}
-        <section className="band sec" id={S.openSource.id}>
-          <header className="sec__head">
-            <h2 className="sec__title t-title">{S.openSource.title}</h2>
-            <span className="sec__note">{S.openSource.note}</span>
-          </header>
+        <SectionHead className="band sec" id={S.openSource.id}>
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle className="t-title">{S.openSource.title}</SectionHeadTitle>
+            <SectionHeadNote>{S.openSource.note}</SectionHeadNote>
+          </SectionHeadHead>
           <div className="well">
             {profile.prose.openSource.map((para) => (
               <p key={para.slice(0, 40)}>{para}</p>
             ))}
             <p className="cv-facts mono">{profile.prose.openSourceFacts}</p>
-            <div className="link-grid">
+            {/* `.link-grid` is spaced by `#open-source .link-grid` in cv.css
+                and hidden by its print block. */}
+            <LinkGrid className="link-grid">
               {CV_OPEN_SOURCE.links.map((l) => (
                 <GridLink key={l.label} link={l} />
               ))}
-            </div>
+            </LinkGrid>
             {/* Paper can't be clicked: the buttons above are replaced by their
                 URLs in print. */}
             <p className="print-only mono">{CV_OPEN_SOURCE.printUrls}</p>
           </div>
           <Term />
-        </section>
+        </SectionHead>
 
         {/* ============ 04 EDUCATION ============
             `·`-joined rows: the separator is formatting, not content — the
             corpus says so in as many words and does not author the joined
             string. */}
-        <section className="band sec" id={S.education.id}>
-          <header className="sec__head">
-            <h2 className="sec__title t-title">{S.education.title}</h2>
-          </header>
+        <SectionHead className="band sec" id={S.education.id}>
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle className="t-title">{S.education.title}</SectionHeadTitle>
+          </SectionHeadHead>
           <div className="well well--flush">
-            <dl className="tools">
-              <div className="tools__row">
+            <DefinitionRow>
+              <DefinitionRowRow className="tools__row">
                 <dt>{education.labels.education}</dt>
                 <dd>
                   {education.education.map((e) => `${e.qualification} — ${e.institution}`).join(" · ")}
                 </dd>
-              </div>
-              <div className="tools__row">
+              </DefinitionRowRow>
+              <DefinitionRowRow className="tools__row">
                 <dt>{education.labels.languages}</dt>
                 <dd>{education.languages.map((l) => `${l.language} (${l.level})`).join(" · ")}</dd>
-              </div>
-            </dl>
+              </DefinitionRowRow>
+            </DefinitionRow>
           </div>
           <Term />
-        </section>
+        </SectionHead>
 
         {/* ============ 05 UNEXPECTED ============ */}
-        <section className="band sec sec--tint" id={S.facts.id}>
-          <header className="sec__head">
-            <h2 className="sec__title t-title">{S.facts.title}</h2>
-          </header>
+        <SectionHead variant="tint" className="band sec" id={S.facts.id}>
+          <SectionHeadHead className="sec__head">
+            <SectionHeadTitle className="t-title">{S.facts.title}</SectionHeadTitle>
+          </SectionHeadHead>
           <div className="well">
-            <div className="facts">
+            <Fact className="facts">
               {facts.map((f) => (
-                <div className="fact" key={f.id}>
-                  <span className="fact__title">{f.title}</span>
-                  <span className="fact__label">{f.cv?.label ?? f.label}</span>
-                </div>
+                <FactFact className="fact" key={f.id}>
+                  <FactTitle className="fact__title">{f.title}</FactTitle>
+                  <FactLabel className="fact__label">{f.cv?.label ?? f.label}</FactLabel>
+                </FactFact>
               ))}
-            </div>
+            </Fact>
           </div>
           <Term />
-        </section>
+        </SectionHead>
       </main>
 
       <SiteFooter link={FOOTER.cv} />
