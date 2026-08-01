@@ -100,12 +100,22 @@
 
   <main id="top" class="sheet">
 
-    <!-- ============ HEAD ============ -->
-    <section class="band mcp-head" aria-label="Introduction">
+    <!-- ============ HEAD ============
+         The `page-head` component, verbatim from
+         design-system/components/page-head/spec.md — the same block the five
+         /work/<id> pages are generated with. The meta slot is OMITTED rather
+         than emptied: it holds chips and this page has none, and the lede's
+         own bottom margin is what spaces the prose that follows (the two
+         margins collapse when the slot IS present, which is why omitting it
+         changes nothing else). The band is labelled BY the title, not by an
+         aria-label — the accessible name is then the visible one.
+         The prose and the link grid below are this page's own composition,
+         not part of the component; css/mcp.css positions them. -->
+    <section class="band page-head" aria-labelledby="mcp-title">
       <div class="well">
-        <p class="mcp-head__kicker t-label">Model Context Protocol</p>
-        <h1 class="mcp-head__title t-display t-display--lg">Ask your own agent</h1>
-        <p class="mcp-head__lede t-lead">
+        <p class="page-head__kicker t-label">Model Context Protocol</p>
+        <h1 class="page-head__title t-display t-display--lg" id="mcp-title">Ask your own agent</h1>
+        <p class="page-head__lede t-lead">
           This portfolio is also a remote MCP server. Add one line to your client and your
           Claude — not a chat widget on someone else's website — can read the projects, the
           case studies, the CV and the design system's own component contract directly.

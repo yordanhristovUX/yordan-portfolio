@@ -158,14 +158,9 @@ html { scroll-behavior: smooth; }
    FIRST and LAST case studies — which have only one neighbour each — still put
    their single link on the correct side, with no `:only-child` rule and no
    emitter branch. */
-/* The first thing on a /work/<id> page is a section HEAD, and the fixed bar
-   sat on it — measured 32px over the title at 375px and 48px at 1280px. Every
-   other page clears the bar inside its first well (`--space-nav` on the hero
-   and cv head), but here the head comes before the well, so the clearance
-   goes on the section itself. Index's own work section is `#work`, not
-   `.work` — this rule reaches only the five project pages. */
-.work { padding-top: var(--space-nav); }
-
+/* `.work { padding-top: var(--space-nav) }` stood here and is gone: the five
+   project pages open with `page-head`, which carries the nav clearance on the
+   well, and no page ships a `.work` band. Only `work__nav` remains. */
 .work__nav { display: flex; flex-wrap: wrap; gap: var(--space-4); }
 .work__next { margin-inline-start: auto; text-align: right; }
 .work__prev,
