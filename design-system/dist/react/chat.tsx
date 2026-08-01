@@ -114,7 +114,7 @@ export function ChatRole({ className, ...rest }: ChatRoleProps) {
  */
 export const chatTurnAssistant = cva([
   /* `.chat__turn--assistant .chat__role` */
-  "[&_.chat__role]:text-accent",
+  String.raw`[&_.chat\_\_role]:text-accent`,
 ]);
 
 export type ChatTurnAssistantProps = { className?: string } & Omit<ComponentPropsWithRef<"article">, "className">;
@@ -279,7 +279,7 @@ export const chatTrace = cva([
   "font-mono",
   "text-step-2xs",
   /* `.chat__trace[open] .chat__trace-toggle::before` */
-  "[&[open]_.chat__trace-toggle::before]:[content:'▾_']",
+  String.raw`[&[open]_.chat\_\_trace-toggle::before]:[content:'▾_']`,
 ]);
 
 export type ChatTraceProps = { className?: string } & Omit<ComponentPropsWithRef<"details">, "className">;
@@ -410,7 +410,15 @@ export function ChatForm({ className, ...rest }: ChatFormProps) {
 }
 
 export const chatInput = cva([
-  "[font:inherit]",
+  /* `font: inherit`, distributed over the longhands this rule does not set again. The class
+     attribute has no order, so the shorthand cannot be allowed to claim a property a later
+     declaration takes back — see the cascade pass in scripts/emit-react.mjs. */
+  "[font-style:inherit]",
+  "[font-variant:inherit]",
+  "[font-weight:inherit]",
+  "[font-stretch:inherit]",
+  "[line-height:inherit]",
+  "[font-family:inherit]",
   "text-step-md",
   "text-content-body",
   "bg-surface-page",

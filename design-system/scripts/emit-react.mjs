@@ -75,7 +75,7 @@
    ============================================================ */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { utilitiesFor, STATE_PREFIX } from "./emit-tailwind.mjs";
+import { utilitiesFor, STATE_PREFIX, selectorFragment, arbitrary } from "./emit-tailwind.mjs";
 /* The selector arithmetic, imported rather than re-derived: pipeline 1 and
    pipeline 2 must agree about what `within` + `element` + `pseudo` names, and
    the only way to guarantee that is for one of them to own it. */
@@ -119,10 +119,10 @@ function entriesOf(declarations, keyOf, where, tally, prefix = "") {
   const out = [];
   for (const group of declarations ?? []) {
     for (const [prop, value] of Object.entries(group.set)) {
-      const { classes, arbitrary } = utilitiesFor(prop, value, keyOf, where);
-      if (arbitrary) tally.arbitrary += classes.length;
-      for (const { cls, sets } of classes) {
-        out.push({ cls: prefix + cls, keys: new Set(sets.map((s) => `${prefix}${s}`)) });
+      const { classes, arbitrary: isArbitrary } = utilitiesFor(prop, value, keyOf, where);
+      if (isArbitrary) tally.arbitrary += classes.length;
+      for (const { cls, sets, distribute } of classes) {
+        out.push({ cls: prefix + cls, keys: new Set(sets.map((s) => `${prefix}${s}`)), prefix, distribute, where });
       }
     }
   }
@@ -160,15 +160,23 @@ function entriesOf(declarations, keyOf, where, tally, prefix = "") {
  *  does: `[&_.well]:` compiles to `& .well`, which is the selector pipeline 1
  *  writes. A CHILD is the one step that is not a `_`: `[&>div]:` compiles to
  *  `& > div`, which is again exactly the stylesheet's selector — Tailwind's
- *  arbitrary variant takes the combinator as written, so nothing is translated. */
+ *  arbitrary variant takes the combinator as written, so nothing is translated.
+ *
+ *  EVERY NAME GOES THROUGH `selectorFragment` AND EVERY COMBINATOR IS WRITTEN
+ *  HERE. That split is what makes the underscore escape correct rather than
+ *  approximately correct: the `_` separating `p` from `strong` is a space and
+ *  stays bare, the `_`s inside `card__title` are letters and become `\_`. An
+ *  escape applied to an assembled scope would flatten the two together and
+ *  compile `.card__title` to a `<title>` element — which is precisely the
+ *  defect this replaced. See selectorFragment's banner in emit-tailwind.mjs. */
 const scopeOf = (part) =>
   !part.within ? ""
-  : part.child ? `>${part.child}`
+  : part.child ? `>${selectorFragment(part.child)}`
   /* A pseudo-element of the host itself — no `_`, because `[&::before]:`
      compiles to `&::before` and `[&_::before]:` would compile to a descendant
      of it, which is not a selector at all. */
-  : !part.element && !part.class ? part.pseudo
-  : `_${(part.element ?? [part.class]).join("_")}${part.pseudo ?? ""}`;
+  : !part.element && !part.class ? selectorFragment(part.pseudo)
+  : `_${(part.element ?? [part.class]).map(selectorFragment).join("_")}${part.pseudo ? selectorFragment(part.pseudo) : ""}`;
 
 /** EVERY scope a part contributes — one, or one per member when its `class` is
  *  a selector list. Tailwind has no selector list, so a list emits each class
@@ -177,10 +185,17 @@ const scopeOf = (part) =>
  *  attribute, and neither half dropped. `card`'s clipped media and note are the
  *  pair that asked. */
 const scopesOf = (part) =>
-  Array.isArray(part.class) ? part.class.map((c) => `_${c}`) : [scopeOf(part)];
+  Array.isArray(part.class) ? part.class.map((c) => `_${selectorFragment(c)}`) : [scopeOf(part)];
 
-/** The variant prefix for a scope and/or a selector suffix; "" when neither. */
-const variantFor = (scope, suffix = "") => (scope || suffix ? `[&${scope}${suffix}]:` : "");
+/** The variant prefix for a scope and/or a selector suffix; "" when neither.
+ *  A `scope` arrives already fragment-escaped (it was assembled out of names
+ *  and combinators above); a `suffix` is raw and is escaped here, which is the
+ *  one place `[data-state="dark"]` reaches a class attribute when its state is
+ *  the HOST of a scoped part rather than the wearer of the utility. */
+const variantFor = (scope, suffix = "") => {
+  const s = suffix ? selectorFragment(suffix) : "";
+  return scope || s ? `[&${scope}${s}]:` : "";
+};
 
 /* A state may carry a selector LIST — `:hover, :focus-visible` is one rule under
    two selectors in the stylesheet. Tailwind has no selector list, so each class
@@ -301,6 +316,164 @@ const hits = (entry, keys) => [...entry.keys].some((k) => keys.has(k));
    that overlap the build FAILS and names both branches and the property —
    guessing which should win is exactly the decision an emitter must not make.
    ============================================================ */
+/* ============================================================
+   THE INTRA-LIST CASCADE — a shorthand against its OWN longhand, in ONE list.
+
+   `disjoin` below solves the ordering problem BETWEEN a base list and a
+   variant axis. This solves the same problem INSIDE one list, which the
+   transform above cannot see because there is no second branch to move
+   anything into. components.css writes
+
+       .chat__input { font: inherit; font-size: var(--text-md); … }
+
+   — an ordinary stylesheet sentence: reset the form control's font, then set
+   the size. Two declarations of one rule, and the cascade inside a rule is
+   SOURCE ORDER, so the size wins. cva concatenates both classes into one
+   attribute, which has no order; Tailwind sorts `[font:inherit]` after
+   `text-step-md`; the shorthand wins and the composer renders at the inherited
+   16px instead of 14.72px, and 4.09px taller. Measured by the R5 cutover
+   against the vanilla page.
+
+   THE RESOLUTION IS THE ONE THE STYLESHEET ALREADY STATES. Walk the list
+   backwards; a class keeps only the longhands no LATER class in the same list
+   writes. That is not a policy, it is what the cascade did — the emitter is
+   only making the outcome independent of Tailwind's sort. Three outcomes:
+
+     · nothing lost                    → the class is emitted unchanged
+     · everything lost                 → the class is DROPPED, because a
+                                         declaration wholly overridden by a
+                                         later one contributes nothing
+     · some lost, and the class is a   → it is DISTRIBUTED: re-emitted as one
+       shorthand whose value is a        arbitrary property per surviving
+       CSS-wide keyword                  longhand, with the same value
+
+   AND NOTHING ELSE. A partially-overridden shorthand carrying a real value —
+   `background: red url(x)` under a later `background-color` — cannot be split
+   without deciding which part of the value belongs to which longhand, and that
+   decision is the shorthand's grammar rather than this emitter's. So the build
+   FAILS naming both declarations, the property and the rule, exactly as the
+   axes clash below does. `emit-tailwind.mjs` marks the distributable case with
+   `distribute`, and marks only that case: a CSS-wide keyword MEANS "each of my
+   longhands takes this value", so distributing it is a restatement.
+
+   WHY NOT SIMPLY REORDER. Because there is no order to write into. This is the
+   same sentence design-system/README.md's "A class attribute has no order"
+   makes about variants, and the same refusal to reach for `!important` or
+   `tailwind-merge`: disjointness, not weight.
+
+   PIPELINE 1 IS UNTOUCHED. `.chat__input` still carries both declarations in
+   the order the definition lists them, and components.css has a real cascade.
+   ============================================================ */
+/* ---- the pairs this pass cannot order, declared one line at a time ----
+
+   A collision the pass can resolve is resolved and never appears here. This is
+   the residue: a shorthand carrying a TOKEN, partially overridden by a later
+   longhand in the same rule. `border: var(--rule)` is width AND style AND
+   colour in one custom property, and CSS has no way to take two of the three
+   out of it — `border-style: var(--rule)` is not a declaration. So the pair
+   ships to pipeline 2 in whatever order Tailwind picks, components.css remains
+   the surface that delivers the rule, and BOTH ends keep their class.
+
+   It is a census rather than a silence, and it is two-sided: an undeclared
+   pair fails the build, and a declared pair that is no longer found fails it
+   too, so the day the shape leaves nobody has to remember to delete the line.
+
+   THE FIX IS A TOKEN DECISION AND IT IS THE OWNER'S. PATTERNS.md's review list
+   already carries the border-token question (`--rule-chrome-strong`, item 6);
+   this is the same question from the other side — a `--rule` split into a
+   width, a style and a colour would make both of these expressible, and
+   splitting it is an appearance-source change no emitter may make. Reported to
+   the review list rather than worked around. */
+export const UNORDERABLE = [
+  {
+    id: "link-grid",
+    rule: ".link-grid",
+    prefix: "",
+    shorthand: "border",
+    overridden: "border-width",
+    why: "`border: var(--rule); border-width: 1px 0 0 1px` — the outer frame draws only its top and left edge, and the widths are a longhand override of a shorthand TOKEN.",
+  },
+  {
+    id: "link-grid",
+    rule: ".link-grid a",
+    prefix: "[&_a]:",
+    shorthand: "border",
+    overridden: "border-width",
+    why: "the same idiom on the cell — `border-width: 0 1px 1px 0` — which is what makes the grid one hairline between cells rather than two.",
+  },
+];
+
+function cascade(entries, rule, tally, unorderable) {
+  const claimed = new Set();
+  const out = [];
+  let carried = null; // a `lead` whose entry did not survive
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const e = entries[i];
+    const lost = [...e.keys].filter((k) => claimed.has(k));
+    for (const k of e.keys) claimed.add(k);
+    if (!lost.length) {
+      out.unshift(carried && !e.lead ? { ...e, lead: carried } : e);
+      if (carried && !e.lead) carried = null;
+      continue;
+    }
+    const survivors = [...e.keys].filter((k) => !lost.includes(k));
+    if (!survivors.length) {
+      tally.cascaded++;
+      if (e.lead) carried = carried ?? e.lead;
+      continue;
+    }
+    if (!e.distribute) {
+      const shorthand = e.cls.slice(e.prefix.length).replace(/^\[([a-z-]+):[\s\S]*$/, "$1");
+      const overridden = lost.map((k) => k.slice(e.prefix.length)).sort().join(" ");
+      /* Keyed by the VARIANT PREFIX rather than by the prose selector: the
+         prefix is what the emitter computed and what the class wears, so a
+         declaration cannot be satisfied by a rule that merely reads alike. */
+      const declared = unorderable.find((u) => u.prefix === e.prefix && u.shorthand === shorthand && u.overridden === overridden);
+      if (!declared) {
+        throw new Error(
+          `${e.where}: \`${rule}${e.prefix ? ` (${e.prefix})` : ""}\` holds \`${e.cls}\` and, later in the same list, ` +
+            `a class writing ${overridden} — ` +
+            `which the shorthand also writes. In components.css the later declaration wins by source order; in a ` +
+            `class attribute there IS no order, so Tailwind's sort decides instead, and it decided wrong for the ` +
+            `two cases the R5 cutover measured.\n` +
+            `  This one cannot be resolved faithfully. \`${e.cls}\`'s value is not a CSS-wide keyword, so it cannot ` +
+            `be distributed over the longhands it keeps, and splitting it would mean deciding which part of the ` +
+            `value belongs to which longhand — that is the shorthand's grammar, not this emitter's.\n` +
+            `  Either write the rule as the longhands it means, or declare the pair in \`UNORDERABLE\` in ` +
+            `scripts/emit-react.mjs with the reason it cannot be written that way. A declaration is not a silencer: ` +
+            `the pair still ships to pipeline 2 in whatever order Tailwind picks, which is why the component keeps ` +
+            `its class and components.css stays the surface that delivers the rule.`
+        );
+      }
+      declared.$found = true;
+      tally.unorderable++;
+      out.unshift(carried && !e.lead ? { ...e, lead: carried } : e);
+      if (carried && !e.lead) carried = null;
+      continue;
+    }
+    tally.cascaded++;
+    const { prop, value } = e.distribute;
+    const made = survivors.map((k, n) => ({
+      cls: `${e.prefix}[${k.slice(e.prefix.length)}:${arbitrary(value)}]`,
+      keys: new Set([k]),
+      prefix: e.prefix,
+      where: e.where,
+      ...(n === 0
+        ? {
+            lead:
+              (e.lead ? `${e.lead} — ` : "") +
+              `\`${prop}: ${value}\`, distributed over the longhands this rule does not set again. The class ` +
+              `attribute has no order, so the shorthand cannot be allowed to claim a property a later declaration ` +
+              `takes back — see the cascade pass in scripts/emit-react.mjs.`,
+          }
+        : {}),
+    }));
+    out.unshift(...made);
+    carried = null;
+  }
+  return out;
+}
+
 function disjoin(base, axes, where, declared) {
   for (const axis of axes) {
     const axisKeys = new Set();
@@ -375,13 +548,67 @@ const remark = (text, indent) => {
     `${indent}   ${lines[lines.length - 1]} */`,
   ];
 };
+/* ============================================================
+   HOW A CLASS BECOMES A LITERAL — and why one of the two forms is raw.
+
+   Tailwind's scanner reads the SOURCE TEXT of this file and generates a rule
+   whose escaped selector matches the class attribute the browser will hold at
+   runtime. Those two are the same characters for every class this emitter
+   wrote until the underscore escape landed, and a backslash breaks the
+   identity in both directions:
+
+     "[&_.card\_\_title]:…"    the scanner reads `\_`; JS drops it, so the
+                               runtime class has a bare `_` — no match
+     "[&_.card\\_\\_title]:…"  the runtime class has `\_`; the scanner reads
+                               `\\_` and builds a rule for that — no match
+
+   `String.raw` is the one literal form whose text and value are the same
+   characters, so it is what an escaped class is emitted as. Measured with
+   Tailwind 4.3.3's own scanner and compiler: the raw form yields the candidate
+   `[&_.card\_\_title]:…`, which compiles to `… .card__title` and to a class
+   name that unescapes back to the runtime string.
+
+   The quoted form stays for everything else, because it is what a reader
+   expects and because most classes have no backslash. Both forms REFUSE a
+   character they cannot carry, which is the gate behind defect 3: a `"` inside
+   a quoted literal is TS1005 and shipped once, and a backtick or a `${` inside
+   a raw one would be worse than a parse error — it would be a template
+   substitution. Neither can arrive from a definition today; both are checked
+   because "cannot arrive" is exactly what was believed about the quote. */
+const classLiteral = (cls, where) => {
+  if (cls.includes("`") || cls.includes("${")) {
+    throw new Error(
+      `${where}: the class \`${cls}\` holds a backtick or a \`\${\`, which cannot be emitted as a literal — a raw ` +
+        `template would substitute it and a quoted one would need an escape the Tailwind scanner cannot read back. ` +
+        `Whatever put it there is naming something this tier has no spelling for.`
+    );
+  }
+  /* THE QUOTE IS REFUSED BEFORE THE FORM IS CHOSEN, and the order matters:
+     a raw literal would happily CARRY a `"`, so testing it second would let
+     the raw branch swallow exactly the defect this guard exists for. A double
+     quote in a class name is not only TS1005 — it is a broken `class="…"`
+     attribute in the rendered HTML, on every surface, whatever quoted the
+     source. There is no literal form in which it is admissible. */
+  if (cls.includes('"')) {
+    throw new Error(
+      `${where}: the class \`${cls}\` holds a double quote. It cannot sit inside the double-quoted string literal ` +
+        `this file emits — that is TS1005, and dist/react/theme-toggle.tsx shipped it six times over at 2.6.0 — and ` +
+        `it could not be rendered into a \`class="…"\` attribute even if it did parse. Every selector fragment must ` +
+        `go through \`selectorFragment\` in scripts/emit-tailwind.mjs, which spells an attribute value with single ` +
+        `quotes; the two are the same selector after the CSS lexer.`
+    );
+  }
+  if (cls.includes("\\")) return `String.raw\`${cls}\``;
+  return `"${cls}"`;
+};
+
 /** An entry may carry a `lead`: the prose of the scoped part its classes came
  *  from. A cva base is the only place that prose can live once the part has
  *  stopped being a component — dropping it would leave a reader of the file
  *  with `[&_li::before]:[content:'▪']` and no account of why. */
-const list = (entries, indent) =>
+const list = (entries, indent, where) =>
   entries
-    .map((e) => `${e.lead ? remark(e.lead, indent).join("\n") + "\n" : ""}${indent}"${e.cls}",`)
+    .map((e) => `${e.lead ? remark(e.lead, indent).join("\n") + "\n" : ""}${indent}${classLiteral(e.cls, where)},`)
     .join("\n");
 
 /* ---------- one component file ---------- */
@@ -393,7 +620,8 @@ const list = (entries, indent) =>
  */
 export function renderComponent(def, elements, keyOf) {
   const where = `components/${def.id}/definition.json`;
-  const tally = { arbitrary: 0 };
+  const tally = { arbitrary: 0, cascaded: 0, unorderable: 0 };
+  const unorderable = UNORDERABLE.filter((u) => u.id === def.id);
   const Name = pascal(def.id);
   const fn = camel(def.id);
 
@@ -535,7 +763,7 @@ export function renderComponent(def, elements, keyOf) {
     if (r.kind === "state") {
       if (!Array.isArray(r.suffix)) {
         const parent = anchor(r, r.of);
-        scopeByName.set(r.name, { scope: parent.scope + r.suffix, host: parent.host });
+        scopeByName.set(r.name, { scope: parent.scope + selectorFragment(r.suffix), host: parent.host });
       }
       continue;
     }
@@ -549,7 +777,7 @@ export function renderComponent(def, elements, keyOf) {
        byte-identical and the flattening is invisible on this side. */
     if (r.kind === "position") {
       const parent = anchor(r, r.of);
-      scopeByName.set(r.name, { scope: parent.scope + POSITION_SUFFIX[r.at], host: parent.host });
+      scopeByName.set(r.name, { scope: parent.scope + selectorFragment(POSITION_SUFFIX[r.at]), host: parent.host });
       continue;
     }
     const owner = r.kind === "contains" ? r.of : r.kind === "part" && r.within ? r.within : null;
@@ -560,7 +788,7 @@ export function renderComponent(def, elements, keyOf) {
        member and REGISTERS NONE — the loader already refuses a part scoped
        within it, exactly as it refuses one scoped within a list-suffix state,
        because a list has no single selector to descend from. */
-    const scopes = (r.kind === "contains" ? [containsSuffix(r)] : scopesOf(r)).map((s) => parent.scope + s);
+    const scopes = (r.kind === "contains" ? [selectorFragment(containsSuffix(r))] : scopesOf(r)).map((s) => parent.scope + s);
     if (scopes.length === 1) scopeByName.set(r.name, { scope: scopes[0], host: parent.host });
     const sel = selectors.get(r.name);
     const entries = scopes.flatMap((scope) => [
@@ -608,8 +836,8 @@ export function renderComponent(def, elements, keyOf) {
            given there. */
         const scopes = (
           o.kind === "part" ? scopesOf(o)
-          : o.kind === "contains" ? [containsSuffix(o)]
-          : o.kind === "position" ? [POSITION_SUFFIX[o.at]]
+          : o.kind === "contains" ? [selectorFragment(containsSuffix(o))]
+          : o.kind === "position" ? [selectorFragment(POSITION_SUFFIX[o.at])]
           : [""]
         ).map((s) => parent.scope + s);
         if (scopes.length === 1) scopeByName.set(o.name, { scope: scopes[0], host: parent.host });
@@ -653,6 +881,28 @@ export function renderComponent(def, elements, keyOf) {
     }
   }
 
+  /* THE INTRA-LIST CASCADE RUNS BEFORE `disjoin`, ON EVERY LIST. Each of these
+     is one rule's declarations in stylesheet order, so each is a place a
+     shorthand can shadow its own longhand; running it first also means
+     `disjoin` sees the properties a class actually still writes rather than
+     the ones a superseded shorthand claimed. */
+  base = cascade(base, def.root, tally, unorderable);
+  for (const [name, entries] of partEntries) partEntries.set(name, cascade(entries, selectors.get(name) ?? `.${name}`, tally, unorderable));
+  for (const axis of axes) {
+    for (const branch of axis.branches) {
+      branch.entries = cascade(branch.entries, selectors.get(branch.name) ?? `.${branch.name}`, tally, unorderable);
+    }
+  }
+  const stale = unorderable.filter((u) => !u.$found);
+  if (stale.length) {
+    throw new Error(
+      `UNORDERABLE in scripts/emit-react.mjs declares ${stale.length} pair(s) this definition no longer writes:\n` +
+        stale.map((u) => `    ${u.rule} — \`${u.shorthand}\` vs \`${u.overridden}\``).join("\n") +
+        `\n  A declared limitation that has stopped being true is a limitation somebody should be told has gone. ` +
+        `Delete the line, and check whether the class the consumer keeps for it can go too.`
+    );
+  }
+
   base = disjoin(base, axes, where, def.axes?.orthogonal);
 
   let out = header(def, `dist/react/${def.id}.tsx`);
@@ -670,9 +920,9 @@ export function renderComponent(def, elements, keyOf) {
     /* No variants and no sizes: the same one-argument shape a part gets, so a
        component with one appearance does not look like one whose axes went
        missing. */
-    out += `export const ${fn} = cva([\n${list(base, "  ")}\n]);\n\n`;
+    out += `export const ${fn} = cva([\n${list(base, "  ", where)}\n]);\n\n`;
   } else {
-    out += `export const ${fn} = cva(\n  [\n${list(base, "    ")}\n  ]`;
+    out += `export const ${fn} = cva(\n  [\n${list(base, "    ", where)}\n  ]`;
     out += `,\n  {\n    variants: {\n`;
     for (const axis of axes) {
       out += `      ${axis.prop}: {\n`;
@@ -685,11 +935,11 @@ export function renderComponent(def, elements, keyOf) {
             `because a class attribute has no order — see the transform in scripts/emit-react.mjs.`,
           "        "
         );
-        out += `        default: [\n${list(fallback, "          ")}\n        ],\n`;
+        out += `        default: [\n${list(fallback, "          ", where)}\n        ],\n`;
       }
       for (const branch of axis.branches) {
         if (branch.$doc) out += tsdoc(branch.$doc, "        ");
-        out += `        ${branch.name}: [\n${list(branch.entries, "          ")}\n        ],\n`;
+        out += `        ${branch.name}: [\n${list(branch.entries, "          ", where)}\n        ],\n`;
       }
       out += `      },\n`;
     }
@@ -746,7 +996,7 @@ export function renderComponent(def, elements, keyOf) {
     const classes = partEntries.get(part.name);
     out += `\n`;
     if (part.$doc) out += tsdoc(part.$doc, "");
-    out += `export const ${partFn} = cva([\n${list(classes, "  ")}\n]);\n\n`;
+    out += `export const ${partFn} = cva([\n${list(classes, "  ", where)}\n]);\n\n`;
     if (partPoly) {
       out += tsdoc(
         `The props of \`<${PartName} />\`. A union, because the canonical HTML in components/${def.id}/spec.md ` +
@@ -819,6 +1069,125 @@ export function renderIndex(defs) {
     out += `export type { ${types.join(", ")} } from "./${def.id}";\n`;
   }
   return out;
+}
+
+/* ============================================================
+   THE STRUCTURAL SANITY PASS — the gate behind defect 3.
+
+   `build.mjs --check` byte-compares every generated .tsx against a fresh
+   render, which catches a hand-edit and catches nothing else: if the EMITTER
+   writes a file that does not parse, the bytes match perfectly and the gate is
+   green. That is not hypothetical. `dist/react/theme-toggle.tsx` shipped at
+   2.6.0 with three class strings carrying an unescaped `"` inside a
+   double-quoted literal — TS1005 six times over — and every gate on this side
+   of the boundary passed. The consumer found it, which is the wrong end.
+
+   TWO GATES CLOSE IT, at two different prices.
+
+   · THIS ONE, offline and dependency-free, runs on every build and every
+     `--check`. It is a lexer, not a parser: it walks the generated source
+     tracking strings, template literals and comments, and asserts four things
+     that no output of this emitter may violate. It cannot typecheck and does
+     not pretend to.
+
+   · `npm run typecheck:react` in design-system.yml runs the real thing —
+     `tsc --noEmit` over dist/react with react and cva types present. It costs
+     a dependency tier and a CI minute, which is exactly why it is there and
+     not in the root `npm run check`.
+
+   THE FOUR ASSERTIONS, and why each is a real invariant rather than a shape
+   this generator happens to have today:
+
+   1. Every string literal terminates, on its line. A JS string may not contain
+      a raw newline, so an unterminated one is a syntax error wherever it ends.
+   2. Every template literal and every block comment terminates.
+   3. NOTHING IS JUXTAPOSED WITH A STRING LITERAL. In JavaScript a string
+      literal can be followed by an operator, a separator, a closing bracket or
+      end-of-statement — never by an identifier, a number or another string.
+      This is the assertion that catches the shipped defect: the lexer reads
+      `"[&[data-state="` as a complete literal and then finds `dark`, and says
+      so with the line and column. It is also the one that generalises, because
+      every way of leaking a quote into a quoted literal produces exactly this.
+   4. Brackets balance in code position. A stray one is a syntax error, and a
+      count is the cheapest true statement about it.
+   ============================================================ */
+const FOLLOWS_STRING = /^[,;)\]}:+=<>?&|.\n]/;
+
+export function assertStructure(source, rel) {
+  const fail = (line, col, what) => {
+    throw new Error(
+      `${rel}:${line}:${col} — ${what}\n` +
+        `  This file is GENERATED, so the edit is in scripts/emit-react.mjs (or in the definition it read), never ` +
+        `here. \`build.mjs --check\` byte-compares this artefact and would not have noticed: a file the emitter ` +
+        `writes wrong is byte-identical to a fresh render of the same wrongness.`
+    );
+  };
+  let line = 1;
+  let col = 1;
+  const stack = [];
+  const PAIR = { ")": "(", "]": "[", "}": "{" };
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i];
+    const at = [line, col];
+    const step = (n) => {
+      for (let k = 0; k < n; k++) {
+        if (source[i + k] === "\n") { line++; col = 1; } else col++;
+      }
+      i += n - 1;
+    };
+    if (c === "\n") { line++; col = 1; continue; }
+    if (c === "/" && source[i + 1] === "*") {
+      const end = source.indexOf("*/", i + 2);
+      if (end === -1) fail(...at, "a block comment is never closed.");
+      step(end + 2 - i);
+      continue;
+    }
+    if (c === "/" && source[i + 1] === "/") {
+      const end = source.indexOf("\n", i);
+      step((end === -1 ? source.length : end) - i);
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      let j = i + 1;
+      while (j < source.length && source[j] !== c && source[j] !== "\n") j += source[j] === "\\" ? 2 : 1;
+      if (j >= source.length || source[j] === "\n") fail(...at, `a ${c === '"' ? "double" : "single"}-quoted string is never closed on its line.`);
+      const after = source.slice(j + 1).match(/^[ \t]*/)[0].length;
+      const next = source.slice(j + 1 + after, j + 2 + after);
+      if (next && !FOLLOWS_STRING.test(next)) {
+        fail(
+          line,
+          col + (j - i) + 1 + after,
+          `the string literal ${JSON.stringify(source.slice(i, j + 1))} is followed by \`${next}\`, which is not ` +
+            `something a string literal may be followed by. The usual cause is a quote INSIDE the string that ` +
+            `closed it early — which is exactly how dist/react/theme-toggle.tsx failed to parse at 2.6.0.`
+        );
+      }
+      step(j + 1 - i);
+      continue;
+    }
+    if (c === "`") {
+      /* No substitutions are ever emitted (classLiteral refuses `${`), so a
+         raw scan to the closing backtick is the whole grammar here. */
+      let j = i + 1;
+      while (j < source.length && source[j] !== "`") j += source[j] === "\\" ? 2 : 1;
+      if (j >= source.length) fail(...at, "a template literal is never closed.");
+      step(j + 1 - i);
+      continue;
+    }
+    if (c === "(" || c === "[" || c === "{") { stack.push({ c, line, col }); col++; continue; }
+    if (PAIR[c]) {
+      const open = stack.pop();
+      if (!open) fail(line, col, `a \`${c}\` closes a bracket that was never opened.`);
+      if (open.c !== PAIR[c]) fail(line, col, `a \`${c}\` closes the \`${open.c}\` opened at ${open.line}:${open.col}.`);
+      col++;
+      continue;
+    }
+    col++;
+  }
+  if (stack.length) {
+    const open = stack[stack.length - 1];
+    fail(open.line, open.col, `a \`${open.c}\` is never closed.`);
+  }
 }
 
 /* ---------- the provenance banner ---------- */

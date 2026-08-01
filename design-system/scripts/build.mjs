@@ -66,7 +66,7 @@ import { PILOT, definitionPath, loadAll, renderAll, checkRegions, openMarker, cl
    Both artefact sets are written through `packaged` below, so both are
    byte-compared by --check rather than regenerated in place. */
 import { renderThemeCss, themeKeyOf } from "./emit-tailwind.mjs";
-import { elementsInSpec, renderComponent, renderIndex } from "./emit-react.mjs";
+import { elementsInSpec, renderComponent, renderIndex, assertStructure } from "./emit-react.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CHECK = process.argv.includes("--check");
@@ -460,11 +460,22 @@ try {
 
 const reactSources = new Map();
 let arbitraryClasses = 0;
+let cascadedClasses = 0;
+let unorderablePairs = 0;
 for (const def of definitions) {
   try {
     const specText = readFileSync(join(root, "components", def.id, "spec.md"), "utf8");
     const { source, tally } = renderComponent(def, elementsInSpec(specText), themeKey);
     arbitraryClasses += tally.arbitrary;
+    cascadedClasses += tally.cascaded;
+    unorderablePairs += tally.unorderable;
+    /* THE ARTEFACT IS CHECKED FOR STRUCTURE BEFORE IT IS EITHER WRITTEN OR
+       COMPARED, and that order is the whole point of the pass. A byte compare
+       asks "is this what the emitter produces"; it cannot ask "is what the
+       emitter produces a file". theme-toggle.tsx was TS1005 six times over at
+       2.6.0 and every gate here was green, because the bad bytes were the
+       expected bytes. See assertStructure's banner in scripts/emit-react.mjs. */
+    assertStructure(source, `dist/react/${def.id}.tsx`);
     reactSources.set(def.id, source);
   } catch (e) {
     fatal(`react check — components/${def.id}/definition.json cannot be rendered to a component`, e);
@@ -503,6 +514,17 @@ const reactSource = (id) => {
   }
 }
 const keyframesOut = renderKeyframes(definitions);
+
+/* The barrel is a generated TypeScript file too, and it is the one every
+   consumer who does not import a subpath reaches through. */
+{
+  const barrel = renderIndex(definitions);
+  try {
+    assertStructure(barrel, "dist/react/index.ts");
+  } catch (e) {
+    fatal("react check — the generated barrel is not structurally sound", e);
+  }
+}
 
 const packaged = [
   ["dist/tokens.dtcg.json", dtcgOut],
@@ -577,6 +599,12 @@ if (CHECK) {
     `✓ package check          (${packaged.length} published artefacts byte-identical to a fresh build: ` +
       `tokens.dtcg.json, tokens.d.ts, tokens.tailwind.css, react/ ×${reactSources.size + 1})`
   );
+  console.log(
+    `✓ react structure check  (${reactSources.size + 1} generated TypeScript files lexed: strings and templates ` +
+      `closed, nothing juxtaposed with a literal, brackets balanced; ` +
+      `${cascadedClasses} intra-list shorthand collision${cascadedClasses === 1 ? "" : "s"} resolved, ` +
+      `${unorderablePairs} declared unorderable)`
+  );
 } else {
   for (const [rel, out] of packaged) writeFileSync(join(root, rel), out);
   const types = {};
@@ -597,7 +625,9 @@ if (CHECK) {
   );
   console.log(
     `✓ dist/react/            (${reactSources.size} components + index, ` +
-      `${arbitraryClasses} arbitrary-property classes)`
+      `${arbitraryClasses} arbitrary-property classes, ` +
+      `${cascadedClasses} intra-list shorthand collision${cascadedClasses === 1 ? "" : "s"} resolved, ` +
+      `${unorderablePairs} declared unorderable)`
   );
 }
 

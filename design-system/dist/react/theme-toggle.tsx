@@ -41,10 +41,10 @@ export const themeToggle = cva([
   "[transition:background-color_0.2s,_transform_0.2s]",
   "[&:hover]:[transform:translateY(-1px)]",
   /* `.theme[data-state="dark"] .theme__lamp` */
-  "[&[data-state="dark"]_.theme__lamp]:bg-content-primary",
+  String.raw`[&[data-state='dark']_.theme\_\_lamp]:bg-content-primary`,
   /* `.theme[data-state="auto"] .theme__lamp` */
-  "[&[data-state="auto"]_.theme__lamp]:[background:linear-gradient(90deg,_var(--content-primary)_0_50%,_var(--surface-page)_50%_100%)]",
-  "[&[data-state="auto"]_.theme__lamp]:[animation:theme-dial_9s_linear_infinite]",
+  String.raw`[&[data-state='auto']_.theme\_\_lamp]:[background:linear-gradient(90deg,_var(--content-primary)_0_50%,_var(--surface-page)_50%_100%)]`,
+  String.raw`[&[data-state='auto']_.theme\_\_lamp]:[animation:theme-dial_9s_linear_infinite]`,
 ]);
 
 export type ThemeToggleVariants = VariantProps<typeof themeToggle>;

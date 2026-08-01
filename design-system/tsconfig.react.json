@@ -1,0 +1,18 @@
+{
+  "//": "THE TYPECHECK OVER THE GENERATED REACT TIER. `build.mjs --check` byte-compares dist/react/*.tsx against a fresh render, which proves the artefact is what the emitter produces and says nothing about whether what the emitter produces is a FILE. dist/react/theme-toggle.tsx shipped at 2.6.0 as TS1005 six times over and every gate on this side was green. scripts/emit-react.mjs now carries a lexer that runs offline on every build; this is the other half of the answer, and it is here rather than in the root `npm run check` because it needs typescript, @types/react and class-variance-authority — three devDependencies of this directory, none of them shipped, none of them installed by the root `npm ci`. Run by `npm run typecheck:react`, and by .github/workflows/design-system.yml.",
+  "//jsx": "`react-jsx` rather than `preserve`: the emitted components are TSX and this is the transform a consumer's build applies (apps/next runs the same one). `moduleResolution: bundler` matches the consumer too — ./react/<id> resolves to SOURCE and the consumer's own compiler settings apply to it, so checking under different ones would be checking a file nobody compiles.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": []
+  },
+  "include": ["dist/react/**/*.ts", "dist/react/**/*.tsx"]
+}

@@ -213,6 +213,54 @@ export const utilitySuffix = (key) =>
 /** Tailwind arbitrary values take `_` for a space; a real `_` would need escaping. */
 export const arbitrary = (value) => String(value).replace(/"/g, "'").replace(/ /g, "_");
 
+/* ============================================================
+   A SELECTOR FRAGMENT INSIDE AN ARBITRARY VARIANT — two lexical edits, and
+   both of them are the same kind of edit `arbitrary()` above already makes.
+
+   `[&_.card__title]:` is not a selector, it is a CLASS NAME that Tailwind
+   decodes into one, and the decoding has two rules this emitter has to respect
+   because they are properties of the class-name grammar rather than of CSS.
+
+   1. `_` DECODES TO A SPACE. That is how the descendant combinator is written
+      at all — there are no spaces in a class name — and it is why the
+      combinators below are deliberately unescaped `_`. But a BEM part's name
+      is `card__title`, and an unescaped `_` inside it decodes the same way:
+      `[&_.card__title]:` compiled to `.card title`, a descendant <title>
+      ELEMENT, which no page has. Eighteen scoped rules across eight of the
+      twenty generated components shipped that way and delivered NOTHING;
+      components.css delivered every one of them instead, which is why the
+      failure was invisible on both surfaces until somebody measured a swapped
+      `.card--ruled` against the vanilla page and found it 15px short — exactly
+      the 12px padding plus the 3px rule its ink bar is made of.
+
+      Tailwind's escape for a literal underscore is `\_`, so every `_` that is
+      part of a NAME is escaped here and every `_` that is a COMBINATOR is
+      inserted by the caller, unescaped, after this function has run. That
+      split is the whole correctness argument: escaping happens per fragment,
+      never over an assembled scope.
+
+      THE ESCAPE REACHES THE ARTEFACT AS A REAL BACKSLASH, which is why
+      scripts/emit-react.mjs emits such a class as a `String.raw` literal
+      rather than a quoted one. Tailwind's scanner reads the SOURCE TEXT of a
+      file and its output has to match the string the browser sees at runtime;
+      `"\\_"` makes those two disagree (the scanner reads two backslashes, the
+      runtime string has one) and `"\_"` makes them disagree the other way
+      (`\_` is not a JS escape, so the runtime string has none). A raw literal
+      is the one form where the text and the value are the same characters.
+
+   2. A `"` BECOMES A `'`. A class name ends up inside a `class`/`className`
+      attribute, and a double quote inside a double-quoted attribute is not a
+      class, it is a parse error — in HTML and, as `dist/react/theme-toggle.tsx`
+      proved at 2.6.0, in TypeScript. STATE_PREFIX below already made this edit
+      for a state that wears its attribute on its own root; a state that is the
+      HOST of a scoped part reaches its suffix by a different path and did not,
+      so `[&[data-state="dark"]_.theme__lamp]:` shipped unquotable. Single and
+      double quotes are interchangeable in the CSS attribute-selector grammar —
+      the compiled selector is the same selector, character for character after
+      the lexer — so this is a spelling, not a translation.
+   ============================================================ */
+export const selectorFragment = (s) => String(s).replace(/"/g, "'").replace(/_/g, "\\_");
+
 /**
  * Fail loudly if a restated group grows a mode. The restatement is only
  * defensible while there is exactly one value to copy; the day `font-mono`
@@ -541,7 +589,19 @@ export function utilitiesFor(prop, value, keyOf, where) {
     : isToken(value)
       ? `var(--${value.token})`
       : literal(value);
-  return { classes: [{ cls: `[${prop}:${arbitrary(flat)}]`, sets: expand(prop) }], arbitrary: true };
+  /* A SHORTHAND WHOSE VALUE IS A CSS-WIDE KEYWORD CAN BE NARROWED, and nothing
+     else can. `font: inherit` MEANS "every longhand of `font` takes the value
+     `inherit`" — that is the keyword's definition, not an inference — so
+     distributing it over the longhands the same rule does not later set is a
+     restatement rather than a rewrite. `background: red url(x)` is not: its
+     parts belong to different longhands and only the shorthand's own grammar
+     says which. So `distributive` is set for the first case alone, and
+     scripts/emit-react.mjs refuses to guess in the second. */
+  const distributive = SHORTHAND[prop] && /^(inherit|initial|unset|revert|revert-layer)$/i.test(flat);
+  return {
+    classes: [{ cls: `[${prop}:${arbitrary(flat)}]`, sets: expand(prop), ...(distributive ? { distribute: { prop, value: flat } } : {}) }],
+    arbitrary: true,
+  };
 }
 
 /* ============================================================

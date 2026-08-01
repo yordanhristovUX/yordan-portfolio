@@ -32,8 +32,8 @@ export const menu = cva([
   "[&[data-open]]:[visibility:visible]",
   "[&[data-open]]:[transition-delay:0s]",
   /* `.menu[data-open] .menu__sheet` */
-  "[&[data-open]_.menu__sheet]:[opacity:1]",
-  "[&[data-open]_.menu__sheet]:[transform:none]",
+  String.raw`[&[data-open]_.menu\_\_sheet]:[opacity:1]`,
+  String.raw`[&[data-open]_.menu\_\_sheet]:[transform:none]`,
 ]);
 
 export type MenuVariants = VariantProps<typeof menu>;

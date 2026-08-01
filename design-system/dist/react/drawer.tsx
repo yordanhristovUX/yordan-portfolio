@@ -32,31 +32,31 @@ export const drawer = cva([
   "[&[data-open]]:[visibility:visible]",
   "[&[data-open]]:[transition-delay:0s]",
   /* `.drawer[data-open] .drawer__scrim` */
-  "[&[data-open]_.drawer__scrim]:[opacity:1]",
+  String.raw`[&[data-open]_.drawer\_\_scrim]:[opacity:1]`,
   /* `.drawer[data-open] .drawer__sheet` */
-  "[&[data-open]_.drawer__sheet]:[transform:none]",
+  String.raw`[&[data-open]_.drawer\_\_sheet]:[transform:none]`,
   /* `.drawer .chat` */
   "[&_.chat]:[min-height:0]",
   "[&_.chat]:[min-width:0]",
   "[&_.chat]:[grid-template-rows:minmax(0,_1fr)]",
   "[&_.chat]:[grid-auto-rows:auto]",
   /* `.drawer .chat__thread` */
-  "[&_.chat__thread]:[max-height:none]",
-  "[&_.chat__thread]:[min-height:0]",
+  String.raw`[&_.chat\_\_thread]:[max-height:none]`,
+  String.raw`[&_.chat\_\_thread]:[min-height:0]`,
   /* `.drawer .chat__thread:empty` */
-  "[&_.chat__thread:empty]:grid",
-  "[&_.chat__thread:empty]:[border-top:0]",
+  String.raw`[&_.chat\_\_thread:empty]:grid`,
+  String.raw`[&_.chat\_\_thread:empty]:[border-top:0]`,
   /* `.drawer .idx__row` */
-  "[&_.idx__row]:[grid-template-columns:minmax(0,_1fr)_auto]",
+  String.raw`[&_.idx\_\_row]:[grid-template-columns:minmax(0,_1fr)_auto]`,
   /* `.drawer .idx__tags` */
-  "[&_.idx__tags]:hidden",
+  String.raw`[&_.idx\_\_tags]:hidden`,
   /* `.drawer .entry` */
   "[&_.entry]:[grid-template-columns:1fr]",
   "[&_.entry]:gap-space-1",
   /* `.drawer .entry__span` */
-  "[&_.entry__span]:[grid-column:1]",
-  "[&_.entry__span]:[grid-row:auto]",
-  "[&_.entry__span]:text-left",
+  String.raw`[&_.entry\_\_span]:[grid-column:1]`,
+  String.raw`[&_.entry\_\_span]:[grid-row:auto]`,
+  String.raw`[&_.entry\_\_span]:text-left`,
   /* `.drawer .profile` */
   "[&_.profile]:[grid-template-columns:1fr]",
   /* `.drawer .profile > div` — A SCOPE, NOT AN APPEARANCE — the part that has no
@@ -67,7 +67,7 @@ export const drawer = cva([
      Emitting an empty rule for the wrapper would claim a decision that was never made. */
   "[&_.profile>div:nth-child(odd)]:[padding-right:0]",
   /* Under `@media (max-width: 560px)` (`below-560`) */
-  "[@media(max-width:560px)]:[&_.idx__row]:[grid-template-columns:1fr]",
+  String.raw`[@media(max-width:560px)]:[&_.idx\_\_row]:[grid-template-columns:1fr]`,
 ]);
 
 export type DrawerVariants = VariantProps<typeof drawer>;

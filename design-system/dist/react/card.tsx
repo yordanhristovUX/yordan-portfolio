@@ -71,23 +71,23 @@ export const card = cva(
              card — and writing it twice would say two things that could then drift apart.
              Both members are the card's own parts, which is the guard the array carries and
              the single form does not need. */
-          "[&_.card__media]:[position:absolute]",
-          "[&_.card__media]:[width:1px]",
-          "[&_.card__media]:[height:1px]",
-          "[&_.card__media]:[overflow:hidden]",
-          "[&_.card__media]:[clip-path:inset(50%)]",
-          "[&_.card__media]:whitespace-nowrap",
-          "[&_.card__note]:[position:absolute]",
-          "[&_.card__note]:[width:1px]",
-          "[&_.card__note]:[height:1px]",
-          "[&_.card__note]:[overflow:hidden]",
-          "[&_.card__note]:[clip-path:inset(50%)]",
-          "[&_.card__note]:whitespace-nowrap",
+          String.raw`[&_.card\_\_media]:[position:absolute]`,
+          String.raw`[&_.card\_\_media]:[width:1px]`,
+          String.raw`[&_.card\_\_media]:[height:1px]`,
+          String.raw`[&_.card\_\_media]:[overflow:hidden]`,
+          String.raw`[&_.card\_\_media]:[clip-path:inset(50%)]`,
+          String.raw`[&_.card\_\_media]:whitespace-nowrap`,
+          String.raw`[&_.card\_\_note]:[position:absolute]`,
+          String.raw`[&_.card\_\_note]:[width:1px]`,
+          String.raw`[&_.card\_\_note]:[height:1px]`,
+          String.raw`[&_.card\_\_note]:[overflow:hidden]`,
+          String.raw`[&_.card\_\_note]:[clip-path:inset(50%)]`,
+          String.raw`[&_.card\_\_note]:whitespace-nowrap`,
           /* `.card--reveal .card__media img` */
-          "[&_.card__media_img]:block",
-          "[&_.card__media_img]:[width:100%]",
-          "[&_.card__media_img]:[height:100%]",
-          "[&_.card__media_img]:[object-fit:cover]",
+          String.raw`[&_.card\_\_media_img]:block`,
+          String.raw`[&_.card\_\_media_img]:[width:100%]`,
+          String.raw`[&_.card\_\_media_img]:[height:100%]`,
+          String.raw`[&_.card\_\_media_img]:[object-fit:cover]`,
         ],
         /**
          * An EFFECT-ONLY modifier, the shape `section-head`'s `.sec--tint` forced:
@@ -97,8 +97,8 @@ export const card = cva(
          */
         ruled: [
           /* `.card--ruled .card__title` */
-          "[&_.card__title]:[padding-top:var(--space-3)]",
-          "[&_.card__title]:[border-top:3px_solid_var(--primary)]",
+          String.raw`[&_.card\_\_title]:[padding-top:var(--space-3)]`,
+          String.raw`[&_.card\_\_title]:[border-top:3px_solid_var(--primary)]`,
         ],
       },
     },
@@ -186,9 +186,9 @@ export const cardPeekSheet = cva([
   "[&[data-open]]:[visibility:visible]",
   "[&[data-open]]:[transition-delay:0s]",
   /* `.peek-sheet[data-open] .peek-sheet__scrim` */
-  "[&[data-open]_.peek-sheet__scrim]:[opacity:1]",
+  String.raw`[&[data-open]_.peek-sheet\_\_scrim]:[opacity:1]`,
   /* `.peek-sheet[data-open] .peek-sheet__panel` */
-  "[&[data-open]_.peek-sheet__panel]:[transform:none]",
+  String.raw`[&[data-open]_.peek-sheet\_\_panel]:[transform:none]`,
 ]);
 
 export type CardPeekSheetProps = { className?: string } & Omit<ComponentPropsWithRef<"div">, "className">;

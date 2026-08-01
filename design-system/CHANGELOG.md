@@ -5,6 +5,10 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.6.1 — 2026-08-01
+
+No classified contract change.
+
 ## 2.6.0 — 2026-08-01
 
 Minor — 36 change(s).

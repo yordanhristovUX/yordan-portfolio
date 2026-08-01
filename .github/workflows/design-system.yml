@@ -16,10 +16,22 @@
 # a workflow you debug by guessing.
 #
 # Each step answers one question:
-#   a11y    — does axe still pass on all 62 stories? GREEN OR THE JOB FAILS.
-#             It runs first because it is also what BUILDS storybook-static/;
-#             the visual gate then finds the build current, skips it, and the
-#             pair costs one build rather than two.
+#   tsc     — do the generated React components PARSE AND TYPECHECK? This is
+#             the gate that was missing when dist/react/theme-toggle.tsx
+#             shipped at 2.6.0 with an unescaped quote inside a quoted class
+#             literal: `build.mjs --check` byte-compares that artefact, so the
+#             bad bytes were the expected bytes and every gate was green until
+#             a consumer ran tsc. It runs FIRST because it is the cheapest step
+#             here and because a tier that does not compile makes the two
+#             browser gates below a slower way of finding that out. The offline
+#             half of the same gate — a lexer over every generated file — lives
+#             in design-system/scripts/emit-react.mjs and runs in `npm run
+#             check`; this is the half that needs typescript, @types/react and
+#             class-variance-authority, which is why it is here.
+#   a11y    — does axe still pass on all 64 stories? GREEN OR THE JOB FAILS.
+#             It runs ahead of the visual gate because it is also what BUILDS
+#             storybook-static/; the visual gate then finds the build current,
+#             skips it, and the pair costs one build rather than two.
 #   visual  — has any story changed shape? REPORT-ONLY UNTIL 2026-09-01: it
 #             prints every mismatch and exits 0 on purpose. What it does still
 #             fail on is a real test failure — a story that threw, a page that
@@ -38,7 +50,7 @@
 # and by design, not a broken gate. The linux captures ride out in the
 # visual-diff artifact below; the first linux baseline set gets committed from
 # it, after which this run starts comparing rather than collecting. Until then
-# the linux job still proves the harness boots, all 62 stories render and axe
+# the linux job still proves the harness boots, all 64 stories render and axe
 # is clean — which is the half that fails loudly anyway.
 name: design-system
 
@@ -71,6 +83,12 @@ jobs:
       # the root `npm ci` that ci.yml runs.
       - name: "install: the design system's own dependencies"
         run: npm ci
+        working-directory: design-system
+
+      # No browser, no Storybook build: this is the parse-and-typecheck gate
+      # over dist/react, and it is deliberately ahead of the two that are slow.
+      - name: "tsc: the generated React tier parses and typechecks"
+        run: npm run typecheck:react
         working-directory: design-system
 
       # --with-deps pulls the shared libraries the runner image lacks. Chromium

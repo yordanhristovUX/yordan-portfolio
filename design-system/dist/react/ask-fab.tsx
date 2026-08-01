@@ -60,8 +60,8 @@ export const askFab = cva([
      third block to need that (media's `.ph:has(img) .ph__label` and drawer's sheet are the
      others). The accessible name does not fold with it: it is an `aria-label` on the button
      and spec.md is where that rule lives. */
-  "[&[data-collapsed]_.ask-fab__label]:[max-width:0]",
-  "[&[data-collapsed]_.ask-fab__label]:[opacity:0]",
+  String.raw`[&[data-collapsed]_.ask-fab\_\_label]:[max-width:0]`,
+  String.raw`[&[data-collapsed]_.ask-fab\_\_label]:[opacity:0]`,
 ]);
 
 export type AskFabVariants = VariantProps<typeof askFab>;

@@ -52,7 +52,7 @@ export const media = cva(
        scoped part whose target class is one this same definition declares — `within` names
        a rule and the target names an element, and those are two different jobs, so a class
        of ours in the second slot is not a special case. */
-    "[&:has(img)_.ph__label]:hidden",
+    String.raw`[&:has(img)_.ph\_\_label]:hidden`,
     /* `.ph img` — The picture itself, filling the width and keeping its own height.
        `display: block` kills the inline baseline gap under it, which would otherwise show
        as a few pixels of frame that nothing declared. */

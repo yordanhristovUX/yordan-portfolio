@@ -1,6 +1,6 @@
 {
   "name": "@yordan/design-system",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "private": true,
   "type": "module",
   "description": "AI-ready, repo-first design system for the blueprint portfolio. Source of truth: tokens/tokens.json + components/*/spec.md + css/components.css. See README.md.",
@@ -47,6 +47,8 @@
     "emit:css": "node scripts/emit-css.mjs",
     "build": "node scripts/emit-css.mjs && node scripts/build.mjs && node scripts/build.mjs --check",
     "contract": "node scripts/contract-diff.mjs --check",
+    "//typecheck:react": "THE OTHER HALF OF THE PARSE GATE. `build.mjs --check` byte-compares dist/react/*.tsx, which proves the artefact is what the emitter produces and cannot ask whether what the emitter produces is a file — theme-toggle.tsx shipped at 2.6.0 as TS1005 six times over with every gate green, and the consumer found it. scripts/emit-react.mjs now lexes every generated file offline on each build (strings and templates closed, nothing juxtaposed with a literal, brackets balanced); this runs the real compiler over the same files with react and cva types present, so a type error is caught here rather than in apps/next. It needs three devDependencies and is therefore in .github/workflows/design-system.yml rather than in the root `npm run check`, which stays offline and dependency-light.",
+    "typecheck:react": "tsc --noEmit -p tsconfig.react.json",
     "release": "node scripts/contract-diff.mjs --release",
     "storybook": "npm run build && storybook dev -p 6006 --no-open",
     "build-storybook": "npm run build && storybook build",
@@ -59,10 +61,13 @@
     "@storybook/addon-a11y": "^9.1.5",
     "@storybook/html-vite": "^9.1.5",
     "@storybook/test-runner": "^0.23.0",
+    "@types/react": "^19.2.2",
     "axe-playwright": "^2.2.2",
+    "class-variance-authority": "^0.7.1",
     "jest-image-snapshot": "^6.5.2",
     "playwright": "^1.56.0",
     "storybook": "^9.1.5",
+    "typescript": "^5.9.3",
     "vite": "^6.3.5"
   }
 }
