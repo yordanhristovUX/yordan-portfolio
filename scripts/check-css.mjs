@@ -31,6 +31,12 @@
       Every size is a `--text-*` step, or the keyword `inherit` — an
       inherited size is a relationship, not a value, and the scale is
       whatever the parent already picked.
+      1c. And none for the motion tier: a `transition`'s duration,
+      delay and timing function are `--motion-*` / `--ease-*`. Zero
+      and `linear` are exempt for the reason zero is exempt on the
+      spacing ramp; `animation` is deliberately out of scope; and the
+      four surviving one-off durations are REGISTERED with the reason
+      each is not a register, so the list cannot grow quietly.
 
    2. No `prefers-color-scheme` outside design-system/dist/. A colour
       that differs in dark is a token with a `dark` value; the build
@@ -234,6 +240,121 @@ for (const file of STYLESHEETS) {
         `one place is drift, not a decision.`
     );
   }
+}
+
+/* ============ 1c. the motion tier ============
+   The fourth row of the same table, and it arrived the same way the other
+   three did: a tier was minted, so the reason a literal was the honest answer
+   expired and the exemption with it. Before the tier, components.css carried
+   every duration and every curve as a number — `0.2s` twenty-five times as a
+   transition duration, `0.28s` twelve, `cubic-bezier(0.22, 1, 0.36, 1)` five,
+   `ease` four — which is the shape the type scale had at 40 sizes, one tier
+   down. `--motion-state`, `--motion-arrive`, `--ease-arrive` and `--ease-fade`
+   are the four names the owner approved for it.
+
+   WHAT IS ALLOWED LITERALLY, and each is a condition rather than a taste:
+
+   · `0s` / `0ms` — the same exemption zero gets on the spacing ramp. Zero is
+     not a step, it is the absence of one, and `.menu[data-open] {
+     transition-delay: 0s }` is cancelling a delay rather than choosing a
+     duration.
+   · `linear` — a straight line is the absence of a curve. It is also load
+     bearing in `transition: visibility 0s linear var(--motion-arrive)`, where
+     the only reason a timing function is written at all is that the DELAY is
+     the fourth position of the shorthand and cannot be reached past it.
+   · `none`, and the CSS-wide keywords.
+
+   WHAT THIS DELIBERATELY DOES NOT COVER, said out loud because a gate's
+   silence reads as permission. `animation` — its duration, its delay and its
+   `steps()`. A keyframe loop's period is the animation's own rhythm and not a
+   step on any ramp: `blink` is 2.4s because that is how long a caret is dark,
+   `chat-life` is 1.6s because that is the pulse, `theme-dial` is 9s because
+   that is how slowly the lamp should turn. And `.chat__cell`'s 0.2 / 0.4 / 0.6
+   `animation-delay`s are a STAGGER — three steps of one sequence, of which the
+   first coincides with the state register by arithmetic rather than by
+   meaning. Rebinding it would assert that the third square waits for the same
+   reason a hover ink changes. If a motion tier for loops is ever wanted it is
+   a different tier, minted against a different measurement.
+
+   THE FOUR SURVIVING LITERALS ARE REGISTERED, NOT TOLERATED. Each is a
+   duration with one consumer, which is the drift this system's own rule
+   retires rather than enshrines — the same argument that keeps `line-height`
+   out of a tier. Consolidating them into the registers is an APPEARANCE
+   decision and therefore the owner's, so each sits below with the reason it
+   survived, and the register is two-sided: an unregistered literal fails, and
+   a registered one that is no longer found fails too. They are on
+   design-system/PATTERNS.md's review list. */
+const MOTION_PROPS = /^transition(-duration|-timing-function|-delay)?$/;
+const DURATION = /(?<![\w.])-?[\d.]+m?s(?![\w])/g;
+const TIMING = /\b(ease(-in|-out|-in-out)?|cubic-bezier\([^)]*\)|steps\([^)]*\))/g;
+const MOTION_OK = /^(0m?s|linear|none|inherit|initial|unset|revert|revert-layer)$/i;
+
+/* One line per surviving literal: where it is, what it is, and why it is not a
+   register. `value` is matched against the LITERAL, not the declaration, so a
+   second `0.25s` arriving on another selector is a new decision and fails. */
+const MOTION_EXEMPT = [
+  {
+    where: "design-system/css/components.css",
+    sel: ".theme__lamp",
+    literal: "0.3s",
+    why: "the lamp's own fill cross-fades slower than a control changes state, because it is reading as a dial turning rather than as a button acknowledging a press. One consumer; folding it into `--motion-arrive` would be a look decision.",
+  },
+  {
+    where: "design-system/css/components.css",
+    sel: ".peek",
+    literal: "0.18s",
+    why: "the cursor panel follows the pointer, so its fade is deliberately faster than the state register — a panel chasing a mouse at 0.2s reads as lag. One consumer.",
+  },
+  {
+    where: "design-system/css/components.css",
+    sel: ".idx__row::before",
+    literal: "0.25s",
+    why: "the ink bar wipes across the row rather than changing state, so it travels on `--ease-arrive` at a duration between the two registers. One consumer.",
+  },
+  {
+    where: "css/style.css",
+    sel: ".tx__big",
+    literal: "0.25s",
+    why: "the contact line's hover, the one place on the site where a colour change is the size of a headline. One consumer, and the same number as the ink bar by coincidence rather than by decision — which is exactly why neither is a register.",
+  },
+];
+
+let motionDecls = 0;
+for (const file of STYLESHEETS) {
+  const raw = readFileSync(file, "utf8");
+  const src = blankComments(raw);
+  for (const d of declarations(src)) {
+    if (!MOTION_PROPS.test(d.prop)) continue;
+    motionDecls++;
+    /* A `var()` is blanked before the scan, and it has to be: `--ease-fade` is
+       a token name that contains the word this rule is looking for, so a
+       correctly bound declaration would report itself as a literal `ease`. */
+    const scrubbed = d.value.replace(/var\(\s*--[a-z0-9-]+\s*(,[^)]*)?\)/gi, " ");
+    const literals = [...(scrubbed.match(DURATION) ?? []), ...(scrubbed.match(TIMING) ?? [])];
+    for (const lit of literals) {
+      if (MOTION_OK.test(lit)) continue;
+      const exempt = MOTION_EXEMPT.find((e) => e.where === rel(file) && e.sel === d.sel && e.literal === lit);
+      if (exempt) {
+        exempt.$found = true;
+        continue;
+      }
+      problems.push(
+        `${at(file, raw, d.index)}  \`${d.sel} { ${d.prop}: ${d.value} }\` writes \`${lit}\` literally. ` +
+          `Motion has a token tier — \`--motion-state\` for a control acknowledging you, \`--motion-arrive\` for a ` +
+          `surface arriving or leaving, \`--ease-arrive\` for travel and \`--ease-fade\` for an opacity. Pick one, ` +
+          `or add a register to design-system/tokens/tokens.json if neither event is what this is. A duration that ` +
+          `exists in only one place is drift, not a decision — and if it IS deliberate, register it in ` +
+          `MOTION_EXEMPT in the rule-1c block of scripts/check-css.mjs with the reason, in the same commit.`
+      );
+    }
+  }
+}
+for (const e of MOTION_EXEMPT.filter((e) => !e.$found)) {
+  problems.push(
+    `rule 1c registers \`${e.literal}\` on \`${e.sel}\` in ${e.where} as a surviving motion literal, and it is no ` +
+      `longer there. A registered exemption that has stopped being true is one somebody should be told has gone: ` +
+      `prune the line in the same commit, and check whether the owner's review list still needs the entry.`
+  );
 }
 
 /* ============ 2. prefers-color-scheme ============ */
@@ -527,7 +648,8 @@ if (problems.length) {
 }
 console.log(
   `✓ css check              (${STYLESHEETS.length} stylesheets, ${SITE_JS.length} site scripts, ` +
-    `${HTML_PAGES.length} pages · ${sizedDecls} font-size and ${tieredDecls} weight/tracking/width declarations, all tokens · ` +
+    `${HTML_PAGES.length} pages · ${sizedDecls} font-size, ${tieredDecls} weight/tracking/width and ` +
+    `${motionDecls} transition declarations, all tokens bar ${MOTION_EXEMPT.length} registered · ` +
     `0 colour literals · 0 prefers-color-scheme · skeleton clean · ` +
     `${solidCounts.map(([f, n]) => `${f.replace(/\.html$/, "")}:${n}`).join(" ")} solid buttons · ` +
     `automata lattice ${latticeRem}rem (${latticeRem * ROOT_PX}px) ≥ ${LATTICE_FLOOR_REM}rem, ` +

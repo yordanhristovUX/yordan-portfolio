@@ -33,7 +33,7 @@ export const button = cva(
     "border-solid",
     "border-content-primary",
     "text-center",
-    "[transition:background-color_0.2s,_color_0.2s]",
+    "[transition:background-color_var(--motion-state),_color_var(--motion-state)]",
     "whitespace-nowrap",
     "cursor-pointer",
     "[&:hover]:text-content-inverse",

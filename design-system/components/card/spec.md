@@ -98,20 +98,12 @@ every card on the final row drop the rules that would otherwise trail into empty
 `--accent`, `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`, `--chrome-grid`,
 `--chrome-label`, `--chrome-label-strong`, `--content-body`, `--content-inverse`,
 `--content-primary`, `--font-display`, `--font-mono`, `--primary`, `--rule`, `--rule-strong`,
-`--scrim`, `--shadow-drop`, `--surface-page`, `--surface-raised`, `--text-2xs`,
-`--text-base`, `--text-md`, `--text-sm`, `--text-sub`, `--text-xs`, `--pad`, `--space-2`,
-`--space-3`, `--space-4`, `--space-5`, `--space-6`, `--space-flow`, `--tracking-wide-lg`,
-`--tracking-wide-sm`, `--tracking-wide-xl`, `--weight-extrabold`, `--width-body`
-
-The `--scrim`/`--surface-page`/`--chrome-bg` group belongs to the peek sheet — a real
-overlay wears the same dress every other overlay here wears, which is why a card component
-suddenly consumes chrome and scrim tokens.
-
-`--surface-raised` and `--shadow-drop` belong to `.peek`, the panel that rides the pointer:
-raised paper with the same drop shadow the floating nav uses, because it is the same idea —
-an object lying **on** the sheet rather than a hole cut into it. `--space-6` is the lattice
-cell, and a reveal card is six of them tall, so a card is a whole number of squares like
-everything else here.
+`--scrim`, `--shadow-drop`, `--surface-page`, `--surface-raised`, `--text-2xs`, `--text-base`,
+`--text-md`, `--text-sm`, `--text-sub`, `--text-xs`, `--pad`, `--space-2`, `--space-3`,
+`--space-4`, `--space-5`, `--space-6`, `--space-flow`, `--tracking-wide-lg`,
+`--tracking-wide-sm`, `--tracking-wide-xl`, `--weight-extrabold`, `--width-body`, `--scrim`,
+`--surface-page`, `--chrome-bg`, `--surface-raised`, `--shadow-drop`, `--space-6`,
+`--motion-arrive`, `--ease-arrive`, `--ease-fade`
 
 ## The peek panel
 

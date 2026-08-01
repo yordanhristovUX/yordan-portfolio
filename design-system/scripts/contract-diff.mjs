@@ -156,7 +156,17 @@ const termOf = (t) => {
       `contract stops describing what a definition actually says.`
   );
 };
-const valueOf = (v) => (Array.isArray(v) ? v.map(termOf).join(" ") : termOf(v));
+/* The comma term joins to the term on its left, the same way both emitters
+   join it. A snapshot that wrote `background-color {motion-state} , color
+   {motion-state}` would be recording a value no pipeline emits, and the
+   CHANGELOG entry a reader is meant to check the diff against would carry the
+   space. `joinTerms` is not imported: this file is deliberately a SECOND
+   reading of the same data, and importing the renderer it is checking would
+   make both sides of the comparison the same side. */
+const valueOf = (v) =>
+  Array.isArray(v)
+    ? v.map(termOf).reduce((acc, s, i) => (i === 0 ? s : s === "," ? `${acc},` : `${acc} ${s}`), "")
+    : termOf(v);
 /** A rule's declarations as a sorted property map — order is presentation, not contract. */
 const declOf = (declarations) => {
   const flatMap = {};

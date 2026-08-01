@@ -90,7 +90,7 @@
    design-system/README.md, "The Tailwind tier", is the consumer-facing copy of
    that list.
    ============================================================ */
-import { isExpr, exprCss } from "./emit-css.mjs";
+import { isExpr, exprCss, joinTerms } from "./emit-css.mjs";
 
 /* ============================================================
    1. THE DECISION TABLE
@@ -125,6 +125,7 @@ export const THEME_MAP = {
   tracking: { ns: "tracking-step" },
   width: { ns: null, why: "the display family's `wdth` axis. Tailwind has no namespace for font-variation-settings; a component reaches it as [font-variation-settings:var(--width-hero)], which keeps the token" },
   space: { ns: "spacing" },
+  motion: { ns: null, why: "two duration registers and two curves, and every one of them is reached through a `transition` SHORTHAND — one declaration carrying a property, a duration, a curve and sometimes a delay. Tailwind has no namespace for a shorthand, and the pair `duration-*` / `ease-*` is refused for the reason `transition` has always been an arbitrary property here: the shorter classes apply Tailwind's own default timing function, and a shorter class that changes a curve is not a translation. `--ease-*` is a real Tailwind namespace and the two curves would fit it — but this emitter would then mint a utility it never emits, and a tier earns its keep by being consumed. A component reaches all four as [transition:opacity_var(--motion-arrive)_var(--ease-fade)], which keeps the token" },
   border: { ns: null, why: "whole `border` shorthands (width + style + colour). Tailwind has no namespace for one; a component reaches them as [border:var(--rule-strong)], which keeps the token and therefore keeps the theme" },
 };
 
@@ -585,7 +586,7 @@ export function utilitiesFor(prop, value, keyOf, where) {
      default timing function, and the authored rule has none. A shorter class
      that changes a curve is not a translation. */
   const flat = Array.isArray(value)
-    ? value.map((v) => (isToken(v) ? `var(--${v.token})` : literal(v))).join(" ")
+    ? joinTerms(value.map((v) => (isToken(v) ? `var(--${v.token})` : literal(v))))
     : isToken(value)
       ? `var(--${value.token})`
       : literal(value);

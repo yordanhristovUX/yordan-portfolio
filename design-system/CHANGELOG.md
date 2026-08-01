@@ -5,6 +5,44 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.7.0 — 2026-08-01
+
+Minor — 28 change(s).
+
+### Added
+
+- token `motion.ease-arrive` added
+- token `motion.ease-fade` added
+- token `motion.motion-arrive` added
+- token `motion.motion-state` added
+
+### Changed
+
+- definition `ask-fab .ask-fab__label` `transition` "max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s" → "max-width {motion-arrive} {ease-arrive}, opacity {motion-state}"
+- definition `ask-fab .ask-fab` `transition` "gap 0.28s, padding 0.28s, transform 0.2s, background-color 0.2s" → "gap {motion-arrive}, padding {motion-arrive}, transform {motion-state}, background-color {motion-state}"
+- definition `button .btn` `transition` "background-color 0.2s, color 0.2s" → "background-color {motion-state}, color {motion-state}"
+- definition `card .peek-sheet__panel` `transition` "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" → "transform {motion-arrive} {ease-arrive}"
+- definition `card .peek-sheet__scrim` `transition` "opacity 0.28s ease" → "opacity {motion-arrive} {ease-fade}"
+- definition `card .peek-sheet` `transition` "visibility 0s linear 0.28s" → "visibility 0s linear {motion-arrive}"
+- definition `card .peek` `box-shadow` "inset 0 0 0 1px {chrome-border} , {shadow-drop} 0 12px 32px -8px" → "inset 0 0 0 1px {chrome-border}, {shadow-drop} 0 12px 32px -8px"
+- definition `card .peek` `transition` "opacity 0.18s ease" → "opacity 0.18s {ease-fade}"
+- definition `drawer .drawer__scrim` `transition` "opacity 0.28s ease" → "opacity {motion-arrive} {ease-fade}"
+- definition `drawer .drawer__sheet` `transition` "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" → "transform {motion-arrive} {ease-arrive}"
+- definition `drawer .drawer` `transition` "visibility 0s linear 0.28s" → "visibility 0s linear {motion-arrive}"
+- definition `link-grid .link-grid a` `transition` "background-color 0.2s, color 0.2s" → "background-color {motion-state}, color {motion-state}"
+- definition `menu .menu__close` `transition` "background-color 0.2s, color 0.2s" → "background-color {motion-state}, color {motion-state}"
+- definition `menu .menu__nav a` `transition` "color 0.2s" → "color {motion-state}"
+- definition `menu .menu__sheet` `transition` "opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" → "opacity {motion-arrive} {ease-fade}, transform {motion-arrive} {ease-arrive}"
+- definition `menu .menu` `transition` "visibility 0s linear 0.28s" → "visibility 0s linear {motion-arrive}"
+- definition `nav .bar__action` `transition` "background-color 0.2s, color 0.2s" → "background-color {motion-state}, color {motion-state}"
+- definition `nav .bar__menu` `transition` "background-color 0.2s, color 0.2s" → "background-color {motion-state}, color {motion-state}"
+- definition `nav .bar__nav a` `transition` "background-color 0.2s, color 0.2s" → "background-color {motion-state}, color {motion-state}"
+- definition `nav .bar` `box-shadow` "inset 0 0 0 1px {chrome-border-strong} , 5px 5px 0 {shadow-drop}" → "inset 0 0 0 1px {chrome-border-strong}, 5px 5px 0 {shadow-drop}"
+- definition `source .source__link` `transition` "border-color 0.2s, color 0.2s" → "border-color {motion-state}, color {motion-state}"
+- definition `theme-toggle .theme__lamp` `transition` "background 0.3s, box-shadow 0.2s" → "background 0.3s, box-shadow {motion-state}"
+- definition `theme-toggle .theme` `box-shadow` "inset 0 0 0 1px {chrome-border} , 2px 2px 0 {shadow-drop}" → "inset 0 0 0 1px {chrome-border}, 2px 2px 0 {shadow-drop}"
+- definition `theme-toggle .theme` `transition` "background-color 0.2s, transform 0.2s" → "background-color {motion-state}, transform {motion-state}"
+
 ## 2.6.1 — 2026-08-01
 
 No classified contract change.

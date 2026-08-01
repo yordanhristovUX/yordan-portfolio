@@ -44,7 +44,7 @@
           "set": { "z-index": "300" }
         },
         { "set": { "visibility": "hidden" } },
-        { "set": { "transition": "visibility 0s linear 0.28s" } }
+        { "set": { "transition": ["visibility","0s","linear",{"token":"motion-arrive"}] } }
       ]
     },
     { "kind": "state", "name": "open", "of": "base", "suffix": "[data-open]", "declarations": [{ "set": { "visibility": "visible", "transition-delay": "0s" } }] },
@@ -65,7 +65,7 @@
         { "set": { "background": { "token": "surface-page" } } },
         { "set": { "opacity": "0" } },
         { "set": { "transform": "translateY(-0.75rem)" } },
-        { "set": { "transition": "opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" } }
+        { "set": { "transition": ["opacity",{"token":"motion-arrive"},{"token":"ease-fade"},",","transform",{"token":"motion-arrive"},{"token":"ease-arrive"}] } }
       ]
     },
     { "kind": "part", "name": "open-sheet", "within": "open", "class": ".menu__sheet", "declarations": [{ "set": { "opacity": "1", "transform": "none" } }] },
@@ -139,7 +139,7 @@
         },
         { "set": { "color": { "token": "content-inverse" } } },
         { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } },
-        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+        { "set": { "transition": ["background-color",{"token":"motion-state"},",","color",{"token":"motion-state"}] } }
       ]
     },
     { "kind": "state", "name": "close-hover", "of": "close", "suffix": ":hover", "declarations": [{ "set": { "background": { "token": "action-hover" } } }] },
@@ -191,7 +191,7 @@
         { "set": { "line-height": "1.2" } },
         { "set": { "color": { "token": "content-primary" } } },
         { "set": { "padding": [{ "token": "space-4" }, "0"] } },
-        { "set": { "transition": "color 0.2s" } }
+        { "set": { "transition": ["color",{"token":"motion-state"}] } }
       ]
     },
     {

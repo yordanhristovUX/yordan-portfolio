@@ -36,7 +36,7 @@ Rectangular mono-type action. Outline by default; solid ink for the primary acti
 
 `--action-hover`, `--content-inverse`, `--content-primary`, `--font-mono`, `--primary`,
 `--text-2xs`, `--text-xs`, `--space-2`, `--space-3`, `--space-5`, `--tracking-wide`,
-`--weight-semibold`
+`--weight-semibold`, `--motion-state`
 
 ## A11y
 

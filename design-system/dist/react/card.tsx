@@ -182,7 +182,7 @@ export const cardPeekSheet = cva([
   "[inset:0]",
   "[z-index:350]",
   "[visibility:hidden]",
-  "[transition:visibility_0s_linear_0.28s]",
+  "[transition:visibility_0s_linear_var(--motion-arrive)]",
   "[&[data-open]]:[visibility:visible]",
   "[&[data-open]]:[transition-delay:0s]",
   /* `.peek-sheet[data-open] .peek-sheet__scrim` */
@@ -203,7 +203,7 @@ export const cardSheetScrim = cva([
   "[inset:0]",
   "bg-scrim",
   "[opacity:0]",
-  "[transition:opacity_0.28s_ease]",
+  "[transition:opacity_var(--motion-arrive)_var(--ease-fade)]",
 ]);
 
 export type CardSheetScrimProps = { className?: string } & Omit<ComponentPropsWithRef<"div">, "className">;
@@ -224,7 +224,7 @@ export const cardSheetPanel = cva([
   "bg-surface-page",
   "[box-shadow:inset_0_1px_0_var(--chrome-border-strong)]",
   "[transform:translateY(100%)]",
-  "[transition:transform_0.28s_cubic-bezier(0.22,_1,_0.36,_1)]",
+  "[transition:transform_var(--motion-arrive)_var(--ease-arrive)]",
 ]);
 
 export type CardSheetPanelProps = { className?: string } & Omit<ComponentPropsWithRef<"div">, "className">;
@@ -345,10 +345,10 @@ export const cardPeek = cva([
   "[overflow:hidden]",
   "[pointer-events:none]",
   "bg-surface-raised",
-  "[box-shadow:inset_0_0_0_1px_var(--chrome-border)_,_var(--shadow-drop)_0_12px_32px_-8px]",
+  "[box-shadow:inset_0_0_0_1px_var(--chrome-border),_var(--shadow-drop)_0_12px_32px_-8px]",
   "p-space-3",
   "[opacity:0]",
-  "[transition:opacity_0.18s_ease]",
+  "[transition:opacity_0.18s_var(--ease-fade)]",
   "[will-change:transform]",
   "[&[data-open]]:[opacity:1]",
 ]);

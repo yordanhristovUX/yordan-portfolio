@@ -43,7 +43,7 @@ export const askFab = cva([
   "tracking-step-wide-sm",
   "whitespace-nowrap",
   "[box-shadow:2px_2px_0_var(--shadow-drop)]",
-  "[transition:gap_0.28s,_padding_0.28s,_transform_0.2s,_background-color_0.2s]",
+  "[transition:gap_var(--motion-arrive),_padding_var(--motion-arrive),_transform_var(--motion-state),_background-color_var(--motion-state)]",
   /* Under `@media (max-width: 699px)` (`below-699`) — MOBILE ONLY, and the number is the
      one the bar gives up at. 699 rather than 700 because the bar's own query claims 700 and
      above; the two are one decision written from both sides, which is exactly the drift a
@@ -104,7 +104,7 @@ export const askFabLabel = cva([
   "[max-width:12rem]",
   "[overflow:hidden]",
   "[opacity:1]",
-  "[transition:max-width_0.28s_cubic-bezier(0.22,_1,_0.36,_1),_opacity_0.2s]",
+  "[transition:max-width_var(--motion-arrive)_var(--ease-arrive),_opacity_var(--motion-state)]",
 ]);
 
 export type AskFabLabelProps = { className?: string } & Omit<ComponentPropsWithRef<"span">, "className">;

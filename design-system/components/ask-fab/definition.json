@@ -60,7 +60,7 @@
         { "set": { "letter-spacing": { "token": "tracking-wide-sm" } } },
         { "set": { "white-space": "nowrap" } },
         { "set": { "box-shadow": ["2px", "2px", "0", { "token": "shadow-drop" }] } },
-        { "set": { "transition": "gap 0.28s, padding 0.28s, transform 0.2s, background-color 0.2s" } }
+        { "set": { "transition": ["gap",{"token":"motion-arrive"},",","padding",{"token":"motion-arrive"},",","transform",{"token":"motion-state"},",","background-color",{"token":"motion-state"}] } }
       ]
     },
     {
@@ -115,7 +115,7 @@
         { "set": { "max-width": "12rem" } },
         { "set": { "overflow": "hidden" } },
         { "set": { "opacity": "1" } },
-        { "set": { "transition": "max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s" } }
+        { "set": { "transition": ["max-width",{"token":"motion-arrive"},{"token":"ease-arrive"},",","opacity",{"token":"motion-state"}] } }
       ]
     },
     {

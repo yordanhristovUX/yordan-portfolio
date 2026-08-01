@@ -55,12 +55,9 @@ None. A citation is either resolvable or it is not rendered.
 
 ## Tokens
 
-`--accent` (hover/focus only), `--chrome-border-strong`, `--chrome-label`,
-`--chrome-label-strong`, `--content-primary`, `--font-mono`, `--rule`, `--text-2xs`,
-`--text-sm`, `--space-1`, `--space-2`, `--space-3`, `--tracking-wide-2xl`,
-`--weight-semibold`
-
-No `prefers-color-scheme`. Both hover colours flip through their own `dark` token values.
+`--accent`, `--chrome-border-strong`, `--chrome-label`, `--chrome-label-strong`,
+`--content-primary`, `--font-mono`, `--rule`, `--text-2xs`, `--text-sm`, `--space-1`,
+`--space-2`, `--space-3`, `--tracking-wide-2xl`, `--weight-semibold`, `--motion-state`
 
 ## Where the ids come from
 

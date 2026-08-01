@@ -35,7 +35,7 @@
         { "set": { "color": { "token": "chrome-label-strong" } } },
         { "set": { "border": { "token": "rule" } } },
         { "set": { "border-width": "0 1px 1px 0" } },
-        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+        { "set": { "transition": ["background-color",{"token":"motion-state"},",","color",{"token":"motion-state"}] } }
       ]
     },
     {

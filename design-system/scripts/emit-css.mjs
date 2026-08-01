@@ -340,6 +340,37 @@ const TIERED = {
   "font-variation-settings": ["--width-*", "the six steps of the display width axis"],
 };
 
+/* ---------- the motion tier, refused BY VALUE rather than by property ----------
+   The other four guards above are keyed by property, because a `font-weight`
+   is a weight whatever it says. A `transition` is a shorthand: one declaration
+   carrying a property name, a duration, a curve and sometimes a delay, of
+   which only some terms belong to the motion tier at all. So this one is keyed
+   by VALUE, and the set of refused values is DERIVED from tokens.json's motion
+   group rather than typed here — mint a fifth register and its literal is
+   refused the same day, which is the shape the weight tier's expiry had.
+
+   WHAT IT DELIBERATELY DOES NOT REFUSE: a duration the tier has no name for.
+   `.theme__lamp`'s 0.3s and `.peek`'s 0.18s are one-consumer values, and
+   consolidating them into a register is an appearance decision the owner has
+   not taken — so they stay literal HERE, and are registered with their reason
+   in rule 1c of ../../scripts/check-css.mjs, which reads the emitted CSS and
+   is the gate that asks the wider question. Two gates, one question each: this
+   one asks "did you write a value the tier already names", and that one asks
+   "is every literal that survives one somebody decided to keep". */
+const MOTION_PROP = /^transition(-duration|-timing-function|-delay)?$/;
+const squash = (s) => String(s).replace(/\s+/g, "");
+let motionNamesCache = null;
+function motionNames() {
+  if (motionNamesCache !== null) return motionNamesCache;
+  const tokens = JSON.parse(readFileSync(join(root, "tokens", "tokens.json"), "utf8"));
+  motionNamesCache = new Map();
+  for (const [name, def] of Object.entries(tokens.motion ?? {})) {
+    if (name.startsWith("$")) continue;
+    motionNamesCache.set(squash(typeof def === "string" ? def : def.value), name);
+  }
+  return motionNamesCache;
+}
+
 /* ---------- computed geometry, with the bindings still visible ----------
    `{"expr": "calc({space-3} - 2px)"}` is the fourth value form, and the only
    reason it is not the wedge PATTERNS.md refuses is the interpolation: a
@@ -348,6 +379,15 @@ const TIERED = {
    binding is. Written `var(--space-3)` by hand it would be a binding no gate
    could check and no census could count, which is why that form is refused. */
 export const EXPR_REF = /\{([a-z][a-z0-9-]*)\}/g;
+/** The punctuation rule for a sequence of terms, and the ONLY one: terms join
+ *  with a space, and a `","` term joins to the term on its left. Exported
+ *  because pipeline 2 has to make the same joins — a `transition` list reaches
+ *  Tailwind as an arbitrary property, and `background-color var(--motion-state)
+ *  , color …` is not the declaration components.css writes. Two emitters, one
+ *  rule, in the file that owns it. */
+export const joinTerms = (parts) =>
+  parts.reduce((acc, s, i) => (i === 0 ? s : s === "," ? `${acc},` : `${acc} ${s}`), "");
+
 export const isExpr = (v) => v !== null && typeof v === "object" && typeof v.expr === "string";
 /** `calc({space-3} - 2px)` → `calc(var(--space-3) - 2px)`. */
 export const exprCss = (source) => String(source).replace(EXPR_REF, (_, name) => `var(--${name})`);
@@ -689,7 +729,16 @@ export function checkDefinition(def, id, rel) {
   eachDeclaration(def, (prop, value, where) => {
     for (const t of terms(value)) {
       if (typeof t !== "string") continue;
-      if (AS_COLOUR.test(t.trim())) {
+      if (MOTION_PROP.test(prop) && motionNames().has(squash(t))) {
+        const name = motionNames().get(squash(t));
+        bad(
+          `\`${where}\` writes \`${t}\` inside \`${prop}\`, and that value has a name: \`{"token": "${name}"}\`. The ` +
+            `motion tier turned two durations and two curves into four registers, so writing one of their values by ` +
+            `hand says the same thing without saying WHICH EVENT it is — and the next reader has no way to tell a ` +
+            `transition that is a control acknowledging you from one that is a surface arriving. This was legal ` +
+            `until the tier existed and stopped being legal the day it did`
+        );
+      } else if (AS_COLOUR.test(t.trim())) {
         bad(`\`${where}\` writes the colour literal \`${t}\` on \`${prop}\`. Colours are born in tokens.json and reach a definition as {"token": "…"} — scripts/check-css.mjs refuses this in CSS and cannot see it here`);
       } else if (TIERED[prop]) {
         const [tier, what] = TIERED[prop];
@@ -1183,12 +1232,7 @@ const comments = (note, indent) => (Array.isArray(note[0]) ? note.map((c) => com
  *  and it exists because a comma cannot be appended to a `{"token"}` object. */
 function value(v, where) {
   if (typeof v === "string") return v;
-  if (Array.isArray(v)) {
-    return v.reduce((acc, t, i) => {
-      const s = value(t, where);
-      return i === 0 ? s : s === "," ? `${acc},` : `${acc} ${s}`;
-    }, "");
-  }
+  if (Array.isArray(v)) return joinTerms(v.map((t) => value(t, where)));
   if (isExpr(v)) return exprCss(v.expr);
   if (v && typeof v === "object" && typeof v.token === "string") return `var(--${v.token})`;
   throw new Error(

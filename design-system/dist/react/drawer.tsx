@@ -28,7 +28,7 @@ export const drawer = cva([
   "[inset:0]",
   "[z-index:400]",
   "[visibility:hidden]",
-  "[transition:visibility_0s_linear_0.28s]",
+  "[transition:visibility_0s_linear_var(--motion-arrive)]",
   "[&[data-open]]:[visibility:visible]",
   "[&[data-open]]:[transition-delay:0s]",
   /* `.drawer[data-open] .drawer__scrim` */
@@ -87,7 +87,7 @@ export const drawerScrim = cva([
   "[inset:0]",
   "bg-scrim",
   "[opacity:0]",
-  "[transition:opacity_0.28s_ease]",
+  "[transition:opacity_var(--motion-arrive)_var(--ease-fade)]",
 ]);
 
 export type DrawerScrimProps = { className?: string } & Omit<ComponentPropsWithRef<"div">, "className">;
@@ -109,7 +109,7 @@ export const drawerSheet = cva([
   "bg-surface-page",
   "[box-shadow:inset_1px_0_0_var(--chrome-border-strong)]",
   "[transform:translateX(100%)]",
-  "[transition:transform_0.28s_cubic-bezier(0.22,_1,_0.36,_1)]",
+  "[transition:transform_var(--motion-arrive)_var(--ease-arrive)]",
   "[will-change:transform]",
   /* Under `@media (max-width: 1024px)` (`below-1024`) */
   "[@media(max-width:1024px)]:[width:100%]",

@@ -466,8 +466,49 @@ values across nineteen declarations — drift to be consolidated *before* it is 
 drift to be enshrined in `tokens.json`. A tier of twelve steps with one consumer each fails
 this system's own rule that a semantic tier earns its keep by being consumed, which is the
 rule that retired `action`. It is on the owner's review list, and the day it is consolidated
-it gets a tier and `check-css.mjs` gains a fourth row. `max-width` is a *measure*, a different
-job from spacing, and is on the same list.
+it gets a tier. `max-width` is a *measure*, a different job from spacing, and is on the same
+list.
+
+### The motion tier — two registers and two curves
+
+**`--motion-state` (0.2s), `--motion-arrive` (0.28s), `--ease-arrive`
+(`cubic-bezier(0.22, 1, 0.36, 1)`) and `--ease-fade` (`ease`).** The fifth entry on the
+owner's review list, approved and taken. Before it the stylesheet wrote every duration and
+every curve out: 0.2s twenty-five times as a transition duration, 0.28s twelve, the arrival
+curve five, `ease` four — the shape the type scale had at 40 sizes, one tier down. It was
+found by a `next-app` agent reading the arbitrary properties pipeline 2 emits, which is
+worth knowing: the second front end is the thing that makes a leak on the first one visible.
+
+**These are registers, not a ramp, and the names say so.** There is no ordering between 0.2s
+and 0.28s to interpolate — one is a control acknowledging you and the other is a surface
+arriving, which is a difference in *what is happening* rather than in *how much*. That is
+also the pairing rule: something that travels takes `--ease-arrive`, something that fades
+takes `--ease-fade`, and both take `--motion-arrive`. A colour change takes neither curve,
+because a colour has no distance to decelerate over.
+
+`transition` **stays an arbitrary property in pipeline 2**, and the motion group is
+deliberately absent from `@theme`. A transition is a shorthand and Tailwind has no namespace
+for one; the `duration-*` / `ease-*` pair is refused for the reason it always has been here —
+it would also apply Tailwind's default timing function, and a shorter class that changes a
+curve is not a translation. `--ease-*` is a real Tailwind namespace and the two curves would
+fit it, but this emitter would then mint a utility it never emits, and a tier earns its keep
+by being consumed. A component reaches all four as
+`[transition:opacity_var(--motion-arrive)_var(--ease-fade)]`, which keeps the token.
+
+**Two gates, one question each.** The definition guard refuses a literal *the tier already
+names* — the refused set is derived from `tokens.json`, so a fifth register is enforced the
+day it is minted. `check-css.mjs` rule 1c asks the wider question of the emitted CSS: every
+transition duration, delay and timing function is a token, with `0s` and `linear` exempt for
+the reason `0` is exempt on the spacing ramp, and **four surviving one-off durations
+registered by selector with the reason each is not a register** (`.theme__lamp` 0.3s, `.peek`
+0.18s, `.idx__row::before` 0.25s, `.tx__big` 0.25s). The register is two-sided: an
+unregistered literal fails, and a registered one that has gone fails too. Consolidating those
+four is an appearance decision, so they are on the owner's review list rather than folded in.
+
+**`animation` is deliberately outside the tier.** A keyframe loop's period is the animation's
+own rhythm rather than a step on any ramp — `blink` is 2.4s because that is how long a caret
+is dark — and `.chat__cell`'s 0.2 / 0.4 / 0.6 delays are a *stagger* whose first step
+coincides with the state register by arithmetic and not by meaning.
 
 ### `dist/components.json` stays parsed from the shipped CSS
 
@@ -890,8 +931,8 @@ READMEs, the **dark count**. Those figures are a claim the site makes about itse
 public, so they get the same enforcement as component coverage — during one session they
 went stale twice, which is exactly the drift this system exists to prevent.
 
-- **tokens** — entries in `tokens.json` (103)
-- **values** — light + dark + print + wide authored values across those tokens (167). Note this is
+- **tokens** — entries in `tokens.json` (107)
+- **values** — light + dark + print + wide authored values across those tokens (171). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
 - **components** — directories under `components/` (24)

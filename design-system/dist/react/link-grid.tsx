@@ -43,7 +43,7 @@ export const linkGrid = cva([
   "[&_a]:text-chrome-label-strong",
   "[&_a]:[border:var(--rule)]",
   "[&_a]:[border-width:0_1px_1px_0]",
-  "[&_a]:[transition:background-color_0.2s,_color_0.2s]",
+  "[&_a]:[transition:background-color_var(--motion-state),_color_var(--motion-state)]",
   "[&_a:hover]:bg-primary",
   "[&_a:hover]:text-content-inverse",
 ]);

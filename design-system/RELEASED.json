@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -469,6 +469,22 @@
       "cssVar": "--pad-y",
       "value": "calc(var(--space-6) * 2)"
     },
+    "motion.motion-state": {
+      "cssVar": "--motion-state",
+      "value": "0.2s"
+    },
+    "motion.motion-arrive": {
+      "cssVar": "--motion-arrive",
+      "value": "0.28s"
+    },
+    "motion.ease-arrive": {
+      "cssVar": "--ease-arrive",
+      "value": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "motion.ease-fade": {
+      "cssVar": "--ease-fade",
+      "value": "ease"
+    },
     "border.rule": {
       "cssVar": "--rule",
       "value": "1px solid var(--chrome-border)"
@@ -780,7 +796,7 @@
         "letter-spacing": "{tracking-wide}",
         "padding": "{space-3} {space-5}",
         "text-align": "center",
-        "transition": "background-color 0.2s, color 0.2s",
+        "transition": "background-color {motion-state}, color {motion-state}",
         "white-space": "nowrap"
       }
     },
@@ -930,7 +946,7 @@
         "border-bottom": "1px solid {chrome-border-strong}",
         "color": "{content-primary}",
         "text-align": "left",
-        "transition": "border-color 0.2s, color 0.2s"
+        "transition": "border-color {motion-state}, color {motion-state}"
       }
     },
     "source .source__link:hover,:focus-visible": {
@@ -970,7 +986,7 @@
         "font-weight": "{weight-medium}",
         "letter-spacing": "{tracking-wide}",
         "padding": "{space-4} {pad}",
-        "transition": "background-color 0.2s, color 0.2s"
+        "transition": "background-color {motion-state}, color {motion-state}"
       }
     },
     "link-grid .link-grid a:hover": {
@@ -1446,7 +1462,7 @@
         "padding": "2px {space-4} 2px 2px",
         "position": "fixed",
         "right": "1rem",
-        "transition": "gap 0.28s, padding 0.28s, transform 0.2s, background-color 0.2s",
+        "transition": "gap {motion-arrive}, padding {motion-arrive}, transform {motion-state}, background-color {motion-state}",
         "white-space": "nowrap",
         "z-index": "90"
       }
@@ -1487,7 +1503,7 @@
         "max-width": "12rem",
         "opacity": "1",
         "overflow": "hidden",
-        "transition": "max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s"
+        "transition": "max-width {motion-arrive} {ease-arrive}, opacity {motion-state}"
       }
     },
     "ask-fab .ask-fab[data-collapsed] .ask-fab__label": {
@@ -1549,7 +1565,7 @@
       "declarations": {
         "align-items": "stretch",
         "background": "{chrome-bg}",
-        "box-shadow": "inset 0 0 0 1px {chrome-border-strong} , 5px 5px 0 {shadow-drop}",
+        "box-shadow": "inset 0 0 0 1px {chrome-border-strong}, 5px 5px 0 {shadow-drop}",
         "display": "flex",
         "font-family": "{font-mono}",
         "font-size": "{text-xs}",
@@ -1592,7 +1608,7 @@
         "color": "{chrome-label-strong}",
         "display": "flex",
         "padding": "0 {space-5}",
-        "transition": "background-color 0.2s, color 0.2s"
+        "transition": "background-color {motion-state}, color {motion-state}"
       }
     },
     "nav .bar__nav a:hover": {
@@ -1611,7 +1627,7 @@
         "display": "none",
         "letter-spacing": "{tracking-wide-sm}",
         "padding": "0 {space-5}",
-        "transition": "background-color 0.2s, color 0.2s",
+        "transition": "background-color {motion-state}, color {motion-state}",
         "white-space": "nowrap"
       }
     },
@@ -1662,7 +1678,7 @@
         "gap": "{space-2}",
         "letter-spacing": "{tracking-wide-sm}",
         "padding": "0 {space-5}",
-        "transition": "background-color 0.2s, color 0.2s",
+        "transition": "background-color {motion-state}, color {motion-state}",
         "white-space": "nowrap"
       }
     },
@@ -1780,7 +1796,7 @@
       "declarations": {
         "inset": "0",
         "position": "fixed",
-        "transition": "visibility 0s linear 0.28s",
+        "transition": "visibility 0s linear {motion-arrive}",
         "visibility": "hidden",
         "z-index": "400"
       }
@@ -1799,7 +1815,7 @@
         "inset": "0",
         "opacity": "0",
         "position": "absolute",
-        "transition": "opacity 0.28s ease"
+        "transition": "opacity {motion-arrive} {ease-fade}"
       }
     },
     "drawer .drawer[data-open] .drawer__scrim": {
@@ -1821,7 +1837,7 @@
         "right": "0",
         "top": "0",
         "transform": "translateX(100%)",
-        "transition": "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)",
+        "transition": "transform {motion-arrive} {ease-arrive}",
         "width": "min(46rem, 100%)",
         "will-change": "transform"
       }
@@ -2330,7 +2346,7 @@
       "declarations": {
         "inset": "0",
         "position": "fixed",
-        "transition": "visibility 0s linear 0.28s",
+        "transition": "visibility 0s linear {motion-arrive}",
         "visibility": "hidden",
         "z-index": "300"
       }
@@ -2352,7 +2368,7 @@
         "opacity": "0",
         "position": "absolute",
         "transform": "translateY(-0.75rem)",
-        "transition": "opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)"
+        "transition": "opacity {motion-arrive} {ease-fade}, transform {motion-arrive} {ease-arrive}"
       }
     },
     "menu .menu[data-open] .menu__sheet": {
@@ -2394,7 +2410,7 @@
         "color": "{content-inverse}",
         "display": "flex",
         "padding": "0 {space-5}",
-        "transition": "background-color 0.2s, color 0.2s"
+        "transition": "background-color {motion-state}, color {motion-state}"
       }
     },
     "menu .menu__close:hover": {
@@ -2429,7 +2445,7 @@
         "font-size": "{text-title}",
         "line-height": "1.2",
         "padding": "{space-4} 0",
-        "transition": "color 0.2s"
+        "transition": "color {motion-state}"
       }
     },
     "menu .menu__nav a:hover": {
@@ -2444,7 +2460,7 @@
         "align-items": "center",
         "background": "{chrome-bg}",
         "border-radius": "50%",
-        "box-shadow": "inset 0 0 0 1px {chrome-border} , 2px 2px 0 {shadow-drop}",
+        "box-shadow": "inset 0 0 0 1px {chrome-border}, 2px 2px 0 {shadow-drop}",
         "color": "{chrome-label}",
         "display": "flex",
         "height": "2.5rem",
@@ -2453,7 +2469,7 @@
         "margin-top": "-1.25rem",
         "position": "absolute",
         "top": "50%",
-        "transition": "background-color 0.2s, transform 0.2s",
+        "transition": "background-color {motion-state}, transform {motion-state}",
         "width": "2.5rem",
         "z-index": "90"
       }
@@ -2472,7 +2488,7 @@
         "box-shadow": "inset 0 0 0 1px {content-primary}",
         "flex-shrink": "0",
         "height": "14px",
-        "transition": "background 0.3s, box-shadow 0.2s",
+        "transition": "background 0.3s, box-shadow {motion-state}",
         "width": "14px"
       }
     },
@@ -2581,7 +2597,7 @@
       "declarations": {
         "inset": "0",
         "position": "fixed",
-        "transition": "visibility 0s linear 0.28s",
+        "transition": "visibility 0s linear {motion-arrive}",
         "visibility": "hidden",
         "z-index": "350"
       }
@@ -2600,7 +2616,7 @@
         "inset": "0",
         "opacity": "0",
         "position": "absolute",
-        "transition": "opacity 0.28s ease"
+        "transition": "opacity {motion-arrive} {ease-fade}"
       }
     },
     "card .peek-sheet[data-open] .peek-sheet__scrim": {
@@ -2622,7 +2638,7 @@
         "position": "absolute",
         "right": "0",
         "transform": "translateY(100%)",
-        "transition": "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)"
+        "transition": "transform {motion-arrive} {ease-arrive}"
       }
     },
     "card .peek-sheet[data-open] .peek-sheet__panel": {
@@ -2698,7 +2714,7 @@
       "kind": "part",
       "declarations": {
         "background": "{surface-raised}",
-        "box-shadow": "inset 0 0 0 1px {chrome-border} , {shadow-drop} 0 12px 32px -8px",
+        "box-shadow": "inset 0 0 0 1px {chrome-border}, {shadow-drop} 0 12px 32px -8px",
         "left": "0",
         "max-height": "calc(100vh - 1rem)",
         "opacity": "0",
@@ -2707,7 +2723,7 @@
         "pointer-events": "none",
         "position": "fixed",
         "top": "0",
-        "transition": "opacity 0.18s ease",
+        "transition": "opacity 0.18s {ease-fade}",
         "width": "min(26rem, 70vw)",
         "will-change": "transform",
         "z-index": "90"

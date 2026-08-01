@@ -219,17 +219,8 @@ Numbers and the 375px arithmetic: `components/nav/spec.md`.
 `--chrome-bg`, `--chrome-border-strong`, `--chrome-label`, `--content-primary`,
 `--font-display`, `--font-mono`, `--rule-strong`, `--scrim`, `--surface-page`, `--text-2xs`,
 `--text-sub`, `--space-1`, `--space-3`, `--space-4`, `--space-5`, `--tracking-tight`,
-`--tracking-wide`, `--weight-extrabold`, `--width-title`
-
-No `prefers-color-scheme` anywhere in this block, and no colour in any `@media print`. The
-portrait's edge is a `dark` value on `chrome-border-strong` in `tokens.json`, which is the
-only place that judgement can live. The surface-portrait token used to be in this list and
-has been deleted from the system: restoring the tile left it consumed by nothing, and a
-semantic tier earns its keep by being consumed — the same rule that retired `action`.
-
-The drawer is hidden on paper by a layout rule in each page stylesheet
-(`css/style.css`, `css/cv.css`, `css/mcp.css`, `css/evals.css`). A fixed overlay printed is
-printed once, at the top of sheet one, over whatever was there.
+`--tracking-wide`, `--weight-extrabold`, `--width-title`, `--motion-arrive`, `--ease-arrive`,
+`--ease-fade`
 
 ## Behaviour (site JS contract)
 

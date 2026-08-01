@@ -49,13 +49,8 @@ reason is still true.
 `--content-primary`, `--font-display`, `--font-mono`, `--pad`, `--primary`, `--rule`,
 `--space-2`, `--space-3`, `--space-flow`, `--surface-raised`, `--text-heading`, `--text-sm`,
 `--text-sub`, `--text-xs`, `--tracking-wide`, `--tracking-wide-lg`, `--weight-bold`,
-`--weight-extrabold`, `--weight-semibold`, `--width-normal`, `--width-sub`
-
-`--text-sub` is `.idx__name`'s size below 900px. A project name cannot carry section-heading
-level in a ~400px column — measured, it wrapped worse at 1280px than at 1024px, because the
-name grew with the viewport while its grid track did not. Naming a token at a breakpoint is
-the existing idiom for "a component changes level here"; `css/cv.css` does the same thing four
-times.
+`--weight-extrabold`, `--weight-semibold`, `--width-normal`, `--width-sub`, `--text-sub`,
+`--motion-state`, `--ease-arrive`
 
 ## A11y
 

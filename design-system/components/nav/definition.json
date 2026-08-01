@@ -83,7 +83,7 @@
         { "set": { "padding": ["0", { "token": "space-5" }] } },
         { "set": { "color": { "token": "chrome-label-strong" } } },
         { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } },
-        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+        { "set": { "transition": ["background-color",{"token":"motion-state"},",","color",{"token":"motion-state"}] } }
       ]
     },
     {
@@ -122,7 +122,7 @@
         { "set": { "letter-spacing": { "token": "tracking-wide-sm" } } },
         { "set": { "white-space": "nowrap" } },
         { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } },
-        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+        { "set": { "transition": ["background-color",{"token":"motion-state"},",","color",{"token":"motion-state"}] } }
       ]
     },
     {
@@ -283,7 +283,7 @@
         { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } },
         { "set": { "letter-spacing": { "token": "tracking-wide-sm" } } },
         { "set": { "white-space": "nowrap" } },
-        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+        { "set": { "transition": ["background-color",{"token":"motion-state"},",","color",{"token":"motion-state"}] } }
       ]
     },
     { "kind": "state", "name": "action-hover", "of": "action", "suffix": ":hover", "declarations": [{ "set": { "background": { "token": "primary" } } }] },

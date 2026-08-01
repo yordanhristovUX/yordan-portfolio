@@ -110,24 +110,11 @@ segment for the link's right edge to butt against.
 
 ## Tokens
 
-`--accent` (dot), `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`,
-`--chrome-label`, `--chrome-label-strong`, `--content-inverse`, `--content-primary`,
-`--accent`, `--font-mono`, `--primary`, `--shadow-drop` (the offset drop shadow),
-`--text-xs`,
-`--text-sm` (the identity's one-step-up on the docked mobile bar — desktop stays `--text-xs`,
-so the measured widths above remain true), `--space-2`, `--space-3`, `--space-5`,
-`--tracking-wide-sm`, `--weight-semibold`
-
-**`--accent` is the primary action's ground**, and this is the only place in the system where
-the accent is a ground rather than a mark. A solid ink segment carried the right hierarchy and
-the wrong weight — at that size a near-black block reads as a hole punched in the bar. Blue
-also separates the action from the ink-coloured identity on the left *and* from the
-chrome-grey navigation between them, which no shade of grey does at once. Measured: the label
-sits at 6.63:1 on it in light and 5.21:1 in dark, and the block itself stands off the bar at
-6.60:1 and 5.32:1.
-
-`--primary` is then hover **and** the open state. Blue at rest is an invitation; ink is what it
-looks like once you are in it, and "you are in it" is one state however you arrived.
+`--accent`, `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`, `--chrome-label`,
+`--chrome-label-strong`, `--content-inverse`, `--content-primary`, `--accent`, `--font-mono`,
+`--primary`, `--shadow-drop`, `--text-xs`, `--text-sm`, `--text-xs`, `--space-2`, `--space-3`,
+`--space-5`, `--tracking-wide-sm`, `--weight-semibold`, `--accent`, `--primary`,
+`--motion-state`
 
 ## Behaviour
 

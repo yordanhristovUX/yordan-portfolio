@@ -5,7 +5,7 @@
    this system's token layer: it binds Tailwind's @theme namespaces to the custom
    properties dist/tokens.css already defines. `--check` byte-compares this file.
 
-   IT CONTAINS NO COLOUR, SIZE OR SPACING VALUE. 65 of 103 tokens are mapped, and all
+   IT CONTAINS NO COLOUR, SIZE OR SPACING VALUE. 65 of 107 tokens are mapped, and all
    but the three font stacks are a `var()` REFERENCE rather than a copy. That is the
    whole design: dark, pinned-theme, print and wide-viewport values are emitted by
    dist/tokens.css and reach a Tailwind utility through the same cascade they reach a
@@ -40,6 +40,7 @@
    | tracking (8 of 8) | --tracking-step-* | var() reference to the runtime token |
    | width (6) | — stays a plain custom property | the display family's `wdth` axis. Tailwind has no namespace for font-variation-settings; a component reaches it as [font-variation-settings:var(--width-hero)], which keeps the token |
    | space (13 of 13) | --spacing-* | var() reference to the runtime token |
+   | motion (4) | — stays a plain custom property | two duration registers and two curves, and every one of them is reached through a `transition` SHORTHAND — one declaration carrying a property, a duration, a curve and sometimes a delay. Tailwind has no namespace for a shorthand, and the pair `duration-*` / `ease-*` is refused for the reason `transition` has always been an arbitrary property here: the shorter classes apply Tailwind's own default timing function, and a shorter class that changes a curve is not a translation. `--ease-*` is a real Tailwind namespace and the two curves would fit it — but this emitter would then mint a utility it never emits, and a tier earns its keep by being consumed. A component reaches all four as [transition:opacity_var(--motion-arrive)_var(--ease-fade)], which keeps the token |
    | border (2) | — stays a plain custom property | whole `border` shorthands (width + style + colour). Tailwind has no namespace for one; a component reaches them as [border:var(--rule-strong)], which keeps the token and therefore keeps the theme |
 
    HELD OUT OF A MAPPED GROUP, because they are not values of their namespace:

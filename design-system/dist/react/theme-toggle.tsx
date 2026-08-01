@@ -37,8 +37,8 @@ export const themeToggle = cva([
   "[border-radius:50%]",
   "bg-chrome-bg",
   "text-chrome-label",
-  "[box-shadow:inset_0_0_0_1px_var(--chrome-border)_,_2px_2px_0_var(--shadow-drop)]",
-  "[transition:background-color_0.2s,_transform_0.2s]",
+  "[box-shadow:inset_0_0_0_1px_var(--chrome-border),_2px_2px_0_var(--shadow-drop)]",
+  "[transition:background-color_var(--motion-state),_transform_var(--motion-state)]",
   "[&:hover]:[transform:translateY(-1px)]",
   /* `.theme[data-state="dark"] .theme__lamp` */
   String.raw`[&[data-state='dark']_.theme\_\_lamp]:bg-content-primary`,
@@ -66,7 +66,7 @@ export const themeToggleLamp = cva([
   "[border-radius:50%]",
   "bg-surface-page",
   "[box-shadow:inset_0_0_0_1px_var(--content-primary)]",
-  "[transition:background_0.3s,_box-shadow_0.2s]",
+  "[transition:background_0.3s,_box-shadow_var(--motion-state)]",
 ]);
 
 export type ThemeToggleLampProps = { className?: string } & Omit<ComponentPropsWithRef<"span">, "className">;

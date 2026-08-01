@@ -136,7 +136,7 @@ export const sourceLink = cva([
   "text-content-primary",
   "text-left",
   "[border-bottom:1px_solid_var(--chrome-border-strong)]",
-  "[transition:border-color_0.2s,_color_0.2s]",
+  "[transition:border-color_var(--motion-state),_color_var(--motion-state)]",
   "[&:hover]:border-accent",
   "[&:hover]:text-accent",
   "focus-visible:border-accent",

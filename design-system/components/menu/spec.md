@@ -92,13 +92,9 @@ None. One menu per document, `id="site-menu"`.
 `--accent`, `--action-hover`, `--chrome-bg`, `--chrome-border`, `--chrome-label`,
 `--content-inverse`, `--content-primary`, `--font-display`, `--font-mono`, `--primary`,
 `--rule`, `--rule-strong`, `--space-3`, `--space-4`, `--space-5`, `--space-6`,
-`--surface-page`, `--text-sm`, `--text-title`, `--text-xs`, `--tracking-wide-sm`
-
-The head is bar chrome on purpose — `--chrome-bg`, `--font-mono`, `--text-xs` are the bar's
-own voice, and `--chrome-border` is Close's left seam, the same edge every bar segment
-draws — so the sheet reads as the bar unfolded rather than as a new surface. The links are
-`--font-display` at `--text-title`: reading type, not chrome type, because a full screen of
-mono uppercase would shout.
+`--surface-page`, `--text-sm`, `--text-title`, `--text-xs`, `--tracking-wide-sm`,
+`--chrome-bg`, `--font-mono`, `--text-xs`, `--chrome-border`, `--font-display`, `--text-title`,
+`--motion-state`, `--motion-arrive`, `--ease-arrive`, `--ease-fade`
 
 ## A11y
 

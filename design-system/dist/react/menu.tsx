@@ -28,7 +28,7 @@ export const menu = cva([
   "[inset:0]",
   "[z-index:300]",
   "[visibility:hidden]",
-  "[transition:visibility_0s_linear_0.28s]",
+  "[transition:visibility_0s_linear_var(--motion-arrive)]",
   "[&[data-open]]:[visibility:visible]",
   "[&[data-open]]:[transition-delay:0s]",
   /* `.menu[data-open] .menu__sheet` */
@@ -56,7 +56,7 @@ export const menuSheet = cva([
   "bg-surface-page",
   "[opacity:0]",
   "[transform:translateY(-0.75rem)]",
-  "[transition:opacity_0.28s_ease,_transform_0.28s_cubic-bezier(0.22,_1,_0.36,_1)]",
+  "[transition:opacity_var(--motion-arrive)_var(--ease-fade),_transform_var(--motion-arrive)_var(--ease-arrive)]",
 ]);
 
 export type MenuSheetProps = { className?: string } & Omit<ComponentPropsWithRef<"div">, "className">;
@@ -108,7 +108,7 @@ export const menuClose = cva([
   "bg-primary",
   "text-content-inverse",
   "[box-shadow:inset_1px_0_0_var(--chrome-border)]",
-  "[transition:background-color_0.2s,_color_0.2s]",
+  "[transition:background-color_var(--motion-state),_color_var(--motion-state)]",
   "[&:hover]:bg-action-hover",
 ]);
 
@@ -146,7 +146,7 @@ export const menuNav = cva([
   "[&_a]:text-content-primary",
   "[&_a]:py-space-4",
   "[&_a]:px-0",
-  "[&_a]:[transition:color_0.2s]",
+  "[&_a]:[transition:color_var(--motion-state)]",
   "[&_a:hover]:text-accent",
 ]);
 

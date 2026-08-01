@@ -560,6 +560,26 @@
     "resolved": "calc(1.5rem * 2)",
     "description": "The vertical inset of every content well, and therefore the page's section rhythm. TWO LATTICE CELLS, not a viewport clamp: it was clamp(2rem, 5vh, 3.5rem), which resolved to 36px in a 720px-tall window — 1.5 cells, off the grid the terminator exists to keep every plate on, and a different fraction of a cell at every window height. Horizontal inset stays fluid (`pad`) because a measure should breathe with the viewport; vertical rhythm is structure, and structure is measured in cells here. Expressed against `space-6` rather than as 3rem so the two cannot drift apart — change the lattice and the section rhythm follows it, exactly as the strip's height and the rail's width already do."
   },
+  "motion.motion-state": {
+    "cssVar": "--motion-state",
+    "value": "0.2s",
+    "description": "A CONTROL ACKNOWLEDGING YOU. Hover ink, a focus ring's colour, a chip filling, a row tinting under the cursor — the element is already where it belongs and only its state changed, so the change should be perceptible and over. Twenty-five of the file's transition durations were this number written out. It is deliberately not a ramp step: half of it reads as a jump and twice reads as lag, and neither is a size."
+  },
+  "motion.motion-arrive": {
+    "cssVar": "--motion-arrive",
+    "value": "0.28s",
+    "description": "A SURFACE ARRIVING OR LEAVING. The menu sheet, the drawer, the peek panel, the fab folding to its badge — something enters or leaves the page and has distance to cover, so it needs long enough to be read as travel rather than as a cut. It is also the delay on the `visibility` flip that keeps a closing layer in the accessibility tree until its own exit has finished; that is the same event, measured from the other end, which is why it is one token and not two."
+  },
+  "motion.ease-arrive": {
+    "cssVar": "--ease-arrive",
+    "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+    "description": "The curve travel takes: almost all of the distance in the first third, then a long settle. Paired with `motion-arrive` on anything that MOVES — a sheet sliding in, a panel translating, the fab's label opening — and with nothing that merely changes colour, because a colour has no distance to decelerate over. It is the one curve in the system with a shape; everything else either fades or is instant."
+  },
+  "motion.ease-fade": {
+    "cssVar": "--ease-fade",
+    "value": "ease",
+    "description": "The curve an OPACITY takes, which is the CSS default written down rather than omitted. Every fade in the file pairs it with `motion-arrive`, always beside something else travelling on `ease-arrive` — a scrim appearing while its sheet slides. Naming it records that the pairing was chosen: a fade wants no character of its own, because a curve on an opacity reads as a change of speed in the thing behind it."
+  },
   "border.rule": {
     "cssVar": "--rule",
     "value": "1px solid var(--chrome-border)",

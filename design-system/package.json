@@ -1,6 +1,6 @@
 {
   "name": "@yordan/design-system",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "private": true,
   "type": "module",
   "description": "AI-ready, repo-first design system for the blueprint portfolio. Source of truth: tokens/tokens.json + components/*/spec.md + css/components.css. See README.md.",

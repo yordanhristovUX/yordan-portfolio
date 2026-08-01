@@ -157,12 +157,9 @@ The thread's bounded height is what keeps the layout still, and that is unchange
 
 `--accent`, `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`, `--chrome-label`,
 `--chrome-label-strong`, `--content-body`, `--content-muted`, `--content-primary`,
-`--font-mono`, `--primary-muted`, `--rule`, `--surface-page`, `--surface-raised`,
-`--text-2xs`, `--text-md`, `--text-sm`, `--text-xs`, `--pad`, `--space-2`, `--space-3`,
-`--space-4`, `--space-5`, `--tracking-wide`, `--tracking-wide-lg`, `--weight-semibold`
-
-No `prefers-color-scheme` anywhere in this block. Every colour above flips through its own
-`dark` value in `tokens.json`; the component does not know a theme exists.
+`--font-mono`, `--primary-muted`, `--rule`, `--surface-page`, `--surface-raised`, `--text-2xs`,
+`--text-md`, `--text-sm`, `--text-xs`, `--pad`, `--space-2`, `--space-3`, `--space-4`,
+`--space-5`, `--tracking-wide`, `--tracking-wide-lg`, `--weight-semibold`
 
 ## Behaviour (site JS contract — js/chat.js)
 

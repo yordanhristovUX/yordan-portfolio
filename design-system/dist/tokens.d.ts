@@ -6,7 +6,7 @@
    source for the one thing this system exists to have one of. `--check` byte-compares
    this file, so a hand-edit fails the build rather than being silently overwritten. */
 
-/** Every custom property `dist/tokens.css` defines on `:root` (103). */
+/** Every custom property `dist/tokens.css` defines on `:root` (107). */
 export type DesignTokenName =
   | "--accent"
   | "--accent-rgb"
@@ -25,12 +25,16 @@ export type DesignTokenName =
   | "--content-inverse"
   | "--content-muted"
   | "--content-primary"
+  | "--ease-arrive"
+  | "--ease-fade"
   | "--font-body"
   | "--font-display"
   | "--font-mono"
   | "--ink-500"
   | "--ink-700"
   | "--ink-900"
+  | "--motion-arrive"
+  | "--motion-state"
   | "--pad"
   | "--pad-y"
   | "--primary"
@@ -132,6 +136,7 @@ export type DesignTokenGroup =
   | "tracking"
   | "width"
   | "space"
+  | "motion"
   | "border";
 
 /** A `var()` reference to a token that exists — usable wherever a CSS string is taken. */

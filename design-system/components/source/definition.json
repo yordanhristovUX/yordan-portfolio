@@ -111,7 +111,7 @@
         { "set": { "color": { "token": "content-primary" } } },
         { "set": { "text-align": "left" } },
         { "set": { "border-bottom": ["1px", "solid", { "token": "chrome-border-strong" }] } },
-        { "set": { "transition": "border-color 0.2s, color 0.2s" } }
+        { "set": { "transition": ["border-color",{"token":"motion-state"},",","color",{"token":"motion-state"}] } }
       ]
     },
     {

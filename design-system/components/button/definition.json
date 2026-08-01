@@ -28,7 +28,7 @@
           ],
           "set": { "text-align": "center" }
         },
-        { "set": { "transition": "background-color 0.2s, color 0.2s" } },
+        { "set": { "transition": ["background-color",{"token":"motion-state"},",","color",{"token":"motion-state"}] } },
         { "set": { "white-space": "nowrap" } },
         { "set": { "cursor": "pointer" } }
       ]
