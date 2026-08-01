@@ -11,25 +11,27 @@
     ]
   },
   "root": ".entry",
-  "base": {
-    "declarations": [
-      { "set": { "display": "grid" } },
-      { "set": { "grid-template-columns": "1fr minmax(9rem, 14rem)" } },
-      { "set": { "gap": [{ "token": "space-2" }, { "token": "space-7" }] } },
-      { "set": { "padding": [{ "token": "space-flow" }, { "token": "pad" }] } },
-      { "set": { "border-bottom": { "token": "rule" } } }
-    ],
-    "positions": [
-      {
-        "name": "closing",
-        "at": "last",
-        "$doc": "The last entry in a run drops its divider, so a list of records ends on the section's own rule rather than on a line of its own. No entry knows how many siblings it has, which is exactly why this is a position and not a modifier the markup has to remember.",
-        "declarations": [{ "set": { "border-bottom": "0" } }]
-      }
-    ]
-  },
-  "parts": [
+  "rules": [
     {
+      "kind": "base",
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "1fr minmax(9rem, 14rem)" } },
+        { "set": { "gap": [{ "token": "space-2" }, { "token": "space-7" }] } },
+        { "set": { "padding": [{ "token": "space-flow" }, { "token": "pad" }] } },
+        { "set": { "border-bottom": { "token": "rule" } } }
+      ]
+    },
+    {
+      "kind": "position",
+      "name": "closing",
+      "of": "base",
+      "at": "last",
+      "$doc": "The last entry in a run drops its divider, so a list of records ends on the section's own rule rather than on a line of its own. No entry knows how many siblings it has, which is exactly why this is a position and not a modifier the markup has to remember.",
+      "declarations": [{ "set": { "border-bottom": "0" } }]
+    },
+    {
+      "kind": "part",
       "name": "role",
       "selector": ".entry__role",
       "break": true,
@@ -49,6 +51,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "org",
       "selector": ".entry__org",
       "$doc": "Where. Body weight lifted to the primary ink, so the role and the organisation read as one line of two weights rather than as a heading and a caption.",
@@ -62,8 +65,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "org-aside",
-      "within": ".entry__org",
+      "within": "org",
       "element": ["em"],
       "$doc": "The qualifier inside the organisation — a contract, a division, a former name. It steps back to muted body weight, which is the only place in this block where emphasis markup means de-emphasis: <em> is the semantics the content pipeline has for \"this is an aside\", and the styling follows the meaning rather than the tag's default.",
       "declarations": [
@@ -76,6 +80,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "span",
       "selector": ".entry__span",
       "break": true,
@@ -96,6 +101,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "lede",
       "selector": ".entry__lede",
       "$doc": "One sentence of context under the org, in column 1 so it does not run under the dates.",
@@ -110,6 +116,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "list",
       "selector": ".entry__list",
       "break": true,
@@ -125,8 +132,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "item",
-      "within": ".entry__list",
+      "within": "list",
       "element": ["li"],
       "$doc": "One thing that happened. `position: relative` is here for the marker below it; the left padding is the space that marker sits in. The measure is wider than a case study's because these are single lines rather than paragraphs.",
       "declarations": [
@@ -146,8 +154,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "marker",
-      "within": ".entry__list",
+      "within": "list",
       "element": ["li"],
       "pseudo": "::before",
       "$doc": "The same list mark case-body draws, for the same reason: ::before rather than a character in the text, so it is decoration and is not read out. The two blocks state it twice because they are two blocks — a shared rule would be a third selector belonging to neither.",
@@ -169,8 +178,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "item-emphasis",
-      "within": ".entry__list",
+      "within": "list",
       "element": ["strong"],
       "$doc": "Lifts to the primary ink inside a list item. Scoped to the list rather than to the item, which is what the stylesheet says — a <strong> anywhere in the list gets it, not only one directly inside an <li>.",
       "declarations": [
@@ -181,10 +191,9 @@
           }
         }
       ]
-    }
-  ],
-  "at": [
+    },
     {
+      "kind": "at",
       "condition": "below-720",
       "break": true,
       "$doc": "One column. The dates stop being an edge to scan and become a line of the record like any other, so the span leaves its own column, gives up its row span and aligns left with everything else. The gap collapses to the smallest step because a stacked record is a paragraph rather than a table.",
@@ -196,7 +205,7 @@
           ]
         },
         {
-          "of": "parts.span",
+          "of": "span",
           "declarations": [
             { "set": { "grid-column": "1", "grid-row": "auto", "text-align": "left" } }
           ]

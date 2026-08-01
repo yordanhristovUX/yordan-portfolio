@@ -130,30 +130,72 @@ So `border: 1px solid var(--content-primary)` records, as data, that its width a
 structure while its colour is a token — a fact no parser recovers from the CSS. Declarations
 are **grouped**, because the authored CSS groups them and the grouping is a decision
 (`font-size / font-weight / letter-spacing` on one line is one thought); one group renders on
-one line, more than one renders as a block. Rendering order is the cascade: base, base
-states and positions, each variant and its states, each size and its states, then parts, then
-the `at` blocks.
+one line, more than one renders as a block.
 
-### The eight constructs R4 added, and the block that forced each
+### The rules are one ordered list, and `media` and `profile` are why
+
+A definition used to hold five sections — `base`, `variants`, `sizes`, `parts`, `at` — and the
+emitter rendered them in a fixed cascade in that order. That order was the emitter's opinion,
+and two blocks proved it was not the stylesheet's shape. `media` writes `.ph:has(img)` **four
+rules after** `.ph`, with a part in between, because the has-an-image case is a paragraph of
+its own; `profile` writes `.profile > div:nth-child(odd)` after every part, beside the query
+that undoes it. Both group their rules by **topic**, and under a fixed cascade neither is
+sayable.
+
+The two ways out were both worse. A `detach` flag on a rule would be an **emitter hint** — a
+key that exists to move a line rather than to say something about the component — and this
+format refuses hints, which is the argument `break` already makes from the other side (a
+blank line is a paragraph, so it is *recorded* rather than inferred). So the sections became
+one array, `rules`, in stylesheet order, each entry tagged `"kind"`:
+
+```jsonc
+{ "kind": "base",     "declarations": [ … ] },
+{ "kind": "variant",  "name": "tall", "selector": ".ph--tall", "declarations": [ … ] },
+{ "kind": "part",     "name": "label", "selector": ".ph__label", "declarations": [ … ] },
+{ "kind": "state",    "name": "hover", "of": "base", "suffix": ":hover", "declarations": [ … ] },
+{ "kind": "position", "name": "closing", "of": "fact", "at": "last", "declarations": [ … ] },
+{ "kind": "at",       "condition": "below-720", "rules": [ { "of": "fact", … } ] }
+```
+
+Source order **is** the cascade, so recording it records a fact rather than accommodating a
+renderer. Three consequences, and the first is the one that pays for the rest:
+
+- **A reference is a name.** `of`, `within` and an alias's `of` name a rule the same
+  definition declares, **backwards only** — a stylesheet reads downwards and so does this.
+  That is what makes a part scoped to a *state* expressible at all: `.ph:has(img) .ph__label`
+  and `.drawer[data-open] .drawer__sheet` have an ancestor with no selector of its own for an
+  author to quote, and a section had nowhere to put them.
+- **Every rule carries a unique name**, because the name is the handle. Button's two hover
+  states were both called `hover` when a section was a namespace; they are `hover` and
+  `solid-hover` now. A state's name reaches no artefact — the CSS carries its suffix, the
+  contract keys by selector, the React tier keys by prefix — which is why renaming one is free
+  and why the build can insist they are distinct.
+- **`base`/`variants`/`sizes`/`parts` are derived, not stored.** Two consumers want a set
+  rather than a sequence (the React axes; the contract projection, which is keyed by
+  selector), so the loader computes that view from the list. It is a query, not a second
+  source.
+
+### The nine constructs R4 added, and the block that forced each
 
 | construct | what it says | forced by |
 | --- | --- | --- |
-| a **scoped part** — `within` + `element[]` + `pseudo?` | a rule on markup that carries no class: `.link-grid a`, `.case-body p strong`, `.entry__list li::before` | `link-grid`, `case-body`, then `entry` and `fact` widened `within` from the root to any earlier part |
+| a **scoped part** — `within` + `element[]` + `pseudo?` | a rule on markup that carries no class: `.link-grid a`, `.case-body p strong`, `.entry__list li::before` | `link-grid`, `case-body`, then `entry` and `fact` widened `within` from the root to any earlier rule |
+| **`rules`** — one ordered list, each entry tagged by `kind` | the block's rules in stylesheet order, so a rule may sit where the stylesheet puts it rather than where a cascade would | `media` and `profile`, which group their rules by topic (see above) |
 | **`positions`** — `at: first \| last` | where a rule sits among its siblings: `.case-body h3:first-child`, `.entry:last-child` | `case-body` (`first`), `entry` and `fact` (`last`) |
-| **`at`** on the definition — `condition` + `rules: [{ of, … }]` | the `@media` **paragraph at the foot** of a stylesheet block, with the condition NAMED in `tokens.json` and the rule NAMED rather than re-selected | `fact` and `entry`, which write the same breakpoint for the same reason |
+| **`at`** — `condition` + `rules: [{ of, … }]` | a set of overrides under one condition, with the condition NAMED in `tokens.json` and each rule NAMED rather than re-selected | `fact` and `entry`, which write the same breakpoint for the same reason |
 | a rule-level **`note`** | a comment above a rule, distinct from a group's note inside the braces | `entry`'s `.entry__span` |
-| **`at`** on a rule — `condition` + `declarations` | the `@media` written **in place**, under the rule it modifies and before its states, rendered inline on one line | `section-head`'s `.sec__note`, and `ask-fab` writes the same shape |
+| **`inline`** on an `at` | render the query on one line — `@media … { .sel { … } }` — one override, one group, no ornament | `section-head`'s `.sec__note`, and `ask-fab` writes the same shape |
 | a scoped part's **`class`**, beside `element[]` | the descendant has a class and the class belongs to somebody else: `.sec--tint .well` | `section-head` |
 | an **effect-only modifier** — a variant with neither `declarations` nor `aliases` | `.sec--tint` declares nothing; its whole effect is a scoped part on a descendant | `section-head` |
 | **`expr`** — `{"expr": "calc({space-3} - 2px)"}` | computed geometry with its bindings still interpolated rather than written as `var()` | `section-head`'s head padding, which subtracts the two rule widths that bracket it |
 
 Six of those are closed at both ends on purpose, and that is what keeps them from being the
-wedge `PATTERNS.md` refuses. A scoped part's ancestor must be a selector the same definition
-already declares, and its target is bare tag names or one class, with the combinator supplied
+wedge `PATTERNS.md` refuses. A scoped part's ancestor must **name** a rule the same definition
+declares above it, and its target is bare tag names or one class, with the combinator supplied
 by the emitter — so `.case-body p strong` and `.sec--tint .well` are sayable and
 `.band > .rail--l` is not. A position is an enum with one member per block that has asked. An
-`at` condition is a name resolved in `tokens/tokens.json`'s `$conditions` in **both** of its
-shapes, so a definition cannot invent a breakpoint; a new one is a decision recorded in the one
+`at` condition is a name resolved in `tokens/tokens.json`'s `$conditions`, so a definition
+cannot invent a breakpoint; a new one is a decision recorded in the one
 file where a literal may be written. And an `expr`'s `{name}` is a reference into `tokens.json`,
 checked exactly as `{"token": …}` is — a literal `var(` inside one is refused, because that
 would be a binding the census cannot count. `expr` is also the one construct that is a **value**
@@ -161,15 +203,17 @@ rather than a relation, which is why admitting computed geometry did not widen w
 apply to: `@supports (grid-template-columns: round(down, 10%, 3px))` is still unsayable, and its
 condition being a computed value rather than a named viewport is the reason.
 
-**Two shapes wear the word `at`, and that is a decision rather than an overload.** A stylesheet
-block writes a media query in two places and they are two statements. `fact` and `entry` gather
-theirs in a paragraph at the foot — several rules under one condition, each naming the rule it
-overrides. `section-head` and `ask-fab` write one on a single line directly under the rule it
-modifies: that is a footnote on one rule, so it hangs off the rule, needs no `of` because its
-owner is the referent, and renders inline. The in-place form takes **one group, no note, no
-aside** — it is one line by construction, and the build refuses a shape that would not fit on
-one rather than choosing a rendering. The block that needs a multi-line query in place is the
-one that adds that shape.
+**Two shapes used to wear the word `at`, and the ordered list dissolved the distinction.** A
+stylesheet block writes a media query in two places: `fact` and `entry` gather theirs in a
+paragraph at the foot, several rules under one condition; `section-head` and `ask-fab` write
+one on a single line directly under the rule it modifies. While the rules were sections,
+**where** was a property of the construct and had to be encoded as two constructs. In an
+ordered list, where is where the entry sits — so what is left to record is how it renders, and
+that is `inline: true`: one override, one group, no positions, no note, no break, refused by
+the build if it would not fit on one line. It is **never inferred**, because a foot query that
+happens to hold one rule is not thereby a footnote — `media` writes
+`@media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }` at the foot and
+inline, which is the counter-example an inference would have got wrong.
 
 **`$conditions` is not a token group and is emitted into nothing.** CSS has no way to use a
 custom property in a media query — `@media var(--below-720)` fails silently — so publishing

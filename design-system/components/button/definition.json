@@ -10,59 +10,59 @@
     "$doc": "A deliberate matrix: all four combinations are meant, and they resolve by the cascade because the two axes touch disjoint properties — variant sets colour and background, size sets padding and font size. scripts/emit-react.mjs checks that against its own collision analysis and fails naming both branches if it ever stops being true, because in a class attribute there is no order to fall back on.",
     "orthogonal": ["variant", "size"]
   },
-  "base": {
-    "declarations": [
-      { "set": { "display": "inline-block" } },
-      { "set": { "font-family": { "token": "font-mono" } } },
-      { "set": { "font-size": { "token": "text-xs" }, "font-weight": { "token": "weight-semibold" }, "letter-spacing": { "token": "tracking-wide" } } },
-      { "set": { "padding": [{ "token": "space-3" }, { "token": "space-5" }] } },
-      { "set": { "border": ["1px", "solid", { "token": "content-primary" }] } },
-      { "set": { "color": { "token": "content-primary" } } },
-      {
-        "note": [
-          "Invisible at natural width (the box hugs the text), load-bearing when a",
-          "layout stretches two buttons to a shared width — the hero's stacked pair",
-          "is the case that added it."
-        ],
-        "set": { "text-align": "center" }
-      },
-      { "set": { "transition": "background-color 0.2s, color 0.2s" } },
-      { "set": { "white-space": "nowrap" } },
-      { "set": { "cursor": "pointer" } }
-    ],
-    "states": [
-      {
-        "name": "hover",
-        "suffix": ":hover",
-        "declarations": [
-          { "set": { "background": { "token": "primary" }, "color": { "token": "content-inverse" } } }
-        ]
-      }
-    ]
-  },
-  "variants": [
+  "rules": [
     {
+      "kind": "base",
+      "declarations": [
+        { "set": { "display": "inline-block" } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-xs" }, "font-weight": { "token": "weight-semibold" }, "letter-spacing": { "token": "tracking-wide" } } },
+        { "set": { "padding": [{ "token": "space-3" }, { "token": "space-5" }] } },
+        { "set": { "border": ["1px", "solid", { "token": "content-primary" }] } },
+        { "set": { "color": { "token": "content-primary" } } },
+        {
+          "note": [
+            "Invisible at natural width (the box hugs the text), load-bearing when a",
+            "layout stretches two buttons to a shared width — the hero's stacked pair",
+            "is the case that added it."
+          ],
+          "set": { "text-align": "center" }
+        },
+        { "set": { "transition": "background-color 0.2s, color 0.2s" } },
+        { "set": { "white-space": "nowrap" } },
+        { "set": { "cursor": "pointer" } }
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "hover",
+      "of": "base",
+      "suffix": ":hover",
+      "declarations": [
+        { "set": { "background": { "token": "primary" }, "color": { "token": "content-inverse" } } }
+      ]
+    },
+    {
+      "kind": "variant",
       "name": "solid",
       "selector": ".btn--solid",
       "$doc": "THE primary action, at most one per view — asserted per shipped page by scripts/check-css.mjs rule 5. It is the resting state of the outline button's hover, which is why the two share `primary` and `content-inverse` rather than each naming a colour.",
       "aliases": {
-        "of": "base",
-        "state": "hover",
-        "$doc": "The solid button at rest IS the outline button on hover — that is the relationship, not a coincidence, and writing the same two declarations twice made it read as duplication somebody should tidy away. Said once here: both emitters resolve this before rendering, so the CSS block and the cva map are byte-for-byte what they were when it was written out longhand, and the build fails if the state it names ever stops existing."
-      },
-      "states": [
-        {
-          "name": "hover",
-          "suffix": ":hover",
-          "declarations": [
-            { "set": { "background": { "token": "action-hover" } } }
-          ]
-        }
-      ]
-    }
-  ],
-  "sizes": [
+        "of": "hover",
+        "$doc": "The solid button at rest IS the outline button on hover — that is the relationship, not a coincidence, and writing the same two declarations twice made it read as duplication somebody should tidy away. Said once here: both emitters resolve this before rendering, so the CSS block and the cva map are byte-for-byte what they were when it was written out longhand, and the build fails if the rule it names ever stops existing. It names `hover` the way every other reference here names a rule — the base's hover state is an entry in the list with a handle of its own, so the two-key `{of: base, state: hover}` form the old sections needed has nothing left to say."
+      }
+    },
     {
+      "kind": "state",
+      "name": "solid-hover",
+      "of": "solid",
+      "suffix": ":hover",
+      "declarations": [
+        { "set": { "background": { "token": "action-hover" } } }
+      ]
+    },
+    {
+      "kind": "size",
       "name": "small",
       "selector": ".btn--small",
       "$doc": "Chrome contexts — a dialog bar, a dense row. One step down the padding ramp and one step down the type ramp; it changes nothing else, which is why it is a size and not a variant.",

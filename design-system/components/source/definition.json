@@ -11,15 +11,17 @@
     ]
   },
   "root": ".sources",
-  "base": {
-    "declarations": [
-      { "set": { "border-top": { "token": "rule" } } },
-      { "set": { "padding-top": { "token": "space-3" } } },
-      { "set": { "margin-top": { "token": "space-1" } } }
-    ]
-  },
-  "parts": [
+  "rules": [
     {
+      "kind": "base",
+      "declarations": [
+        { "set": { "border-top": { "token": "rule" } } },
+        { "set": { "padding-top": { "token": "space-3" } } },
+        { "set": { "margin-top": { "token": "space-1" } } }
+      ]
+    },
+    {
+      "kind": "part",
       "name": "title",
       "selector": ".sources__title",
       "$doc": "The word Sources. The mono chrome label at the floor of the type ramp — the same family and case as a chip, a fact title and a plate label, at its own step of the tracking ramp.",
@@ -41,6 +43,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "list",
       "selector": ".sources__list",
       "$doc": "The <ol>. `counter-reset: none` is deliberate and is the one declaration here that exists to cancel something: the ordinal is drawn by `.source__ref`, so the list's own numbering would be a second, disagreeing count.",
@@ -56,6 +59,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "item",
       "selector": ".source",
       "break": true,
@@ -74,6 +78,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "ref",
       "selector": ".source__ref",
       "$doc": "The ordinal, in a square. Its width and height are equal and literal because it is a box drawn around one or two characters, not a step on the spacing ramp — a rhythm token here would make the square follow the page's rhythm instead of its own type.",
@@ -98,6 +103,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "link",
       "selector": ".source__link",
       "$doc": "The citation itself. It is a <button> when it opens the passage in place and an <a> when it navigates, which is why the generated component is polymorphic — the canonical HTML shows both, and the emitter reads the element from there rather than being told.",
@@ -106,24 +112,25 @@
         { "set": { "text-align": "left" } },
         { "set": { "border-bottom": ["1px", "solid", { "token": "chrome-border-strong" }] } },
         { "set": { "transition": "border-color 0.2s, color 0.2s" } }
-      ],
-      "states": [
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "engaged",
+      "of": "link",
+      "suffix": [":hover", ":focus-visible"],
+      "$doc": "One rule under two selectors: a pointer and a keyboard should land on the same appearance, and writing that twice would be the same CSS with a second place to forget.",
+      "declarations": [
         {
-          "name": "engaged",
-          "suffix": [":hover", ":focus-visible"],
-          "$doc": "One rule under two selectors: a pointer and a keyboard should land on the same appearance, and writing that twice would be the same CSS with a second place to forget.",
-          "declarations": [
-            {
-              "set": {
-                "border-color": { "token": "accent" },
-                "color": { "token": "accent" }
-              }
-            }
-          ]
+          "set": {
+            "border-color": { "token": "accent" },
+            "color": { "token": "accent" }
+          }
         }
       ]
     },
     {
+      "kind": "part",
       "name": "id",
       "selector": ".source__id",
       "$doc": "The chunk id, shown so a claim can be traced by hand. `word-break: break-all` and `min-width: 0` are the pair that stops a long id from widening the flex row past its container.",

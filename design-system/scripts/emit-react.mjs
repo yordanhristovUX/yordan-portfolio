@@ -216,10 +216,10 @@ function positionEntriesOf(positions, keyOf, where, tally, scope = "", at = "") 
    ============================================================ */
 const conditionVariant = (condition) => `[@media${String(condition).replace(/\s+/g, "")}]:`;
 
-/* An IN-PLACE `at` — the second shape of the word, a media query written under
-   one rule rather than gathered at the foot — needs no sink lookup at all: its
-   owner IS the rule, so its classes join that rule's own list wearing the same
-   at-rule variant a foot override wears. Pipeline 1 renders the two shapes
+/* An INLINE `at` — a media query the stylesheet writes on one line under the
+   rule it modifies — needs no sink lookup at all: the loader has already
+   gathered it under its owner, so its classes join that rule's own list wearing
+   the same at-rule variant a foot override wears. Pipeline 1 renders the two
    differently because the stylesheet writes them differently; here they are
    genuinely the same thing, which is worth stating rather than looking like an
    omission. */
@@ -403,7 +403,7 @@ export function renderComponent(def, elements, keyOf) {
   /* Two kinds of part. One has a class and becomes a component of its own; the
      other is SCOPED and cannot, because the element it styles carries no class
      — its rules land on the root as arbitrary variants instead. */
-  const classParts = (def.parts ?? []).filter((p) => p.selector);
+  const classParts = (def.parts ?? []).filter((p) => !p.within);
   const scopedParts = (def.parts ?? []).filter((p) => p.within);
 
   let base = [
@@ -462,9 +462,9 @@ export function renderComponent(def, elements, keyOf) {
      part. Pipeline 1 has the same fact written as a selector and needs no rule
      for it, which is exactly the asymmetry this function exists to absorb. */
   const hostOf = (part) => {
-    if (part.within === def.root) return { sink: base, label: "base" };
-    const host = classParts.find((p) => p.selector === part.within);
-    if (host) return { sink: partEntries.get(host.name), label: `parts.${host.name}` };
+    if (part.within === "base") return { sink: base, host: "base" };
+    const host = classParts.find((p) => p.name === part.within);
+    if (host) return { sink: partEntries.get(host.name), host: host.name };
     /* A MODIFIER CAN BE THE HOST, and `.sec--tint .well` is why. The tint's
        class is on the root, so the descendant's utilities go on the root too —
        but only when the variant is chosen, which in cva means they belong to
@@ -473,8 +473,8 @@ export function renderComponent(def, elements, keyOf) {
        for an element skeleton owns. The branch is the honest sink, and it is
        the same rule the other two follow: `within` names the host. */
     for (const kind of ["variants", "sizes"]) {
-      const m = (def[kind] ?? []).find((x) => x.selector === part.within);
-      if (m) return { sink: branchNamed(kind, m.name).entries, label: `${kind}.${m.name}` };
+      const m = (def[kind] ?? []).find((x) => x.name === part.within);
+      if (m) return { sink: branchNamed(kind, m.name).entries, host: m.name };
     }
     throw new Error(
       `${where}: the scoped part \`${part.name}\` is \`within\` \`${part.within}\`, which is neither the root, a ` +
@@ -484,12 +484,18 @@ export function renderComponent(def, elements, keyOf) {
     );
   };
 
-  const scopeByLabel = new Map([["base", ""]]);
+  /** The class list a rule's utilities belong in, by the NAME that names it —
+   *  the root's own, a class part's cva, or an axis branch's. */
+  const sinkFor = (name) =>
+    name === "base" ? base : partEntries.get(name) ?? branchOf(name)?.entries ?? null;
+  const branchOf = (name) => axes.flatMap((a) => a.branches).find((b) => b.name === name);
+
+  const scopeByName = new Map();
   for (const part of scopedParts) {
     const scope = scopeOf(part);
     const sel = partSelector(part);
-    const { sink, label } = hostOf(part);
-    scopeByLabel.set(`parts.${part.name}`, { scope, label });
+    const { sink, host } = hostOf(part);
+    scopeByName.set(part.name, { scope, host });
     const entries = [
       ...entriesOf(part.declarations, keyOf, `${where} → ${sel}`, tally, variantFor(scope)),
       ...stateEntriesOf(part.states, keyOf, `${where} → ${sel}`, tally, scope),
@@ -513,20 +519,16 @@ export function renderComponent(def, elements, keyOf) {
     for (const o of block.rules) {
       /* A scoped part overridden under a condition keeps BOTH its scope and its
          host: the classes wear `[@media…]:[&_span]:` and land on the host's list. */
-      const scoped = scopeByLabel.get(o.of);
-      const target = scoped?.label ?? o.of;
+      const scoped = scopeByName.get(o.of);
+      const target = scoped?.host ?? o.of;
       const scope = scoped?.scope ?? "";
-      const [kind, name] = target.split(".");
       const entries = [
         ...entriesOf(o.declarations, keyOf, `${where} @${block.condition} ${o.of}`, tally, at + variantFor(scope)),
         ...positionEntriesOf(o.positions, keyOf, `${where} @${block.condition} ${o.of}`, tally, scope, at),
       ];
       if (!entries.length) continue;
       entries[0] = { ...entries[0], lead: `Under \`@media ${conditions.get(block.condition)}\` (\`${block.condition}\`)${block.$doc ? ` — ${block.$doc}` : ""}` };
-      const sink =
-        kind === "parts" && partEntries.has(name) ? partEntries.get(name)
-        : kind === "variants" || kind === "sizes" ? branchNamed(kind, name)?.entries
-        : base;
+      const sink = sinkFor(target);
       if (!sink) {
         throw new Error(
           `${where}: the \`at\` override \`${o.of}\` names a rule this emitter cannot find a class list for. ` +
@@ -669,7 +671,7 @@ export function exportsOf(def) {
   const Name = pascal(def.id);
   const values = [camel(def.id), Name];
   const types = [`${Name}Props`, `${Name}Variants`];
-  for (const part of (def.parts ?? []).filter((p) => p.selector)) {
+  for (const part of (def.parts ?? []).filter((p) => !p.within)) {
     const PartName = pascal(`${def.id}-${part.name}`);
     values.push(camel(`${def.id}-${part.name}`), PartName);
     types.push(`${PartName}Props`);

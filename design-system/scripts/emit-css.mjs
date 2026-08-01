@@ -37,17 +37,30 @@
 
      block          the CSS banner: { title, note?: [lines] }
      root           the component's own selector, e.g. ".btn"
-     base           { declarations, states?, positions?, note? } — the rule for
-                    `root`. OPTIONAL since case-body, whose root is a scope with
-                    no appearance: emitting `.case-body { }` would claim a rule
-                    it has not got.
-     variants[]     { name, selector, declarations, states? } — appearance
-     sizes[]        { name, selector, declarations, states? } — dimension
-     parts[]        a companion selector that is not a modifier of root. Since
-                    R4 a part is a FULL rule: states, positions, and polymorphic
-                    on the same terms the root is. It has no variants or sizes —
-                    a companion that needs an axis is a component with its own
-                    definition. THREE SHAPES:
+     rules[]        EVERY RULE THE BLOCK WRITES, IN STYLESHEET ORDER, each
+                    tagged by `kind`. It was five sections — base, variants,
+                    sizes, parts, at — rendered in a fixed cascade, and `media`
+                    and `profile` are the blocks that proved the cascade was
+                    this emitter's opinion rather than the stylesheet's shape:
+                    media writes `.ph:has(img)` four rules after `.ph`, with a
+                    part in between, and profile writes
+                    `.profile > div:nth-child(odd)` after every part, beside the
+                    query that undoes it. Source order IS the cascade, so a
+                    definition records it rather than being re-sorted into one.
+
+     A RULE IS ONE OF SEVEN KINDS, and each names the rules it depends on:
+
+     base           { declarations, note? } — the rule for `root`, and the one
+                    rule whose name is reserved rather than written. OPTIONAL
+                    since case-body, whose root is a scope with no appearance:
+                    emitting `.case-body { }` would claim a rule it has not got.
+     variant        { name, selector, declarations | aliases } — appearance
+     size           { name, selector, declarations | aliases } — dimension
+     part           a companion selector that is not a modifier of root. Since
+                    R4 a part is a FULL rule: it takes states and positions like
+                    any other, and is polymorphic on the same terms the root is.
+                    It has no variants or sizes — a companion that needs an axis
+                    is a component with its own definition. THREE SHAPES:
                       { name, selector, … }              chip's `.chips`
                       { name, within, element[], pseudo?, … }   scoped, to a tag
                       { name, within, class, … }         scoped, to a class
@@ -59,43 +72,47 @@
                     class-scoped form is `.sec--tint .well`: the descendant DOES
                     have a class and the class belongs to another component,
                     which is a rule this component owns about an element it does
-                    not. Every half is closed — `within` is the root or an
-                    earlier rule of the same definition, `element` is bare tag
-                    names, `class` is one class selector — so a descendant is
-                    the only relation any of them can say.
-     states[]       { name, suffix, declarations } — suffix is appended to the
-                    owner's selector, so `:hover` on `.btn--solid` is a state
-                    OF the variant and is emitted straight after it. An ARRAY
-                    suffix is a selector list: `[":hover", ":focus-visible"]` is
-                    one rule under two selectors.
-     positions[]    { name, at, declarations } — where a rule sits among its
+                    not. Every half is closed — `within` NAMES an earlier rule of
+                    this same definition, `element` is bare tag names, `class` is
+                    one class selector — so a descendant is the only relation any
+                    of them can say.
+     state          { name, of, suffix, declarations } — `suffix` is appended to
+                    the selector of the rule `of` names, so `:hover` on
+                    `.btn--solid` is a state OF the variant. An ARRAY suffix is a
+                    selector list: `[":hover", ":focus-visible"]` is one rule
+                    under two selectors.
+     position       { name, of, at, declarations } — where a rule sits among its
                     siblings, from a CLOSED enum (`first`, `last`). A position is
                     what the document is; a state is what the user does.
-     at[]           TWO SHAPES FOR ONE WORD, because a stylesheet writes a media
-                    query in two places and they are two statements.
-
-                    ON THE DEFINITION — { condition, rules: [{ of, … }] } — the
-                    @media paragraph at the FOOT of the block, several rules
-                    under one condition, each naming the rule it overrides
-                    (`base`, `parts.span`) rather than repeating its selector.
-                    `fact` and `entry` are the blocks; it renders as a block.
-
-                    ON A RULE — { condition, declarations } on `base` or on a
-                    part — the query written IN PLACE, directly under the rule it
-                    modifies and before that rule's own states, rendered INLINE
-                    on one line because that is how the stylesheet writes it:
-                    `@media (max-width: 640px) { .sec__note { display: none; } }`.
-                    No `of`, because the rule carrying it IS the referent. One
-                    group, no note, no aside — the inline form is one line by
-                    construction, and the build refuses a shape that would not
-                    fit on one rather than silently re-rendering it as a block.
-                    `section-head` and `ask-fab` are the blocks.
-
-                    `condition` is a NAME resolved in tokens.json's `$conditions`
-                    in both shapes, and that is the half that does not vary:
+     at             { condition, rules: [{ of, declarations?, positions? }] } — a
+                    set of overrides under one NAMED condition, each naming the
+                    rule it overrides rather than repeating its selector.
+                    `condition` is resolved in tokens.json's `$conditions`:
                     `(max-width: 720px)` appeared in two blocks meaning the same
                     thing with nothing saying so, and a media rule can no longer
                     outlive the rule it overrides.
+
+                    TWO SHAPES USED TO WEAR THIS WORD. A stylesheet writes a
+                    media query in two places — gathered in a paragraph at the
+                    foot (`fact`, `entry`), or as a one-line footnote directly
+                    under the rule it modifies (`section-head`, `ask-fab`) — and
+                    while the rules were sections, WHERE was a property of the
+                    construct and had to be two constructs. In an ordered list
+                    where is where the entry sits, so what is left to record is
+                    how it renders: `inline: true`, one override, one group, no
+                    positions, no note, no break. NEVER INFERRED — a foot query
+                    that happens to hold one rule is not thereby a footnote, and
+                    media's `@media (max-width: 640px) { .ph-grid { … } }` sits
+                    at the foot and renders inline.
+
+     REFERENCES ARE NAMES, BACKWARDS ONLY. `of`, `within` and an alias's `of`
+     name a rule this definition declares ABOVE the one referring to it — a
+     stylesheet reads downwards and so does this — and every name is unique in
+     its definition, which is what makes a reference checkable and an orphan
+     impossible. The build derives `base` / `variants` / `sizes` / `parts` back
+     out of the list for the two consumers that want a set rather than a
+     sequence (the React axes, the contract projection). That is a query over
+     the list, not a second source.
 
    A RULE'S `note` AND A GROUP'S `note` ARE TWO THINGS. A rule's is emitted above
    it at column 0 and explains the whole rule (`.entry__span`'s "Column 2, both
@@ -255,39 +272,39 @@ export const exprCss = (source) => String(source).replace(EXPR_REF, (_, name) =>
 /** Every token an expr references, in order. */
 export const exprTokens = (source) => [...String(source).matchAll(EXPR_REF)].map((m) => m[1]);
 
-/** Walk every declaration in a definition: `fn(prop, value, where)`. */
+/** The seven kinds, and the `$def` in the schema that shapes each. The map is
+ *  what lets the loader re-report a rejected rule against the ONE form its
+ *  `kind` claims, instead of leaving the reader with `oneOf`'s branch count. */
+export const RULE_FORM = {
+  base: "rule-base",
+  variant: "rule-variant",
+  size: "rule-size",
+  part: "rule-part",
+  state: "rule-state",
+  position: "rule-position",
+  at: "rule-at",
+};
+
+/** What the build calls a rule when it reports one: its name, and `base` for
+ *  the root's own. One vocabulary — the same names `of` and `within` use. */
+const labelOf = (r) => (r.kind === "base" ? "base" : r.kind === "at" ? `at ${r.condition}` : r.name);
+
+/** Walk every declaration in a definition: `fn(prop, value, where)`. Every
+ *  declaration, including the ones under a media query — a door the literal
+ *  guard and the binding check do not watch is the door a raw value walks in. */
 function eachDeclaration(def, fn) {
-  const rules = [];
-  if (def.base) rules.push(["base", def.base]);
-  for (const kind of ["variants", "sizes"]) for (const m of def[kind] ?? []) rules.push([`${kind}.${m.name}`, m]);
-  for (const p of def.parts ?? []) rules.push([`parts.${p.name}`, p]);
-  for (const [label, rule] of rules) {
-    for (const g of rule.declarations ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, label);
-    for (const s of rule.states ?? []) {
-      for (const g of s.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}:${s.name}`);
-    }
-    for (const p of rule.positions ?? []) {
-      for (const g of p.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}@${p.name}`);
-    }
-    /* An IN-PLACE condition is a declaration on this rule under a media query,
-       and the guards below have to reach it for the same reason they reach the
-       foot's `at` blocks: a door neither of them watches is the door a raw
-       value walks through. */
-    for (const a of rule.at ?? []) {
-      for (const g of a.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label} @${a.condition}`);
-    }
-  }
-  /* A declaration under a media query is a declaration: the literal guard and
-     the binding check have to reach it, or `at` becomes the one door into the
-     system neither of them watches. */
-  for (const block of def.at ?? []) {
-    for (const o of block.rules) {
-      const label = `at.${block.condition} ${o.of}`;
-      for (const g of o.declarations ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, label);
-      for (const p of o.positions ?? []) {
-        for (const g of p.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}@${p.name}`);
+  for (const r of def.rules ?? []) {
+    const label = labelOf(r);
+    if (r.kind === "at") {
+      for (const o of r.rules) {
+        for (const g of o.declarations ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label} ${o.of}`);
+        for (const p of o.positions ?? []) {
+          for (const g of p.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label} ${o.of}@${p.name}`);
+        }
       }
+      continue;
     }
+    for (const g of r.declarations ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, label);
   }
 }
 
@@ -297,20 +314,27 @@ const terms = (value) => (Array.isArray(value) ? value : [value]);
    SELECTOR ARITHMETIC — the one place either pipeline is allowed to build a
    selector out of pieces, so the two cannot arrive at different answers.
 
-   A part is one of two shapes. It has a `selector` of its own — `.chips`,
-   `.source__link` — or it is SCOPED: `within` names the ancestor and `element`
-   is a path of bare tag names under it. `link-grid` and `case-body` are the
-   blocks that forced the second, and neither of them could have been written
-   the first way: their children have no classes, and case-body's deliberately
-   never will, because its prose is compiled from markdown under content/ and a
-   class per element would put styling inside the content pipeline.
+   A part is one of three shapes. It has a `selector` of its own — `.chips`,
+   `.source__link` — or it is SCOPED: `within` NAMES the ancestor rule and the
+   target is a path of bare tag names or one class under it. `link-grid` and
+   `case-body` are the blocks that forced the scoped form, and neither of them
+   could have been written the first way: their children have no classes, and
+   case-body's deliberately never will, because its prose is compiled from
+   markdown under content/ and a class per element would put styling inside the
+   content pipeline.
 
    The reason this is not the wedge PATTERNS.md refuses is that both halves are
-   closed. `within` is checked to be the root, so there is exactly one possible
-   ancestor; `element` is an array of tag names and the emitter supplies the
-   combinator, so a descendant is the ONLY relation expressible. `.case-body p
-   strong` is sayable. `.band > .rail--l` is not, and no combination of these
-   keys makes it so.
+   closed. `within` is checked to be a rule this definition declares ABOVE the
+   part, so the set of ancestors is finite and written down in the same file;
+   `element` is an array of tag names and the emitter supplies the combinator,
+   so a descendant is the ONLY relation expressible. `.case-body p strong` is
+   sayable. `.band > .rail--l` is not, and no combination of these keys makes
+   it so.
+
+   `within` NAMES A RULE RATHER THAN QUOTING ITS SELECTOR, and that is what the
+   ordered list bought: `.ph:has(img) .ph__label` and `.drawer[data-open]
+   .drawer__sheet` are scoped to a STATE, which owns no selector of its own for
+   an author to quote, so the old key could not have reached them.
 
    POSITION is a third piece and a closed enum, not a selector: `first` is
    `:first-child`, and the vocabulary grows one member at a time with the block
@@ -323,34 +347,45 @@ const terms = (value) => (Array.isArray(value) ? value : [value]);
  *  and fact — and the enum in the schema is kept in step with this object. */
 export const POSITION_SUFFIX = { first: ":first-child", last: ":last-child" };
 
-/** A part's own selector: its class, or `within` + a descendant + a pseudo,
- *  where the descendant is a path of bare tag names or a single class. The
- *  combinator is supplied HERE and never by an author, in every shape. */
-export const partSelector = (part) =>
-  part.selector ?? `${part.within} ${part.element ? part.element.join(" ") : part.class}${part.pseudo ?? ""}`;
-
-/** Every selector a definition declares, by the label the build names it with —
- *  `base`, `variants.solid`, `parts.span`. One vocabulary for naming a rule
- *  inside a definition, shared by the error messages and by an `at` override. */
-export function rulesByLabel(def) {
-  const out = new Map();
-  if (def.base) out.set("base", def.root);
-  for (const kind of ["variants", "sizes"]) for (const m of def[kind] ?? []) out.set(`${kind}.${m.name}`, m.selector);
-  for (const p of def.parts ?? []) out.set(`parts.${p.name}`, partSelector(p));
-  return out;
-}
-
-/** The selector an `at` override names. Throws only where the loader has
- *  already refused the document, so a caller never sees an undefined selector. */
-export const selectorOf = (def, label) => {
-  const sel = rulesByLabel(def).get(label);
-  if (!sel) throw new Error(`${definitionPath(def.id)}: an \`at\` override names \`${label}\`, which this definition does not declare`);
-  return sel;
-};
+/** A part's selector. The loader resolves a scoped part's once, so both
+ *  emitters read one string rather than each joining the pieces — the
+ *  combinator is supplied THERE and never by an author, in every shape. */
+export const partSelector = (part) => part.selector;
 
 /** A state's selector: one suffix, or a selector LIST when it carries several. */
 export const stateSelector = (owner, suffix) =>
   (Array.isArray(suffix) ? suffix : [suffix]).map((s) => `${owner}${s}`).join(", ");
+
+/** Every selector a definition declares, by the NAME that refers to it —
+ *  `base`, `solid`, `span`. One vocabulary, shared by the error messages, by a
+ *  scoped part's `within`, by a state's and a position's `of`, and by an `at`
+ *  override's. Built by walking the list forwards, which is also what makes a
+ *  forward reference unresolvable rather than merely discouraged. */
+export function selectorsByName(def) {
+  /* `base` is the root, declared or not: case-body styles nothing on
+     `.case-body` and scopes seven parts within it. */
+  const out = new Map([["base", def.root]]);
+  for (const r of def.rules ?? []) {
+    if (r.kind === "base") continue;
+    else if (r.kind === "variant" || r.kind === "size") out.set(r.name, r.selector);
+    else if (r.kind === "part") {
+      out.set(
+        r.name,
+        r.selector ?? `${out.get(r.within)} ${r.element ? r.element.join(" ") : r.class}${r.pseudo ?? ""}`
+      );
+    } else if (r.kind === "state") out.set(r.name, stateSelector(out.get(r.of), r.suffix));
+    else if (r.kind === "position") out.set(r.name, `${out.get(r.of)}${POSITION_SUFFIX[r.at]}`);
+  }
+  return out;
+}
+
+/** The selector a reference names. Throws only where the loader has already
+ *  refused the document, so a caller never sees an undefined selector. */
+export const selectorOf = (def, name) => {
+  const sel = selectorsByName(def).get(name);
+  if (!sel) throw new Error(`${definitionPath(def.id)}: a reference names \`${name}\`, which this definition does not declare`);
+  return sel;
+};
 
 /**
  * @returns {{def: object|null, errors: string[]}} — never throws, so the caller
@@ -376,6 +411,28 @@ export function loadDefinition(id) {
     return { def: null, errors: [`${rel} is not valid JSON — ${e.message}`] };
   }
 
+  /* THE PRE-MIGRATION SHAPE IS NAMED RATHER THAN MERELY REJECTED. `base` and
+     `parts` were top-level sections until the rules became one ordered list,
+     and the schema's verdict on a file still written that way — "missing
+     `rules`, unknown property `base`" — is true and tells a reader nothing
+     about what happened. It also has a live source: ../../scripts/new-component.mjs
+     scaffolds the old shape, and that file is outside this directory's
+     ownership, so this message is what a scaffolded component gets until it is
+     updated. A gate that knows why it failed should say so. */
+  if (!def.rules && ["base", "variants", "sizes", "parts", "at"].some((k) => k in def)) {
+    return {
+      def: null,
+      errors: [
+        `${rel} is written in the pre-migration shape — the top-level sections ` +
+          `${["base", "variants", "sizes", "parts", "at"].filter((k) => k in def).map((k) => `\`${k}\``).join(", ")} ` +
+          `became ONE ordered \`rules\` list, each entry tagged by \`kind\` and naming the rules it depends on. See the ` +
+          `\`rules\` $doc in ${SCHEMA_PATH} for the shape and for the two blocks that forced it.\n` +
+          `      If this file was just scaffolded, ../../scripts/new-component.mjs still writes the old shape and is the ` +
+          `thing to fix: its \`base: { declarations: […] }\` is now \`rules: [{ kind: "base", declarations: […] }]\`.`,
+      ],
+    };
+  }
+
   /* ---- 1. the shape ----
      A throw here is the SCHEMA being wrong, not the definition: validate-json
      refuses a keyword it does not implement rather than ignoring it. Reported
@@ -393,7 +450,27 @@ export function loadDefinition(id) {
       ],
     };
   }
-  if (shape.length) return { def: null, errors: formatErrors(shape, rel) };
+  /* A REJECTED RULE IS RE-REPORTED AGAINST THE ONE FORM ITS `kind` CLAIMS.
+     `rules` is a discriminated union, so a `part` with a stray `suffix` fails
+     all seven branches and validate-json says exactly that: "matches none of
+     the 7 permitted forms". That is deliberate over there — a branch's own
+     errors are noise when the reader meant a different branch — and it is the
+     wrong answer here, because `kind` says which branch was meant. So the
+     union's verdict is replaced by the errors of the named form, resolved
+     through the same $defs so nothing is re-implemented. Doing this in the
+     LOADER rather than teaching validate-json `if`/`then` keeps the closed
+     keyword list closed: the discrimination is a fact about this document,
+     not a gap in the validator. */
+  if (shape.length) {
+    const detailed = shape.flatMap((e) => {
+      const at = /^rules\[(\d+)\]$/.exec(e.path);
+      const form = at && RULE_FORM[def.rules?.[Number(at[1])]?.kind];
+      if (e.keyword !== "oneOf" || !form) return [e];
+      const sub = validate({ $defs: schema().$defs, $ref: `#/$defs/${form}` }, def.rules[Number(at[1])], e.path);
+      return sub.length ? sub : [e];
+    });
+    return { def: null, errors: formatErrors(detailed, rel) };
+  }
 
   /* ---- 2. what the schema cannot see ---- */
   const errors = [];
@@ -453,40 +530,107 @@ export function loadDefinition(id) {
     }
   });
 
-  /* A modifier's selector is its root plus its name — stated in the file so the
-     CSS is transcribed rather than assembled, and checked so the two agree. */
-  const seen = new Map([[def.root, "root"]]);
-  for (const kind of ["variants", "sizes"]) {
-    for (const m of def[kind] ?? []) {
-      const want = `${def.root}--${m.name}`;
-      if (m.selector !== want) bad(`\`${kind}.${m.name}\` has the selector \`${m.selector}\`, and a modifier of \`${def.root}\` named \`${m.name}\` is \`${want}\``);
-      if (seen.has(m.selector)) bad(`\`${m.selector}\` is declared twice — by \`${seen.get(m.selector)}\` and by \`${kind}.${m.name}\``);
-      seen.set(m.selector, `${kind}.${m.name}`);
-    }
+  /* ---- the list is a namespace, and every reference is backwards ----
+     A name is the handle `of`, `within` and an alias use, so two rules sharing
+     one would make a reference ambiguous rather than merely confusing; and a
+     name may only point at a rule ABOVE the one using it, because a stylesheet
+     reads downwards and a rule cannot be scoped to a selector that does not
+     exist yet. Both were free when the rules were sections — a section is a
+     namespace and a fixed cascade is an order — and both have to be checked now
+     that neither is. */
+  /* `base` is seeded, and BEFORE the list rather than at the base rule's index,
+     because it names the ROOT — which is a fact about the component whether or
+     not the component styles it. `case-body` is the proof: it has no base rule
+     at all and every one of its parts is still scoped within `.case-body`. */
+  const declaredAt = new Map([["base", -1]]);
+  const bases = (def.rules ?? []).filter((r) => r.kind === "base");
+  if (bases.length > 1) {
+    bad(`it declares ${bases.length} \`base\` rules, and a component has one root. Everything else is a variant, a size or a part`);
   }
-  for (const p of def.parts ?? []) {
-    /* A scoped part states its ancestor and it is checked, for the reason a
-       modifier states its own selector: the CSS stays transcribed, and the two
-       halves cannot disagree. The referent is the root or a part THIS definition
-       already declares — a finite set, written down in the same file — and a
-       part declared later cannot be it, because a stylesheet reads downwards. */
-    if (p.within !== undefined && !seen.has(p.within)) {
+  (def.rules ?? []).forEach((r, i) => {
+    if (r.kind === "base") return;
+    const name = r.name;
+    if (name === undefined) return; /* an `at` block names nothing and is named by nothing */
+    if (name === "base") {
+      bad(`rules[${i}] is called \`base\`, which is the reserved name of the root — every \`of\` and \`within\` naming \`base\` means \`${def.root}\``);
+      return;
+    }
+    if (declaredAt.has(name)) {
       bad(
-        `\`parts.${p.name}\` is scoped \`within\` \`${p.within}\`, which this definition does not declare above it. ` +
-          `The ancestor is the root or an EARLIER part — ${[...seen.keys()].map((s) => `\`${s}\``).join(", ")} — so that ` +
-          `the set of possible ancestors is finite, in this file, and checkable. A path is not a value this key takes`
+        `two rules are called \`${name}\` — rules[${declaredAt.get(name)}] and rules[${i}]. A name is the handle every ` +
+          `\`of\` and \`within\` uses, so it is unique across the whole list; button's two hover states are \`hover\` and ` +
+          `\`solid-hover\` for exactly this reason, and a state's name reaches no artefact, so renaming one is free`
+      );
+      return;
+    }
+    declaredAt.set(name, i);
+  });
+
+  /** Every reference in the document: who refers, to what, from where. */
+  const references = [];
+  (def.rules ?? []).forEach((r, i) => {
+    if (r.kind === "part" && r.within !== undefined) references.push([i, r.within, `\`${r.name}\` is scoped \`within\``]);
+    if (r.kind === "state" || r.kind === "position") references.push([i, r.of, `\`${r.name}\` is a ${r.kind} \`of\``]);
+    if ((r.kind === "variant" || r.kind === "size") && r.aliases) references.push([i, r.aliases.of, `\`${r.name}\` aliases`]);
+    if (r.kind === "at") for (const o of r.rules) references.push([i, o.of, `an \`at ${r.condition}\` override names`]);
+  });
+  for (const [i, name, who] of references) {
+    const at = declaredAt.get(name);
+    if (at === undefined) {
+      bad(
+        `${who} \`${name}\`, and this definition declares no such rule. A reference is a NAME rather than a selector ` +
+          `so that a renamed rule cannot leave an orphan pointing at an element that is gone — the names here are ` +
+          `${[...declaredAt.keys()].map((n) => `\`${n}\``).join(", ")}`
+      );
+    } else if (at >= i) {
+      bad(
+        `${who} \`${name}\`, which rules[${i}] declares ${at === i ? "itself" : `later, at rules[${at}]`}. A reference ` +
+          `points BACKWARDS only: a stylesheet reads downwards, and the rule being named has to have a selector by the ` +
+          `time the one naming it is emitted`
       );
     }
-    const sel = partSelector(p);
-    if (seen.has(sel)) bad(`\`${sel}\` is declared twice — by \`${seen.get(sel)}\` and by \`parts.${p.name}\``);
-    seen.set(sel, `parts.${p.name}`);
+  }
+  if (errors.length) return { def: null, errors };
+
+  /* From here the graph resolves, so every selector can be built once. */
+  const selectors = selectorsByName(def);
+
+  /* A modifier's selector is its root plus its name — stated in the file so the
+     CSS is transcribed rather than assembled, and checked so the two agree. A
+     scoped part's is BUILT, from a name and a target, which is the difference
+     between a rule this component owns and a relation it declares. */
+  const seen = new Map([[def.root, "root"]]);
+  for (const r of def.rules) {
+    if (r.kind === "variant" || r.kind === "size") {
+      const want = `${def.root}--${r.name}`;
+      if (r.selector !== want) bad(`\`${r.name}\` has the selector \`${r.selector}\`, and a ${r.kind} of \`${def.root}\` named \`${r.name}\` is \`${want}\``);
+    }
+    if (r.kind === "part" && r.within !== undefined) {
+      /* A state whose suffix is a selector LIST has no single selector to
+         descend from, so it cannot host a scoped part. The block that needs one
+         is the block that decides what `.a:hover, .a:focus-visible .x` means. */
+      const host = def.rules[declaredAt.get(r.within)];
+      if (host?.kind === "state" && Array.isArray(host.suffix)) {
+        bad(
+          `\`${r.name}\` is scoped \`within\` \`${r.within}\`, a state whose \`suffix\` is a selector LIST. A list is two ` +
+            `selectors, so a descendant of it is two rules or one with a comma in the middle, and neither is a choice ` +
+            `this emitter may make. Split the state, or add the shape in the commit that needs it`
+        );
+      }
+    }
+    if (!["base", "variant", "size", "part"].includes(r.kind)) continue;
+    const sel = r.kind === "base" ? def.root : selectors.get(r.name);
+    if (r.kind !== "base" && seen.has(sel)) bad(`\`${sel}\` is declared twice — by \`${seen.get(sel)}\` and by \`${r.name}\``);
+    seen.set(sel, r.kind === "base" ? "base" : r.name);
   }
 
-  /* An `at` block names a condition tokens.json declares, and overrides a rule
-     this definition declares. Both are cross-references a schema cannot follow,
-     and both are the whole reason the construct is a name rather than a string. */
-  const labels = rulesByLabel(def);
-  for (const block of def.at ?? []) {
+  /* An `at` block names a condition tokens.json declares — a cross-reference a
+     schema cannot follow, and the whole reason the key is a name rather than a
+     string. An INLINE one is refused if it could not render on one line: the
+     inline shape is not a formatting preference, it is what section-head,
+     ask-fab and media actually write, and this migration transcribes rather
+     than reformats. A query that needs a paragraph does not carry the key. */
+  for (const block of def.rules.filter((r) => r.kind === "at")) {
     if (!conditionNames().has(block.condition)) {
       bad(
         `its \`at\` block names the condition \`${block.condition}\`, and tokens.json's \`$conditions\` has no such ` +
@@ -494,51 +638,97 @@ export function loadDefinition(id) {
           `add it there, with a description, beside the ones that already exist`
       );
     }
-    for (const o of block.rules) {
-      if (!labels.has(o.of)) {
-        bad(
-          `an \`at\` override names \`${o.of}\`, and this definition declares no such rule. It is a NAME rather than a ` +
-            `selector so that a renamed part cannot leave an orphaned media rule pointing at an element that is gone`
-        );
-      }
+    if (!block.inline) continue;
+    const groups = block.rules[0]?.declarations ?? [];
+    const why =
+      block.rules.length !== 1 ? `${block.rules.length} overrides`
+      : block.rules[0].positions ? "a position"
+      : groups.length !== 1 ? `${groups.length} declaration groups`
+      : groups[0].note || groups[0].aside ? "a comment"
+      : block.note ? "a note"
+      : block.break ? "a break"
+      : null;
+    if (why) {
+      bad(
+        `its \`at ${block.condition}\` is \`inline\` and carries ${why}. The inline form renders on ONE line — ` +
+          `\`@media … { .sel { … } }\` — because that is how the stylesheet writes it, so it is one override, one group ` +
+          `and no ornament. Drop \`inline\` and it renders as a block; the emitter will not choose between two ` +
+          `renderings of the same data`
+      );
     }
   }
 
-  /* An IN-PLACE `at` names the same finite set of conditions, and is refused if
-     it could not render on one line. The inline shape is not a formatting
-     preference — it is what section-head and ask-fab actually write, and this
-     migration transcribes rather than reformats. A rule whose in-place query
-     needs a paragraph is a real case and is the block that adds that shape. */
-  const inPlace = [];
-  if (def.base) inPlace.push(["base", def.base]);
-  for (const kind of ["variants", "sizes"]) for (const m of def[kind] ?? []) inPlace.push([`${kind}.${m.name}`, m]);
-  for (const p of def.parts ?? []) inPlace.push([`parts.${p.name}`, p]);
-  for (const [label, rule] of inPlace) {
-    for (const a of rule.at ?? []) {
-      if (!conditionNames().has(a.condition)) {
-        bad(
-          `\`${label}\` carries an in-place \`at\` naming the condition \`${a.condition}\`, and tokens.json's \`$conditions\` has ` +
-            `no such entry. A breakpoint is a literal, and this system has exactly one file where a literal may be written`
-        );
+  /* ---- 3. the derived view ----
+     The list is the source and stays the source; this is a QUERY over it, for
+     the two consumers that want a set rather than a sequence. scripts/
+     emit-react.mjs needs the variants of an axis (a cva branch list has no
+     order to have), and scripts/contract-diff.mjs needs each rule with its
+     states and positions gathered (the snapshot is keyed by selector). Neither
+     of those questions is about where a rule sits, which is exactly why the
+     answer is computed here rather than being a second thing the file says. */
+  const byName = new Map();
+  def.variants = [];
+  def.sizes = [];
+  def.parts = [];
+  def.at = [];
+  for (const r of def.rules) {
+    switch (r.kind) {
+      case "base":
+        def.base = r;
+        byName.set("base", r);
+        break;
+      case "variant":
+      case "size":
+        (r.kind === "variant" ? def.variants : def.sizes).push(r);
+        byName.set(r.name, r);
+        break;
+      case "part":
+        /* A scoped part's selector is resolved ONCE, here, so both emitters and
+           the contract read one string rather than each joining the pieces. */
+        r.selector = selectors.get(r.name);
+        def.parts.push(r);
+        byName.set(r.name, r);
+        break;
+      /* A state or a position GATHERS UNDER the rule it hangs off, which is the
+         shape both other consumers ask for — and that is a narrower demand than
+         a selector: `.btn:hover:last-child` resolves perfectly well and would
+         be a position gathered under a state, which contract-diff walks past
+         and would therefore drop from the published contract. So the owner has
+         to be a rule with a body of its own, and the block that writes a
+         position of a state is the block that decides what the contract calls
+         it. A state IS still nameable — an alias names one — just not owned. */
+      case "state":
+      case "position": {
+        const owner = byName.get(r.of);
+        if (!["base", "variant", "size", "part"].includes(owner?.kind)) {
+          bad(
+            `\`${r.name}\` is a ${r.kind} \`of\` \`${r.of}\`, which is ${owner ? `a ${owner.kind}` : "the root and not a rule"} ` +
+              `and so has no rule of its own for it to hang off. Both other emitters read a state and a position through ` +
+              `their owner, so the owner is a base, a variant, a size or a part${r.of === "base" ? " — and this definition declares no `base` rule above it" : ""}`
+          );
+          break;
+        }
+        (owner[r.kind === "state" ? "states" : "positions"] ??= []).push(r);
+        byName.set(r.name, r);
+        break;
       }
-      const groups = a.declarations ?? [];
-      if (groups.length !== 1 || groups[0].note || groups[0].aside) {
-        bad(
-          `\`${label}\`'s in-place \`at ${a.condition}\` has ${groups.length} declaration group(s)${groups.some((g) => g.note || g.aside) ? " and a comment" : ""}, ` +
-            `and the in-place form renders on ONE line — \`@media … { .sel { … } }\` — because that is how the stylesheet writes it. ` +
-            `Use the definition-level \`at\` array, which renders as a block, or add the multi-line in-place shape in the commit ` +
-            `that needs it. The emitter will not choose between two renderings of the same data`
-        );
-      }
+      case "at":
+        /* An INLINE at is a footnote on one rule, which is how both other
+           consumers already see it: a `{condition, declarations}` hanging off
+           its owner. A block one is a paragraph of overrides and stays one. */
+        if (r.inline) (byName.get(r.rules[0].of).at ??= []).push({ condition: r.condition, $doc: r.$doc, declarations: r.rules[0].declarations });
+        else def.at.push(r);
+        break;
     }
   }
+  for (const key of ["variants", "sizes", "parts", "at"]) if (!def[key].length) delete def[key];
 
   /* A definition renders a banner and whatever is under it. With `base` optional
      since case-body, "whatever" can be nothing at all — which is a block that
      claims a component and styles none of it. */
   if (!def.base && !def.parts?.length) {
     bad(
-      `it declares neither \`base\` nor \`parts\`, so it would render a banner with no rule under it. \`base\` is ` +
+      `it declares neither a \`base\` rule nor a \`part\`, so it would render a banner with no rule under it. \`base\` is ` +
         `optional because case-body's root is a scope rather than an appearance, not because a definition may be empty`
     );
   }
@@ -563,20 +753,17 @@ export function loadDefinition(id) {
     }
   }
 
-  /* ---- 3. resolve aliases, so neither emitter has to know about them ---- */
-  for (const kind of ["variants", "sizes"]) {
-    for (const m of def[kind] ?? []) {
-      if (!m.aliases) continue;
-      const state = m.aliases.state;
-      const source = state ? (def.base?.states ?? []).find((s) => s.name === state) : def.base;
-      if (!source) {
-        bad(`\`${kind}.${m.name}\` aliases the base's \`${state}\` state, and the base declares no such state`);
-        continue;
-      }
-      /* A deep copy, because the two rules are now one statement and an emitter
-         must not be able to mutate one of them into disagreeing with the other. */
-      m.declarations = JSON.parse(JSON.stringify(source.declarations));
+  /* ---- 4. resolve aliases, so neither emitter has to know about them ---- */
+  for (const m of [...(def.variants ?? []), ...(def.sizes ?? [])]) {
+    if (!m.aliases) continue;
+    const source = byName.get(m.aliases.of);
+    if (!source?.declarations) {
+      bad(`\`${m.name}\` aliases \`${m.aliases.of}\`, which declares nothing of its own to be identical to`);
+      continue;
     }
+    /* A deep copy, because the two rules are now one statement and an emitter
+       must not be able to mutate one of them into disagreeing with the other. */
+    m.declarations = JSON.parse(JSON.stringify(source.declarations));
   }
 
   return errors.length ? { def: null, errors } : { def, errors: [] };
@@ -639,72 +826,72 @@ function banner(def) {
   return note.length ? `${head}\n${note.map((l) => (l === "" ? "" : `   ${l}`)).join("\n")} */\n` : `${head} */\n`;
 }
 
-/** A whole block: banner, base, base states, variants (+ their states), sizes, parts.
- *  That order is the cascade — a variant must be able to beat the base, and a
- *  state of a variant must be able to beat the variant. A part's positions come
- *  after its own rule for the same reason: `.case-body h3:first-child` exists to
- *  undo three of `.case-body h3`'s declarations. An IN-PLACE `at` sits between a
- *  rule and its states, which is where the two blocks that write one put it —
- *  ask-fab's `@media (max-width: 699px)` is between `.ask-fab` and `.ask-fab:hover`. */
+/** A whole block: the banner, then every rule in the order the list gives them.
+ *  THE ORDER IS THE FILE'S, NOT THIS FUNCTION'S, and that is the change `media`
+ *  and `profile` forced — a fixed cascade (base, variants, sizes, parts, foot)
+ *  cannot say `.ph:has(img)` four rules after `.ph` or
+ *  `.profile > div:nth-child(odd)` after every part, and both of those are the
+ *  stylesheet grouping its rules by topic rather than by kind. Source order IS
+ *  the cascade, so an emitter that re-sorted was asserting something the file
+ *  had not said. Every selector here is resolved from a NAME the list declares
+ *  earlier, so a rule cannot end up pointing at an element another rule does not. */
 export function renderBlock(def, conditions = {}) {
   const where = definitionPath(def.id);
-  const states = (owner, list, pad) =>
-    (list ?? []).map((s) => rule(stateSelector(owner, s.suffix), s.declarations, where, pad)).join("");
+  const selectors = selectorsByName(def);
+  const sel = (name) => selectors.get(name);
   const positions = (owner, list, pad) =>
     (list ?? []).map((p) => rule(`${owner}${POSITION_SUFFIX[p.at]}`, p.declarations, where, pad)).join("");
   /* A rule's own note sits above it at column 0; a group's note sits inside the
      braces. The stylesheet draws that line and this only records it. */
   const lead = (r, pad) => (r.note?.length ? comment(r.note, pad) : "");
-  /* An in-place condition renders on ONE line, under the rule that carries it
-     and before that rule's states — which is where the stylesheet writes it.
-     The loader has already refused anything that would not fit, so the inner
-     rule is a single line and this only unwraps it. */
-  const inPlace = (owner, list) =>
-    (list ?? [])
-      .map((a) => `@media ${conditions[a.condition]} { ${rule(owner, a.declarations, where).trimEnd()} }\n`)
-      .join("");
 
   let out = banner(def);
-  /* `base` is optional: case-body's root is a scope with no appearance of its
-     own, and emitting `.case-body { }` would claim a rule the file has not got. */
-  if (def.base) {
-    out += lead(def.base, "");
-    out += rule(def.root, def.base.declarations, where);
-    out += inPlace(def.root, def.base.at);
-    out += states(def.root, def.base.states, "");
-    out += positions(def.root, def.base.positions, "");
-  }
-  /* A modifier that declares nothing emits nothing. `.sec--tint { }` would
-     claim an appearance the stylesheet has not got — the same refusal `base`
-     being optional records — and the tint's whole effect is the scoped part
-     `.sec--tint .well`, which is emitted below with the other parts. */
-  for (const m of [...(def.variants ?? []), ...(def.sizes ?? [])]) {
-    if (m.declarations) out += rule(m.selector, m.declarations, where);
-    out += inPlace(m.selector, m.at);
-    out += states(m.selector, m.states, "");
-  }
-  for (const p of def.parts ?? []) {
-    if (p.break) out += "\n";
-    out += lead(p, "");
-    const sel = partSelector(p);
-    out += rule(sel, p.declarations, where, "");
-    out += inPlace(sel, p.at);
-    out += states(sel, p.states, "");
-    out += positions(sel, p.positions, "");
-  }
-  /* The at-rules last, in array order. Their selectors are RESOLVED from the
-     rule each override names rather than restated, so a media rule cannot end up
-     pointing at an element its unconditional half does not. */
-  for (const block of def.at ?? []) {
-    if (block.break) out += "\n";
-    out += lead(block, "");
-    out += `@media ${conditions[block.condition]} {\n`;
-    for (const o of block.rules) {
-      const sel = selectorOf(def, o.of);
-      if (o.declarations) out += rule(sel, o.declarations, where, "  ");
-      out += positions(sel, o.positions, "  ");
+  for (const r of def.rules) {
+    switch (r.kind) {
+      /* `base` is optional: case-body's root is a scope with no appearance of
+         its own, and `.case-body { }` would claim a rule the file has not got. */
+      case "base":
+        out += lead(r, "");
+        out += rule(def.root, r.declarations, where);
+        break;
+      /* A modifier that declares nothing emits nothing. `.sec--tint { }` would
+         claim an appearance the stylesheet has not got — the same refusal
+         `base` being optional records — and the tint's whole effect is the
+         scoped part `.sec--tint .well`, which is a rule further down the list. */
+      case "variant":
+      case "size":
+        if (r.declarations) out += rule(r.selector, r.declarations, where);
+        break;
+      case "part":
+        if (r.break) out += "\n";
+        out += lead(r, "");
+        out += rule(r.selector ?? sel(r.name), r.declarations, where);
+        break;
+      case "state":
+        out += rule(stateSelector(sel(r.of), r.suffix), r.declarations, where);
+        break;
+      case "position":
+        out += rule(`${sel(r.of)}${POSITION_SUFFIX[r.at]}`, r.declarations, where);
+        break;
+      /* An INLINE at renders on one line, because that is how the stylesheet
+         writes a footnote on one rule. The loader has already refused anything
+         that would not fit, so this only unwraps a single-line rule. */
+      case "at":
+        if (r.inline) {
+          out += `@media ${conditions[r.condition]} { ${rule(sel(r.rules[0].of), r.rules[0].declarations, where).trimEnd()} }\n`;
+          break;
+        }
+        if (r.break) out += "\n";
+        out += lead(r, "");
+        out += `@media ${conditions[r.condition]} {\n`;
+        for (const o of r.rules) {
+          const owner = sel(o.of);
+          if (o.declarations) out += rule(owner, o.declarations, where, "  ");
+          out += positions(owner, o.positions, "  ");
+        }
+        out += `}\n`;
+        break;
     }
-    out += `}\n`;
   }
   return out;
 }

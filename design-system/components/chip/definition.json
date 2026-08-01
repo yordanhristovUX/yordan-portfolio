@@ -6,19 +6,21 @@
     "title": "Chip"
   },
   "root": ".chip",
-  "base": {
-    "declarations": [
-      { "set": { "display": "inline-block" } },
-      { "set": { "font-family": { "token": "font-mono" } } },
-      { "set": { "font-size": { "token": "text-2xs" }, "font-weight": { "token": "weight-medium" } } },
-      { "set": { "letter-spacing": { "token": "tracking-wide" }, "text-transform": "uppercase" } },
-      { "set": { "padding": [{ "token": "space-1" }, { "token": "space-2" }] } },
-      { "set": { "border": ["1px", "solid", { "token": "chrome-border-strong" }] } },
-      { "set": { "color": { "token": "chrome-label-strong" } } }
-    ]
-  },
-  "variants": [
+  "rules": [
     {
+      "kind": "base",
+      "declarations": [
+        { "set": { "display": "inline-block" } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-2xs" }, "font-weight": { "token": "weight-medium" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide" }, "text-transform": "uppercase" } },
+        { "set": { "padding": [{ "token": "space-1" }, { "token": "space-2" }] } },
+        { "set": { "border": ["1px", "solid", { "token": "chrome-border-strong" }] } },
+        { "set": { "color": { "token": "chrome-label-strong" } } }
+      ]
+    },
+    {
+      "kind": "variant",
       "name": "solid",
       "selector": ".chip--solid",
       "$doc": "The ONE emphasised fact in a set. It repaints the border as well as the fill — a solid chip keeping the default border would read as a chip with an outline round its ink.",
@@ -31,10 +33,9 @@
           }
         }
       ]
-    }
-  ],
-  "parts": [
+    },
     {
+      "kind": "part",
       "name": "group",
       "selector": ".chips",
       "$doc": "The wrapper a set of chips sits in. It provides wrap and gap and nothing else — no chip knows how many siblings it has, which is what keeps the same chip usable in a work-row's tag list and on a project page.",

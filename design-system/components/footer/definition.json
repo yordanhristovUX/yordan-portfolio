@@ -6,32 +6,35 @@
     "title": "Footer"
   },
   "root": ".foot",
-  "base": {
-    "declarations": [
-      {
-        "set": {
-          "display": "flex",
-          "justify-content": "space-between",
-          "flex-wrap": "wrap",
-          "gap": [{ "token": "space-2" }, { "token": "space-7" }]
+  "rules": [
+    {
+      "kind": "base",
+      "declarations": [
+        {
+          "set": {
+            "display": "flex",
+            "justify-content": "space-between",
+            "flex-wrap": "wrap",
+            "gap": [{ "token": "space-2" }, { "token": "space-7" }]
+          }
+        },
+        {
+          "aside": "was its own clamp, one 0.5rem cap away from --pad's — identical below 1600px, so it was never a decision",
+          "set": { "padding": [{ "token": "space-4" }, { "token": "pad" }] }
+        },
+        { "set": { "background": { "token": "chrome-bg-strong" } } },
+        {
+          "aside": "not chrome-border-strong: a border token read as text, which inverts to 2.7:1 in dark",
+          "set": { "color": { "token": "chrome-label-on-strong" } }
+        },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        {
+          "set": {
+            "font-size": { "token": "text-2xs" },
+            "letter-spacing": { "token": "tracking-wide" }
+          }
         }
-      },
-      {
-        "aside": "was its own clamp, one 0.5rem cap away from --pad's — identical below 1600px, so it was never a decision",
-        "set": { "padding": [{ "token": "space-4" }, { "token": "pad" }] }
-      },
-      { "set": { "background": { "token": "chrome-bg-strong" } } },
-      {
-        "aside": "not chrome-border-strong: a border token read as text, which inverts to 2.7:1 in dark",
-        "set": { "color": { "token": "chrome-label-on-strong" } }
-      },
-      { "set": { "font-family": { "token": "font-mono" } } },
-      {
-        "set": {
-          "font-size": { "token": "text-2xs" },
-          "letter-spacing": { "token": "tracking-wide" }
-        }
-      }
-    ]
-  }
+      ]
+    }
+  ]
 }

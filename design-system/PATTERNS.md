@@ -191,6 +191,50 @@ blocks that have asked. The one that has not moved is `local-custom-property` �
 is a name a block invents for itself, and nothing outside that block can check it, name it or
 count it. If the mechanical test is going to keep one column, that is the entry it keeps.
 
+### The fourth finding is not a feature at all — it is ORDER, and `media` and `profile` are why
+
+This note scans blocks for *features*, and every finding above is about one. The next block to
+fail was rejected by nothing in the scan: `media` has a `:has()` and `profile` has a `>`, both
+squarely inside the closures the sections above argued for, and neither could be written down.
+
+The obstruction was the **emitter's fixed cascade** — base, then variants, then sizes, then
+parts, then the `@media` blocks at the foot — which was a reasonable reading of a stylesheet
+that groups its rules by kind. These two do not. They group by **topic**:
+
+```css
+.ph { … }  .ph--tall { … }  .ph__label { … }
+.ph:has(img) { … }              /* four rules after .ph, with a part in between */
+.ph:has(img) .ph__label { … }   /* a part scoped to a STATE, which owns no selector to quote */
+
+.profile > div { … }   … three parts …
+.profile > div:nth-child(odd) { … }   /* at the foot, beside the query that undoes it */
+```
+
+Under a fixed cascade the first is `.ph:has(img)` emitted directly after `.ph`, and the second
+is `:nth-child(odd)` emitted directly after `.profile > div`. Both are *different bytes*, and
+this migration's whole claim is that a block joins by transcription.
+
+**The decisive point is which of the two the fix belongs to.** A `detach` flag on a rule would
+have kept the sections and moved the line, and it would have been an **emitter hint** — a key
+whose meaning is "render me elsewhere" rather than a statement about the component. This
+format has refused that once already, from the other side: `break` records a blank line
+*because the paragraph is a statement*, not because the emitter needed telling. So the sections
+became one ordered list, `rules`, and the entry's position IS the stylesheet's order. Source
+order is the cascade in CSS; recording it records a fact.
+
+It pays for itself twice over, which is the sign it was structural rather than local. The
+`within` of a scoped part became a **name** instead of a quoted selector, and that is the only
+form in which `.ph:has(img) .ph__label`, `.drawer[data-open] .drawer__sheet` and
+`.ask-fab[data-collapsed] .ask-fab__label` are sayable at all — their ancestor is a state,
+which has no selector of its own for an author to quote. And the two shapes that wore the word
+`at` collapsed into one: what distinguished them was *where* the query sat, and where is now
+where the entry sits.
+
+**So the mechanical test keeps its four columns and gains a caveat.** A feature with a finite
+vocabulary is expressible; a feature with a finite vocabulary *in an order the emitter chose
+for it* is not. The scan cannot see the second, and the only way to find it is the method this
+note has argued for throughout — one block at a time, with the block in front of you.
+
 - **`typography` fails on `computed` alone** (its `clamp()` values), which is a token
   question rather than a pattern one: those are `--text-*` steps and the block mostly maps a
   class to a step. It may be the best argument for a fourth value form (a token binding with

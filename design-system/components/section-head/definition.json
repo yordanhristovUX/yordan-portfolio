@@ -1,24 +1,25 @@
 {
-  "$doc": "Section head's appearance, as data — the source of the `@component section-head` block in css/components.css and of dist/react/section-head.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, {\"expr\": \"…\"} is computed geometry with its bindings still interpolated, and an array is a sequence of those. SECTION HEAD IS THE BLOCK THAT FORCED FOUR CONSTRUCTS, and they are one shape seen from four sides: a component that owns a rule about an element it does not own. `.sec--tint .well` is a scoped part whose TARGET is a class (`class`, beside `element[]`) and whose ancestor is a VARIANT rather than the root; `.sec--tint` itself declares nothing at all, which is a third form of modifier — its whole effect is that part, and calling it anything but a variant would cost the word its meaning, because index.html writes `class=\"band sec sec--tint\"` and React writes `variant=\"tint\"`. The head's padding is `calc(var(--space-3) - 2px) … calc(var(--space-3) - 1px)`, which is the first `expr`: measured arithmetic subtracting the two BORDER WIDTHS that bracket the head, so that the whole chrome sums to one lattice cell. And the note's `@media` is written IN PLACE under the rule it modifies rather than gathered at the foot, which is the second shape of `at` — see the schema's `in-place-conditional` for why those are two statements rather than one.",
+  "$doc": "Section head's appearance, as data — the source of the `@component section-head` block in css/components.css and of dist/react/section-head.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, {\"expr\": \"…\"} is computed geometry with its bindings still interpolated, and an array is a sequence of those. SECTION HEAD IS THE BLOCK THAT FORCED FOUR CONSTRUCTS, and they are one shape seen from four sides: a component that owns a rule about an element it does not own. `.sec--tint .well` is a scoped part whose TARGET is a class (`class`, beside `element[]`) and whose ancestor is a VARIANT rather than the root; `.sec--tint` itself declares nothing at all, which is a third form of modifier — its whole effect is that part, and calling it anything but a variant would cost the word its meaning, because index.html writes `class=\"band sec sec--tint\"` and React writes `variant=\"tint\"`. The head's padding is `calc(var(--space-3) - 2px) … calc(var(--space-3) - 1px)`, which is the first `expr`: measured arithmetic subtracting the two BORDER WIDTHS that bracket the head, so that the whole chrome sums to one lattice cell. And the note's `@media` is written IN PLACE under the rule it modifies rather than gathered at the foot, which used to be a second construct wearing the word `at` and is now `inline: true` on the one construct — the difference between the two shapes was WHERE the query sits, and once the rules became an ordered list, where is where the entry sits. What is left to record is that it renders on one line, which the stylesheet decided and this transcribes.",
   "$schema": "../definition.schema.json",
   "id": "section-head",
   "block": {
     "title": "Section head"
   },
   "root": ".sec",
-  "base": {
-    "$doc": "The section, not the head — the strong rule that opens every band. It is 2px, and the head's padding subtracts it, which is why those two rules cannot be moved apart without the arithmetic in the note below going wrong.",
-    "declarations": [{ "set": { "border-top": { "token": "rule-strong" } } }]
-  },
-  "variants": [
+  "rules": [
     {
+      "kind": "base",
+      "$doc": "The section, not the head — the strong rule that opens every band. It is 2px, and the head's padding subtracts it, which is why those two rules cannot be moved apart without the arithmetic in the note below going wrong.",
+      "declarations": [{ "set": { "border-top": { "token": "rule-strong" } } }]
+    },
+    {
+      "kind": "variant",
       "name": "tint",
       "selector": ".sec--tint",
       "$doc": "A tinted section. It declares NOTHING on itself: the whole effect is the raised surface behind the well inside it, which is the `tinted-well` part below. A variant rather than a part with a `--` in its name, because that is what it is on both surfaces — the markup wears it beside `.sec` and the React prop is `variant=\"tint\"`, whichever element the one declaration eventually lands on."
-    }
-  ],
-  "parts": [
+    },
     {
+      "kind": "part",
       "name": "head",
       "selector": ".sec__head",
       "note": [
@@ -70,6 +71,7 @@
       ]
     },
     {
+      "kind": "part",
       "name": "title",
       "selector": ".sec__title",
       "note": [
@@ -84,6 +86,7 @@
       "declarations": [{ "set": { "min-width": "0" } }]
     },
     {
+      "kind": "part",
       "name": "note",
       "selector": ".sec__note",
       "$doc": "The optional hint at the right of the head. Chrome: the smallest step above the floor of the ramp, the label ink, and centred against the title's baseline row rather than sharing it, because a one-line hint beside a display line looks pinned rather than aligned.",
@@ -95,18 +98,24 @@
             "align-self": "center"
           }
         }
-      ],
-      "at": [
+      ]
+    },
+    {
+      "kind": "at",
+      "condition": "below-640",
+      "inline": true,
+      "$doc": "Gone, not wrapped: the note is the second thing in a two-track grid and there is no width left for it. That is why spec.md says it may never carry essential information — a rule the markup cannot enforce and this declaration is the reason for.",
+      "rules": [
         {
-          "condition": "below-640",
-          "$doc": "Gone, not wrapped: the note is the second thing in a two-track grid and there is no width left for it. That is why spec.md says it may never carry essential information — a rule the markup cannot enforce and this declaration is the reason for.",
+          "of": "note",
           "declarations": [{ "set": { "display": "none" } }]
         }
       ]
     },
     {
+      "kind": "part",
       "name": "tinted-well",
-      "within": ".sec--tint",
+      "within": "tint",
       "class": ".well",
       "break": true,
       "$doc": "What the tint actually tints. `.well` is skeleton's class and not this component's, which is the honest shape of the rule: a tinted section raises the surface of the well inside it, and no well knows what kind of section it is in. Scoped to the variant rather than to the root, so it is the tint that carries the coupling and not the head.",

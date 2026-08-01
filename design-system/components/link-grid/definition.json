@@ -1,22 +1,24 @@
 {
-  "$doc": "Link grid's appearance, as data — the source of the `@component link-grid` block in css/components.css and of dist/react/link-grid.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. LINK-GRID IS THE BLOCK THAT FORCED A SCOPED PART. Its cells are bare <a> elements with no class of their own, so there is nothing for a `selector` to name; the part states the ancestor it lives `within` and the `element` path under it, and the emitter supplies the combinator. That is the whole of the relation this schema admits — a descendant of the root, and nothing else. The two border declarations are the block's one real idea: the grid draws its top and left edges once, and every cell draws its own right and bottom, so a wrapped row of cells has no doubled rule anywhere and no cell knows how many siblings it has.",
+  "$doc": "Link grid's appearance, as data — the source of the `@component link-grid` block in css/components.css and of dist/react/link-grid.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. LINK-GRID IS THE BLOCK THAT FORCED A SCOPED PART. Its cells are bare <a> elements with no class of their own, so there is nothing for a `selector` to name; the part NAMES the rule it lives `within` and gives the `element` path under it, and the emitter supplies the combinator. That is the whole of the relation this schema admits — a descendant of the root, and nothing else. The two border declarations are the block's one real idea: the grid draws its top and left edges once, and every cell draws its own right and bottom, so a wrapped row of cells has no doubled rule anywhere and no cell knows how many siblings it has.",
   "$schema": "../definition.schema.json",
   "id": "link-grid",
   "block": {
     "title": "Link grid"
   },
   "root": ".link-grid",
-  "base": {
-    "declarations": [
-      { "set": { "display": "flex", "flex-wrap": "wrap" } },
-      { "set": { "border": { "token": "rule" } } },
-      { "set": { "border-width": "1px 0 0 1px" } }
-    ]
-  },
-  "parts": [
+  "rules": [
     {
+      "kind": "base",
+      "declarations": [
+        { "set": { "display": "flex", "flex-wrap": "wrap" } },
+        { "set": { "border": { "token": "rule" } } },
+        { "set": { "border-width": "1px 0 0 1px" } }
+      ]
+    },
+    {
+      "kind": "part",
       "name": "cell",
-      "within": ".link-grid",
+      "within": "base",
       "element": ["a"],
       "$doc": "One channel. `flex: 1 1 11rem` is the whole responsive behaviour — cells share the row until one would be narrower than 11rem, and then the row wraps; there is no breakpoint here and there is nothing for one to do. Its border is the mirror of the root's: right and bottom, so the two together draw a closed grid whatever the wrap lands on.",
       "declarations": [
@@ -34,20 +36,20 @@
         { "set": { "border": { "token": "rule" } } },
         { "set": { "border-width": "0 1px 1px 0" } },
         { "set": { "transition": "background-color 0.2s, color 0.2s" } }
-      ],
-      "states": [
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "hover",
+      "of": "cell",
+      "suffix": ":hover",
+      "$doc": "The cell inverts to ink rather than tinting, because every cell is equal weight and a tint would read as one of them being the primary action. The primary contact action is the display link elsewhere on the page.",
+      "declarations": [
         {
-          "name": "hover",
-          "suffix": ":hover",
-          "$doc": "The cell inverts to ink rather than tinting, because every cell is equal weight and a tint would read as one of them being the primary action. The primary contact action is the display link elsewhere on the page.",
-          "declarations": [
-            {
-              "set": {
-                "background": { "token": "primary" },
-                "color": { "token": "content-inverse" }
-              }
-            }
-          ]
+          "set": {
+            "background": { "token": "primary" },
+            "color": { "token": "content-inverse" }
+          }
         }
       ]
     }

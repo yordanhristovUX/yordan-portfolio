@@ -16,10 +16,11 @@
     ]
   },
   "root": ".case-body",
-  "parts": [
+  "rules": [
     {
+      "kind": "part",
       "name": "heading",
-      "within": ".case-body",
+      "within": "base",
       "element": ["h3"],
       "$doc": "A section heading, ruled off above so the sections read as a stack of plates. <h3> because the page's <h1> is the project title and the section head above carries the number — the level is an outline decision, and changing it breaks the outline before it breaks anything visible.",
       "declarations": [
@@ -36,21 +37,22 @@
         { "set": { "margin": [{ "token": "space-7" }, "0", { "token": "space-3" }] } },
         { "set": { "padding-top": { "token": "space-7" } } },
         { "set": { "border-top": { "token": "rule" } } }
-      ],
-      "positions": [
-        {
-          "name": "opening",
-          "at": "first",
-          "$doc": "The first heading loses the rule and the space above it — a page does not open on a line. Three zeroes rather than a second set of values, because the declaration being undone is the one directly above.",
-          "declarations": [
-            { "set": { "margin-top": "0", "padding-top": "0", "border-top": "0" } }
-          ]
-        }
       ]
     },
     {
+      "kind": "position",
+      "name": "opening",
+      "of": "heading",
+      "at": "first",
+      "$doc": "The first heading loses the rule and the space above it — a page does not open on a line. Three zeroes rather than a second set of values, because the declaration being undone is the one directly above.",
+      "declarations": [
+        { "set": { "margin-top": "0", "padding-top": "0", "border-top": "0" } }
+      ]
+    },
+    {
+      "kind": "part",
       "name": "paragraph",
-      "within": ".case-body",
+      "within": "base",
       "element": ["p"],
       "$doc": "Body copy, held to a measure rather than to the well's full width. The measure is deliberate and narrower than the well: a case study is read, and the well is sized for an index that is scanned.",
       "declarations": [
@@ -58,8 +60,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "emphasis",
-      "within": ".case-body",
+      "within": "base",
       "element": ["p", "strong"],
       "$doc": "Lifts to the primary ink; the prose around it sits at --content-body. A two-name element path, which is what the array form is for — the emitter supplies the combinator, so a descendant is the only relation an author can write.",
       "declarations": [
@@ -72,8 +75,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "list",
-      "within": ".case-body",
+      "within": "base",
       "element": ["ul"],
       "$doc": "The native marker off, so the drawn one below is the only one.",
       "declarations": [
@@ -81,8 +85,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "item",
-      "within": ".case-body",
+      "within": "base",
       "element": ["li"],
       "$doc": "`position: relative` is here for the marker below it, which is absolutely positioned against this box; the left padding is the space that marker sits in.",
       "declarations": [
@@ -100,8 +105,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "marker",
-      "within": ".case-body",
+      "within": "base",
       "element": ["li"],
       "pseudo": "::before",
       "$doc": "The list mark. Drawn with ::before rather than written into the text, so it is decoration and a screen reader does not read it out — which is the whole reason the content pipeline emits a plain <li>. Small and in the brand ink, so a list reads as a set of marks rather than as punctuation.",
@@ -123,8 +129,9 @@
       ]
     },
     {
+      "kind": "part",
       "name": "item-emphasis",
-      "within": ".case-body",
+      "within": "base",
       "element": ["li", "strong"],
       "$doc": "The same lift inside a list item. Written twice rather than as one rule under two selectors, because that is what the stylesheet says and this is a transcription — the two are a paragraph apart and each belongs beside the element it qualifies.",
       "declarations": [
