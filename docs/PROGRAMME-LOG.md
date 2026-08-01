@@ -430,6 +430,177 @@ that leaves the app to appear in `CROSSINGS`.
 ever been checked, because both *look* verified — one sits beside a gate, the other returns
 200.
 
+---
+
+## The architecture revision, the copy pass and the push — what got in the way
+
+The era after Phase 8: components became contract-first, the owner's words arrived, and
+everything went to production. Same rule as above — only what a fresh session would otherwise
+rediscover expensively.
+
+### A class attribute has no order, and it is the deepest thing this repo has learned about
+### the two pipelines
+
+The pilot generated a Tailwind + React tier from the same definitions as the CSS, and the
+components *rendered wrong on the second surface only*. `Button variant="solid"` came out as
+dark ink on a dark fill exactly where the hero call to action is — rgb(20,21,24) against the
+vanilla page's rgb(245,245,244) — and `size="small"` rendered at base metrics, 102×46 against
+81×36.
+
+The cause is one sentence and it is not obvious: **`cva` concatenates base and variant classes
+into one `class` attribute, a class attribute has no precedence, CSS resolves the pair by
+stylesheet order, and Tailwind decides stylesheet order by sorting class names.** Every
+override in the pilot happened to sort *before* the base class it had to beat —
+`px-space-3` before `px-space-5`, `text-content-inverse` before `text-content-primary`,
+`hover:bg-action-hover` before `hover:bg-primary`. `Chip` worked, and worked only because its
+names sort the other way. **A component library that works by alphabetical luck is a component
+library that will break on a rename.**
+
+Three things about the fix are worth carrying:
+
+- **Disjointness, not weight.** No `!important`, no `tailwind-merge`, and not one byte of the
+  definitions — they stay transcription-faithful. Every emitted class reports which CSS
+  *longhands* it writes, shorthands expand, and a base class writing a longhand an axis owns
+  is moved into that axis's `default` branch. Exactly one of the two is then ever present.
+- **The collision is between properties, not between class names.** Chip's base
+  `border: 1px solid var(--chrome-border-strong)` and its variant's `border-color` are two
+  names for one declaration, and nothing that compares class strings can see that.
+- **Refuse rather than choose.** Two axes writing the same property cannot be made disjoint,
+  because both apply at once and `cva` has no ordering between them. The build fails naming
+  both branches and the property. Which should win is not an emitter's decision.
+
+The same commit found the sibling of it: Tailwind's `hover:` wraps in `@media (hover: hover)`
+and `components.css`'s `:hover` does not, so **the two pipelines disagreed about every hover
+state in the system on a coarse pointer**. The media query may be the better behaviour. It is
+still not the emitter's to invent — if it is right it is right for both surfaces, so it is a
+definition-format question filed for one commit that moves both.
+
+### Reduced motion, and a `*` selector that turned a settle pass into an oscillator
+
+The page's bands oscillated at ~5Hz, for as long as they were open, **under exactly the
+preference that asks for stillness** — and the first symptom was a ~4px cross-site offset at
+`.idx__tags` that only existed under reduce, because both surfaces inherited it out of phase.
+
+The cause is boilerplate almost every reduced-motion block in the world contains:
+`transition-duration: 0.01ms` on `*`. `transition-property` defaults to `all`, so every
+`--term-slack` write became a height tween whose progress was still 0 for the rest of the task
+that wrote it. The terminator pass then measured the *previous* pass's layout instead of the
+one it had just reset — `S(n+1) = f(S(n))` with no fixpoint.
+
+Two layers were fixed, because they answer different questions. The stylesheet says `0s`: the
+block means "in no time", and the only thing `0.01ms` buys is a `transitionend` nothing here
+waits for. And the pass stopped trusting any stylesheet — it pins `transition: none` on the
+one element it writes, for exactly the duration of the pass.
+
+**The general rule: a universal `transition-duration` breaks any write-then-measure code in
+the document, and it will look like a bug in the measuring code.**
+
+### A scaffold emitted a dead format for a whole phase, and no gate could see it
+
+`scripts/new-component.mjs` kept writing `base: { declarations: […] }` for a phase after
+definitions became one ordered list. Nothing failed. The reason is the useful part: **every
+gate that understands the format lives on the far side of the scaffold actually being run, and
+a dry run never gets there.** A generator's *output* was unexercised even though the generator
+itself was tested.
+
+It was found by a human noticing that the loader had been special-casing the shape by hand. The
+fix is the shape of the repair worth copying: `test/scaffold.test.js` now runs the design
+system's own loader over the dry-run bytes — spawned as a process, because the boundary gate
+makes `design-system/scripts/` private and spawning a slice's entry point is how every other
+consumer already reaches it. In the same file, three `def.variants ?? []` reads were pointing
+at top-level sections that had stopped existing, so a coverage assertion had become **vacuously
+true**: the selector set was the root and nothing else. It now reads the list and asserts it is
+non-empty, because an empty list must not report coverage.
+
+### The suite ran on the developer's Node, not on CI's
+
+147 green locally, two failures on ubuntu, and neither was a platform difference:
+
+- `test/ci.test.js` opened with `import { globSync } from "node:fs"`. That export arrived in
+  Node 22; the workflows pin 20. The module raised `SyntaxError: … does not provide an export
+  named 'globSync'` **before one assertion in it ran** — so *the file that checks the gates was
+  the one file that never loaded*, and nothing said so.
+- `test/budget.test.js`'s abort-signal lock had nothing holding the event loop open, because
+  `AbortSignal.timeout()`'s timer is unref'd. On 20 the loop drained first and the runner
+  reported "Promise resolution is still pending but the event loop has already resolved",
+  cancelling that test **and the two after it**.
+
+Both are the same class: a version-dependent behaviour that is invisible on the machine you
+are typing on. The guard added is `ARRIVED_IN` — a list of builtin exports newer than the
+pinned Node, which fails any gate that imports one, **compared against the pin rather than a
+hard-coded 20**, so raising `node-version` retires an entry rather than orphaning a rule. And
+the verification was done the only way that settles it: docker on `node:20` linux *and*
+Windows on 24.
+
+### Do not widen a gold set inside the commit that freezes a floor
+
+The copy pass restored six Spetema sections an earlier rewrite had killed, and five questions
+were left scored against a gold set narrower than the corpus supported. `cross-b2b-b2c` was
+marked wrong by *every* arm while both ranked arms returned `project:spetema#subtitle` —
+"reconciling B2C e-commerce and B2B corporate needs on a single coherent site", the question
+almost word for word. **The retriever was right and the ground truth was wrong.**
+
+Widening a gold set raises hit@k. Doing it in the same commit that re-cuts the baseline is
+therefore indistinguishable, in the artefact, from tuning — which is the one shape the eval
+charter exists to stop. So it was **escalated instead of fixed**, written up for the owner,
+approved on a date that is on the record, and landed *alone*, by a rule that is mechanical and
+checkable against git: gold becomes the UNION of each question's pre-rewrite and current sets,
+with `git show <sha>:evals/questions.json` named as the state the union was taken against.
+
+Two details generalise. The count was **five, not the four that were escalated** — one question
+was filed under REWORDED rather than REPOINTED and did not surface when the count came off the
+`why` notes, so a category boundary hid a member of the set. And one restored id puts an echo
+of a heading back within BM25's reach, on a question that was deliberately worded *away* from
+that heading; the wording did not move back, so the protection stands, but it is written down
+rather than left for someone to rediscover as a mystery.
+
+### A significant result stopped being significant, and that is the honest outcome
+
+`embeddings vs bm25` was p=0.0386 before the re-widen and is **p=0.0654** after it: the
+correction helped BM25 more than embeddings, 9–2 on eleven discordant questions. The
+comparison this entire suite exists to make is no longer separated at 95% by these 49
+questions.
+
+The reading that is correct and the reading that is tempting are different sentences.
+**"This set cannot detect a difference"** is what the data says. *"The arms are equal"* is
+what it does not say, and publishing the second would be the same error as publishing a
+flattering one. Nothing was tuned, no threshold moved, and the remedy is arithmetic rather
+than engineering: more questions. It shipped with the p-value attached.
+
+### A census that could only prove its own good half
+
+`components.css` had eleven byte-compared generated regions and fifteen blocks that were
+simply *whatever was in the file* — and that is the wrong way round while the authored set is
+the one that is shrinking. Every block now carries a marker naming which half it is in, and an
+authored one carries a **reason from a closed vocabulary**. The build asserts three things:
+every block is exactly one kind, the reason is in the vocabulary, and **the scan finds that
+feature in the block** — so a reason that has stopped being true is a block that should now be
+a definition, and the build says which one.
+
+The design decision inside it is the one to copy: the check asserts **presence, not
+disqualification**. Proving that a block *cannot* generate would mean re-implementing the
+schema inside the census, and a census that re-implements the emitter agrees with it by
+construction — which is exactly the trap `dist/components.json` is kept out of by being parsed
+from the shipped CSS.
+
+Two of the vocabulary's original entries were wrong and were replaced by doing the work:
+`at-rule` became `unnamed-condition` (an `@media` whose query has a *name* generates fine;
+what disqualifies is a condition the system cannot name), and `computed-geometry` disappeared
+entirely once `expr` landed — the arithmetic was never the problem, an unreadable `var()`
+inside a string was.
+
+**And the census immediately caught this document counting it wrong.** Writing the handover,
+the generated/authored split was obtained by grepping the markers in `components.css` — which
+gives *"14 generated, 13 authored"*. The gate says *"26 blocks: 13 generated, 12 authored, 1
+split"*. Both readings are of the same file and only one is right: a **split** block
+contributes a marker to each half, and one generated region is typography, which is not a
+component at all. The number was in a draft for about ten minutes.
+
+That is the repo's own doctrine catching the person writing the repo's own doctrine, so it is
+worth stating as a rule rather than an anecdote: **a marker is not a count, and a grep is not
+a gate.** `node design-system/scripts/build.mjs --check` prints the census; anything derived
+from the file by hand is a second implementation of the census that nobody tested.
+
 ## The one structural lesson
 
 Four audits verified that the documentation matched the code. It did. **Nothing verified that the

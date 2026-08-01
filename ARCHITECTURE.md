@@ -3,6 +3,22 @@
 One page. Read this to find out **which slice you need** — then read that slice's
 `CLAUDE.md` (or `README.md`) and nothing else.
 
+> **Status, 2026-08-01 — accurate about the boundaries, behind on the design system.**
+> Everything below about slices, the artefact-not-import rule, the gates and the two
+> deployments is current and was re-verified on this date. What it does **not** yet describe
+> is the design system's architecture revision, which is mid-flight: components are becoming
+> **contract-first** — appearance held as data in `design-system/components/<id>/definition.json`
+> and rendered by emitters into **two** pipelines, a generated region of `components.css` and
+> a Tailwind `@theme` + generated React tier that `apps/next` consumes. At the last commit 13
+> of 26 blocks generate and the authored remainder is governed by a census that makes each one
+> state its reason.
+>
+> The full rewrite of this page is a scheduled pass (R7) and is deliberately not done
+> piecemeal. Until it lands, **`design-system/README.md` and `design-system/PATTERNS.md` are
+> the current truth** for anything about definitions, the emitters, the two pipelines or the
+> census. Numbers about that slice move weekly; the artefacts that produce them are named
+> wherever one appears here.
+
 ## The dependency graph
 
 Acyclic and one-directional. Nothing points back up.
@@ -66,10 +82,16 @@ inputs, each by its published surface:
 
 | Input | Route in |
 | --- | --- |
-| the design system | the `@yordan/design-system` package (`file:../../design-system`), and only the six subpaths its `exports` map names |
+| the design system | the `@yordan/design-system` package (`file:../../design-system`), and **only the subpaths its `exports` map names** — that map is the authority and it grows with the migration, so read it rather than a count typed here. It now covers both pipelines: the stylesheets and token artefacts, plus `tokens.tailwind.css` and a `./react/<id>` entry per generated component |
 | the corpus | a build-time `import` of `content/dist/content.json` |
 | the eval numbers | a build-time `import` of `evals/dist/page.json` |
 | the assistant | `fetch` to `/api/chat` over HTTP, endpoint in `NEXT_PUBLIC_CHAT_ENDPOINT` |
+
+Still four inputs, and the first one has grown a second dialect rather than a second route:
+`apps/next` now consumes the generated React components and their Tailwind utilities through
+the same package, which is why `class-variance-authority` and `tailwindcss` are dependencies
+*of the app* and not of the design system. The boundary is unchanged; what crosses it is
+richer.
 
 `css/{style,cv,mcp,evals}.css`, `css/fonts/` and `content/assets/` arrive by **copy at build
 time** through `apps/next/scripts/sync-artifacts.mjs`; every copy is gitignored, and a wrong
@@ -109,9 +131,11 @@ content pipeline's internals.
 The design system now states its half of that in the vocabulary a package manager
 understands. `design-system/package.json` is `@yordan/design-system` at a real `version`,
 `private` (it is consumed by `file:`, never from a registry), with `files: [dist, css,
-assets]` and an `exports` map naming **exactly six** subpaths: `tokens.css`,
-`components.css`, `components.json`, `tokens.flat.json`, `tokens.dtcg.json` and
-`tokens.d.ts`. A subpath not on that list is unreachable rather than merely undocumented,
+assets]` and an **`exports` map that is the authority on what is published**. Do not look for
+a count here: the map grew from six subpaths to twenty as the second pipeline landed and it
+moves with every batch of the migration — `design-system/package.json` is the file to read,
+and `contract-diff.mjs` treats the subpath list as one of the four surfaces it versions. A
+subpath not on that map is unreachable rather than merely undocumented,
 which is the same statement `check-boundaries.mjs` makes about
 `design-system/{tokens,components,stories,scripts,figma}/`. `assets/` is in `files` and
 deliberately not in `exports`, because `avatar.svg` is fetched by URL and never resolved as
@@ -193,6 +217,8 @@ Each carries a "generated — do not edit" banner.
 | `content/system.generated.json` | same | the token + component counts | same, plus the counts gate below |
 | `design-system/dist/tokens.dtcg.json` | same | `tokens.json`, aliases **kept** as `{group.token}` references | `build.mjs --check` byte-compares it, *and* the drift gate |
 | `design-system/dist/tokens.d.ts` | same | the token names, as a TS union | same |
+| the **generated regions** of `design-system/css/components.css` | `scripts/emit-css.mjs`, via `build.mjs` | `components/<id>/definition.json`, and `tokens/typography.json` for the type layer | `build.mjs --check` byte-compares each region, *and* the drift gate |
+| `design-system/dist/tokens.tailwind.css` and `dist/react/<id>.tsx` | `scripts/emit-tailwind.mjs`, `scripts/emit-react.mjs`, via `build.mjs` | the same definitions — pipeline 2 | `build.mjs --check` byte-compares them against its `packaged` list |
 | `design-system/RELEASED.json` | `design-system/scripts/contract-diff.mjs --release` | the current `dist/` | `contract-diff.mjs --check` (semver class vs `package.json`'s version) |
 | `design-system/CHANGELOG.md` | same | the classified diff against the previous snapshot | nothing — it is an append-only record, not a comparison |
 | the `<!-- content:… -->` regions of `index.html`, `cv.html` | `scripts/build-content.mjs` | `content/**` | `build-content.mjs --check`, and the drift gate |
@@ -220,10 +246,13 @@ and the paragraph that said so was false for four commits.** `build.mjs --check`
 else: that every component still has a spec and a story, that each spec agrees with the CSS
 beside it, that the counts advertised in `README.md`, `design-system/README.md`, `cv.html`
 and `work/portfolio-system.html` are the current ones, and that every figure in
-`tokens.json`'s own prose recomputes from the values beside it. (`tokens.dtcg.json` and
-`tokens.d.ts` are the exception among the six: `--check` byte-compares those two, because the
-older four are tolerable while the only consumer is this repo and stop being tolerable the
-moment another repo installs the directory.)
+`tokens.json`'s own prose recomputes from the values beside it. (The **four older** `dist/`
+files are the ones regenerated in place. Everything added since — `tokens.dtcg.json`,
+`tokens.d.ts`, `tokens.tailwind.css` and the generated React components — is **byte-compared**
+instead, and so is every generated region of `components.css`. `build.mjs` keeps the
+authoritative list in its `packaged` array and refuses to render a component whose file is
+missing from it: those bytes are what another repo installs, and a hand-edit that survives in
+the workspace is a hand-edit that ships.)
 
 What closed the gap is the **drift step**, which is a line of `npm run check` and a step of
 `ci.yml`:
@@ -402,8 +431,12 @@ These are cheap to violate and expensive to discover. Full detail in `CLAUDE.md`
 2. Colours, fonts and spacing come from `tokens.json` only. **Never** a
    `prefers-color-scheme` query in `components.css` or a page stylesheet — a themed colour
    is a token with a `dark` value, and print is a token with a `print` value.
-3. Every design-system component is three things: CSS block + `spec.md` + story. The build
-   fails otherwise.
+3. Every design-system component carries a `spec.md` and a story, always, and the build fails
+   otherwise. The third leg is the one the revision is changing: a component either has a
+   `definition.json` **its CSS block is generated from** — 13 of 26 blocks at the last commit,
+   and a scaffolded component is now born that way — or an authored block that must declare a
+   reason from a closed vocabulary, which the build checks is actually present in it. Current
+   detail in `design-system/README.md` and `design-system/PATTERNS.md`.
 4. A rail never sizes its band; content lives in the well. `.rail { contain: size }` used to
    enforce that and has been deleted — the loop is unbuildable now, not merely prevented, so
    the rule is upheld by review rather than by a declaration. Separately, `--space-6` is the

@@ -17,7 +17,11 @@ tokens/tokens.json ──▶ build.mjs ──▶ dist/tokens.css ────▶
                                        dist/tokens.dtcg.json ─▶ a consumer with its own
                                        dist/tokens.d.ts          token pipeline · a TS build
                                        css/components.css ──▶ site + Storybook
-components/*/spec.md  ◀── every component = CSS + AI spec + story (build-enforced)
+components/<id>/definition.json ─▶ emit-css ──▶ a generated region of components.css
+   (appearance as data)          ─▶ emit-tailwind + emit-react ──▶ dist/tokens.tailwind.css
+                                                                  dist/react/<id>.tsx ─▶ apps/next
+components/*/spec.md  ◀── every component = spec + story, and CSS that is generated or
+                          authored-with-a-reason (build-enforced, either way)
 ```
 
 ## The design
@@ -43,16 +47,25 @@ generations. "An old sketchbook with machines that help."
   semantic tier can be put to. No stylesheet anywhere contains a colour for print, and
   since the type scale landed, none contains a literal `font-size` either: paper gets its
   own pt sizes down the same pipe the colours use. `scripts/check-css.mjs` enforces it.
-- **23 components, triple-enforced** — each is a CSS block + an AI spec
-  ([example](design-system/components/button/spec.md)) + a Storybook story; `npm run build`
-  fails if any leg is missing.
+- **23 components, and their appearance is becoming data** — each carries an AI spec
+  ([example](design-system/components/button/spec.md)) and a Storybook story, and `npm run
+  build` fails if either is missing. The third leg is mid-migration: a component's CSS is
+  either *generated* from `components/<id>/definition.json` — about half the stylesheet at the
+  time of writing, byte-compared on every build — or authored, in which case it must declare
+  why, from a closed vocabulary the build checks against the block itself.
 - **AI-first** — [`CLAUDE.md`](CLAUDE.md) routes agents to
   [`design-system/README.md`](design-system/README.md); every spec carries canonical HTML
   patterns and do/don't rules written for machine consumption.
 - **A package, not a folder** — `@yordan/design-system` at a real version, with an `exports`
-  map naming exactly six subpaths and `RELEASED.json` as the published contract.
-  `contract-diff.mjs` classifies every change against it — added name MINOR, changed value
-  PATCH, removed or renamed MAJOR — and fails when the version bump does not cover the class.
+  map that is the authority on what is published (read `design-system/package.json`; the list
+  grows with the migration) and `RELEASED.json` as the published contract.
+  `contract-diff.mjs` classifies every change across four surfaces — tokens, components,
+  definitions and the subpath list — as added name MINOR, changed value PATCH, removed or
+  renamed MAJOR, and fails when the version bump does not cover the class.
+- **Two pipelines, one source** — the same definitions render the stylesheet the vanilla site
+  loads *and* a Tailwind `@theme` plus typed React components. Neither is a translation of the
+  other; the `@theme` holds no values at all, only `var()` references, so dark mode and print
+  reach a utility by the mechanism they already reach a hand-written rule by.
 - **Figma is an output** — one-way repo→Figma variables push, executed by an AI agent via
   the Figma MCP: [`figma/push-guide.md`](design-system/figma/push-guide.md).
 - **Storybook** — vanilla-HTML stories over the very CSS the site ships. axe runs over every

@@ -363,3 +363,171 @@ What is actually harder:
   changed. The document that records that is worth more than one that was right by luck.
 
 The through-line: *the same discipline that governs a colour value governs a sentence.*
+
+---
+
+# Chapter two — the design system stops being a stylesheet
+
+Appended, not edited in. Everything above describes the content pipeline and the assistant,
+and every figure in it belongs to the phase it sits under. This chapter is a later era, and
+it is the one where the *design system's* architecture changed. Read it the same way: dated,
+traceable to a commit, and most interesting where the plan turned out to be wrong.
+
+## The decision, and what it cost to take it
+
+The system had one output that mattered: `css/components.css`, hand-authored, with `spec.md`
+and a story beside each block and a build that refused a component missing any of the three.
+That was already better than most, and it had a ceiling — **the CSS was the source, so
+anything that was not CSS had to be re-derived from it.** `dist/components.json` is parsed out
+of the shipped stylesheet for exactly that reason.
+
+The owner's call, taken mid-programme: components become **contract-first**. Appearance moves
+into `components/<id>/definition.json` as data, and emitters render it into two independent
+pipelines — a generated region of `components.css` for the vanilla site and Storybook, and
+`dist/tokens.tailwind.css` + `dist/react/<id>.tsx` for the React surface. Neither output is a
+translation of the other. Both are renderings of one source, which is the entire claim.
+
+The end state was chosen explicitly and it is the uncomfortable one: **grow the schema until
+every component generates**, rather than stopping at a convenient subset and calling the
+remainder "special". That decision is what produced every finding below, because the blocks
+that resist are the ones with something to teach.
+
+## The reversals, chapter two
+
+### 1. "The definition format is a design problem" — wrong; it is an extraction problem
+
+The pilot was three components, transcribed rather than designed, and the three generated
+regions came back **byte-identical** to the blocks they replaced. The schema was then
+*extracted from those real cases* rather than written ahead of them, and validated with a
+closed keyword list so an unknown key is an error rather than an extension.
+
+Every construct the format has since gained arrived the same way — a real block refused to
+generate, and the refusal named the missing idea:
+
+| Block | What it forced |
+|---|---|
+| `entry`, `fact` | `at` — a set of overrides under a **named** condition, because both wrote `@media (max-width: 720px)` for the same reason and nothing in the repo said so |
+| `section-head` | `expr` — computed geometry with its bindings visible, because `var(--x)` inside a string is a binding no gate can see |
+| `media` | `contains` — `.ph:has(img)` is not a state and not a position; it is what the element **holds** |
+| `profile` | `child` — with the closure enforced by the schema: a child combinator may only reach a bare tag, and a class may only be reached by a descendant |
+
+### 2. "The five sections are the shape of a component" — wrong; the cascade was the emitter's opinion
+
+A definition held `base`, `variants`, `sizes`, `parts` and `at`, and the emitter rendered them
+in that fixed order. `media` and `profile` broke it: both group their rules by **topic**, and
+under a fixed cascade neither is expressible.
+
+The available fix was a `detach` flag — a key that exists to move a line rather than to say
+something about the component. The format refuses hints, so the sections became **one ordered
+list in stylesheet order**, each entry tagged by `kind`. *Source order is the cascade, so
+recording it records a fact rather than accommodating a renderer.* It paid for itself twice
+over: a reference became a backwards-only **name**, which is the only form in which a part
+scoped to a state is sayable at all, and two constructs that both wore the word `at` collapsed
+into one.
+
+It landed as a migration with a byte-parity ratchet — all ten definitions moved in a single
+commit, every generated region and all fourteen published artefacts byte-identical to a fresh
+render.
+
+### 3. "Two pipelines from one source will agree" — they did not, and the reason is not in CSS
+
+This is chapter two's equivalent of the BM25 result: the confident claim, measured, and wrong
+in an instructive direction.
+
+The React tier rendered `Button variant="solid"` as dark ink on a dark fill, precisely where
+the hero call to action is — rgb(20,21,24) against the vanilla page's rgb(245,245,244) — and
+`size="small"` at base metrics, 102×46 against 81×36.
+
+```
+a class attribute has no precedence
+  → CSS resolves the pair by STYLESHEET order
+  → Tailwind decides stylesheet order by SORTING CLASS NAMES
+  → px-space-3 (36) beats px-space-5 (38); text-content-inverse beats text-content-primary
+```
+
+Every override in the pilot sorted before the base class it had to beat. `Chip` worked, and
+worked only because its names sort the other way — **the library was correct by alphabetical
+accident.**
+
+The fix is *disjointness rather than weight*: no `!important`, no `tailwind-merge`, and not
+one byte of the definitions. Each emitted class now reports the CSS longhands it writes,
+shorthands expand, and a base class writing a longhand an axis owns is moved into that axis's
+`default` branch — so exactly one of the two is ever in the attribute. Where two axes write
+the same property, the build **fails naming both branches and the property**, because which
+should win is not an emitter's decision.
+
+### 4. "A generated stylesheet proves itself" — only the generated half
+
+At the time the census landed, eleven regions were byte-compared and fifteen blocks were
+simply whatever was in the file,
+which is the wrong way round while the authored set is the one shrinking. Every block now
+declares which half it is in and an authored one declares **why**, from a closed vocabulary,
+with the build asserting that the reason's feature is genuinely present. A reason that has
+stopped being true is a block that should now be a definition, and the build names it.
+
+The subtle call: the check asserts **presence, not disqualification**. Proving a block
+*cannot* generate would mean re-implementing the schema inside the census — and a census that
+re-implements the emitter agrees with it by construction, which is the trap
+`dist/components.json` is kept out of by being parsed from the shipped CSS.
+
+## The owner's words arrived, and the measurements moved under them
+
+The copy pass is the other half of this era. Thirteen commits, and the corpus went from **70
+chunks to 99**.
+
+Everything in the eval fell, and the fall is not a regression:
+
+```
+arm            hit@3 before   after the pass   after the gold-set correction
+bm25                  83.7%            63.3%                          67.3%
+embeddings            91.8%            79.6%                          81.6%
+```
+
+**A 36% bigger index does that to a fixed top-k.** The floor was re-cut with the reason on
+file, and part of the fall was measurement rather than retrieval: the pass restored six
+sections an earlier rewrite had killed, leaving five questions scored against a gold set
+narrower than the corpus supported. `cross-b2b-b2c` was marked wrong by every arm while both
+ranked arms returned the chunk that answers it in as many words. That correction was
+**escalated to the owner rather than folded in**, because widening a gold set raises hit@k and
+doing it inside the commit that freezes a floor is indistinguishable from tuning.
+
+And then the result this chapter exists to record honestly:
+
+> `embeddings vs bm25` was significant at **p = 0.0386**. After the ground truth was corrected
+> it is **p = 0.0654**. The comparison this entire suite was built to make is no longer
+> separated at 95% by these 49 questions.
+
+The correct sentence is *"this set cannot detect a difference"*. The tempting sentence is
+*"the arms are equal"*, and it is not what the data says. Nothing was tuned, no threshold
+moved, and the remedy is more questions rather than better engineering. It shipped with the
+p-value attached — which is the same discipline as publishing the table that overturned the
+plan, applied to a result that went the other way.
+
+## Numbers, chapter two
+
+| | |
+|---|---|
+| Definitions | 26 blocks — 13 generated, 12 authored, 1 split; each authored one carrying a reason the build checks (`build.mjs --check` at `2983f30`; still climbing) |
+| Contract version | 1.0.0 → 1.9.0, one release per batch, `CHANGELOG.md` entry each time |
+| Published subpaths | 6 → 21 |
+| Artefacts byte-compared per build | 17 packaged files + 14 generated regions |
+| Contract surfaces diffed | 4 — tokens, components, definitions, exports |
+| Tokens | 83 → 103, carrying 147 → 167 values |
+| Corpus | 70 → 99 chunks, 967 → 1435 terms |
+| Eval questions | 65, unchanged — not one added or reworded through any of it |
+| Billed rebuilds | 2 (the pass, then the citation-label correction), both sanctioned |
+| Workflows | 3 → 4 (`pages-a11y.yml`) |
+| Runtime dependencies in the vanilla site | still 0 |
+
+## What chapter two demonstrates
+
+- **Extracting a format from real cases beats designing one.** Every construct in the schema
+  is there because a block refused to generate without it, and can be traced to that block.
+- **Two renderings of one source is a falsifiable claim, and it was falsified once.** The
+  class-attribute ordering defect is worth more than a clean run would have been: it is the
+  proof that "one source, many surfaces" needs a mechanism and not an intention.
+- **A migration that may not change appearance is a discipline, not a limitation.** Byte
+  parity was the ratchet on every batch; the one deliberate appearance change in the whole era
+  — a single `0.05em` folded into `0.06em`, on five selectors — is written down as such.
+- **A result that gets weaker is still a result.** The p-value went the wrong way because the
+  ground truth got more accurate, and that is the version of the number worth publishing.

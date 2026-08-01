@@ -18,12 +18,32 @@ that every boundary crossing is a generated artefact rather than a code import, 
 "for task X, open slice Y" table. It is the only file you need to read to find out which
 slice you actually need.
 
-**Before touching any UI, read `design-system/README.md`.** In short:
+**Before touching any UI, read `design-system/README.md`.**
+
+> **Dated note, 2026-08-01 — the design system is mid-revision, and this list is a summary of
+> a moving target.** Components are becoming **contract-first**: appearance lives as data in
+> `design-system/components/<id>/definition.json` and is rendered by emitters into two
+> pipelines — a generated region of `components.css`, and a Tailwind `@theme` + generated
+> React components that `apps/next` consumes. At the last commit 13 of 26 blocks generate,
+> one is split between the two, and `build.mjs --check` prints the census — read it rather
+> than counting markers in the file.
+> The rules below are still the rules; where you need detail or a current number,
+> **`design-system/README.md` and `design-system/PATTERNS.md` are the truth** and this file
+> is a summary. The full architectural write-up is a scheduled pass and is not here yet.
+
+In short:
 
 - All colours/fonts/spacing come from `design-system/tokens/tokens.json` → run
   `npm run build` in `design-system/` after token edits. Never write raw palette values in
   CSS — semantic variables only.
-- Every component = CSS block + `spec.md` + story (the DS build enforces this).
+- Every component has a `spec.md` and a story, and the build fails otherwise. Its CSS is
+  either **generated** from `components/<id>/definition.json` — in which case do not edit the
+  block, edit the definition — or authored, in which case the block must carry a census
+  reason from a closed vocabulary that the build checks is really present. Both halves of
+  `components.css` are marked in the file; look at the marker before you type into it.
+- **`design-system/css/components.css` is no longer plain authored source.** Roughly half of
+  it is emitter output between markers, byte-compared on every `--check`. A hand-edit inside
+  a generated region is overwritten by the next build and fails the gate before that.
 - `css/style.css` is page layout ONLY; component styles belong in
   `design-system/css/components.css`.
 - **Dark mode is tokens, not media queries.** A themed colour gets a `dark` value beside its
@@ -55,6 +75,12 @@ slice you actually need.
   `scripts/build-content.mjs` (it interpolates them). (`js/case-studies.js` used to be on
   that list and is **gone** — the modal it fed was retired when the case studies got real
   pages.)
+- **There is a second pipeline, and `apps/next` is its consumer.** The same definitions
+  render `dist/tokens.tailwind.css` (every entry a `var()` reference to the runtime token, so
+  dark, print and the wide tier reach a utility by the mechanism they already reach a rule by)
+  and a typed React component per generated block. Never hand-write a React mirror of a
+  component: it is emitter output, and its subpath is in the package's `exports`. Details in
+  `design-system/README.md`.
 - Figma sync is one-way repo → Figma: `design-system/figma/push-guide.md`.
 - Storybook: `npm run storybook` in `design-system/` (port 6006). Two browser gates —
   `npm run test:a11y` and `npm run test:visual` — live there too and deliberately do **not**

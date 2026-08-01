@@ -1,8 +1,30 @@
 # Project pages — architecture
 
-**Status: proposed, not built.** Nothing in this document is implemented. It exists so the
-decisions are made before the code, and so the two that need the owner are visible rather than
-buried in a diff.
+> ## HISTORICAL — DEPRECATED 2026-08-01. Do not use this as a specification.
+>
+> **What it was for.** A planning document written *before* the code, so that the decisions
+> behind `/work/<id>` — and the two that needed the owner — were visible rather than buried in
+> a diff.
+>
+> **When it served.** Authored `1c3a1d6`, 2026-07-30. Both halves of what it proposes have
+> since shipped: the five case-study pages at `d3cf702` and the modal's retirement at
+> `9c833b1`, both 2026-07-30; the assistant-only depth for the nine notable projects at
+> `609cf50`, 2026-08-01.
+>
+> **Superseded by.** The shipped pages themselves, `content/CLAUDE.md` for the authoring
+> contract, and `ARCHITECTURE.md` for how `work/<id>.html` is generated and gated.
+>
+> **Read it for the reasoning, never for the state.** Its original header said *"proposed,
+> not built"*, which was true on the day and is the sentence most likely to mislead now.
+> Several figures in it — corpus and chunk counts especially — describe a 70-chunk corpus that
+> is 99 chunks today. The argument that survives, and the reason this file is kept rather than
+> deleted, is the one about addressability: **a modal has no URL**, and for work whose premise
+> is that every claim is inspectable, an inspectable thing with no address is the
+> contradiction worth fixing.
+>
+> **One operating rule from it is still live** and has been copied where it belongs: new
+> writing that enters the corpus costs a billed vector rebuild, so batch it and rebuild once.
+> That is in `docs/HANDOVER.md`, which is the document to trust for it.
 
 **Scope: the five case studies get pages. The nine notable projects do not.** That is not a
 compromise — it is the distinction the content already draws. A project with

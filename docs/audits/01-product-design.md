@@ -1,5 +1,31 @@
 # Audit prompt — Product Designer
 
+> ## HISTORICAL INSTRUMENT — DEPRECATED 2026-08-01. Not an input for future work.
+>
+> **What this is.** An audit *prompt*: the brief that was pasted into a fresh session to run
+> one of the four independent reviews this repo was put through. It is a measuring
+> instrument, not a description of the system, and it was never a specification.
+>
+> **When it served.** Written `ee4fd78`, 2026-07-27, with its two siblings in this
+> directory. The findings it produced were executed in the waves `docs/HANDOVER.md` records,
+> and the reasoning that survived them lives in `docs/PROGRAMME-LOG.md`.
+>
+> **Do not run it as written.** Its "read these first" list and its factual framing describe
+> the repo as it stood on that date, and the repo has moved a long way since — a second front
+> end, a contract-first design system with two pipelines, a corpus that went from 70
+> chunks to 99.
+> Its print check still asks whether `/cv` is
+> two pages, which is a question about a CV the owner has since reordered and retitled.
+>
+> Re-auditing is a good idea; **write a fresh brief from `ARCHITECTURE.md` and the per-slice
+> `CLAUDE.md` files rather than editing this one**, so that the record of what was asked in
+> July stays the record of what was asked in July.
+>
+> **The findings are deliberately not here.** `.gitignore` keeps `*-findings.md` and the two
+> later audits out of the repository, and the entry there carries the reason: this deployment
+> is public, and publishing an enumeration of its own weaknesses with reproduction steps arms
+> a reader in the wrong direction. That is unchanged by this header.
+
 Copy everything below the line into a fresh session, run from the repo root.
 
 ---

@@ -2,17 +2,22 @@
 
 Written at the end of a long session. Everything here was measured, not remembered.
 
-**Branch:** `main` · **HEAD:** the docs commit sitting on `c84ddf9`.
+**Branch:** `main`. **The push happened.** `origin/main` carries everything through the
+ordered-rules migration, production is deployed and was verified from outside (see below),
+and GitHub is down to one branch. Local `main` runs a little ahead of the remote at any
+moment because work is in flight — `git rev-list --count origin/main..main` is the only
+honest answer to "how far", and this sentence cannot interpolate one.
 
-**Merged is not deployed, and this is the first thing to know.** `main` is **well ahead of
-`origin/main`** — the whole contract-gaps + second-site programme (24 commits) plus the
-documentation pass that closes it, committed locally and **not pushed, not deployed**. Ask
-git for the exact figure rather than this sentence, which cannot interpolate one:
-`git rev-list --count origin/main..main`.
+**Production is live and current.** Checked this session against
+`yordan-portfolio.vercel.app`: `/cv` carries the owner's retitle *"Portfolio as a product"*,
+the index carries the notable-cards hint line, and `/apps/next/package.json` and
+`/apps/next/next.config.mjs` both 404 — the `.vercelignore` guard doing its job on a
+deployment that now contains an `apps/` to guard.
 
-`yordan-portfolio.vercel.app` is serving `9da8576`, the previous session's HEAD, and it is
-healthy (`/`, `/cv`, `/evals`, `/work/<id>` all 200). Everything the earlier sections of this
-file call "deployed" still is; everything in the programme section below is not.
+**R4 is in flight while you read this.** The design system is mid-migration: definitions are
+landing one batch at a time, and `design-system/**` has uncommitted work in it more often
+than not. Every design-system figure below is read from the last commit, not from the working
+tree, and will have moved.
 
 ---
 
@@ -24,9 +29,10 @@ file call "deployed" still is; everything in the programme section below is not.
 > `ARCHITECTURE.md` for the slice map. Anything about deploying — env vars, a second Vercel
 > project, headers — is in `docs/DEPLOY-RUNBOOK.md` and nowhere else.
 >
-> Everything is committed on `main` and `npm run check` is green — start there, and if it is
-> not green, that is the first thing to tell me. **`main` is well ahead of `origin/main`, so
-> "merged" does not mean "deployed" right now**; the handover's OPEN ITEMS say which is which.
+> Everything is committed on `main`, pushed, and deployed — start with `npm run check`, and
+> if it is not green, that is the first thing to tell me. **The design system is mid-migration
+> (R4), so expect uncommitted work under `design-system/` and do not run a build over
+> somebody else's half-finished tokens.** The handover's OPEN ITEMS say what is in flight.
 >
 > I have more defects to fix. I will describe them; audit each one against the actual code
 > before you change anything, because several of my reports this session turned out to have a
@@ -42,30 +48,41 @@ file call "deployed" still is; everything in the programme section below is not.
 ## Current numbers
 
 ```
-HEAD            docs commit on c84ddf9, main — NOT pushed, NOT deployed
-deployed        9da8576 — origin/main, the whole programme behind local main
-tests           146 / 146
-gates           all green — `npm run check` exits 0 end to end
-corpus          9530564fdc07971c · 70 chunks · 967 terms      (unmoved)
-design system   83 tokens · 147 values · 23 components         (unmoved)
-                (83 base + 23 dark + 36 print + 5 wide)
-package         @yordan/design-system 1.0.0 · 6 exported subpaths · RELEASED.json at 1.0.0
-questions       65 — 49 retrieval, 16 abstention
-boundaries      8 slice rules · 74 files · 20 crossings pinned
+deployed        yes — verified from outside: retitle live, hint line live, /apps/ 404
+tests           149 / 149
+gates           green — content, css, boundaries, evals and the suite all pass
+corpus          43413e53aa94810c · 99 chunks · 1435 terms      (was 70 · 967)
+design system   103 tokens · 167 values · 23 components         (was 83 · 147)
+                (103 base + 23 dark + 36 print + 5 wide)
+package         @yordan/design-system 1.9.0 · 21 exported subpaths · RELEASED at 1.9.0
+definitions     26 blocks: 13 generated, 12 authored, 1 SPLIT (ask-fab, the first)
+                14 generated regions in components.css · 13 definitions · 17 packaged
+                artefacts byte-compared   (read off build.mjs --check at 2983f30)
+questions       65 — 49 retrieval, 16 abstention  (unmoved: not one was added or reworded)
+boundaries      8 slice rules · 80 files · 20 crossings pinned
 pages           vanilla: index · cv · mcp · evals · work/<id> × 5
                 apps/next: the same nine, statically exported (11 files, with 404)
-workflows       ci.yml · design-system.yml · next.yml
+workflows       ci.yml · design-system.yml · next.yml · pages-a11y.yml
 ```
 
-Every figure above was read off a gate's own output this session, not remembered. The
-component count says 23 rather than the 21 this block used to carry because two components
-landed after it was last written, not because anything moved this session — `6b6cc48`'s
-message states the counts were unchanged, and `content/system.generated.json` agrees.
+Every figure was read off a gate's own output or off the last commit this session, not
+remembered. **The design-system rows move under you** — they are the ones R4 is changing, and
+`node design-system/scripts/build.mjs --check` is the artefact that produces them.
 
-**Nothing is billed by the current state.** `corpusHash` has not moved since the corpus
-freeze: the stopword change altered the index and not the chunk text, and the project pages
-altered `cite` metadata and not the chunk text. Both vector caches are valid, and the whole
-of Phases 1–8 was free — no chunk text was touched.
+**One thing this block cannot show, and it is the important one.** `npm run check` was **not
+run end to end** for this update: the design-system build writes `dist/` and
+`content/system.generated.json`, and another agent holds uncommitted work in that directory.
+Running it would have rendered their half-finished source into published artefacts. The
+read-only gates were run instead and are green — `build-content.mjs --check` (ten files),
+`check-css.mjs`, `check-boundaries.mjs`, `evals/run.mjs --check` (four artefacts, no
+regression across 7 metrics × 6 arms) and the 149-test suite.
+
+**What was billed, and it was budgeted.** The copy pass moved chunk text, so the corpus
+fingerprint moved twice and was re-embedded twice: once for the pass itself (99 chunks), and
+once more — sanctioned, one pass — after the open-source chunk's citation label was corrected
+to the heading that is actually on the page, because the digest covers `heading. text`. The
+baseline was re-cut twice with reasons on file. Both vector caches are valid at
+`43413e53aa94810c`.
 
 ---
 
@@ -93,7 +110,8 @@ was the first free one.
 
 ## The contract-gaps + second-site programme (Phases 1–8)
 
-One session, eight phases, 24 commits, **none of them pushed**. Two threads ran through it:
+One session, eight phases, 24 commits — **unpushed at the time this section was written, and
+pushed since**, along with everything in the era after it. Two threads ran through it:
 close the gaps between what this repo's documents claimed and what its gates enforced, and
 build a second front end that could only work if those boundaries were real.
 
@@ -153,38 +171,186 @@ These are the ones where a phase boundary caught something the phase itself had 
 
 ---
 
+## The architecture revision, the copy pass, and the push (R1 → R4, and everything beside it)
+
+Everything above ends at the documentation commit that closed Phase 8. What follows is the
+era after it, and it is a bigger change than the eight phases were: **the owner took an
+architectural decision mid-programme, and the design system stopped being a stylesheet.**
+
+### The decision
+
+Components become **contract-first**: a component's appearance is held as data in
+`design-system/components/<id>/definition.json`, and two emitters render it into two
+independent pipelines —
+
+| | Pipeline 1 | Pipeline 2 |
+|---|---|---|
+| Output | a generated region of `css/components.css` | `dist/tokens.tailwind.css` + `dist/react/<id>.tsx` |
+| Consumer | the vanilla site, and Storybook | `apps/next` |
+| Emitter | `scripts/emit-css.mjs` | `scripts/emit-tailwind.mjs`, `scripts/emit-react.mjs` |
+
+Neither output is a translation of the other — both are renderings of the same definition,
+which is the whole claim. The owner chose the end state explicitly: **grow the schema until
+every component generates**, rather than stopping at a comfortable subset. Typography went
+the same way and is now a generated region rendered from `tokens/typography.json`, which is
+deliberately *not* a component definition (nothing about `.t-lead` wants a `<TLead>`, and
+`.t-title` sets `line-height` twice behind a fallback — a construct a class attribute cannot
+express, because a class attribute has no order).
+
+### R1–R3, in the order they landed
+
+- **The pilot** (`82404c7`). `button`, `chip` and `stat` moved into definitions and out of
+  authored CSS, and all three generated regions came back **byte-identical** to the blocks
+  they replaced. Nothing was designed: every value was transcribed. The one idea in it is
+  that a value is one of three things — a bare string is a structural literal, `{token:x}` is
+  a binding, an array is a sequence of both — so `border: 1px solid var(--content-primary)`
+  records which third of itself is a token, a fact no parser recovers from CSS.
+- **Pipeline 2** (`a8b307a`, `85b0e25`, `13bbdca`). The same three definitions render a
+  Tailwind `@theme` in which **every entry is a `var()` reference and no entry holds a
+  value** — so dark mode, print and the wide tier reach a utility by exactly the mechanism
+  they already reach a hand-written rule by, and there is nothing to fork. Three refusals are
+  load-bearing: the 25 raw ramp tokens get no utility at all (`bg-stone-500` would hand a
+  consumer the raw tier this system's first rule reserves), `color-scheme` stays out of
+  `--color-*`, and the keys are `p-space-3` / `text-step-xs` so the package cannot silently
+  redefine a class the Tailwind ecosystem already owns.
+- **The schema** (`7bb06fd`). Extracted from the real definitions rather than invented ahead
+  of them, and validated by `scripts/validate-json.mjs` with a **closed keyword list** — a
+  key the validator does not know is an error, not an extension.
+- **`contract-diff.mjs` grew to four surfaces** — tokens, components, definitions, exports —
+  and the version walked `1.0.0 → 1.9.0` with a release per batch and a `CHANGELOG.md` entry
+  each time. Exports went 6 → 11 → 21 subpaths. Both figures are still climbing;
+  `design-system/CHANGELOG.md` is the record and `package.json` is the current state.
+- **The ordered-rules migration** (`fd76075`). A definition held five named sections and the
+  emitter rendered them in a fixed cascade; `media` and `profile` proved the cascade was the
+  *emitter's opinion rather than the stylesheet's shape*. The alternative was a `detach` flag
+  — a key that exists to move a line rather than to say something about the component — and
+  the format refuses hints. So the sections became **one ordered list in stylesheet order**,
+  each entry tagged by `kind`: source order *is* the cascade, so recording it records a fact.
+  Landed as a migration with a byte-parity ratchet — all ten definitions moved in one commit,
+  every generated region and all fourteen published artefacts byte-identical to a fresh
+  render, and the contract's resolved projection unchanged.
+- **The census** (`0090df9`). `components.css` could prove its generated half and nothing
+  about the rest. Every block now carries a marker saying which half it is in, and an
+  authored one **says why** from a closed vocabulary; the build asserts that the reason's
+  feature is actually *present* in the block, so a reason that has stopped being true is a
+  block that should now be a definition and the build names it. At the last commit, in the
+  gate's own words: **26 blocks — 13 generated, 12 authored, 1 split** — with the authored
+  reasons breaking down as 5 `relational-selectors`, 4 `unnamed-condition`, 2
+  `foreign-selector`, 2 `local-custom-property`. **`split` is new**: `2983f30` cut `ask-fab`
+  into a generated half and an authored one, which is the shape the migration takes when a
+  block is *partly* expressible rather than not at all.
+
+### The finding that cost the most, and is the most reusable
+
+**A class attribute has no order.** `cva` concatenates base and variant classes into one
+attribute, CSS resolves the pair by *stylesheet* order, and Tailwind decides stylesheet order
+by sorting class names. Every override in the pilot sorted before the base class it had to
+beat — `px-space-3` before `px-space-5`, `text-content-inverse` before `text-content-primary`
+— so `Button variant="solid"` rendered dark ink on a dark fill where the hero CTA is, and
+`size="small"` rendered at base metrics: 102×46 against the vanilla page's 81×36. Chip worked,
+and worked only by the accident that its names sort the other way.
+
+The fix (`612732c`) is **disjointness, not weight**: no `!important`, no `tailwind-merge`, and
+not one byte of the definitions. Every emitted class now reports the CSS longhands it writes,
+shorthands expand, and a base class writing a longhand an axis owns is moved into that axis's
+`default` branch — so exactly one of the two is ever in the attribute. Two axes writing the
+same property cannot be made disjoint, and the build **fails naming both branches and the
+property** rather than choosing. In the same commit `:hover` became `[&:hover]:` because
+Tailwind's `hover:` wraps in `@media (hover: hover)` and `components.css`'s `:hover` does not
+— the two pipelines disagreed about every hover state in the system on a coarse pointer. That
+media query may well be better behaviour; it is **not the emitter's to invent**, so it is
+filed as a definition-format question that must move both surfaces in one commit.
+
+### The copy pass arrived, and the ground truth had to follow it
+
+Thirteen workshop commits merged (`09197f1`). The corpus went **70 → 99 chunks**, and the
+site/CV skills taxonomy collapsed into one six-row list, which killed `skills:design:site` and
+stopped the eval runner before a question ran.
+
+- Two question ids were repointed to the surviving groups that carry their subject, **all 65
+  re-verified** against the new corpus rather than only the two the error named, and no
+  question was added, removed or reworded. Every premise still holds; the two
+  fabricated-employer probes got *harder*, because the pass added more Google and Hotjar
+  mentions as tools.
+- **Everything fell, and that is what a much bigger index does to a fixed top-k** — 70 chunks
+  to 99: bm25 hit@3 83.7 → 63.3, embeddings 91.8 → 79.6. The floor was re-cut with the reason
+  on file. (`52fbcfb`'s own message says "36% bigger" in one sentence and "70 chunks to 99" in
+  another; the counts are the checkable half, so they are what is quoted here.)
+- Part of that fall was **measurement, not retrieval**, and it was escalated rather than
+  folded in: the pass restored six Spetema sections an earlier rewrite had killed, so five
+  questions were being scored against a gold set narrower than the corpus supports.
+  `cross-b2b-b2c` was marked wrong by every arm while both ranked arms returned
+  `project:spetema#subtitle` — the question in as many words. Widening a gold set raises
+  hit@k, so doing it inside the commit that freezes a floor is precisely the shape the
+  charter's tuning rule exists to stop. **The owner approved it on 2026-08-01** and it landed
+  alone (`bd6e191`), by a rule that is mechanical and checkable against git: gold is the
+  UNION of each question's pre-rewrite and current sets. It recovered about a sixth of the
+  fall, and only on the arms that could recover it.
+- **The comparison this suite exists to make stopped being significant, and it is published
+  that way.** `embeddings vs bm25` was p=0.0386 and is now **p=0.0654** — the re-widen helped
+  bm25 more than embeddings, 9–2 on eleven discordant questions. That is not retrieval getting
+  worse; it is the ground truth getting more accurate and 49 questions turning out to be too
+  few to hold the distinction they appeared to hold. It is reported as *"this set cannot
+  detect a difference"*, never as *"the arms are equal"*, and the remedy is more questions.
+
+### The defect chain, and every chip merged
+
+**Every branch in this repo is now an ancestor of `HEAD`** — the six chips this file listed
+as in flight, the copy workshop, and the two agent branches that opened after it. Checked
+with `git merge-base --is-ancestor`, not assumed. What the chips carried, and what each one
+actually turned out to be:
+
+| Fix | What it turned out to be |
+|---|---|
+| `Independent` unreachable (`9eb816b`) | The gate reads a term as a proper name when every occurrence in chunk *bodies* is capitalised — which is what stops `team`, `web` and `site` opening it. `independent` appears lowercase exactly once, in Domestina's description, and one unrelated sentence made an employer unreachable by the only name it has. Fixed by a per-entity `sole` set: a term also counts when it **exhausts** one of that entity's authored names |
+| Reduced-motion 5Hz oscillation (`ebc9900`) | The `*` boilerplate `transition-duration: 0.01ms`, with `transition-property` defaulting to `all`, turned every `--term-slack` write into a tween still at progress 0 for the rest of the task that wrote it — so the terminator pass read the *previous* pass's layout. Fixed in both layers and on both surfaces |
+| `pageRegions` (`20a162a`, re-copied at `554cdc2`) | The font-ready re-settle had never run: a name deleted with the case dialog threw inside a promise. It was `all` all along |
+| Chat trace count (`ec2e5d1`) | A validation notice is not a tool call |
+| Corpus hrefs (`fe7028d`) | The renderer now rebases what the build already rebased |
+| Drawer `<aside>` (`17a7285`) | `index.html` catching up to the spec the axe gate fixed in the design system |
+| Storybook fonts (`9c66a24`) | The gates were taking their text metrics from a network fetch |
+| The page-level axe gate (`68520b5`) | The assertion the story-level exemptions explicitly do not make: four shipped pages, both themes, no exemptions — `pages-a11y.yml`, the **fourth** workflow |
+
+### The push era
+
+Production is deployed and was verified from outside rather than assumed: the retitle, the
+hint line, and the `/apps/` guard returning 404. All four workflows are green, and getting
+there needed one real fix — **the suite ran on the developer's Node, not CI's** (`f451090`).
+`test/ci.test.js` imported `globSync` from `node:fs`, which arrived in Node 22, so on the
+runner's pinned Node 20 *the file that checks the gates was the one file that never loaded*.
+`test/budget.test.js` had an abort-signal lock with nothing holding the event loop open,
+because `AbortSignal.timeout()`'s timer is unref'd. Both fixed, and a guard added:
+**`ARRIVED_IN` lists builtin exports newer than the pinned Node and fails any gate that
+imports one**, compared against the pin rather than a hard-coded 20, so raising
+`node-version` retires an entry. Verified in docker on node:20 linux and on Windows node 24.
+
+Eight stale branches were deleted and **the remote is `main` only** (`git branch -r`: one
+branch and `HEAD`). The eight local `claude/*` names are still listed because each has a
+worktree attached; all eight are ancestors of `HEAD` and none holds unmerged work.
+
+---
+
 ## What is left
 
-### OPEN ITEMS from Phases 1–8 — read these before starting anything
+### OPEN ITEMS — read these before starting anything
 
-Five. Each says what is known, what is not, and who it belongs to.
+Lettered so the earlier ones keep their names. **(a)** and **(d)** are closed and are kept as
+one line each, because a reader who remembers them should find out where they went rather
+than wonder.
 
-**(a) Phase 5, the owner's content pass — OPEN, and the corpus is frozen until it lands.**
-No commits, by design: the words are the owner's. The operating constraint is the one from
-`docs/PROJECT-PAGES.md` and it is financial rather than editorial — **write everything, then
-rebuild once**. A content pass that touches chunk text moves `corpusHash`, invalidates both
-vector caches and costs one billed Voyage rebuild plus a re-cut baseline:
+**(a) Phase 5, the owner's content pass — CLOSED.** It landed: thirteen workshop commits
+merged at `09197f1`, the corpus went 70 → 99 chunks, and the ground truth followed it. The
+"write everything, then rebuild once" constraint was honoured — one billed rebuild for the
+pass, plus one sanctioned second pass after the citation-label correction, and two baseline
+re-cuts with reasons. The corpus is no longer frozen; it is `43413e53aa94810c`, 99 chunks,
+1435 terms, and both caches are valid at it.
 
-```sh
-node --env-file=.env scripts/build-vectors.mjs
-node --env-file=.env evals/run.mjs
-node evals/run.mjs --update-baseline --reason "owner content pass"
-```
-
-**One** rebuild after the whole pass, never one per edit. Until then, treat the corpus as
-frozen: `9530564fdc07971c`, 70 chunks, 967 terms.
-
-The brief that produced this session records a *copy-workshop chip* as existing. It is not
-visible from this checkout — `content/**` is unmodified in all six worktrees listed under (d),
-and `git status` on `main` shows no content change. So either it has not started or it lives
-somewhere this session cannot see. **Do not assume it is done.**
-
-**(b) The Tier 2 chat verification checklist — WRITTEN, NOT RUN.** It is
+**(b) The Tier 2 chat verification checklist — WRITTEN, STILL NOT RUN.** It is
 `docs/DEPLOY-RUNBOOK.md` §4: preflight `204` before the budget is touched, reflected
 `Access-Control-Allow-Origin` plus `Vary: Origin`, one budget decrement per conversation, and
-the four negative checks. It cannot be run until `CHAT_ALLOWED_ORIGINS` is set, and that
-cannot happen until `main` is pushed and a second origin exists. It is **not** in
-`apps/next/README.md`; that file belongs to `next-app`, and a note for its owner is under (d).
+the four negative checks. The push has happened, so the blocker is now down to one thing:
+`CHAT_ALLOWED_ORIGINS` is unset and there is no second origin to put in it. It is **not** in
+`apps/next/README.md`; that file belongs to `next-app`.
 
 **(c) The generation-eval publication paragraph — AWAITING THE OWNER. Nothing about this may
 reach a page.** `evals/generation.mjs` and `evals/generation.json` exist and are committed;
@@ -218,22 +384,10 @@ for best in the table" has now broken three times. And unlike `/evals`, this art
 placeholder mechanism, because `evals/generation.json` is gated by nothing and only a billed
 run can move it.
 
-**(d) Six chip sessions are in flight, and none of them is merged.** Each is a `claude/*`
-worktree under `.claude/worktrees/`. Their bases differ, so all six will need rebasing onto
-whatever `main` becomes. Measured this session, not remembered:
-
-| Worktree / branch | Base | State |
-|---|---|---|
-| `awesome-rhodes-08e8b6` | `cace793` | uncommitted, `js/answer-render.js` (+13/−2). Two related fixes: the corpus URL becomes root-relative (`content/dist/content.json` 404s from `/work/<id>`), and a `rebaseHref()` for corpus link hrefs, matching `rootRebase` in `build-content.mjs` |
-| `confident-poincare-354e22` | `fe12a71` | uncommitted, one line of `js/automata.js`: `rebuild(pageRegions, …)` → `rebuild(all, …)`. **This is the upstream defect `apps/next`'s port reported** — `pageRegions` is defined nowhere in that file, so the font-ready re-settle throws inside a promise callback and the ResizeObserver silently heals it |
-| `exciting-bose-c27c23` | `fe12a71` | uncommitted, `design-system/README.md` + `design-system/package.json` + `index.html`, plus two new files: `design-system/scripts/page-a11y.mjs` and `.github/workflows/pages-a11y.yml` — a **page-level** a11y gate, which is the assertion the story-level exemptions explicitly do not make |
-| `happy-meitner-4197f2` | `fe12a71` | uncommitted, `index.html`: the drawer's `<aside role="dialog">` / `<header>` pair becomes two `<div>`s. This is the vanilla half of the defect Phase 2's axe gate found in the design system — `9458b2d` says in as many words that "index.html still ships the old pair" |
-| `infallible-tu-8c096e` | `cace793` | uncommitted, `js/chat.js` + `apps/next/src/lib/chat/{types,useChat}.ts`: a gate `notice` stops counting as a tool call in the trace (`count: false`, the treatment `meta` already had). **Touches both surfaces**, which is the port rule working — fixed upstream, re-applied in the copy |
-| `wizardly-liskov-f7f306` | `fe12a71` | **one commit ahead**, `9c66a24`: Storybook loaded Google's font CSS while the site vendors its own, so the a11y and visual gates took their metrics from a network fetch. All 62 stories match the committed win32 baselines after the swap |
-
-Three of the six (`confident-poincare`, `happy-meitner`, `infallible-tu`) are fixing defects
-this programme's own gates or ports *found*, which is the arrangement working. None has been
-reviewed here and none is claimed correct — the table records what is on disk.
+**(d) The six chip sessions — CLOSED, all merged.** Every one is an ancestor of `HEAD`, and
+what each turned out to be is in the defect-chain table above. The table that used to sit
+here — six worktrees, their bases and their uncommitted diffs — described a state that no
+longer exists, and is removed rather than left to be read as current.
 
 **(e) The Storybook Vercel project — PENDING, and the CV currently links a URL that lies.**
 `yordan-design-system.vercel.app` answers 200 with **this portfolio** (`/cv` resolves there,
@@ -243,7 +397,69 @@ is published by `content/profile.json` and therefore by the CV, and it was publi
 was fixed; the CV is a **page**, its words are the owner's, and it has been left alone. The
 fix is either a Storybook project with that domain moved onto it
 (`docs/DEPLOY-RUNBOOK.md` §3) or an owner edit to `content/profile.json` — a deploy decision,
-not a copy one, so it is recorded rather than acted on.
+not a copy one, so it is recorded rather than acted on. **Re-checked after the push: still
+true.**
+
+**(f) R4 — the migration is IN FLIGHT right now.** At `2983f30`, in the census gate's own
+words: **26 blocks — 13 generated, 12 authored, 1 split**, with 14 generated regions in
+`components.css` (the thirteenth definition plus typography), contract at 1.9.0 and 21
+published subpaths. `ask-fab` is the first block to be **split** into a generated half and an
+authored one, which is why there is now a third census kind.
+
+These figures moved twice while this section was being written, and one of them was wrong in
+between: counting the markers in `components.css` by hand gives "14 generated, 13 authored"
+and the gate says "13 generated, 12 authored, 1 split", because a split block contributes a
+marker to both halves. **Read `node design-system/scripts/build.mjs --check`; do not count
+the file.** That is the same lesson this repo keeps paying for, collected one more time. A **row split** is reported as approved and in
+progress, and it is the change that would take the contract to **2.0.0** — a MAJOR, because
+splitting a component removes a name. *That last part is reported rather than verified: at
+the last commit nothing in `design-system/` names a 2.0.0 or a row split, which is what
+in-flight work looks like from outside.* Expect `design-system/**` to have uncommitted work in
+it, expect the counts to move, and **do not run a design-system build while it does**: that
+build writes `dist/` and `content/system.generated.json`, so it would publish somebody else's
+half-finished source. Read the counts from the last commit instead.
+
+**(g) R5, the cutover — PENDING.** The end state the owner chose is every component
+generating. R4 is the approach to it; R5 is the point at which the authored half of
+`components.css` is empty and the census has nothing left to excuse.
+
+**(h) R6, deploys and Tier 2 — PENDING**, and it is the same list as (b) plus
+`docs/DEPLOY-RUNBOOK.md`'s three projects: `CHAT_ALLOWED_ORIGINS` on the vanilla project with
+the redeploy it needs, the second Vercel project with a **preview build before any domain**,
+and the optional Storybook project from (e). None of these can be done from the repository;
+all of them are dashboard steps, which is why the runbook exists.
+
+**(i) R7, the documentation pass — PENDING, and `ARCHITECTURE.md` is stale in a specific
+way.** That file describes **one** pipeline. It says the design system emits CSS, tokens and
+a component contract; it does not describe definitions, the two emitters, the Tailwind/React
+tier, or the census. Two sentences in it say the `exports` map names "exactly six" subpaths
+and there are **20**; a third counts "the six" `dist/` outputs, and `dist/` has grown a
+Tailwind theme and a `react/` directory since. All three are left standing on purpose —
+this rewrite is R7's, and doing it piecemeal produces a document that describes neither
+architecture. Until then, `ARCHITECTURE.md` is right about the boundaries and behind on what
+the design system *is*. (What it says about `check-boundaries.mjs` asserting **six artefacts**
+exist is a different six and is still true — checked.)
+
+**(j) The deferred design decisions — the owner's, and each is written where it applies.**
+There is **no single consolidated list in the repo**, so this is a pointer table rather than a
+count; anyone quoting a number for it is quoting something that is not written down:
+
+| Decision | Written at |
+|---|---|
+| `$conditions` are named for their values (`below-720`, `from-760`) because `components.css` holds **seventeen** distinct max-widths and no ramp. Consolidating them is an *appearance* change the migration may not make | `design-system/README.md`, the `$conditions` section |
+| `line-height` — twelve distinct values across nineteen declarations, drift to be consolidated *before* it is tokenised. `max-width` is on the same list, as a *measure* rather than a spacing job | `design-system/README.md`, the exemptions section |
+| The border-token question | `design-system/PATTERNS.md`, its closing section |
+| The single deliberate appearance change of the type phase: one `0.05em` tracking value, on five selectors, folded into `0.06em` | `df35070` |
+| Whether `:hover` should carry `@media (hover: hover)` — if it is right it is right for **both** pipelines, so it is a definition-format question, filed rather than dropped | `612732c` |
+| Behaviour stays out of definitions permanently — element choice, focus, keyboard, ARIA are judgement and live in `spec.md` | `design-system/README.md` |
+
+**(k) `.nvmrc` — an open question, not a task.** All **four** workflows pin `node-version:
+"20"`; every machine here runs 24, and that divergence has already cost one CI-only failure
+(see the push era above). There is **no `.nvmrc` in the repo** — checked. Adding one would
+make the pin visible to a developer's version manager; it would also add a fifth place the
+number lives, which four workflows would not read. So it is a decision rather than an obvious
+win. The guard that actually catches the class of bug — `ARRIVED_IN` in `test/ci.test.js`,
+compared against the pin rather than a literal — exists either way.
 
 ### The design pass is finished and shipped
 
