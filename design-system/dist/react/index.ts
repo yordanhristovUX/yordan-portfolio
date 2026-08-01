@@ -40,3 +40,5 @@ export { profile, Profile } from "./profile";
 export type { ProfileProps, ProfileVariants } from "./profile";
 export { askFab, AskFab, askFabFace, AskFabFace, askFabLabel, AskFabLabel } from "./ask-fab";
 export type { AskFabProps, AskFabVariants, AskFabFaceProps, AskFabLabelProps } from "./ask-fab";
+export { definitionRow, DefinitionRow, definitionRowRow, DefinitionRowRow } from "./definition-row";
+export type { DefinitionRowProps, DefinitionRowVariants, DefinitionRowRowProps } from "./definition-row";

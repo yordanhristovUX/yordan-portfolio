@@ -80,8 +80,9 @@
       "rules": [
         { "of": "base", "declarations": [{ "set": { "grid-template-columns": "1fr" } }] },
         {
-          "of": "pair",
-          "positions": [{ "name": "left-column", "at": "odd", "declarations": [{ "set": { "padding-right": "0" } }] }]
+          "of": "left-column",
+          "$doc": "The gutter, undone. It NAMES the position — `left-column` is a rule with a handle in the list above — rather than nesting a position inside an override of `pair`, which is the shape `override.positions` had and no longer has: the two rules this query holds are two entries in it.",
+          "declarations": [{ "set": { "padding-right": "0" } }]
         }
       ]
     }

@@ -523,6 +523,19 @@ export function renderComponent(def, elements, keyOf) {
       }
       continue;
     }
+    /* A POSITION IS AN ANCHOR FOR THE SAME REASON, and it became one when
+       `override.positions` retired. `.fact:last-child` inside a media query used
+       to arrive here as a clause nested in the override of `.fact`; it arrives
+       as an override naming `closing`, so the sink lookup at the foot has to be
+       able to resolve a position's name to a class list and a suffix. The string
+       it composes is the one `positionEntriesOf` was already building —
+       `[&:last-child]:`, `[&>div:nth-child(odd)]:` — so the emitted classes are
+       byte-identical and the flattening is invisible on this side. */
+    if (r.kind === "position") {
+      const parent = anchor(r, r.of);
+      scopeByName.set(r.name, { scope: parent.scope + POSITION_SUFFIX[r.at], host: parent.host });
+      continue;
+    }
     const owner = r.kind === "contains" ? r.of : r.kind === "part" && r.within ? r.within : null;
     if (owner === null) continue;
     const parent = anchor(r, owner);
@@ -550,15 +563,13 @@ export function renderComponent(def, elements, keyOf) {
   for (const block of def.at ?? []) {
     const at = conditionVariant(conditions.get(block.condition));
     for (const o of block.rules) {
-      /* A scoped part overridden under a condition keeps BOTH its scope and its
-         host: the classes wear `[@media…]:[&_span]:` and land on the host's list. */
+      /* A scoped part, a state or a position overridden under a condition keeps
+         BOTH its scope and its host: the classes wear `[@media…]:[&_span]:` and
+         land on the host's list. */
       const scoped = scopeByName.get(o.of);
       const target = scoped?.host ?? o.of;
       const scope = scoped?.scope ?? "";
-      const entries = [
-        ...entriesOf(o.declarations, keyOf, `${where} @${block.condition} ${o.of}`, tally, at + variantFor(scope)),
-        ...positionEntriesOf(o.positions, keyOf, `${where} @${block.condition} ${o.of}`, tally, scope, at),
-      ];
+      const entries = entriesOf(o.declarations, keyOf, `${where} @${block.condition} ${o.of}`, tally, at + variantFor(scope));
       if (!entries.length) continue;
       entries[0] = { ...entries[0], lead: `Under \`@media ${conditions.get(block.condition)}\` (\`${block.condition}\`)${block.$doc ? ` — ${block.$doc}` : ""}` };
       const sink = sinkFor(target);

@@ -90,9 +90,15 @@
      position       { name, of, at, declarations } — where a rule sits among its
                     siblings, from a CLOSED enum (`first`, `last`). A position is
                     what the document is; a state is what the user does.
-     at             { condition, rules: [{ of, declarations?, positions? }] } — a
+     at             { condition, rules: [{ of, declarations }] } — a
                     set of overrides under one NAMED condition, each naming the
-                    rule it overrides rather than repeating its selector.
+                    rule it overrides rather than repeating its selector. An
+                    override may name a POSITION, which is why it no longer
+                    carries positions of its own: `.fact:last-child` inside a
+                    query used to be a clause nested in the override of `.fact`,
+                    and in an ordered list it is a rule with a name, so
+                    `{"of": "closing"}` says it with the same reference every
+                    other rule uses.
                     `condition` is resolved in tokens.json's `$conditions`:
                     `(max-width: 720px)` appeared in two blocks meaning the same
                     thing with nothing saying so, and a media rule can no longer
@@ -106,7 +112,7 @@
                     construct and had to be two constructs. In an ordered list
                     where is where the entry sits, so what is left to record is
                     how it renders: `inline: true`, one override, one group, no
-                    positions, no note, no break. NEVER INFERRED — a foot query
+                    note, no break. NEVER INFERRED — a foot query
                     that happens to hold one rule is not thereby a footnote, and
                     media's `@media (max-width: 640px) { .ph-grid { … } }` sits
                     at the foot and renders inline.
@@ -177,7 +183,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -366,10 +372,7 @@ function eachDeclaration(def, fn) {
     const label = labelOf(r);
     if (r.kind === "at") {
       for (const o of r.rules) {
-        for (const g of o.declarations ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label} ${o.of}`);
-        for (const p of o.positions ?? []) {
-          for (const g of p.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label} ${o.of}@${p.name}`);
-        }
+        for (const g of o.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label} ${o.of}`);
       }
       continue;
     }
@@ -739,7 +742,6 @@ export function checkDefinition(def, id, rel) {
     const groups = block.rules[0]?.declarations ?? [];
     const why =
       block.rules.length !== 1 ? `${block.rules.length} overrides`
-      : block.rules[0].positions ? "a position"
       : groups.length !== 1 ? `${groups.length} declaration groups`
       : groups[0].note || groups[0].aside ? "a comment"
       : block.note ? "a note"
@@ -937,8 +939,6 @@ export function renderBlock(def, conditions = {}) {
   const where = definitionPath(def.id);
   const selectors = selectorsByName(def);
   const sel = (name) => selectors.get(name);
-  const positions = (owner, list, pad) =>
-    (list ?? []).map((p) => rule(`${owner}${POSITION_SUFFIX[p.at]}`, p.declarations, where, pad)).join("");
   /* A rule's own note sits above it at column 0; a group's note sits inside the
      braces. The stylesheet draws that line and this only records it. */
   const lead = (r, pad) => (r.note?.length ? comment(r.note, pad) : "");
@@ -984,11 +984,11 @@ export function renderBlock(def, conditions = {}) {
         if (r.break) out += "\n";
         out += lead(r, "");
         out += `@media ${conditions[r.condition]} {\n`;
-        for (const o of r.rules) {
-          const owner = sel(o.of);
-          if (o.declarations) out += rule(owner, o.declarations, where, "  ");
-          out += positions(owner, o.positions, "  ");
-        }
+        /* Each override is one rule, and a POSITION is a rule — `.fact:last-child`
+           inside the query is an override naming `closing`, not a clause nested
+           in the override of `.fact`. Same selector, resolved through the same
+           map as every other reference. */
+        for (const o of r.rules) out += rule(sel(o.of), o.declarations, where, "  ");
         out += `}\n`;
         break;
     }

@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "1.9.0",
+  "version": "2.0.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -572,6 +572,13 @@
         ".chips"
       ]
     },
+    "definition-row": {
+      "status": "stable",
+      "classes": [
+        ".tools",
+        ".tools__row"
+      ]
+    },
     "drawer": {
       "status": "stable",
       "classes": [
@@ -670,7 +677,7 @@
         ".profile"
       ]
     },
-    "row": {
+    "project-row": {
       "status": "stable",
       "classes": [
         ".idx",
@@ -680,9 +687,7 @@
         ".idx__name",
         ".idx__no",
         ".idx__row",
-        ".idx__tags",
-        ".tools",
-        ".tools__row"
+        ".idx__tags"
       ]
     },
     "section-head": {
@@ -1119,8 +1124,8 @@
         "border-right": "0"
       }
     },
-    "fact .fact @below-720:last-child": {
-      "kind": "at below-720 position",
+    "fact .fact:last-child @below-720": {
+      "kind": "at below-720",
       "declarations": {
         "border-bottom": "0"
       }
@@ -1418,8 +1423,8 @@
         "grid-template-columns": "1fr"
       }
     },
-    "profile .profile > div @below-860:nth-child(odd)": {
-      "kind": "at below-860 position",
+    "profile .profile > div:nth-child(odd) @below-860": {
+      "kind": "at below-860",
       "declarations": {
         "padding-right": "0"
       }
@@ -1491,6 +1496,53 @@
         "max-width": "0",
         "opacity": "0"
       }
+    },
+    "definition-row .tools": {
+      "kind": "base",
+      "declarations": {
+        "display": "grid"
+      }
+    },
+    "definition-row .tools__row": {
+      "kind": "part",
+      "declarations": {
+        "border-bottom": "{rule}",
+        "display": "grid",
+        "gap": "{space-7}",
+        "grid-template-columns": "minmax(9rem, 14rem) 1fr",
+        "padding": "{space-4} {pad}"
+      }
+    },
+    "definition-row .tools__row:last-child": {
+      "kind": "part position",
+      "declarations": {
+        "border-bottom": "0"
+      }
+    },
+    "definition-row .tools__row @below-620": {
+      "kind": "part at below-620",
+      "declarations": {
+        "gap": "{space-1}",
+        "grid-template-columns": "1fr"
+      }
+    },
+    "definition-row .tools__row dt": {
+      "kind": "scoped part",
+      "declarations": {
+        "align-self": "center",
+        "color": "{content-primary}",
+        "font-family": "{font-display}",
+        "font-size": "{text-base}",
+        "font-variation-settings": "{width-body}",
+        "font-weight": "{weight-extrabold}",
+        "text-transform": "uppercase"
+      }
+    },
+    "definition-row .tools__row dd": {
+      "kind": "scoped part",
+      "declarations": {
+        "font-size": "{text-md}"
+      }
     }
   },
   "exports": {
@@ -1556,6 +1608,9 @@
     },
     "./react/ask-fab": {
       "target": "./dist/react/ask-fab.tsx"
+    },
+    "./react/definition-row": {
+      "target": "./dist/react/definition-row.tsx"
     }
   }
 }

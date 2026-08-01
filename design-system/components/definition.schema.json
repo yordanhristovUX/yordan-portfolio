@@ -280,33 +280,19 @@
         "break": { "const": true, "$doc": "Emit a blank line before the at-rule. `entry` separates its overrides from the rules they override; `fact` does not. A paragraph is a statement, and the emitter must not invent one." },
         "inline": {
           "const": true,
-          "$doc": "RENDER ON ONE LINE — `@media (max-width: 640px) { .sec__note { display: none; } }` — because that is how the stylesheet writes this one. ONE override, ONE group, no positions, no note and no break: the inline form is one line by construction, and the build refuses a shape that would not fit on one rather than silently choosing a rendering. NEVER INFERRED, and that is the key's reason for existing: a block whose foot query happens to hold one rule is not thereby a footnote, and `media`'s `@media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }` sits at the foot and renders inline, which is the counter-example that would have made an inference wrong.",
+          "$doc": "RENDER ON ONE LINE — `@media (max-width: 640px) { .sec__note { display: none; } }` — because that is how the stylesheet writes this one. ONE override, ONE group, no note and no break: the inline form is one line by construction, and the build refuses a shape that would not fit on one rather than silently choosing a rendering. NEVER INFERRED, and that is the key's reason for existing: a block whose foot query happens to hold one rule is not thereby a footnote, and `media`'s `@media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }` sits at the foot and renders inline, which is the counter-example that would have made an inference wrong.",
           "$comment": "Absent means the block form."
         },
         "rules": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/override" } }
       }
     },
     "override": {
-      "$doc": "ONE RULE, RESTATED UNDER A CONDITION. `of` NAMES the rule being overridden rather than repeating its selector, so the two can never point at different elements and a renamed rule cannot leave an orphaned media rule behind. `positions` is the one place a rule is still nested inside another, and it is nested because it is not a rule of the block — it is this override's own sibling clause: `fact` writes `.fact:last-child { border-bottom: 0 }` INSIDE the query, and that rule exists nowhere outside it.",
+      "$doc": "ONE RULE, RESTATED UNDER A CONDITION. `of` NAMES the rule being overridden rather than repeating its selector, so the two can never point at different elements and a renamed rule cannot leave an orphaned media rule behind. THIS USED TO CARRY A `positions` ARRAY, and R4 retired it — the last place in the format where a rule was nested inside another rule. The nesting existed because a section-shaped definition had nowhere else to put `.fact:last-child { border-bottom: 0 }`: a position was a clause of the rule it qualified rather than a thing with a name. In the ordered list it IS a thing with a name, so an override can simply say `{\"of\": \"closing\"}` and the emitter resolves the same selector through the same function every other reference uses. Two entries in the list where there was one entry with a nested one, the same bytes out of both pipelines, and one fewer shape for a reader to learn. It is a BREAKING change and the contract said so: `fact .fact @below-720:last-child` is now `fact .fact:last-child @below-720`, because the key follows the selector and the selector is now the position's own.",
       "type": "object",
-      "required": ["of"],
+      "required": ["of", "declarations"],
       "additionalProperties": false,
-      "anyOf": [{ "required": ["declarations"] }, { "required": ["positions"] }],
       "properties": {
         "of": { "$ref": "#/$defs/reference" },
-        "$doc": { "type": "string" },
-        "declarations": { "$ref": "#/$defs/declarations" },
-        "positions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/override-position" } }
-      }
-    },
-    "override-position": {
-      "$doc": "A position of the rule this override restates, drawn inside the same query. Same closed `at` vocabulary as a top-level position; no `of`, because the override it hangs off IS the referent.",
-      "type": "object",
-      "required": ["name", "at", "declarations"],
-      "additionalProperties": false,
-      "properties": {
-        "name": { "$ref": "#/$defs/name" },
-        "at": { "enum": ["first", "last", "odd"] },
         "$doc": { "type": "string" },
         "declarations": { "$ref": "#/$defs/declarations" }
       }

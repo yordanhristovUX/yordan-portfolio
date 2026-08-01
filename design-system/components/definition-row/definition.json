@@ -1,0 +1,77 @@
+{
+  "$doc": "The definition row's appearance, as data — the source of the `@component definition-row` block in css/components.css and of dist/react/definition-row.tsx. THIS BLOCK USED TO BE HALF OF `row`, and the split is why it can be a definition at all. One component owned two banners: a clickable index entry (`.idx__row`) and a term-and-definition pair (`.tools__row`), and they shared a name because both are full-width list rows and nothing else. The project half needs `.idx li:last-child .idx__row` — a positional in the MIDDLE of a descendant path, which no closure in this format reaches — so it stays authored under its own marker. This half needs a part, a position, two scoped parts and one named condition, all of which are vocabulary that already exists. Splitting a component is a MAJOR change and the contract said so; what it bought is that the half that can be data is data, instead of both halves waiting on the half that cannot.",
+  "$schema": "../definition.schema.json",
+  "id": "definition-row",
+  "block": {
+    "title": "Definition row (skills)"
+  },
+  "root": ".tools",
+  "rules": [
+    {
+      "kind": "base",
+      "note": [
+        "The block root. A `<dl>` stacks its rows in normal flow anyway, so the",
+        "visual result is identical — but grid makes the wrapper the thing that",
+        "owns the stack, which is what `.tools__row` is a row OF. Without a rule",
+        "here the class shipped on four pages meant nothing at all."
+      ],
+      "$doc": "One declaration, and the note above it is the whole argument for having it: the wrapper is what the rows are rows of. The note is a RULE note because it explains why the rule exists rather than what the declaration does.",
+      "declarations": [{ "set": { "display": "grid" } }]
+    },
+    {
+      "kind": "part",
+      "name": "row",
+      "selector": ".tools__row",
+      "$doc": "One term-and-definition pair, laid out as a two-track grid: a term track that may shrink to 9rem and grow to 14rem, and the definition taking the rest. The `<div>` wrapping each dt/dd pair is the markup's, so that the outer `<dl>` has one box per row to stack — the same shape `profile` uses, and for the same reason.",
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "minmax(9rem, 14rem) 1fr" } },
+        { "set": { "gap": { "token": "space-7" } } },
+        { "set": { "padding": [{ "token": "space-4" }, { "token": "pad" }] } },
+        { "set": { "border-bottom": { "token": "rule" } } }
+      ]
+    },
+    {
+      "kind": "position",
+      "name": "closing",
+      "of": "row",
+      "at": "last",
+      "$doc": "The last row drops its rule, so the list ends on the section's own edge rather than on a line inside it. The same `last` the fact row and the entry use, and the same reason: no row knows how many siblings it has, and the markup should not have to say.",
+      "declarations": [{ "set": { "border-bottom": "0" } }]
+    },
+    {
+      "kind": "part",
+      "name": "term",
+      "within": "row",
+      "element": ["dt"],
+      "$doc": "The skill group's name, in the display family at body size and uppercase — a heading for the line beside it rather than a label above it, which is what `align-self: center` records: the term sits on the optical middle of a definition that may run to three lines.",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-display" }, "font-weight": { "token": "weight-extrabold" } } },
+        { "set": { "font-variation-settings": { "token": "width-body" } } },
+        { "set": { "font-size": { "token": "text-base" }, "text-transform": "uppercase" } },
+        { "set": { "color": { "token": "content-primary" } } },
+        { "set": { "align-self": "center" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "value",
+      "within": "row",
+      "element": ["dd"],
+      "$doc": "The list of tools. One declaration: the `<dd>`'s own margin is already off in the foundation reset, and its colour is the page's body ink.",
+      "declarations": [{ "set": { "font-size": { "token": "text-md" } } }]
+    },
+    {
+      "kind": "at",
+      "condition": "below-620",
+      "inline": true,
+      "$doc": "Stacked. A term track that has shrunk to 9rem leaves a definition column too narrow to read, so below 620px the pair becomes two lines — and the gap goes with it: `space-7` is the air between two things side by side, and stacked it would put a paragraph's worth of it between a heading and the line it heads.",
+      "rules": [
+        {
+          "of": "row",
+          "declarations": [{ "set": { "grid-template-columns": "1fr", "gap": { "token": "space-1" } } }]
+        }
+      ]
+    }
+  ]
+}

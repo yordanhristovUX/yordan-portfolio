@@ -120,14 +120,12 @@
           "of": "fact",
           "declarations": [
             { "set": { "border-right": "0", "border-bottom": { "token": "rule" } } }
-          ],
-          "positions": [
-            {
-              "name": "closing",
-              "at": "last",
-              "declarations": [{ "set": { "border-bottom": "0" } }]
-            }
           ]
+        },
+        {
+          "of": "closing",
+          "$doc": "The same last-child rule as above, restated for the stacked edge. It NAMES the position rather than nesting one: `closing` is a rule with a handle, so an override can point at it exactly as it points at `fact`, and `override.positions` — the last place in this format where a rule lived inside another rule — retired with it.",
+          "declarations": [{ "set": { "border-bottom": "0" } }]
         }
       ]
     }

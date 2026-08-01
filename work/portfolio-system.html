@@ -167,7 +167,7 @@
           <p><span class="stat">0</span></p>
           <ul>
             <li><strong>0 accessibility violations</strong> across the component library: axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
-            <li><strong>103 tokens, 167 values, 23 components.</strong> One token carries its light, dark and print values together; each component is enforced as definition + spec + story by the build.</li>
+            <li><strong>103 tokens, 167 values, 24 components.</strong> One token carries its light, dark and print values together; each component is enforced as definition + spec + story by the build.</li>
             <li><strong>Dark mode is 23 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS: the sharpest test a semantic token layer can be put to.</li>
             <li><strong>Every boundary crossing is a generated artefact with a schema, never a code import.</strong> A gate asserts the dependency direction and pins each legal crossing, and the whole check runs offline, with no API key and no network.</li>
             <li><strong>A second front end proves it.</strong> A Next.js + React + TypeScript app renders the same nine pages from the published package and corpus alone. It exists to make the boundaries falsifiable: the moment it needs another slice's source, the architecture has failed.</li>

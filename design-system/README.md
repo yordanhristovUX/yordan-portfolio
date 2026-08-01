@@ -38,8 +38,8 @@ dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to t
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 13 generated,
-                        12 authored, 1 SPLIT, each with a marker naming its reason)
+css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 14 generated,
+                        11 authored, 1 SPLIT, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -579,7 +579,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly twenty-one** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly twenty-two** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -607,6 +607,7 @@ published.
 "@yordan/design-system/react/media"          // R4 batch 2, with `contains` and `child`
 "@yordan/design-system/react/profile"
 "@yordan/design-system/react/ask-fab"        // the first SPLIT block — core here, tail authored
+"@yordan/design-system/react/definition-row" // half of `row`; the other half is authored
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —
@@ -781,7 +782,7 @@ went stale twice, which is exactly the drift this system exists to prevent.
 - **values** — light + dark + print + wide authored values across those tokens (167). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
-- **components** — directories under `components/` (23)
+- **components** — directories under `components/` (24)
 - **dark** — tokens carrying a `dark` value (24)
 
 The dark count was added to the gate after it proved the point the hard way, and it has now

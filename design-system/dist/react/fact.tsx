@@ -61,6 +61,10 @@ export const factFact = cva([
      rather than a second definition of it. */
   "[@media(max-width:720px)]:[border-right:0]",
   "[@media(max-width:720px)]:[border-bottom:var(--rule)]",
+  /* Under `@media (max-width: 720px)` (`below-720`) — Stacked, the divider turns ninety
+     degrees. It is the same two rules as above — every fact draws one, the last one does
+     not — with the edge changed, which is what makes this an override of a named rule
+     rather than a second definition of it. */
   "[@media(max-width:720px)]:[&:last-child]:[border-bottom:0]",
 ]);
 

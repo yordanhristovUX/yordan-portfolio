@@ -166,8 +166,8 @@ const declOf = (declarations) => {
 
 const definitionSurface = {};
 for (const def of defs) {
-  const put = (kind, selector, rule, publishOwn = true) => {
-    if (publishOwn) definitionSurface[`${def.id} ${selector}`] = { kind, declarations: declOf(rule.declarations) };
+  const put = (kind, selector, rule) => {
+    definitionSurface[`${def.id} ${selector}`] = { kind, declarations: declOf(rule.declarations) };
     for (const s of rule.states ?? []) {
       definitionSurface[`${def.id} ${selector}${s.suffix}`] = { kind: `${kind} state`, declarations: declOf(s.declarations) };
     }
@@ -214,14 +214,16 @@ for (const def of defs) {
      any selector, and only the key records that. */
   for (const block of def.at ?? []) {
     for (const o of block.rules) {
-      /* An override that declares nothing DIRECTLY publishes no rule of its own,
-         only the positions under it — `profile` restates one column and, of
-         `.profile > div`, nothing but its odd-child gutter. An entry with an
-         empty declaration map would claim a rule that ships no bytes. The
-         effect-only MODIFIER is the opposite case and keeps its empty entry:
-         `.sec--tint` declares nothing and its name is still `variant="tint"`,
-         so the name is the published thing. */
-      put(`at ${block.condition}`, `${selectorOf(def, o.of)} @${block.condition}`, o, Boolean(o.declarations));
+      /* EVERY OVERRIDE PUBLISHES ONE RULE, since `override.positions` retired.
+         There used to be a fourth argument here suppressing the entry for an
+         override that declared nothing directly and existed only to carry
+         positions — `profile` restated one column and, of `.profile > div`,
+         nothing but its odd-child gutter. A position is a named rule now, so
+         that override IS the gutter rather than a wrapper around it, and the
+         key follows the selector: `.profile > div @below-860:nth-child(odd)`
+         became `.profile > div:nth-child(odd) @below-860`. Two keys moved and
+         both are in the 2.0.0 entry of CHANGELOG.md. */
+      put(`at ${block.condition}`, `${selectorOf(def, o.of)} @${block.condition}`, o);
     }
   }
 }

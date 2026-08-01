@@ -47,7 +47,7 @@ generations. "An old sketchbook with machines that help."
   semantic tier can be put to. No stylesheet anywhere contains a colour for print, and
   since the type scale landed, none contains a literal `font-size` either: paper gets its
   own pt sizes down the same pipe the colours use. `scripts/check-css.mjs` enforces it.
-- **23 components, and their appearance is becoming data** — each carries an AI spec
+- **24 components, and their appearance is becoming data** — each carries an AI spec
   ([example](design-system/components/button/spec.md)) and a Storybook story, and `npm run
   build` fails if either is missing. The third leg is mid-migration: a component's CSS is
   either *generated* from `components/<id>/definition.json` — about half the stylesheet at the

@@ -247,6 +247,37 @@ vocabulary is expressible; a feature with a finite vocabulary *in an order the e
 for it* is not. The scan cannot see the second, and the only way to find it is the method this
 note has argued for throughout — one block at a time, with the block in front of you.
 
+### The fifth finding is about the UNIT, and `row` is why
+
+Every measurement in this note counts **blocks**, and the two columns of the table above are a
+verdict on a block. The format's unit is a **component** — one `definition.json`, one `spec.md`,
+one story, one `.tsx`, one entry in `dist/components.json` — and for twenty-two of the
+twenty-three those two units were the same thing, so the difference cost nothing and was
+invisible.
+
+`row` was the one that was not. It owned **two banners**: `.idx__row`, a clickable index entry,
+and `.tools__row`, a term-and-definition pair. They shared an id because both are full-width
+list rows and for no other reason — no rule in either mentions the other, they share no class,
+no token decision and no markup. The scan duly reported one row of the table (`row  26 sel
+at-rule, computed, descendant, positional`) and that row was **the union of two blocks'
+features**, which is a measurement of nothing: the union fails whenever *either* half fails,
+and here exactly one half did. `.idx li:last-child .idx__row` puts a positional in the MIDDLE
+of a descendant path — not a scoped part, whose ancestor names a rule and whose target is bare
+tags, and not a position, which applies to the rule it hangs off. It is the wedge, and the
+definition half was waiting behind it for nothing.
+
+So the component split, which is a **MAJOR** change (`row` is a published id, and it is gone),
+and the two halves went to the two columns the scan should have put them in: `definition-row`
+generates whole, `project-row` stays authored under `relational-selectors` with the sentence
+above as its reason. Nothing about how either LOOKS moved — the CSS is byte-identical apart
+from the two banners' own names.
+
+**The lesson is not "split components".** It is that a table with one row per block answers
+"can this block be data" and the migration asks "can this component be data", and those are
+the same question only while the two are the same thing. Two of the twenty-four blocks are
+`@component none` and belong to no component at all, which is the same seam from the other
+side. Before writing a block off, check what it is a block *of*.
+
 - **`typography` fails on `computed` alone** (its `clamp()` values), which is a token
   question rather than a pattern one: those are `--text-*` steps and the block mostly maps a
   class to a step. It may be the best argument for a fourth value form (a token binding with

@@ -1338,8 +1338,8 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .card:last-child { border-bottom: 0 !important; }
 }
 
-/* ---- authored:row — relational-selectors ---- */
-/* ============ Row — project (work index) ============ @component row */
+/* ---- authored:project-row — relational-selectors ---- */
+/* ============ Project row (work index) ============ @component project-row */
 .idx { list-style: none; }
 /* THE NUMBER SITS ABOVE THE CONTENT, at every width — the owner's call,
    made first for mobile (where a 2.5rem gutter spent a fifth of a 312px
@@ -1474,8 +1474,8 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:entry ---- */
 
-/* ---- authored:row — relational-selectors ---- */
-/* ============ Row — definition (skills) ============ @component row */
+/* ---- generated:definition-row — do not edit, source: components/definition-row/definition.json ---- */
+/* ============ Definition row (skills) ============ @component definition-row */
 /* The block root. A `<dl>` stacks its rows in normal flow anyway, so the
    visual result is identical — but grid makes the wrapper the thing that
    owns the stack, which is what `.tools__row` is a row OF. Without a rule
@@ -1498,6 +1498,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 .tools__row dd { font-size: var(--text-md); }
 @media (max-width: 620px) { .tools__row { grid-template-columns: 1fr; gap: var(--space-1); } }
+/* ---- /generated:definition-row ---- */
 
 /* ---- generated:profile — do not edit, source: components/profile/definition.json ---- */
 /* ============ Profile (definition list) ============ @component profile */

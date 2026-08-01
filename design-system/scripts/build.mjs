@@ -502,6 +502,7 @@ const packaged = [
   ["dist/react/media.tsx", reactSource("media")],
   ["dist/react/profile.tsx", reactSource("profile")],
   ["dist/react/ask-fab.tsx", reactSource("ask-fab")],
+  ["dist/react/definition-row.tsx", reactSource("definition-row")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by

@@ -5,7 +5,7 @@
     "css/components.css",
     "components/*/spec.md (frontmatter only)"
   ],
-  "count": 23,
+  "count": 24,
   "components": [
     {
       "id": "ask-fab",
@@ -448,6 +448,45 @@
         "--text-2xs",
         "--tracking-wide",
         "--weight-medium"
+      ]
+    },
+    {
+      "id": "definition-row",
+      "status": "stable",
+      "since": "initial",
+      "a11y": "A real <dl>: each row is a <div> wrapping one <dt>/<dd> pair, so the term/definition relationship survives with no ARIA.",
+      "spec": "components/definition-row/spec.md",
+      "story": "stories/definition-row.stories.js",
+      "blocks": [
+        "Definition row (skills)"
+      ],
+      "classes": [
+        ".tools",
+        ".tools__row"
+      ],
+      "elements": [
+        "__row"
+      ],
+      "variants": [],
+      "selectors": [
+        ".tools",
+        ".tools__row",
+        ".tools__row dd",
+        ".tools__row dt",
+        ".tools__row:last-child"
+      ],
+      "tokens": [
+        "--content-primary",
+        "--font-display",
+        "--pad",
+        "--rule",
+        "--space-1",
+        "--space-4",
+        "--space-7",
+        "--text-base",
+        "--text-md",
+        "--weight-extrabold",
+        "--width-body"
       ]
     },
     {
@@ -952,15 +991,14 @@
       ]
     },
     {
-      "id": "row",
+      "id": "project-row",
       "status": "stable",
       "since": "initial",
       "a11y": "Project rows are <button>s; .idx__go is aria-hidden because the whole row is the target.",
-      "spec": "components/row/spec.md",
-      "story": "stories/row.stories.js",
+      "spec": "components/project-row/spec.md",
+      "story": "stories/project-row.stories.js",
       "blocks": [
-        "Row — project (work index)",
-        "Row — definition (skills)"
+        "Project row (work index)"
       ],
       "classes": [
         ".idx",
@@ -970,9 +1008,7 @@
         ".idx__name",
         ".idx__no",
         ".idx__row",
-        ".idx__tags",
-        ".tools",
-        ".tools__row"
+        ".idx__tags"
       ],
       "elements": [
         "__desc",
@@ -1000,12 +1036,7 @@
         ".idx__row:hover",
         ".idx__row:hover .idx__go",
         ".idx__row:hover::before",
-        ".idx__tags",
-        ".tools",
-        ".tools__row",
-        ".tools__row dd",
-        ".tools__row dt",
-        ".tools__row:last-child"
+        ".idx__tags"
       ],
       "tokens": [
         "--chrome-border-strong",
@@ -1018,16 +1049,11 @@
         "--pad",
         "--primary",
         "--rule",
-        "--space-1",
         "--space-2",
         "--space-3",
-        "--space-4",
-        "--space-7",
         "--space-flow",
         "--surface-raised",
-        "--text-base",
         "--text-heading",
-        "--text-md",
         "--text-sm",
         "--text-sub",
         "--text-xs",
@@ -1036,7 +1062,6 @@
         "--weight-bold",
         "--weight-extrabold",
         "--weight-semibold",
-        "--width-body",
         "--width-normal",
         "--width-sub"
       ]

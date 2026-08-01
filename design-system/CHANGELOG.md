@@ -5,6 +5,30 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.0.0 — 2026-08-01
+
+Major — 14 change(s).
+
+### Removed or renamed (breaking)
+
+- component `row` removed — the markup pattern and its classes are gone
+- definition `fact .fact @below-720:last-child` removed — the at below-720 position is gone — its class and, for a modifier, its React prop value with it
+- definition `profile .profile > div @below-860:nth-child(odd)` removed — the at below-860 position is gone — its class and, for a modifier, its React prop value with it
+
+### Added
+
+- component `definition-row` added
+- component `project-row` added
+- definition `definition-row .tools__row @below-620` added
+- definition `definition-row .tools__row dd` added
+- definition `definition-row .tools__row dt` added
+- definition `definition-row .tools__row:last-child` added
+- definition `definition-row .tools__row` added
+- definition `definition-row .tools` added
+- definition `fact .fact:last-child @below-720` added
+- definition `profile .profile > div:nth-child(odd) @below-860` added
+- export `./react/definition-row` added
+
 ## 1.9.0 — 2026-08-01
 
 Minor — 8 change(s).
