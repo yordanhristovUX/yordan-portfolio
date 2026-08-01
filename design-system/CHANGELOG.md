@@ -5,6 +5,22 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.4.0 — 2026-08-01
+
+Minor — 9 change(s).
+
+### Added
+
+- definition `source .source__id` added
+- definition `source .source__link:hover,:focus-visible` added
+- definition `source .source__link` added
+- definition `source .source__ref` added
+- definition `source .source` added
+- definition `source .sources__list` added
+- definition `source .sources__title` added
+- definition `source .sources` added
+- export `./react/source` added
+
 ## 1.3.0 — 2026-08-01
 
 Minor — 2 change(s).

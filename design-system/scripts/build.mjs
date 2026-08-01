@@ -471,6 +471,7 @@ const packaged = [
   ["dist/react/chip.tsx", reactSource("chip")],
   ["dist/react/stat.tsx", reactSource("stat")],
   ["dist/react/footer.tsx", reactSource("footer")],
+  ["dist/react/source.tsx", reactSource("source")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by

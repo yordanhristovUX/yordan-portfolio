@@ -1,0 +1,138 @@
+{
+  "$doc": "Source's appearance, as data — the source of the `@component source` block in css/components.css and of dist/react/source.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. SOURCE IS THE BLOCK THAT MADE A PART A FULL RULE. `.source__link` carries a hover-and-focus state and its canonical HTML puts it on a <button> and an <a>, so a part that could hold neither was a limit of the emitter rather than a fact about components. It also has two paragraphs — the list's own chrome, then the item that repeats inside it — which is a statement about which rules belong together and is recorded rather than lost. Six parts and no variants: nothing here has an axis, which is the line that still separates a part from a component of its own.",
+  "$schema": "../definition.schema.json",
+  "id": "source",
+  "block": {
+    "title": "Source (citations)",
+    "note": [
+      "Every claim traced to the passage it came from. An id reaches this",
+      "list only after the provenance gate has confirmed a tool actually",
+      "returned it this turn, so the list is a record, not a bibliography."
+    ]
+  },
+  "root": ".sources",
+  "base": {
+    "declarations": [
+      { "set": { "border-top": { "token": "rule" } } },
+      { "set": { "padding-top": { "token": "space-3" } } },
+      { "set": { "margin-top": { "token": "space-1" } } }
+    ]
+  },
+  "parts": [
+    {
+      "name": "title",
+      "selector": ".sources__title",
+      "$doc": "The word Sources. The mono chrome label at the floor of the type ramp — the same family and case as a chip, a fact title and a plate label, at its own step of the tracking ramp.",
+      "declarations": [
+        {
+          "set": {
+            "font-size": { "token": "text-2xs" },
+            "font-weight": { "token": "weight-semibold" }
+          }
+        },
+        {
+          "set": {
+            "letter-spacing": { "token": "tracking-wide-2xl" },
+            "text-transform": "uppercase"
+          }
+        },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "margin-bottom": { "token": "space-2" } } }
+      ]
+    },
+    {
+      "name": "list",
+      "selector": ".sources__list",
+      "$doc": "The <ol>. `counter-reset: none` is deliberate and is the one declaration here that exists to cancel something: the ordinal is drawn by `.source__ref`, so the list's own numbering would be a second, disagreeing count.",
+      "declarations": [
+        {
+          "set": {
+            "list-style": "none",
+            "display": "grid",
+            "gap": { "token": "space-2" },
+            "counter-reset": "none"
+          }
+        }
+      ]
+    },
+    {
+      "name": "item",
+      "selector": ".source",
+      "break": true,
+      "$doc": "One citation. Baseline-aligned rather than centred, because the ordinal, the link and the id are three different sizes and it is the text they share that should line up.",
+      "declarations": [
+        {
+          "set": {
+            "display": "flex",
+            "flex-wrap": "wrap",
+            "align-items": "baseline",
+            "gap": { "token": "space-2" }
+          }
+        },
+        { "set": { "font-size": { "token": "text-sm" } } },
+        { "set": { "line-height": "1.45" } }
+      ]
+    },
+    {
+      "name": "ref",
+      "selector": ".source__ref",
+      "$doc": "The ordinal, in a square. Its width and height are equal and literal because it is a box drawn around one or two characters, not a step on the spacing ramp — a rhythm token here would make the square follow the page's rhythm instead of its own type.",
+      "declarations": [
+        { "set": { "flex-shrink": "0" } },
+        { "set": { "width": "1.4rem", "height": "1.4rem" } },
+        {
+          "set": {
+            "display": "inline-flex",
+            "align-items": "center",
+            "justify-content": "center"
+          }
+        },
+        {
+          "set": {
+            "font-size": { "token": "text-2xs" },
+            "font-weight": { "token": "weight-semibold" }
+          }
+        },
+        { "set": { "color": { "token": "chrome-label-strong" } } },
+        { "set": { "border": ["1px", "solid", { "token": "chrome-border-strong" }] } }
+      ]
+    },
+    {
+      "name": "link",
+      "selector": ".source__link",
+      "$doc": "The citation itself. It is a <button> when it opens the passage in place and an <a> when it navigates, which is why the generated component is polymorphic — the canonical HTML shows both, and the emitter reads the element from there rather than being told.",
+      "declarations": [
+        { "set": { "color": { "token": "content-primary" } } },
+        { "set": { "text-align": "left" } },
+        { "set": { "border-bottom": ["1px", "solid", { "token": "chrome-border-strong" }] } },
+        { "set": { "transition": "border-color 0.2s, color 0.2s" } }
+      ],
+      "states": [
+        {
+          "name": "engaged",
+          "suffix": [":hover", ":focus-visible"],
+          "$doc": "One rule under two selectors: a pointer and a keyboard should land on the same appearance, and writing that twice would be the same CSS with a second place to forget.",
+          "declarations": [
+            {
+              "set": {
+                "border-color": { "token": "accent" },
+                "color": { "token": "accent" }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "id",
+      "selector": ".source__id",
+      "$doc": "The chunk id, shown so a claim can be traced by hand. `word-break: break-all` and `min-width: 0` are the pair that stops a long id from widening the flex row past its container.",
+      "declarations": [
+        { "set": { "font-size": { "token": "text-2xs" } } },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "word-break": "break-all" } },
+        { "set": { "min-width": "0" } }
+      ]
+    }
+  ]
+}

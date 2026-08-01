@@ -125,18 +125,24 @@ function entriesOf(declarations, keyOf, where, tally, prefix = "") {
   return out;
 }
 
+/* A state may carry a selector LIST — `:hover, :focus-visible` is one rule under
+   two selectors in the stylesheet. Tailwind has no selector list, so each class
+   is emitted once per prefix. That is the same cascade and a longer attribute,
+   which is the honest trade: the alternative is dropping one of the two. */
 function stateEntriesOf(states, keyOf, where, tally) {
   const out = [];
   for (const s of states ?? []) {
-    const prefix = STATE_PREFIX[s.suffix];
-    if (!prefix) {
-      throw new Error(
-        `${where}: the state \`${s.name}\` appends \`${s.suffix}\`, which scripts/emit-tailwind.mjs has no Tailwind ` +
-          `variant prefix for. Add it to STATE_PREFIX — a state this emitter cannot name is a state the React ` +
-          `component would silently drop.`
-      );
+    for (const suffix of Array.isArray(s.suffix) ? s.suffix : [s.suffix]) {
+      const prefix = STATE_PREFIX[suffix];
+      if (!prefix) {
+        throw new Error(
+          `${where}: the state \`${s.name}\` appends \`${suffix}\`, which scripts/emit-tailwind.mjs has no Tailwind ` +
+            `variant prefix for. Add it to STATE_PREFIX — a state this emitter cannot name is a state the React ` +
+            `component would silently drop.`
+        );
+      }
+      out.push(...entriesOf(s.declarations, keyOf, `${where} → ${s.name}`, tally, prefix));
     }
-    out.push(...entriesOf(s.declarations, keyOf, `${where} → ${s.name}`, tally, prefix));
   }
   return out;
 }
@@ -263,21 +269,27 @@ export function renderComponent(def, elements, keyOf) {
   const Name = pascal(def.id);
   const fn = camel(def.id);
 
-  const els = elements.get(def.root);
-  if (!els || !els.length) {
-    throw new Error(
-      `components/${def.id}/spec.md: its canonical HTML never puts \`${def.root}\` on an element, so this emitter ` +
-        `cannot know what to render. The fence in a spec is THE pattern — add the class to it.`
-    );
-  }
+  /* The element(s) a selector renders on, read from the spec's canonical HTML —
+     for a root and, since R4, for a part on exactly the same terms. */
+  const elementsFor = (selector, label) => {
+    const list = elements.get(selector);
+    if (!list || !list.length) {
+      throw new Error(
+        `components/${def.id}/spec.md: its canonical HTML never puts \`${selector}\` (${label}) on an element, so this ` +
+          `emitter cannot know what to render. The fence in a spec is THE pattern — add the class to it.`
+      );
+    }
+    if (list.length > 1 && !(list.length === 2 && list.includes("a") && list.includes("button"))) {
+      throw new Error(
+        `components/${def.id}/spec.md: its canonical HTML puts \`${selector}\` on ${list.map((e) => `<${e}>`).join(" and ")}. ` +
+          `The only polymorphic pair this emitter has a discriminant for is <a> / <button>, which it tells apart by ` +
+          `\`href\`. Decide the discriminant and add it here rather than letting the generator pick one.`
+      );
+    }
+    return list;
+  };
+  const els = elementsFor(def.root, "the root");
   const polymorphic = els.length > 1;
-  if (polymorphic && !(els.length === 2 && els.includes("a") && els.includes("button"))) {
-    throw new Error(
-      `components/${def.id}/spec.md: its canonical HTML puts \`${def.root}\` on ${els.map((e) => `<${e}>`).join(" and ")}. ` +
-        `The only polymorphic pair this emitter has a discriminant for is <a> / <button>, which it tells apart by ` +
-        `\`href\`. Decide the discriminant and add it here rather than letting the generator pick one.`
-    );
-  }
 
   let base = [
     ...entriesOf(def.base.declarations, keyOf, where, tally),
@@ -381,27 +393,49 @@ export function renderComponent(def, elements, keyOf) {
     out += `}\n`;
   }
 
-  /* parts — a companion selector that is not a modifier of the root */
+  /* parts — a companion selector that is not a modifier of the root. Since R4 a
+     part is a FULL rule: it may carry states, and it may be polymorphic on the
+     same terms the root is, because `.source__link` is a <button> and an <a> in
+     its own canonical HTML. It still has no variants and no sizes — a companion
+     selector that needs an axis is a component with its own definition. */
   for (const part of def.parts ?? []) {
     const PartName = pascal(`${def.id}-${part.name}`);
     const partFn = camel(`${def.id}-${part.name}`);
-    const partEls = elements.get(part.selector);
-    if (!partEls || partEls.length !== 1) {
-      throw new Error(
-        `components/${def.id}/spec.md: its canonical HTML puts \`${part.selector}\` on ` +
-          `${partEls ? partEls.map((e) => `<${e}>`).join(" and ") : "nothing"}. A part must appear on exactly one element.`
-      );
-    }
-    const el = partEls[0];
-    const classes = entriesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally);
+    const partEls = elementsFor(part.selector, `part \`${part.name}\``);
+    const partPoly = partEls.length > 1;
+    const classes = [
+      ...entriesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally),
+      ...stateEntriesOf(part.states, keyOf, `${where} → ${part.selector}`, tally),
+    ];
     out += `\n`;
     if (part.$doc) out += tsdoc(part.$doc, "");
     out += `export const ${partFn} = cva([\n${list(classes, "  ")}\n]);\n\n`;
-    out += `export type ${PartName}Props = { className?: string } & Omit<ComponentPropsWithRef<"${el}">, "className">;\n\n`;
-    out += tsdoc(`The \`${part.selector}\` half of the pattern in components/${def.id}/spec.md: a <${el}>.`, "");
-    out += `export function ${PartName}({ className, ...rest }: ${PartName}Props) {\n`;
-    out += `  return <${el} className={cx(${partFn}(), className)} {...rest} />;\n`;
-    out += `}\n`;
+    if (partPoly) {
+      out += tsdoc(
+        `The props of \`<${PartName} />\`. A union, because the canonical HTML in components/${def.id}/spec.md ` +
+          `renders \`${part.selector}\` on <a> AND on <button>: pass \`href\` and it is a link, omit it and it is a button.`,
+        ""
+      );
+      out += `export type ${PartName}Props =\n`;
+      out += `  | ({ className?: string; href: string } & Omit<ComponentPropsWithRef<"a">, "className" | "href">)\n`;
+      out += `  | ({ className?: string; href?: undefined } & Omit<ComponentPropsWithRef<"button">, "className">);\n\n`;
+      out += tsdoc(`The \`${part.selector}\` half of the pattern in components/${def.id}/spec.md.`, "");
+      out += `export function ${PartName}(props: ${PartName}Props) {\n`;
+      out += `  if (props.href !== undefined) {\n`;
+      out += `    const { className, ...rest } = props;\n`;
+      out += `    return <a className={cx(${partFn}(), className)} {...rest} />;\n`;
+      out += `  }\n`;
+      out += `  const { className, ...rest } = props;\n`;
+      out += `  return <button className={cx(${partFn}(), className)} {...rest} />;\n`;
+      out += `}\n`;
+    } else {
+      const el = partEls[0];
+      out += `export type ${PartName}Props = { className?: string } & Omit<ComponentPropsWithRef<"${el}">, "className">;\n\n`;
+      out += tsdoc(`The \`${part.selector}\` half of the pattern in components/${def.id}/spec.md: a <${el}>.`, "");
+      out += `export function ${PartName}({ className, ...rest }: ${PartName}Props) {\n`;
+      out += `  return <${el} className={cx(${partFn}(), className)} {...rest} />;\n`;
+      out += `}\n`;
+    }
   }
 
   return { source: out, tally, elements: els, exports: exportsOf(def) };

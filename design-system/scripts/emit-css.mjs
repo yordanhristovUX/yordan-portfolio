@@ -8,11 +8,14 @@
    `node scripts/emit-css.mjs --check`  render and compare, write nothing
                                         (the same comparison build.mjs runs)
 
-   PHASE R1 — PILOT SCOPE. Three components (button, chip, stat) have their
-   appearance authored as data in components/<id>/definition.json and their CSS
-   block GENERATED from it. The other twenty blocks in css/components.css are
-   hand-authored and untouched. css/components.css is therefore an ASSEMBLY:
-   authored source with three generated regions bracketed by markers, in the
+   PILOT SCOPE, GROWING. Five components (button, chip, stat, footer, source)
+   have their appearance authored as data in components/<id>/definition.json and
+   their CSS block GENERATED from it, and the typography layer is generated from
+   tokens/typography.json beside them. The other eighteen blocks in
+   css/components.css are hand-authored; PATTERNS.md measures which of them can
+   follow and which are page scaffolding that stays. css/components.css is
+   therefore an ASSEMBLY: authored source with six generated regions
+   bracketed by markers, in the
    same idiom as the `<!-- content:… -->` regions of index.html. A region opens
    with a marker naming its source and closes with a slashed one — written here
    without their comment terminators, which would end this comment:
@@ -36,18 +39,26 @@
      base           { declarations, states? } — the rule for `root`
      variants[]     { name, selector, declarations, states? } — appearance
      sizes[]        { name, selector, declarations, states? } — dimension
-     parts[]        { name, selector, declarations } — a companion selector
-                    that is not a modifier of root (chip's `.chips` wrapper)
+     parts[]        { name, selector, declarations, states?, break? } — a
+                    companion selector that is not a modifier of root (chip's
+                    `.chips` wrapper). Since R4 a part is a FULL rule: it may
+                    carry states and be polymorphic on the same terms the root
+                    is. It still has no variants or sizes — a companion that
+                    needs an axis is a component with its own definition.
      states[]       { name, suffix, declarations } — suffix is appended to the
                     owner's selector, so `:hover` on `.btn--solid` is a state
-                    OF the variant and is emitted straight after it
+                    OF the variant and is emitted straight after it. An ARRAY
+                    suffix is a selector list: `[":hover", ":focus-visible"]` is
+                    one rule under two selectors.
 
    DECLARATIONS ARE GROUPED, because the authored CSS groups them and the
    grouping carries meaning — `font-size / font-weight / letter-spacing` on one
    line is one decision. Each group is `{ note?: [lines], set: { prop: value } }`
    and the key order inside `set` is the emission order. One group renders on
    one line; more than one renders as a block, one group per line. That rule
-   reproduces all three authored blocks byte for byte.
+   reproduces every authored block it has replaced byte for byte. A group may
+   also carry an `aside`, a comment emitted at the END of its line — footer's
+   two are the case that added it.
 
    A VALUE IS ONE OF THREE THINGS, and the difference is the point:
 
@@ -65,7 +76,7 @@
    generator — so a write to css/components.css from build.mjs would demand
    that css/components.css join `git diff --exit-code` in the root
    package.json and ci.yml. It should not, yet: components.css is authored
-   source with three generated regions, not a dist artefact, and twenty of its
+   source with six generated regions, not a dist artefact, and eighteen of its
    blocks are still hand-written. This script is a source tool in the manner of
    ../../scripts/new-component.mjs — you run it when you change a definition —
    and the regions it writes are guarded by something stricter than the drift
@@ -82,7 +93,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer"];
+export const PILOT = ["button", "chip", "stat", "footer", "source"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -352,9 +363,14 @@ function banner(def) {
 /** A whole block: banner, base, base states, variants (+ their states), sizes, parts.
  *  That order is the cascade — a variant must be able to beat the base, and a
  *  state of a variant must be able to beat the variant. */
+/** A state's selector: one suffix, or a selector LIST when it carries several. */
+export const stateSelector = (owner, suffix) =>
+  (Array.isArray(suffix) ? suffix : [suffix]).map((s) => `${owner}${s}`).join(", ");
+
 export function renderBlock(def) {
   const where = definitionPath(def.id);
-  const states = (owner, list) => (list ?? []).map((s) => rule(`${owner}${s.suffix}`, s.declarations, where)).join("");
+  const states = (owner, list) =>
+    (list ?? []).map((s) => rule(stateSelector(owner, s.suffix), s.declarations, where)).join("");
 
   let out = banner(def);
   out += rule(def.root, def.base.declarations, where);
@@ -367,7 +383,11 @@ export function renderBlock(def) {
     out += rule(z.selector, z.declarations, where);
     out += states(z.selector, z.states);
   }
-  for (const p of def.parts ?? []) out += rule(p.selector, p.declarations, where);
+  for (const p of def.parts ?? []) {
+    if (p.break) out += "\n";
+    out += rule(p.selector, p.declarations, where);
+    out += states(p.selector, p.states);
+  }
   return out;
 }
 

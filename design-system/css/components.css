@@ -2243,6 +2243,7 @@ body:has(.menu[data-open]) { overflow: hidden; }
   .drawer__note { display: none; }
 }
 
+/* ---- generated:source — do not edit, source: components/source/definition.json ---- */
 /* ============ Source (citations) ============ @component source
    Every claim traced to the passage it came from. An id reaches this
    list only after the provenance gate has confirmed a tool actually
@@ -2286,6 +2287,7 @@ body:has(.menu[data-open]) { overflow: hidden; }
   word-break: break-all;
   min-width: 0;
 }
+/* ---- /generated:source ---- */
 
 /* ============ Reduced motion ============ @component none */
 @media (prefers-reduced-motion: reduce) {

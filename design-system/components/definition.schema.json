@@ -109,9 +109,16 @@
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
         "suffix": {
-          "type": "string",
-          "pattern": "^(:[a-z][a-z-]*(\\([^)]*\\))?|\\[[a-z-]+\\])$",
-          "$doc": "The pseudo-class or attribute appended to the owner's selector. scripts/emit-tailwind.mjs must have a variant prefix for it or the build fails — a state pipeline 2 cannot name is a state it would silently drop."
+          "$doc": "The pseudo-class or attribute appended to the owner's selector. scripts/emit-tailwind.mjs must have a variant prefix for it or the build fails — a state pipeline 2 cannot name is a state it would silently drop. AN ARRAY IS A SELECTOR LIST: `[\":hover\", \":focus-visible\"]` emits ONE rule under two selectors, which is what the stylesheet already writes wherever a pointer and a keyboard should land on the same appearance. Splitting it into two rules would be the same CSS and a different file; pipeline 2 has no selector list, so it emits each class once per prefix, which is the same cascade.",
+          "oneOf": [
+            { "type": "string", "pattern": "^(:[a-z][a-z-]*(\\([^)]*\\))?|\\[[a-z-]+\\])$" },
+            {
+              "type": "array",
+              "minItems": 2,
+              "uniqueItems": true,
+              "items": { "type": "string", "pattern": "^(:[a-z][a-z-]*(\\([^)]*\\))?|\\[[a-z-]+\\])$" }
+            }
+          ]
         },
         "$doc": { "type": "string" },
         "declarations": { "$ref": "#/$defs/declarations" }
@@ -155,7 +162,7 @@
       }
     },
     "part": {
-      "$doc": "A companion selector with no modifiers and no states — if it needed either it would be a component.",
+      "$doc": "A companion selector that is not a modifier of the root. R4 MADE A PART A FULL RULE. It used to be declarations and nothing else — no states, one element, no say in the file's shape — and `source` is the block that showed why that was an arbitrary limit rather than a distinction: `.source__link` has a hover-and-focus state, and its canonical HTML puts it on a <button> and an <a>, exactly as Button's does. A part with less power than a root was a fact about the emitter, not about components. What a part still does not have is variants and sizes: a companion selector that needs an axis is a component with its own definition, and that line has held through five blocks.",
       "type": "object",
       "required": ["name", "selector", "declarations"],
       "additionalProperties": false,
@@ -163,7 +170,12 @@
         "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
         "selector": { "$ref": "#/$defs/selector" },
         "$doc": { "type": "string" },
-        "declarations": { "$ref": "#/$defs/declarations" }
+        "break": {
+          "const": true,
+          "$doc": "Emit a blank line before this rule. A stylesheet block has paragraphs — `source` separates the list's chrome from the item that repeats inside it — and a paragraph is a statement about which rules belong together. Without this the emitter would have to either lose the break or invent one, and both are worse than recording it."
+        },
+        "declarations": { "$ref": "#/$defs/declarations" },
+        "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } }
       }
     },
     "axes": {

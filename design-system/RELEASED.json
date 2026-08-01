@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -864,6 +864,85 @@
         "letter-spacing": "{tracking-wide}",
         "padding": "{space-4} {pad}"
       }
+    },
+    "source .sources": {
+      "kind": "base",
+      "declarations": {
+        "border-top": "{rule}",
+        "margin-top": "{space-1}",
+        "padding-top": "{space-3}"
+      }
+    },
+    "source .sources__title": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "font-size": "{text-2xs}",
+        "font-weight": "{weight-semibold}",
+        "letter-spacing": "{tracking-wide-2xl}",
+        "margin-bottom": "{space-2}",
+        "text-transform": "uppercase"
+      }
+    },
+    "source .sources__list": {
+      "kind": "part",
+      "declarations": {
+        "counter-reset": "none",
+        "display": "grid",
+        "gap": "{space-2}",
+        "list-style": "none"
+      }
+    },
+    "source .source": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "baseline",
+        "display": "flex",
+        "flex-wrap": "wrap",
+        "font-size": "{text-sm}",
+        "gap": "{space-2}",
+        "line-height": "1.45"
+      }
+    },
+    "source .source__ref": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "border": "1px solid {chrome-border-strong}",
+        "color": "{chrome-label-strong}",
+        "display": "inline-flex",
+        "flex-shrink": "0",
+        "font-size": "{text-2xs}",
+        "font-weight": "{weight-semibold}",
+        "height": "1.4rem",
+        "justify-content": "center",
+        "width": "1.4rem"
+      }
+    },
+    "source .source__link": {
+      "kind": "part",
+      "declarations": {
+        "border-bottom": "1px solid {chrome-border-strong}",
+        "color": "{content-primary}",
+        "text-align": "left",
+        "transition": "border-color 0.2s, color 0.2s"
+      }
+    },
+    "source .source__link:hover,:focus-visible": {
+      "kind": "part state",
+      "declarations": {
+        "border-color": "{accent}",
+        "color": "{accent}"
+      }
+    },
+    "source .source__id": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "font-size": "{text-2xs}",
+        "min-width": "0",
+        "word-break": "break-all"
+      }
     }
   },
   "exports": {
@@ -902,6 +981,9 @@
     },
     "./react/footer": {
       "target": "./dist/react/footer.tsx"
+    },
+    "./react/source": {
+      "target": "./dist/react/source.tsx"
     }
   }
 }
