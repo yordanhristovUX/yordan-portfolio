@@ -717,7 +717,7 @@
   /* Webfonts change section heights, so they change every plate's remainder
      too — this is a re-settle as much as a rebuild, and it goes through the
      same path rather than getting a terminator pass of its own. */
-  document.fonts?.ready.then(() => rebuild(pageRegions, document));
+  document.fonts?.ready.then(() => rebuild(all, document));
 
   // Both inks belong to the theme. Re-read them and repaint the generation
   // that is already on screen — the life goes on, it just changes colour.

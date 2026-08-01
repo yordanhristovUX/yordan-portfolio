@@ -102,7 +102,7 @@ export interface TraceRow {
   args: string;
   summary?: string;
   ms?: number;
-  /** `false` for the `meta` row — a row that does not claim a tool ran. */
+  /** `false` for `meta` and `notice` rows — rows that do not claim a tool ran. */
   counts: boolean;
 }
 
