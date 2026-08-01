@@ -10,6 +10,13 @@
    bar does not move, the paper does not blink, the scroll jumps to the top,
    and the reader is left to infer from the words that anything happened.
 
+   THIS FILE IS THE SECOND HALF OF THE FIX. The first is in
+   src/components/RouteSettle.tsx and carries no animation at all: the router's
+   scroll to the top was inheriting `html { scroll-behavior: smooth }` from
+   css/style.css and taking 746ms to fly up through the new page's content,
+   which is the sensation of scrolling inside one document rather than arriving
+   in another. That is corrected to a jump. What follows only marks the moment.
+
    WHAT THIS IS NOT. It is not a loading indicator, and there is deliberately no
    spinner and no progress bar anywhere near this file: on a statically exported
    site with the payload already fetched, nothing IS loading, and drawing a
