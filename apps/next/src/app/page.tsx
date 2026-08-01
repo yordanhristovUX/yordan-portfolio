@@ -198,6 +198,12 @@ export default function Page() {
         <section className="band sec" id={S.notable.id}>
           <header className="sec__head">
             <h2 className="sec__title t-title">{S.notable.title}</h2>
+            {/* The same note slot Selected work uses above, and the same span:
+                these nine have no case-study pages, so the pointer is the
+                assistant. components.css hides it below 640px, where the
+                assistant is a corner button and the sentence would aim
+                off-screen. */}
+            <span className="sec__note">{S.notable.note}</span>
           </header>
           <div className="well well--flush">
             <div className="card-grid">

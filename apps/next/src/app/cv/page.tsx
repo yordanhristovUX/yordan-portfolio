@@ -8,8 +8,9 @@
    the CV prints because the design system says how paper works.
 
    The section rhythm is the vanilla page's and is deliberately irregular: a
-   strip after the head and after Experience, and none between 01/02 or
-   03/04/05. Reproduced rather than regularised.
+   strip after the head and after Skills, and none between 01/02 or 03/04/05.
+   The strips hold structural positions, so they did not travel with the
+   sections when the owner reordered them. Reproduced rather than regularised.
    ============================================================ */
 import type { Metadata } from "next";
 
@@ -95,30 +96,7 @@ export default function Page() {
 
         <Strip />
 
-        {/* ============ 01 OPEN SOURCE ============ */}
-        <section className="band sec" id={S.openSource.id}>
-          <header className="sec__head">
-            <h2 className="sec__title t-title">{S.openSource.title}</h2>
-            <span className="sec__note">{S.openSource.note}</span>
-          </header>
-          <div className="well">
-            {profile.prose.openSource.map((para) => (
-              <p key={para.slice(0, 40)}>{para}</p>
-            ))}
-            <p className="cv-facts mono">{profile.prose.openSourceFacts}</p>
-            <div className="link-grid">
-              {CV_OPEN_SOURCE.links.map((l) => (
-                <GridLink key={l.label} link={l} />
-              ))}
-            </div>
-            {/* Paper can't be clicked: the buttons above are replaced by their
-                URLs in print. */}
-            <p className="print-only mono">{CV_OPEN_SOURCE.printUrls}</p>
-          </div>
-          <Term />
-        </section>
-
-        {/* ============ 02 EXPERIENCE ============ */}
+        {/* ============ 01 EXPERIENCE ============ */}
         <section className="band sec" id={S.experience.id}>
           <header className="sec__head">
             <h2 className="sec__title t-title">{S.experience.title}</h2>
@@ -147,9 +125,7 @@ export default function Page() {
           <Term />
         </section>
 
-        <Strip />
-
-        {/* ============ 03 SKILLS ============ */}
+        {/* ============ 02 SKILLS ============ */}
         <section className="band sec" id={S.skills.id}>
           <header className="sec__head">
             <h2 className="sec__title t-title">{S.skills.title}</h2>
@@ -163,6 +139,31 @@ export default function Page() {
                 </div>
               ))}
             </dl>
+          </div>
+          <Term />
+        </section>
+
+        <Strip />
+
+        {/* ============ 03 OPEN SOURCE ============ */}
+        <section className="band sec" id={S.openSource.id}>
+          <header className="sec__head">
+            <h2 className="sec__title t-title">{S.openSource.title}</h2>
+            <span className="sec__note">{S.openSource.note}</span>
+          </header>
+          <div className="well">
+            {profile.prose.openSource.map((para) => (
+              <p key={para.slice(0, 40)}>{para}</p>
+            ))}
+            <p className="cv-facts mono">{profile.prose.openSourceFacts}</p>
+            <div className="link-grid">
+              {CV_OPEN_SOURCE.links.map((l) => (
+                <GridLink key={l.label} link={l} />
+              ))}
+            </div>
+            {/* Paper can't be clicked: the buttons above are replaced by their
+                URLs in print. */}
+            <p className="print-only mono">{CV_OPEN_SOURCE.printUrls}</p>
           </div>
           <Term />
         </section>

@@ -1,5 +1,5 @@
 /* ============================================================
-   COPIED VERBATIM FROM index.html AND cv.html @ 2e84323 — fix upstream first.
+   COPIED VERBATIM FROM index.html AND cv.html @ ed69a27 — fix upstream first.
 
    Every string below is on the vanilla site today and is NOT in
    content/dist/content.json. That is not an oversight in the corpus: it is
@@ -107,7 +107,10 @@ export const HERO = {
 export const INDEX_SECTIONS = {
   capabilities: { id: "about", title: "What I do" },
   work: { id: "work", title: "Selected work", note: "Click a project for the full case study" },
-  notable: { id: "notable", title: "Notable Projects" },
+  /* The note is page chrome, not content: the same `.sec__note` slot `work`
+     above uses, pointing at the assistant rather than at a case study, because
+     these nine have no pages of their own. */
+  notable: { id: "notable", title: "Notable Projects", note: "More on any of these — ask the assistant." },
   background: { id: "background", title: "Background" },
   skills: { title: "Skills & tools" },
   facts: { id: "unexpected", title: "Unexpected facts" },
@@ -186,7 +189,7 @@ export const CV_MENU_NAV: Link[] = [
 ];
 
 export const CV_SECTIONS = {
-  openSource: { id: "open-source", title: "AI-ready design system", note: "Open source" },
+  openSource: { id: "open-source", title: "Portfolio as a product", note: "Open source" },
   experience: { id: "experience", title: "Experience" },
   skills: { id: "skills", title: "Skills" },
   education: { id: "education", title: "Education & languages" },
