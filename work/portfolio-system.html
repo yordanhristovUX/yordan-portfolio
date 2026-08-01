@@ -82,14 +82,14 @@
   </button>
 
   <main class="sheet" id="top">
-    <section class="band sec work" aria-labelledby="work-title">
-      <header class="sec__head">
-        <h1 class="sec__title t-title" id="work-title">Portfolio as a Product</h1>
-        <span class="sec__note">This site</span>
-      </header>
+    <section class="band page-head" aria-labelledby="work-title">
       <div class="well">
-        <p class="t-lead">Every claim on this page is inspectable in the same public repository that renders it. If the system were not real, this page could not exist in the shape it does.</p>
-        <div class="chips"><span class="chip">Designer &amp; Builder</span><span class="chip">Design system</span><span class="chip">AI-first</span><span class="chip">MCP server</span><span class="chip">Storybook</span><span class="chip">Figma push</span><span class="chip chip--solid">Open source</span></div>
+        <p class="page-head__kicker t-label">This site</p>
+        <h1 class="page-head__title t-display t-display--lg" id="work-title">Portfolio as a Product</h1>
+        <p class="page-head__lede t-lead">Every claim on this page is inspectable in the same public repository that renders it. If the system were not real, this page could not exist in the shape it does.</p>
+        <div class="page-head__meta">
+          <div class="chips"><span class="chip">Designer &amp; Builder</span><span class="chip">Design system</span><span class="chip">AI-first</span><span class="chip">MCP server</span><span class="chip">Storybook</span><span class="chip">Figma push</span><span class="chip chip--solid">Open source</span></div>
+        </div>
         <div class="case-body">
           <h3>The idea</h3>
           <p>A designer's portfolio usually <strong>describes</strong> process. This one <strong>demonstrates</strong> it: every button and chip on this page comes from a design system that lives in the same public repository, documents itself for AI agents, and ships automatically. If I claim to build AI-ready systems, the claim should be inspectable. And it goes past styling: every word here is compiled from one authored source, so anything an AI assistant says about me on this site is traceable to a sentence I actually wrote.</p>
@@ -181,13 +181,13 @@
 
           <h3>See for yourself</h3>
           <p>This is also the personal version of the contract-first system in prototype at Green Street: the same architecture, with one user.</p>
-          <p>
-            <a class="btn btn--solid" href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener" style="margin-right:.6rem">GitHub repo ↗</a>
-            <a class="btn" href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener" style="margin-right:.6rem">Storybook ↗</a>
-            <a class="btn" href="/evals.html" style="margin-right:.6rem">Retrieval evaluation →</a>
-            <a class="btn" href="/mcp.html" style="margin-right:.6rem">MCP server →</a>
+          <div class="actions">
+            <a class="btn btn--solid" href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener">GitHub repo ↗</a>
+            <a class="btn" href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener">Storybook ↗</a>
+            <a class="btn" href="/evals.html">Retrieval evaluation →</a>
+            <a class="btn" href="/mcp.html">MCP server →</a>
             <a class="btn" href="/work/greenstreet-ds">The Green Street arc →</a>
-          </p>
+          </div>
         </div>
       </div>
       <div class="term" aria-hidden="true"></div>

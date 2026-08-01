@@ -306,10 +306,15 @@ function blocksToText(blocks) {
 /* ---------- small emit helpers ---------- */
 const pad = (n) => " ".repeat(n);
 const indent = (n, lines) => lines.map((l) => (l === "" ? "" : pad(n) + l));
+/* No `style` hook, deliberately. It existed for exactly one caller — the
+   `margin-right` `linkLines` put on every button but the last — and that
+   spacing is `.actions`' job now (components/actions/spec.md: "Never space the
+   buttons with a margin, inline or otherwise"). Leaving the parameter behind
+   would leave the defect one argument away from returning. */
 const anchor = (l) =>
   `<a${l.variant === "solid" ? ' class="btn btn--solid"' : l.btn ? ' class="btn"' : ""}` +
   ` href="${escAttr(l.href)}"${l.external ? ' target="_blank" rel="noopener"' : ""}` +
-  `${l.style ? ` style="${escAttr(l.style)}"` : ""}>${inline(l.label)}</a>`;
+  `>${inline(l.label)}</a>`;
 
 /* ============================================================
    3. Case-study bodies  →  the `content` string in js/case-studies.js
@@ -370,19 +375,22 @@ function mediaLines(project, slot) {
   return m.type === "svg" ? svgFigure(m) : [phFigure(m)];
 }
 
-/* One link renders bare; two or more sit in a <p> with the leading ones spaced. */
+/* One link renders bare; two or more are a ROW, and the row is a component.
+
+   This used to emit a `<p>` of inline-blocks with `style="margin-right:.6rem"`
+   on every anchor but the last. A paragraph of inline-blocks is not a group:
+   the column gap was chosen and the row gap was whatever the line box gave it —
+   1px once the row wrapped, which is what the five case studies shipped. The
+   `.actions` block owns both gaps as two named decisions, so no child carries a
+   margin here. design-system/components/actions/spec.md is the pattern; it is
+   copied verbatim, including "one button on its own needs no row". */
 function linkLines(links) {
   if (!links.length) return [];
   if (links.length === 1) return [anchor({ ...links[0], btn: true })];
   return [
-    `<p>`,
-    ...indent(
-      2,
-      links.map((l, i) =>
-        anchor({ ...l, btn: true, style: i < links.length - 1 ? "margin-right:.6rem" : undefined })
-      )
-    ),
-    `</p>`,
+    `<div class="actions">`,
+    ...indent(2, links.map((l) => anchor({ ...l, btn: true }))),
+    `</div>`,
   ];
 }
 
@@ -599,16 +607,35 @@ function workPage(project, prev, next) {
   L.push(`  </button>`);
   L.push(``);
   L.push(`  <main class="sheet" id="top">`);
-  L.push(`    <section class="band sec work" aria-labelledby="work-title">`);
-  L.push(`      <header class="sec__head">`);
-  L.push(`        <h1 class="sec__title t-title" id="work-title">${inline(project.title)}</h1>`);
-  L.push(`        <span class="sec__note">${escText(project.client)}</span>`);
-  L.push(`      </header>`);
+  /* PAGE HEAD, copied verbatim from components/page-head/spec.md — kicker,
+     title, lede, meta, in that order, on the BAND rather than inside the well.
+     The four parts were already all here; they were wearing a section head's
+     clothes. The client sat in a `.sec__note`, which is the note beside a
+     SECTION's title and made the client read as an aside to the project rather
+     than as whose page this is; the title was `.sec__title t-title`, a level
+     below the page's own title; and the band carried `.work`, whose only job
+     was `padding-top: var(--space-nav)` because the head came before the well.
+     `.page-head .well` carries that clearance now — it REPLACES the well's own
+     padding rather than adding to it — so `.work` would double it and is gone
+     from the markup. (The rule survives in css/style.css with nothing left to
+     match; removing it is frontend-a11y's file, not this build's.)
+
+     The chips are the meta slot, and they stay chips: not interactive, not
+     links, per the spec's a11y note. `aria-labelledby` still points at the
+     title's id, so the band's accessible name is the visible one. */
+  L.push(`    <section class="band page-head" aria-labelledby="work-title">`);
   L.push(`      <div class="well">`);
-  L.push(`        <p class="t-lead">${inline(subtitle)}</p>`);
-  L.push(`        <div class="chips">${project.tags
+  L.push(`        <p class="page-head__kicker t-label">${escText(project.client)}</p>`);
+  L.push(`        <h1 class="page-head__title t-display t-display--lg" id="work-title">${inline(project.title)}</h1>`);
+  L.push(`        <p class="page-head__lede t-lead">${inline(subtitle)}</p>`);
+  L.push(`        <div class="page-head__meta">`);
+  L.push(`          <div class="chips">${project.tags
     .map((t) => `<span class="chip${t === project.accentTag ? " chip--solid" : ""}">${inline(t)}</span>`)
     .join("")}</div>`);
+  L.push(`        </div>`);
+  /* The case study itself follows the head INSIDE THE SAME WELL, which is the
+     composition /mcp already ships and which the spec's AI notes sanction: the
+     head is four parts and a rhythm, and what comes after is the page's. */
   L.push(`        <div class="case-body">`);
   L.push(...indent(10, body));
   L.push(`        </div>`);
