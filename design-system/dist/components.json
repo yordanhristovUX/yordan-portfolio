@@ -5,8 +5,30 @@
     "css/components.css",
     "components/*/spec.md (frontmatter only)"
   ],
-  "count": 24,
+  "count": 26,
   "components": [
+    {
+      "id": "actions",
+      "status": "stable",
+      "since": "phase-3",
+      "a11y": "Nothing of its own, and that is the point: it is a flex container around controls that already carry their own semantics. It adds no role and no label, so the tab order is source order and a screen reader hears the buttons rather than a group it was not told about.",
+      "spec": "components/actions/spec.md",
+      "story": "stories/actions.stories.js",
+      "blocks": [
+        "Actions"
+      ],
+      "classes": [
+        ".actions"
+      ],
+      "elements": [],
+      "variants": [],
+      "selectors": [
+        ".actions"
+      ],
+      "tokens": [
+        "--space-3"
+      ]
+    },
     {
       "id": "ask-fab",
       "status": "stable",
@@ -965,6 +987,47 @@
         "--text-xs",
         "--tracking-wide-sm",
         "--weight-semibold"
+      ]
+    },
+    {
+      "id": "page-head",
+      "status": "stable",
+      "since": "phase-3",
+      "a11y": "The kicker is a <p>, never a heading — it names the client or the protocol and is not a level in the document outline. The title is the page's one <h1>, and the band is labelled by it with aria-labelledby rather than by an aria-label, so the accessible name is the visible one.",
+      "spec": "components/page-head/spec.md",
+      "story": "stories/page-head.stories.js",
+      "blocks": [
+        "Page head"
+      ],
+      "classes": [
+        ".page-head",
+        ".page-head__kicker",
+        ".page-head__lede",
+        ".page-head__meta",
+        ".page-head__title",
+        ".well"
+      ],
+      "elements": [
+        "__kicker",
+        "__lede",
+        "__meta",
+        "__title"
+      ],
+      "variants": [],
+      "selectors": [
+        ".page-head .well",
+        ".page-head__kicker",
+        ".page-head__lede",
+        ".page-head__meta",
+        ".page-head__title"
+      ],
+      "tokens": [
+        "--accent",
+        "--space-2",
+        "--space-4",
+        "--space-5",
+        "--space-flow-sm",
+        "--space-nav"
       ]
     },
     {

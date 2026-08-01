@@ -1,4 +1,4 @@
-/* Two automated gates over the same 62 stories, driven by @storybook/test-runner.
+/* Two automated gates over the same 64 stories, driven by @storybook/test-runner.
  *
  *   node scripts/storybook-gates.mjs --mode a11y      (npm run test:a11y)
  *   node scripts/storybook-gates.mjs --mode visual    (npm run test:visual)

@@ -2366,6 +2366,29 @@ body:has(.menu[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:source ---- */
 
+/* ---- generated:page-head — do not edit, source: components/page-head/definition.json ---- */
+/* ============ Page head ============ @component page-head
+   The head an inner page opens with — the five work pages and /mcp. It goes on the
+   BAND rather than inside the well, because the one rule it makes about the page's
+   geometry is a rule about the well: an inner page's head is the thing that has to
+   clear the floating bar, and the clearance REPLACES the well's own top padding
+   rather than adding to it. Everything else is the four parts, in order. */
+.page-head .well { padding-top: var(--space-nav); }
+.page-head__kicker { display: inline-block; border-bottom: 2px solid var(--accent); padding-bottom: var(--space-2); margin-bottom: var(--space-flow-sm); }
+.page-head__title { margin-bottom: var(--space-4); }
+.page-head__lede { max-width: 46rem; margin-bottom: var(--space-5); }
+.page-head__meta { margin-top: var(--space-5); }
+/* ---- /generated:page-head ---- */
+
+/* ---- generated:actions — do not edit, source: components/actions/definition.json ---- */
+/* ============ Actions ============ @component actions
+   The row a page's calls to action sit in. It carries no appearance of its own —
+   a `.btn` still looks like a `.btn` — and exists only to say that these buttons
+   are ONE group that wraps as a group. Anything that needs to look different is a
+   button variant, not a variant of this. */
+.actions { display: flex; flex-wrap: wrap; column-gap: var(--space-3); row-gap: var(--space-3); }
+/* ---- /generated:actions ---- */
+
 /* ---- authored:none — unnamed-condition ---- */
 /* ============ Reduced motion ============ @component none */
 @media (prefers-reduced-motion: reduce) {

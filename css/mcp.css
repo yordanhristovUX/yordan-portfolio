@@ -21,7 +21,31 @@
    and print values.
    ============================================================ */
 
-/* ============ Head ============ */
+/* ============ Head — RETIRING ============
+   Every rule between here and the link-grid line below is now the `page-head`
+   component in the design system, transcribed value for value: this page is
+   where the pattern existed before it was one, and its numbers are what the
+   pattern was approved at. See design-system/components/page-head/spec.md.
+
+   THE MAPPING, one line each, for the commit that swaps the markup:
+
+     .mcp-head          → .page-head          (same <section class="band …">)
+     .mcp-head__kicker  → .page-head__kicker
+     .mcp-head__title   → .page-head__title
+     .mcp-head__lede    → .page-head__lede
+     — no counterpart — → .page-head__meta    the tags slot; /mcp has no tags,
+                                              so this page simply omits it
+
+   WHY IT IS STILL HERE. Deleting it before the markup moves would ship a /mcp
+   with no nav clearance and no accent rule under the kicker, and this file
+   cannot move the markup: mcp.html is hand-authored and belongs to another
+   slice. So this block is deleted by the same commit that rewrites those four
+   class names, and not before. Nothing new may be added to it.
+
+   The link-grid rule at the foot is NOT retiring — it is this page's own
+   composition (prose, then a grid of links, inside the head's well) rather
+   than part of the pattern, so it survives the swap with its selector
+   rewritten to `.page-head .link-grid`. Same for the print rule further down. */
 .mcp-head .well { padding-top: var(--space-nav); } /* clears the floating nav; 0 on paper */
 
 .mcp-head__kicker {
@@ -32,6 +56,8 @@
 }
 .mcp-head__title { margin-bottom: var(--space-4); }
 .mcp-head__lede { max-width: 46rem; margin-bottom: var(--space-5); }
+
+/* ---- page composition, and it stays ---- */
 .mcp-head .link-grid { margin-top: var(--space-7); }
 
 /* ============ Prose inside wells ============ */

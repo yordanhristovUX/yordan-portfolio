@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -497,6 +497,12 @@
     }
   },
   "components": {
+    "actions": {
+      "status": "stable",
+      "classes": [
+        ".actions"
+      ]
+    },
     "ask-fab": {
       "status": "stable",
       "classes": [
@@ -684,6 +690,17 @@
         ".bar__nav",
         ".bar__status",
         ".theme"
+      ]
+    },
+    "page-head": {
+      "status": "stable",
+      "classes": [
+        ".page-head",
+        ".page-head__kicker",
+        ".page-head__lede",
+        ".page-head__meta",
+        ".page-head__title",
+        ".well"
       ]
     },
     "profile": {
@@ -2824,6 +2841,49 @@
       "declarations": {
         "border-bottom": "0 !important"
       }
+    },
+    "page-head .page-head .well": {
+      "kind": "scoped part",
+      "declarations": {
+        "padding-top": "{space-nav}"
+      }
+    },
+    "page-head .page-head__kicker": {
+      "kind": "part",
+      "declarations": {
+        "border-bottom": "2px solid {accent}",
+        "display": "inline-block",
+        "margin-bottom": "{space-flow-sm}",
+        "padding-bottom": "{space-2}"
+      }
+    },
+    "page-head .page-head__title": {
+      "kind": "part",
+      "declarations": {
+        "margin-bottom": "{space-4}"
+      }
+    },
+    "page-head .page-head__lede": {
+      "kind": "part",
+      "declarations": {
+        "margin-bottom": "{space-5}",
+        "max-width": "46rem"
+      }
+    },
+    "page-head .page-head__meta": {
+      "kind": "part",
+      "declarations": {
+        "margin-top": "{space-5}"
+      }
+    },
+    "actions .actions": {
+      "kind": "base",
+      "declarations": {
+        "column-gap": "{space-3}",
+        "display": "flex",
+        "flex-wrap": "wrap",
+        "row-gap": "{space-3}"
+      }
     }
   },
   "exports": {
@@ -2913,6 +2973,12 @@
     },
     "./react/card": {
       "target": "./dist/react/card.tsx"
+    },
+    "./react/page-head": {
+      "target": "./dist/react/page-head.tsx"
+    },
+    "./react/actions": {
+      "target": "./dist/react/actions.tsx"
     }
   }
 }

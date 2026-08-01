@@ -54,3 +54,7 @@ export { themeToggle, ThemeToggle, themeToggleLamp, ThemeToggleLamp } from "./th
 export type { ThemeToggleProps, ThemeToggleVariants, ThemeToggleLampProps } from "./theme-toggle";
 export { card, Card, cardGrid, CardGrid, cardNote, CardNote, cardMore, CardMore, cardPeekSheet, CardPeekSheet, cardSheetScrim, CardSheetScrim, cardSheetPanel, CardSheetPanel, cardSheetHead, CardSheetHead, cardSheetTitle, CardSheetTitle, cardSheetClose, CardSheetClose, cardSheetBody, CardSheetBody, cardSheetFrame, CardSheetFrame, cardSheetNote, CardSheetNote, cardPeek, CardPeek, cardPeekFrame, CardPeekFrame, cardPeekText, CardPeekText, cardType, CardType, cardTitle, CardTitle } from "./card";
 export type { CardProps, CardVariants, CardGridProps, CardNoteProps, CardMoreProps, CardPeekSheetProps, CardSheetScrimProps, CardSheetPanelProps, CardSheetHeadProps, CardSheetTitleProps, CardSheetCloseProps, CardSheetBodyProps, CardSheetFrameProps, CardSheetNoteProps, CardPeekProps, CardPeekFrameProps, CardPeekTextProps, CardTypeProps, CardTitleProps } from "./card";
+export { pageHead, PageHead, pageHeadKicker, PageHeadKicker, pageHeadTitle, PageHeadTitle, pageHeadLede, PageHeadLede, pageHeadMeta, PageHeadMeta } from "./page-head";
+export type { PageHeadProps, PageHeadVariants, PageHeadKickerProps, PageHeadTitleProps, PageHeadLedeProps, PageHeadMetaProps } from "./page-head";
+export { actions, Actions } from "./actions";
+export type { ActionsProps, ActionsVariants } from "./actions";

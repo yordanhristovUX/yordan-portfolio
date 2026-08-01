@@ -552,6 +552,8 @@ const packaged = [
   ["dist/react/menu.tsx", reactSource("menu")],
   ["dist/react/theme-toggle.tsx", reactSource("theme-toggle")],
   ["dist/react/card.tsx", reactSource("card")],
+  ["dist/react/page-head.tsx", reactSource("page-head")],
+  ["dist/react/actions.tsx", reactSource("actions")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by

@@ -5,6 +5,23 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.8.0 — 2026-08-01
+
+Minor — 10 change(s).
+
+### Added
+
+- component `actions` added
+- component `page-head` added
+- definition `actions .actions` added
+- definition `page-head .page-head .well` added
+- definition `page-head .page-head__kicker` added
+- definition `page-head .page-head__lede` added
+- definition `page-head .page-head__meta` added
+- definition `page-head .page-head__title` added
+- export `./react/actions` added
+- export `./react/page-head` added
+
 ## 2.7.0 — 2026-08-01
 
 Minor — 28 change(s).

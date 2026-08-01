@@ -1,0 +1,30 @@
+{
+  "$doc": "A row of buttons or button-shaped links, and the whole component is four declarations because that is all a row of buttons needs — once it is a flex container rather than a paragraph of inline-blocks. The two gaps are NAMED SEPARATELY rather than written as one `gap`, and the reason is the defect this replaced: the work pages spaced their buttons with an inline `margin-right` on every anchor but the last, so the column gap was right and the ROW gap was whatever the line box gave it, which measured at 1px. A shorthand would have made those two numbers one decision; they are one value today and two decisions, and the row gap is the one that was wrong.",
+  "$schema": "../definition.schema.json",
+  "id": "actions",
+  "block": {
+    "title": "Actions",
+    "note": [
+      "The row a page's calls to action sit in. It carries no appearance of its own —",
+      "a `.btn` still looks like a `.btn` — and exists only to say that these buttons",
+      "are ONE group that wraps as a group. Anything that needs to look different is a",
+      "button variant, not a variant of this."
+    ]
+  },
+  "root": ".actions",
+  "rules": [
+    {
+      "kind": "base",
+      "declarations": [
+        {
+          "set": {
+            "display": "flex",
+            "flex-wrap": "wrap",
+            "column-gap": { "token": "space-3" },
+            "row-gap": { "token": "space-3" }
+          }
+        }
+      ]
+    }
+  ]
+}

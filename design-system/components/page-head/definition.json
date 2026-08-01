@@ -1,0 +1,63 @@
+{
+  "$doc": "The head of an inner page, in the order the owner approved: a kicker that names WHOSE page this is, a title, a lede, and a slot for the tags that follow. Every value here is transcribed from `.mcp-head`, which is the one place the pattern existed and is the measurement it was approved against — kicker to title is `space-flow-sm` (20px at an 800px-tall window), title to lede is `space-4`, and the lede's bottom margin meets the meta's top margin at `space-5` and collapses to one 20px gap. The kicker's accent underline is the pattern's signature, and is why the kicker is inline-block rather than a block: the rule has to be the width of the words, not the width of the column.",
+  "$schema": "../definition.schema.json",
+  "id": "page-head",
+  "block": {
+    "title": "Page head",
+    "note": [
+      "The head an inner page opens with — the five work pages and /mcp. It goes on the",
+      "BAND rather than inside the well, because the one rule it makes about the page's",
+      "geometry is a rule about the well: an inner page's head is the thing that has to",
+      "clear the floating bar, and the clearance REPLACES the well's own top padding",
+      "rather than adding to it. Everything else is the four parts, in order."
+    ]
+  },
+  "root": ".page-head",
+  "rules": [
+    {
+      "kind": "part",
+      "name": "well",
+      "within": "base",
+      "class": ".well",
+      "$doc": "The nav clearance, and the one rule this component makes about somebody else's element. `--space-nav` replaces the well's own `--pad-y` rather than adding to it, which is why it is a padding on the well and not a margin on anything inside it; and it prints as nothing, because `--space-nav`'s print value is 0 and `.bar` is not on the sheet.",
+      "declarations": [{ "set": { "padding-top": { "token": "space-nav" } } }]
+    },
+    {
+      "kind": "part",
+      "name": "kicker",
+      "selector": ".page-head__kicker",
+      "$doc": "Whose page this is — a client name on a work page, the protocol's name on /mcp. `inline-block` so the accent rule under it is the width of the words rather than of the column, which is the whole reason it reads as a signature instead of a divider.",
+      "declarations": [
+        {
+          "set": {
+            "display": "inline-block",
+            "border-bottom": ["2px", "solid", { "token": "accent" }],
+            "padding-bottom": { "token": "space-2" },
+            "margin-bottom": { "token": "space-flow-sm" }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "title",
+      "selector": ".page-head__title",
+      "$doc": "The page's one display line. The SIZE is not here: the title wears `t-display t-display--lg` from the type layer, because a typographic level is a utility applied to whatever element a page already has, and this component has no opinion about which heading it is.",
+      "declarations": [{ "set": { "margin-bottom": { "token": "space-4" } } }]
+    },
+    {
+      "kind": "part",
+      "name": "lede",
+      "selector": ".page-head__lede",
+      "$doc": "One paragraph, measured rather than sized. `46rem` is the measure /mcp's prose and its tool table already hold; a measure is a different job from spacing, which is why it is a literal here and on the owner's review list rather than a token.",
+      "declarations": [{ "set": { "max-width": "46rem", "margin-bottom": { "token": "space-5" } } }]
+    },
+    {
+      "kind": "part",
+      "name": "meta",
+      "selector": ".page-head__meta",
+      "$doc": "The slot the tags land in — chips on a work page, and nothing at all on /mcp, whose prose and link grid follow the head rather than sit in it. Its top margin is the same step as the lede's bottom margin ON PURPOSE: adjacent siblings collapse, so the pair is one 20px gap when both are present, and 20px above the meta when there is no lede.",
+      "declarations": [{ "set": { "margin-top": { "token": "space-5" } } }]
+    }
+  ]
+}

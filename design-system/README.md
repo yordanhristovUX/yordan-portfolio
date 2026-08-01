@@ -723,7 +723,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly twenty-nine** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly thirty-one** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -761,6 +761,8 @@ published.
 "@yordan/design-system/react/theme-toggle"   // the block that minted `foreign-scope`
 "@yordan/design-system/react/card"           // R4's LAST block — eight regions, seven gaps,
                                              // and the one that forced a class ARRAY
+"@yordan/design-system/react/page-head"      // the first two components BORN as definitions
+"@yordan/design-system/react/actions"        // rather than migrated into being one
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —
@@ -935,7 +937,7 @@ went stale twice, which is exactly the drift this system exists to prevent.
 - **values** — light + dark + print + wide authored values across those tokens (171). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
-- **components** — directories under `components/` (24)
+- **components** — directories under `components/` (26)
 - **dark** — tokens carrying a `dark` value (24)
 
 The dark count was added to the gate after it proved the point the hard way, and it has now
@@ -1021,8 +1023,8 @@ into a gate whose whole contract is offline and dependency-light. Nothing in thi
 starts with `test-`; keep it that way.
 
 ```sh
-npm run test:a11y        # axe over all 62 stories — a violation fails, and is named
-npm run test:visual      # a screenshot of all 62 — report-only until 2026-09-01
+npm run test:a11y        # axe over all 64 stories — a violation fails, and is named
+npm run test:visual      # a screenshot of all 64 — report-only until 2026-09-01
 npm run test:a11y:pages  # axe over the four shipped pages, both themes, no exemptions
 ```
 
