@@ -52,12 +52,14 @@ deployed        yes — verified from outside: retitle live, hint line live, /ap
 tests           149 / 149
 gates           green — content, css, boundaries, evals and the suite all pass
 corpus          43413e53aa94810c · 99 chunks · 1435 terms      (was 70 · 967)
-design system   103 tokens · 167 values · 23 components         (was 83 · 147)
+design system   103 tokens · 167 values · 24 components         (was 83 · 147 · 23)
                 (103 base + 23 dark + 36 print + 5 wide)
-package         @yordan/design-system 1.9.0 · 21 exported subpaths · RELEASED at 1.9.0
-definitions     26 blocks: 13 generated, 12 authored, 1 SPLIT (ask-fab, the first)
-                14 generated regions in components.css · 13 definitions · 17 packaged
-                artefacts byte-compared   (read off build.mjs --check at 2983f30)
+package         @yordan/design-system 2.0.0 · RELEASED at 2.0.0 — read package.json for
+                the subpath list; it moves every batch
+definitions     26 blocks: 14 generated, 11 authored, 1 SPLIT (ask-fab, the first)
+                15 generated regions · 14 definitions · 18 packaged artefacts byte-compared
+                (read off `build.mjs --check` at d9e70a6 — it moved three times while this
+                block was being written; run the gate, do not trust this line)
 questions       65 — 49 retrieval, 16 abstention  (unmoved: not one was added or reworded)
 boundaries      8 slice rules · 80 files · 20 crossings pinned
 pages           vanilla: index · cv · mcp · evals · work/<id> × 5
@@ -410,11 +412,12 @@ These figures moved twice while this section was being written, and one of them 
 between: counting the markers in `components.css` by hand gives "14 generated, 13 authored"
 and the gate says "13 generated, 12 authored, 1 split", because a split block contributes a
 marker to both halves. **Read `node design-system/scripts/build.mjs --check`; do not count
-the file.** That is the same lesson this repo keeps paying for, collected one more time. A **row split** is reported as approved and in
-progress, and it is the change that would take the contract to **2.0.0** — a MAJOR, because
-splitting a component removes a name. *That last part is reported rather than verified: at
-the last commit nothing in `design-system/` names a 2.0.0 or a row split, which is what
-in-flight work looks like from outside.* Expect `design-system/**` to have uncommitted work in
+the file.** That is the same lesson this repo keeps paying for, collected one more time. **The row split has since landed** as `d9e70a6`, and it is
+the MAJOR it was expected to be: `row` owned two banners — `.idx__row`, a clickable index
+entry, and `.tools__row`, a term-and-definition pair — sharing an id because both are
+full-width list rows and for no other reason. They are `project-row` and `definition-row`
+now, the contract is **2.0.0**, and the component count went 23 → 24. Removing a name is a
+MAJOR whatever the reason, which is the whole point of having the gate. Expect `design-system/**` to have uncommitted work in
 it, expect the counts to move, and **do not run a design-system build while it does**: that
 build writes `dist/` and `content/system.generated.json`, so it would publish somebody else's
 half-finished source. Read the counts from the last commit instead.
