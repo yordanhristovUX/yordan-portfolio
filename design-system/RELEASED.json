@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -943,6 +943,107 @@
         "min-width": "0",
         "word-break": "break-all"
       }
+    },
+    "link-grid .link-grid": {
+      "kind": "base",
+      "declarations": {
+        "border": "{rule}",
+        "border-width": "1px 0 0 1px",
+        "display": "flex",
+        "flex-wrap": "wrap"
+      }
+    },
+    "link-grid .link-grid a": {
+      "kind": "scoped part",
+      "declarations": {
+        "border": "{rule}",
+        "border-width": "0 1px 1px 0",
+        "color": "{chrome-label-strong}",
+        "flex": "1 1 11rem",
+        "font-family": "{font-mono}",
+        "font-size": "{text-xs}",
+        "font-weight": "{weight-medium}",
+        "letter-spacing": "{tracking-wide}",
+        "padding": "{space-4} {pad}",
+        "transition": "background-color 0.2s, color 0.2s"
+      }
+    },
+    "link-grid .link-grid a:hover": {
+      "kind": "scoped part state",
+      "declarations": {
+        "background": "{primary}",
+        "color": "{content-inverse}"
+      }
+    },
+    "case-body .case-body h3": {
+      "kind": "scoped part",
+      "declarations": {
+        "border-top": "{rule}",
+        "color": "{content-primary}",
+        "font-family": "{font-display}",
+        "font-size": "{text-sub}",
+        "font-variation-settings": "{width-sub}",
+        "font-weight": "{weight-extrabold}",
+        "margin": "{space-7} 0 {space-3}",
+        "padding-top": "{space-7}",
+        "text-transform": "uppercase"
+      }
+    },
+    "case-body .case-body h3:first-child": {
+      "kind": "scoped part position",
+      "declarations": {
+        "border-top": "0",
+        "margin-top": "0",
+        "padding-top": "0"
+      }
+    },
+    "case-body .case-body p": {
+      "kind": "scoped part",
+      "declarations": {
+        "margin-bottom": "{space-4}",
+        "max-width": "44rem"
+      }
+    },
+    "case-body .case-body p strong": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{content-primary}",
+        "font-weight": "{weight-semibold}"
+      }
+    },
+    "case-body .case-body ul": {
+      "kind": "scoped part",
+      "declarations": {
+        "list-style": "none",
+        "margin-bottom": "{space-4}"
+      }
+    },
+    "case-body .case-body li": {
+      "kind": "scoped part",
+      "declarations": {
+        "border-bottom": "{rule}",
+        "max-width": "44rem",
+        "padding": "{space-2} 0 {space-2} {space-6}",
+        "position": "relative"
+      }
+    },
+    "case-body .case-body li::before": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{primary}",
+        "content": "\"▪\"",
+        "font-size": "{text-2xs}",
+        "left": "0",
+        "position": "absolute",
+        "top": "{space-2}"
+      }
+    },
+    "case-body .case-body li strong": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{content-primary}",
+        "font-weight": "{weight-semibold}"
+      }
     }
   },
   "exports": {
@@ -984,6 +1085,12 @@
     },
     "./react/source": {
       "target": "./dist/react/source.tsx"
+    },
+    "./react/link-grid": {
+      "target": "./dist/react/link-grid.tsx"
+    },
+    "./react/case-body": {
+      "target": "./dist/react/case-body.tsx"
     }
   }
 }

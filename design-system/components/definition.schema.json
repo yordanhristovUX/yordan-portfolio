@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://yordanhristov.dev/design-system/definition.schema.json",
   "title": "Component definition",
-  "$doc": "EXTRACTED, NOT IMPOSED. Every construct below exists because one of the three pilot definitions needed it, and nothing below exists because a schema felt incomplete without it. Button forced variants, sizes, states-hanging-off-their-owner and the note-on-a-declaration-group; chip forced `parts`, because `.chips` is the wrapper a set of chips sits in and calling it a variant would have cost the word its meaning; stat forced the sections to be OPTIONAL rather than empty, and is the case where a token binds a whole compound value. The two constructs that are not a shape but a CLAIM — `aliases` and `axes.orthogonal` — come from findings the pilot reported rather than from the CSS: two rules that are deliberately identical, and two axes that are deliberately a matrix. Both are checked, because an unchecked claim is a comment. WHAT IS NOT HERE: behaviour. No focus management, no keyboard, no ARIA, no state. A definition answers what this looks like and nothing else; the rest lives in spec.md and in code, and this schema refuses the keys that would let it drift. WHAT IS ALSO NOT HERE, and is the harder omission: anything relational. There is no combinator, no at-rule, no locally-defined custom property and no computed geometry, so a block that needs one of those is not expressible here and is not meant to be — see design-system/PATTERNS.md, which measures how many blocks that is (19 of 24) and says what happens to them instead.",
+  "$doc": "EXTRACTED, NOT IMPOSED. Every construct below exists because one of the real definitions needed it, and nothing below exists because a schema felt incomplete without it. Button forced variants, sizes, states-hanging-off-their-owner and the note-on-a-declaration-group; chip forced `parts`, because `.chips` is the wrapper a set of chips sits in and calling it a variant would have cost the word its meaning; stat forced the sections to be OPTIONAL rather than empty, and is the case where a token binds a whole compound value; footer forced `aside`; source made a part a full rule. R4's migration adds two more, and both were forced by blocks whose CSS is nothing BUT the thing the construct expresses: `link-grid` and `case-body` style unclassed markup, which forced a SCOPED part (`within` + `element` + optional `pseudo`), and case-body's first heading forced `positions`, a closed enum rather than a selector. The two constructs that are not a shape but a CLAIM — `aliases` and `axes.orthogonal` — come from findings the pilot reported rather than from the CSS: two rules that are deliberately identical, and two axes that are deliberately a matrix. Both are checked, because an unchecked claim is a comment. WHAT IS NOT HERE: behaviour. No focus management, no keyboard, no ARIA, no state. A definition answers what this looks like and nothing else; the rest lives in spec.md and in code, and this schema refuses the keys that would let it drift. WHAT IS ALSO NOT HERE, and is the harder omission: anything freely relational. There is no at-rule, no locally-defined custom property and no computed geometry, and the one relation that IS here is closed at both ends — a scoped part's ancestor must be the root and its path is bare tag names, so it can say `.case-body p strong` and cannot say `.band > .rail--l`. A block that needs the rest is not expressible here and is not meant to be — see design-system/PATTERNS.md.",
   "type": "object",
-  "required": ["id", "block", "root", "base"],
+  "required": ["id", "block", "root"],
   "additionalProperties": false,
   "properties": {
     "$schema": { "type": "string", "$doc": "Optional pointer back to this file, for an editor." },
@@ -17,7 +17,10 @@
     "block": { "$ref": "#/$defs/block" },
     "root": { "$ref": "#/$defs/selector", "$doc": "The component's own class. Its element is NOT here — it is read from the canonical HTML in spec.md, which design-system/README.md calls THE pattern rather than an example." },
     "axes": { "$ref": "#/$defs/axes" },
-    "base": { "$ref": "#/$defs/rule" },
+    "base": {
+      "$ref": "#/$defs/rule",
+      "$doc": "OPTIONAL, and `case-body` is the block that made it so. Its root has no rule at all: `.case-body` is a scope rather than an appearance, and everything it does it does to the prose inside it. Requiring `base` would have meant inventing an empty rule and emitting `.case-body { }`, which is a declaration that the file has a shape it does not have. Same move stat forced on `variants`/`sizes` — optional rather than empty. A definition with neither `base` nor `parts` is refused by the build: it would render a banner and nothing under it."
+    },
     "variants": {
       "type": "array",
       "minItems": 1,
@@ -161,21 +164,49 @@
         "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } }
       }
     },
-    "part": {
-      "$doc": "A companion selector that is not a modifier of the root. R4 MADE A PART A FULL RULE. It used to be declarations and nothing else — no states, one element, no say in the file's shape — and `source` is the block that showed why that was an arbitrary limit rather than a distinction: `.source__link` has a hover-and-focus state, and its canonical HTML puts it on a <button> and an <a>, exactly as Button's does. A part with less power than a root was a fact about the emitter, not about components. What a part still does not have is variants and sizes: a companion selector that needs an axis is a component with its own definition, and that line has held through five blocks.",
+    "position": {
+      "$doc": "WHERE A RULE SITS AMONG ITS SIBLINGS, from a CLOSED vocabulary. `.case-body h3:first-child` drops the rule above the first heading because a page does not open on a line — a real declaration about position, and the reason it is not a `state` is that a state is something the user does and a position is something the document is. The vocabulary is an enum rather than a selector string precisely so it cannot grow into `:nth-last-child(-n+3):nth-child(3n+1)` by increments; a member is minted by the block that needs it, in the same commit, the way `alias.of` is widened. `first` arrived with case-body. Pipeline 2 renders the whole thing as one arbitrary variant, so the position rides inside `[&…]:` rather than becoming Tailwind's `first:` — same argument as `:hover`, and the same refusal to invent.",
       "type": "object",
-      "required": ["name", "selector", "declarations"],
+      "required": ["name", "at", "declarations"],
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "at": { "enum": ["first"], "$doc": "`first` → `:first-child`. One member, because one block has asked. Add the next one with the block that needs it and not before — the value of a closed vocabulary is what it refuses." },
+        "$doc": { "type": "string" },
+        "declarations": { "$ref": "#/$defs/declarations" }
+      }
+    },
+    "part": {
+      "$doc": "A companion selector that is not a modifier of the root. R4 MADE A PART A FULL RULE. It used to be declarations and nothing else — no states, one element, no say in the file's shape — and `source` is the block that showed why that was an arbitrary limit rather than a distinction: `.source__link` has a hover-and-focus state, and its canonical HTML puts it on a <button> and an <a>, exactly as Button's does. A part with less power than a root was a fact about the emitter, not about components. What a part still does not have is variants and sizes: a companion selector that needs an axis is a component with its own definition, and that line has held through six blocks. A PART IS ONE OF TWO SHAPES: it has a `selector` of its own, or it is SCOPED — `within` plus `element` — and `link-grid` and `case-body` are the blocks that forced the second. Their children carry no classes at all, and deliberately: case-body's prose is compiled from markdown under content/, so a class per element would put styling inside the content pipeline. The rule that keeps the scoped form from being `.band > .rail--l` in disguise is that BOTH halves are closed — `within` must be the root, and `element` is a list of bare tag names joined by descendant combinators, with no child, sibling or attribute anywhere in it.",
+      "type": "object",
+      "required": ["name", "declarations"],
+      "additionalProperties": false,
+      "oneOf": [{ "required": ["selector"] }, { "required": ["within", "element"] }],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
         "selector": { "$ref": "#/$defs/selector" },
+        "within": {
+          "$ref": "#/$defs/selector",
+          "$doc": "The ancestor this part is scoped to. STATED here and checked against `root` for the same reason a modifier states its own selector: the CSS stays transcribed rather than assembled, and the two cannot disagree. The root is the only referent — a part scoped to another part would be a two-level descendant chain, which is CSS with more punctuation."
+        },
+        "element": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*$" },
+          "$doc": "The element path under `within`, joined by descendant combinators: [\"p\", \"strong\"] is `.case-body p strong`. An ARRAY rather than a string, so the combinator is the emitter's and never the author's — a string would let `p > strong` in through a space."
+        },
+        "pseudo": {
+          "enum": ["::before"],
+          "$doc": "A drawn pseudo-element. `::before` is the only one css/components.css uses outside the foundation reset, and it draws the list marker — decoration rather than content, which is exactly why it is here and not in the markup. `::after` is not in the vocabulary because nothing has asked for it."
+        },
         "$doc": { "type": "string" },
         "break": {
           "const": true,
           "$doc": "Emit a blank line before this rule. A stylesheet block has paragraphs — `source` separates the list's chrome from the item that repeats inside it — and a paragraph is a statement about which rules belong together. Without this the emitter would have to either lose the break or invent one, and both are worse than recording it."
         },
         "declarations": { "$ref": "#/$defs/declarations" },
-        "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } }
+        "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } },
+        "positions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/position" } }
       }
     },
     "axes": {

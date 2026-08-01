@@ -8,14 +8,14 @@
    `node scripts/emit-css.mjs --check`  render and compare, write nothing
                                         (the same comparison build.mjs runs)
 
-   PILOT SCOPE, GROWING. Five components (button, chip, stat, footer, source)
-   have their appearance authored as data in components/<id>/definition.json and
-   their CSS block GENERATED from it, and the typography layer is generated from
-   tokens/typography.json beside them. The other eighteen blocks in
-   css/components.css are hand-authored; PATTERNS.md measures which of them can
-   follow and which are page scaffolding that stays. css/components.css is
-   therefore an ASSEMBLY: authored source with six generated regions
-   bracketed by markers, in the
+   PILOT SCOPE, GROWING. Seven components (button, chip, stat, footer, source,
+   link-grid, case-body) have their appearance authored as data in
+   components/<id>/definition.json and their CSS block GENERATED from it, and the
+   typography layer is generated from tokens/typography.json beside them. The
+   other fifteen blocks in css/components.css are hand-authored; PATTERNS.md
+   measures which of them can follow and which are page scaffolding that stays.
+   css/components.css is therefore an ASSEMBLY: authored source with eight
+   generated regions bracketed by markers, in the
    same idiom as the `<!-- content:… -->` regions of index.html. A region opens
    with a marker naming its source and closes with a slashed one — written here
    without their comment terminators, which would end this comment:
@@ -36,20 +36,33 @@
 
      block          the CSS banner: { title, note?: [lines] }
      root           the component's own selector, e.g. ".btn"
-     base           { declarations, states? } — the rule for `root`
+     base           { declarations, states? } — the rule for `root`. OPTIONAL
+                    since case-body, whose root is a scope with no appearance:
+                    emitting `.case-body { }` would claim a rule it has not got.
      variants[]     { name, selector, declarations, states? } — appearance
      sizes[]        { name, selector, declarations, states? } — dimension
-     parts[]        { name, selector, declarations, states?, break? } — a
-                    companion selector that is not a modifier of root (chip's
-                    `.chips` wrapper). Since R4 a part is a FULL rule: it may
-                    carry states and be polymorphic on the same terms the root
-                    is. It still has no variants or sizes — a companion that
-                    needs an axis is a component with its own definition.
+     parts[]        a companion selector that is not a modifier of root. Since
+                    R4 a part is a FULL rule: states, positions, and polymorphic
+                    on the same terms the root is. It has no variants or sizes —
+                    a companion that needs an axis is a component with its own
+                    definition. TWO SHAPES:
+                      { name, selector, … }              chip's `.chips`
+                      { name, within, element[], pseudo?, … }   scoped
+                    The scoped form is `.link-grid a`, `.case-body p strong`,
+                    `.case-body li::before` — a component styling markup that
+                    carries no classes, which for case-body is deliberate: its
+                    prose is compiled from markdown, and a class per element
+                    would put styling inside the content pipeline. Both halves
+                    are closed (`within` must be the root, `element` is bare tag
+                    names) so a descendant is the only relation it can say.
      states[]       { name, suffix, declarations } — suffix is appended to the
                     owner's selector, so `:hover` on `.btn--solid` is a state
                     OF the variant and is emitted straight after it. An ARRAY
                     suffix is a selector list: `[":hover", ":focus-visible"]` is
                     one rule under two selectors.
+     positions[]    { name, at, declarations } — where a rule sits among its
+                    siblings, from a CLOSED enum (`first`). A position is what
+                    the document is; a state is what the user does.
 
    DECLARATIONS ARE GROUPED, because the authored CSS groups them and the
    grouping carries meaning — `font-size / font-weight / letter-spacing` on one
@@ -76,7 +89,7 @@
    generator — so a write to css/components.css from build.mjs would demand
    that css/components.css join `git diff --exit-code` in the root
    package.json and ci.yml. It should not, yet: components.css is authored
-   source with six generated regions, not a dist artefact, and eighteen of its
+   source with generated regions in it, not a dist artefact, and some of its
    blocks are still hand-written. This script is a source tool in the manner of
    ../../scripts/new-component.mjs — you run it when you change a definition —
    and the regions it writes are guarded by something stricter than the drift
@@ -93,7 +106,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -163,7 +176,8 @@ const TIERED = {
 
 /** Walk every declaration in a definition: `fn(prop, value, where)`. */
 function eachDeclaration(def, fn) {
-  const rules = [["base", def.base]];
+  const rules = [];
+  if (def.base) rules.push(["base", def.base]);
   for (const kind of ["variants", "sizes"]) for (const m of def[kind] ?? []) rules.push([`${kind}.${m.name}`, m]);
   for (const p of def.parts ?? []) rules.push([`parts.${p.name}`, p]);
   for (const [label, rule] of rules) {
@@ -171,10 +185,49 @@ function eachDeclaration(def, fn) {
     for (const s of rule.states ?? []) {
       for (const g of s.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}:${s.name}`);
     }
+    for (const p of rule.positions ?? []) {
+      for (const g of p.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}@${p.name}`);
+    }
   }
 }
 
 const terms = (value) => (Array.isArray(value) ? value : [value]);
+
+/* ============================================================
+   SELECTOR ARITHMETIC — the one place either pipeline is allowed to build a
+   selector out of pieces, so the two cannot arrive at different answers.
+
+   A part is one of two shapes. It has a `selector` of its own — `.chips`,
+   `.source__link` — or it is SCOPED: `within` names the ancestor and `element`
+   is a path of bare tag names under it. `link-grid` and `case-body` are the
+   blocks that forced the second, and neither of them could have been written
+   the first way: their children have no classes, and case-body's deliberately
+   never will, because its prose is compiled from markdown under content/ and a
+   class per element would put styling inside the content pipeline.
+
+   The reason this is not the wedge PATTERNS.md refuses is that both halves are
+   closed. `within` is checked to be the root, so there is exactly one possible
+   ancestor; `element` is an array of tag names and the emitter supplies the
+   combinator, so a descendant is the ONLY relation expressible. `.case-body p
+   strong` is sayable. `.band > .rail--l` is not, and no combination of these
+   keys makes it so.
+
+   POSITION is a third piece and a closed enum, not a selector: `first` is
+   `:first-child`, and the vocabulary grows one member at a time with the block
+   that needs it. A state's suffix appends after all of this, exactly as it does
+   on a root — `.link-grid a:hover` is the state of a scoped part.
+   ============================================================ */
+
+/** `first` → `:first-child`. The whole vocabulary; see the schema's `position`. */
+export const POSITION_SUFFIX = { first: ":first-child" };
+
+/** A part's own selector: its class, or `within` + the element path + a pseudo. */
+export const partSelector = (part) =>
+  part.selector ?? `${part.within} ${part.element.join(" ")}${part.pseudo ?? ""}`;
+
+/** A state's selector: one suffix, or a selector LIST when it carries several. */
+export const stateSelector = (owner, suffix) =>
+  (Array.isArray(suffix) ? suffix : [suffix]).map((s) => `${owner}${s}`).join(", ");
 
 /**
  * @returns {{def: object|null, errors: string[]}} — never throws, so the caller
@@ -264,8 +317,29 @@ export function loadDefinition(id) {
     }
   }
   for (const p of def.parts ?? []) {
-    if (seen.has(p.selector)) bad(`\`${p.selector}\` is declared twice — by \`${seen.get(p.selector)}\` and by \`parts.${p.name}\``);
-    seen.set(p.selector, `parts.${p.name}`);
+    /* A scoped part states its ancestor and it is checked, for the reason a
+       modifier states its own selector: the CSS stays transcribed, and the two
+       halves cannot disagree. The root is the only referent there is. */
+    if (p.within !== undefined && p.within !== def.root) {
+      bad(
+        `\`parts.${p.name}\` is scoped \`within\` \`${p.within}\`, and this definition's root is \`${def.root}\`. A part ` +
+          `is scoped to the root or it is not scoped — a chain through another part is a second combinator, which is ` +
+          `the door this schema closes`
+      );
+    }
+    const sel = partSelector(p);
+    if (seen.has(sel)) bad(`\`${sel}\` is declared twice — by \`${seen.get(sel)}\` and by \`parts.${p.name}\``);
+    seen.set(sel, `parts.${p.name}`);
+  }
+
+  /* A definition renders a banner and whatever is under it. With `base` optional
+     since case-body, "whatever" can be nothing at all — which is a block that
+     claims a component and styles none of it. */
+  if (!def.base && !def.parts?.length) {
+    bad(
+      `it declares neither \`base\` nor \`parts\`, so it would render a banner with no rule under it. \`base\` is ` +
+        `optional because case-body's root is a scope rather than an appearance, not because a definition may be empty`
+    );
   }
 
   /* The matrix claim: required exactly when there is a matrix to claim. */
@@ -293,7 +367,7 @@ export function loadDefinition(id) {
     for (const m of def[kind] ?? []) {
       if (!m.aliases) continue;
       const state = m.aliases.state;
-      const source = state ? (def.base.states ?? []).find((s) => s.name === state) : def.base;
+      const source = state ? (def.base?.states ?? []).find((s) => s.name === state) : def.base;
       if (!source) {
         bad(`\`${kind}.${m.name}\` aliases the base's \`${state}\` state, and the base declares no such state`);
         continue;
@@ -362,19 +436,23 @@ function banner(def) {
 
 /** A whole block: banner, base, base states, variants (+ their states), sizes, parts.
  *  That order is the cascade — a variant must be able to beat the base, and a
- *  state of a variant must be able to beat the variant. */
-/** A state's selector: one suffix, or a selector LIST when it carries several. */
-export const stateSelector = (owner, suffix) =>
-  (Array.isArray(suffix) ? suffix : [suffix]).map((s) => `${owner}${s}`).join(", ");
-
+ *  state of a variant must be able to beat the variant. A part's positions come
+ *  after its own rule for the same reason: `.case-body h3:first-child` exists to
+ *  undo three of `.case-body h3`'s declarations. */
 export function renderBlock(def) {
   const where = definitionPath(def.id);
   const states = (owner, list) =>
     (list ?? []).map((s) => rule(stateSelector(owner, s.suffix), s.declarations, where)).join("");
+  const positions = (owner, list) =>
+    (list ?? []).map((p) => rule(`${owner}${POSITION_SUFFIX[p.at]}`, p.declarations, where)).join("");
 
   let out = banner(def);
-  out += rule(def.root, def.base.declarations, where);
-  out += states(def.root, def.base.states);
+  /* `base` is optional: case-body's root is a scope with no appearance of its
+     own, and emitting `.case-body { }` would claim a rule the file has not got. */
+  if (def.base) {
+    out += rule(def.root, def.base.declarations, where);
+    out += states(def.root, def.base.states);
+  }
   for (const v of def.variants ?? []) {
     out += rule(v.selector, v.declarations, where);
     out += states(v.selector, v.states);
@@ -385,8 +463,10 @@ export function renderBlock(def) {
   }
   for (const p of def.parts ?? []) {
     if (p.break) out += "\n";
-    out += rule(p.selector, p.declarations, where);
-    out += states(p.selector, p.states);
+    const sel = partSelector(p);
+    out += rule(sel, p.declarations, where);
+    out += states(sel, p.states);
+    out += positions(sel, p.positions);
   }
   return out;
 }
@@ -528,9 +608,9 @@ export function renderTypography(table) {
 
 /* ---------- the assembly ---------- */
 
-/** Which file a generated region comes from. The three components come from
- *  their definitions; the typography layer comes from the levels table, which
- *  is not a component and does not pretend to be one. */
+/** Which file a generated region comes from. A component comes from its own
+ *  definition; the typography layer comes from the levels table, which is not a
+ *  component and does not pretend to be one. */
 export const sourceOf = (id) => (id === "typography" ? TYPOGRAPHY_PATH : definitionPath(id));
 
 export const openMarker = (id) => `/* ---- generated:${id} — do not edit, source: ${sourceOf(id)} ---- */`;

@@ -5,6 +5,26 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.5.0 — 2026-08-01
+
+Minor — 13 change(s).
+
+### Added
+
+- definition `case-body .case-body h3:first-child` added
+- definition `case-body .case-body h3` added
+- definition `case-body .case-body li strong` added
+- definition `case-body .case-body li::before` added
+- definition `case-body .case-body li` added
+- definition `case-body .case-body p strong` added
+- definition `case-body .case-body p` added
+- definition `case-body .case-body ul` added
+- definition `link-grid .link-grid a:hover` added
+- definition `link-grid .link-grid a` added
+- definition `link-grid .link-grid` added
+- export `./react/case-body` added
+- export `./react/link-grid` added
+
 ## 1.4.0 — 2026-08-01
 
 Minor — 9 change(s).

@@ -1593,6 +1593,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:stat ---- */
 
+/* ---- generated:link-grid — do not edit, source: components/link-grid/definition.json ---- */
 /* ============ Link grid ============ @component link-grid */
 .link-grid {
   display: flex; flex-wrap: wrap;
@@ -1610,6 +1611,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   transition: background-color 0.2s, color 0.2s;
 }
 .link-grid a:hover { background: var(--primary); color: var(--content-inverse); }
+/* ---- /generated:link-grid ---- */
 
 /* ---- generated:footer — do not edit, source: components/footer/definition.json ---- */
 /* ============ Footer ============ @component footer */
@@ -1623,6 +1625,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:footer ---- */
 
+/* ---- generated:case-body — do not edit, source: components/case-body/definition.json ---- */
 /* ============ Case study body ============ @component case-body
    The prose of a case study: headings ruled off from each other, a measure on
    the paragraphs, and the list marker the rest of the site uses.
@@ -1657,6 +1660,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   color: var(--primary); font-size: var(--text-2xs);
 }
 .case-body li strong { color: var(--content-primary); font-weight: var(--weight-semibold); }
+/* ---- /generated:case-body ---- */
 
 
 

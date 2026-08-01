@@ -37,7 +37,7 @@ dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to t
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 17 blocks authored, 6 generated)
+css/components.css      every component's styles (an ASSEMBLY: 15 blocks authored, 8 generated)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -430,7 +430,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly eleven** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly fifteen** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -442,19 +442,25 @@ published.
 "@yordan/design-system/tokens.flat.json"  // the same tokens, aliases resolved
 "@yordan/design-system/components.json"   // the derived component contract
 "@yordan/design-system/tokens.d.ts"       // `DesignTokenName` — 83 names, as a union
-// phase R2a — the Tailwind + React tier, generated from the three definitions
+// phase R2a — the Tailwind + React tier, one entry per definition
 "@yordan/design-system/tokens.tailwind.css"  // Tailwind v4 @theme, all references
 "@yordan/design-system/react"                // the barrel
 "@yordan/design-system/react/button"         // .tsx SOURCE — the consumer transpiles it
 "@yordan/design-system/react/chip"
 "@yordan/design-system/react/stat"
+"@yordan/design-system/react/footer"         // R4, as each block stops being authored
+"@yordan/design-system/react/source"
+"@yordan/design-system/react/link-grid"
+"@yordan/design-system/react/case-body"
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —
-they are outside this directory and not this system's to edit. The five new entries are
+they are outside this directory and not this system's to edit. Every entry past the sixth is
 enumerated rather than written as a `./react/*` wildcard, for exactly the reason the first
 six are enumerated: a subpath that is not listed must be *unreachable*, and a wildcard
-publishes whatever happens to land in the directory.
+publishes whatever happens to land in the directory. **The count moves with R4** — one new
+subpath per block that stops being authored — and `contract-diff.mjs` classifies each as
+additive, which is why the version does too.
 
 `exports` is the same statement `check-boundaries.mjs` makes, in the vocabulary a package
 manager understands: a subpath that is not listed is **unreachable**, not merely

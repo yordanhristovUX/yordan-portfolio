@@ -24,3 +24,7 @@ export { footer, Footer } from "./footer";
 export type { FooterProps, FooterVariants } from "./footer";
 export { source, Source, sourceTitle, SourceTitle, sourceList, SourceList, sourceItem, SourceItem, sourceRef, SourceRef, sourceLink, SourceLink, sourceId, SourceId } from "./source";
 export type { SourceProps, SourceVariants, SourceTitleProps, SourceListProps, SourceItemProps, SourceRefProps, SourceLinkProps, SourceIdProps } from "./source";
+export { linkGrid, LinkGrid } from "./link-grid";
+export type { LinkGridProps, LinkGridVariants } from "./link-grid";
+export { caseBody, CaseBody } from "./case-body";
+export type { CaseBodyProps, CaseBodyVariants } from "./case-body";

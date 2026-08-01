@@ -69,7 +69,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadAll, definitionPath } from "./emit-css.mjs";
+import { loadAll, definitionPath, partSelector, POSITION_SUFFIX } from "./emit-css.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -155,11 +155,20 @@ for (const def of defs) {
     for (const s of rule.states ?? []) {
       definitionSurface[`${def.id} ${selector}${s.suffix}`] = { kind: `${kind} state`, declarations: declOf(s.declarations) };
     }
+    /* A position is a rule a consumer's markup can land on without asking for
+       it — `.case-body h3:first-child` applies to whatever the content pipeline
+       emits first — so it is as much a published rule as a state is. */
+    for (const p of rule.positions ?? []) {
+      definitionSurface[`${def.id} ${selector}${POSITION_SUFFIX[p.at]}`] = { kind: `${kind} position`, declarations: declOf(p.declarations) };
+    }
   };
-  put("base", def.root, def.base);
+  /* `base` is optional since case-body, whose root is a scope with no rule. */
+  if (def.base) put("base", def.root, def.base);
   for (const m of def.variants ?? []) put("variant", m.selector, m);
   for (const m of def.sizes ?? []) put("size", m.selector, m);
-  for (const p of def.parts ?? []) put("part", p.selector, p);
+  /* A scoped part's selector is built, not written — through the same function
+     both emitters use, so the contract names the selector that actually ships. */
+  for (const p of def.parts ?? []) put(p.within ? "scoped part" : "part", partSelector(p), p);
 }
 
 /* ---------- the package surface ----------

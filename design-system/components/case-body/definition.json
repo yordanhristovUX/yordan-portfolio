@@ -1,0 +1,140 @@
+{
+  "$doc": "Case body's appearance, as data — the source of the `@component case-body` block in css/components.css and of dist/react/case-body.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. CASE-BODY IS THE BLOCK WITH NO `base`. Its root is a scope, not an appearance — `.case-body` has never had a rule of its own, and inventing an empty one so the schema could stay strict would have recorded a shape the stylesheet does not have. Every part here is SCOPED: the prose is compiled from markdown under content/, so its elements carry no classes and deliberately never will, because a class per element would put styling inside the content pipeline. It is also the block that forced `positions`: `:first-child` on the heading is not a state — nobody does it — it is where the rule sits, and the enum exists so that fact cannot grow into an arbitrary selector by increments.",
+  "$schema": "../definition.schema.json",
+  "id": "case-body",
+  "block": {
+    "title": "Case study body",
+    "note": [
+      "The prose of a case study: headings ruled off from each other, a measure on",
+      "the paragraphs, and the list marker the rest of the site uses.",
+      "",
+      "IT USED TO BE `.case__content`, inside a full-screen modal that js/main.js",
+      "owned. The five case studies have pages at /work/<id> now and the modal is",
+      "gone, so what survives is the half that was never about being a modal — the",
+      "body itself. The name changed with the container: a class called",
+      "`__content` belongs to something, and this belongs to nothing but the prose."
+    ]
+  },
+  "root": ".case-body",
+  "parts": [
+    {
+      "name": "heading",
+      "within": ".case-body",
+      "element": ["h3"],
+      "$doc": "A section heading, ruled off above so the sections read as a stack of plates. <h3> because the page's <h1> is the project title and the section head above carries the number — the level is an outline decision, and changing it breaks the outline before it breaks anything visible.",
+      "declarations": [
+        {
+          "set": {
+            "font-family": { "token": "font-display" },
+            "font-weight": { "token": "weight-extrabold" }
+          }
+        },
+        { "set": { "font-variation-settings": { "token": "width-sub" } } },
+        { "set": { "font-size": { "token": "text-sub" } } },
+        { "set": { "text-transform": "uppercase" } },
+        { "set": { "color": { "token": "content-primary" } } },
+        { "set": { "margin": [{ "token": "space-7" }, "0", { "token": "space-3" }] } },
+        { "set": { "padding-top": { "token": "space-7" } } },
+        { "set": { "border-top": { "token": "rule" } } }
+      ],
+      "positions": [
+        {
+          "name": "opening",
+          "at": "first",
+          "$doc": "The first heading loses the rule and the space above it — a page does not open on a line. Three zeroes rather than a second set of values, because the declaration being undone is the one directly above.",
+          "declarations": [
+            { "set": { "margin-top": "0", "padding-top": "0", "border-top": "0" } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "paragraph",
+      "within": ".case-body",
+      "element": ["p"],
+      "$doc": "Body copy, held to a measure rather than to the well's full width. The measure is deliberate and narrower than the well: a case study is read, and the well is sized for an index that is scanned.",
+      "declarations": [
+        { "set": { "margin-bottom": { "token": "space-4" }, "max-width": "44rem" } }
+      ]
+    },
+    {
+      "name": "emphasis",
+      "within": ".case-body",
+      "element": ["p", "strong"],
+      "$doc": "Lifts to the primary ink; the prose around it sits at --content-body. A two-name element path, which is what the array form is for — the emitter supplies the combinator, so a descendant is the only relation an author can write.",
+      "declarations": [
+        {
+          "set": {
+            "color": { "token": "content-primary" },
+            "font-weight": { "token": "weight-semibold" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "list",
+      "within": ".case-body",
+      "element": ["ul"],
+      "$doc": "The native marker off, so the drawn one below is the only one.",
+      "declarations": [
+        { "set": { "list-style": "none", "margin-bottom": { "token": "space-4" } } }
+      ]
+    },
+    {
+      "name": "item",
+      "within": ".case-body",
+      "element": ["li"],
+      "$doc": "`position: relative` is here for the marker below it, which is absolutely positioned against this box; the left padding is the space that marker sits in.",
+      "declarations": [
+        {
+          "set": {
+            "padding": [{ "token": "space-2" }, "0", { "token": "space-2" }, { "token": "space-6" }]
+          }
+        },
+        { "set": { "position": "relative" } },
+        {
+          "aside": "not surface-sunken: a surface token read as a border, which in dark sits behind the page and vanishes",
+          "set": { "border-bottom": { "token": "rule" } }
+        },
+        { "set": { "max-width": "44rem" } }
+      ]
+    },
+    {
+      "name": "marker",
+      "within": ".case-body",
+      "element": ["li"],
+      "pseudo": "::before",
+      "$doc": "The list mark. Drawn with ::before rather than written into the text, so it is decoration and a screen reader does not read it out — which is the whole reason the content pipeline emits a plain <li>. Small and in the brand ink, so a list reads as a set of marks rather than as punctuation.",
+      "declarations": [
+        {
+          "set": {
+            "content": "\"▪\"",
+            "position": "absolute",
+            "left": "0",
+            "top": { "token": "space-2" }
+          }
+        },
+        {
+          "set": {
+            "color": { "token": "primary" },
+            "font-size": { "token": "text-2xs" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "item-emphasis",
+      "within": ".case-body",
+      "element": ["li", "strong"],
+      "$doc": "The same lift inside a list item. Written twice rather than as one rule under two selectors, because that is what the stylesheet says and this is a transcription — the two are a paragraph apart and each belongs beside the element it qualifies.",
+      "declarations": [
+        {
+          "set": {
+            "color": { "token": "content-primary" },
+            "font-weight": { "token": "weight-semibold" }
+          }
+        }
+      ]
+    }
+  ]
+}

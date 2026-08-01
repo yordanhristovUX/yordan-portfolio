@@ -76,6 +76,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { utilitiesFor, STATE_PREFIX } from "./emit-tailwind.mjs";
+/* The selector arithmetic, imported rather than re-derived: pipeline 1 and
+   pipeline 2 must agree about what `within` + `element` + `pseudo` names, and
+   the only way to guarantee that is for one of them to own it. */
+import { POSITION_SUFFIX } from "./emit-css.mjs";
 
 /* ---------- names ---------- */
 const pascal = (s) => s.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join("");
@@ -125,15 +129,47 @@ function entriesOf(declarations, keyOf, where, tally, prefix = "") {
   return out;
 }
 
+/* ============================================================
+   A SCOPED PART IS ONE ARBITRARY VARIANT, NOT A COMPONENT.
+
+   `.link-grid a` and `.case-body p strong` style markup that carries no class,
+   so there is nothing for a generated component to put a className on — and for
+   case-body there never will be, because its prose is compiled from markdown
+   and a class per element would push styling into the content pipeline. What
+   React CAN say is exactly what the stylesheet says: the classes go on the
+   ROOT, wearing Tailwind's arbitrary variant.
+
+       .link-grid a          →  [&_a]:flex-[1_1_11rem]     on <LinkGrid>
+       .case-body p strong   →  [&_p_strong]:text-content-primary
+       .case-body li::before →  [&_li::before]:[content:'▪']
+       .case-body h3:first-child → [&_h3:first-child]:mt-0
+       .link-grid a:hover    →  [&_a:hover]:bg-primary
+
+   THE WHOLE SELECTOR GOES IN ONE VARIANT, and a state on a scoped part rides
+   inside it rather than going through STATE_PREFIX. That is not a shortcut past
+   the "a state this emitter cannot name" check — it is the same refusal that
+   check exists for. Stacking `[&_a]:` with `hover:` would compile the hover half
+   to `@media (hover: hover)`, and components.css has no media query there, so
+   the two pipelines would disagree about every hover in a scoped part on a
+   coarse pointer. One bracket, one selector, no invention. See STATE_PREFIX's
+   own banner in scripts/emit-tailwind.mjs for the argument in full.
+   ============================================================ */
+
+/** `_a`, `_p_strong`, `_li::before` — the scoped half of the variant, or "". */
+const scopeOf = (part) => (part.within ? `_${part.element.join("_")}${part.pseudo ?? ""}` : "");
+
+/** The variant prefix for a scope and/or a selector suffix; "" when neither. */
+const variantFor = (scope, suffix = "") => (scope || suffix ? `[&${scope}${suffix}]:` : "");
+
 /* A state may carry a selector LIST — `:hover, :focus-visible` is one rule under
    two selectors in the stylesheet. Tailwind has no selector list, so each class
    is emitted once per prefix. That is the same cascade and a longer attribute,
    which is the honest trade: the alternative is dropping one of the two. */
-function stateEntriesOf(states, keyOf, where, tally) {
+function stateEntriesOf(states, keyOf, where, tally, scope = "") {
   const out = [];
   for (const s of states ?? []) {
     for (const suffix of Array.isArray(s.suffix) ? s.suffix : [s.suffix]) {
-      const prefix = STATE_PREFIX[suffix];
+      const prefix = scope ? variantFor(scope, suffix) : STATE_PREFIX[suffix];
       if (!prefix) {
         throw new Error(
           `${where}: the state \`${s.name}\` appends \`${suffix}\`, which scripts/emit-tailwind.mjs has no Tailwind ` +
@@ -143,6 +179,17 @@ function stateEntriesOf(states, keyOf, where, tally) {
       }
       out.push(...entriesOf(s.declarations, keyOf, `${where} → ${s.name}`, tally, prefix));
     }
+  }
+  return out;
+}
+
+/* A position is a closed enum on both sides, so there is no table to miss:
+   pipeline 1 turns `first` into `:first-child` and this turns the same member
+   into the same suffix, out of the same object. */
+function positionEntriesOf(positions, keyOf, where, tally, scope = "") {
+  const out = [];
+  for (const p of positions ?? []) {
+    out.push(...entriesOf(p.declarations, keyOf, `${where} @${p.name}`, tally, variantFor(scope, POSITION_SUFFIX[p.at])));
   }
   return out;
 }
@@ -254,7 +301,24 @@ const tsdoc = (text, indent) => {
   if (lines.length === 1) return `${indent}/** ${lines[0]} */\n`;
   return `${indent}/**\n${lines.map((l) => `${indent} * ${l}`).join("\n")}\n${indent} */\n`;
 };
-const list = (entries, indent) => entries.map((e) => `${indent}"${e.cls}",`).join("\n");
+/** A block comment for a class list, wrapped to the same width a tsdoc is. */
+const remark = (text, indent) => {
+  const lines = wrap(text, 89 - indent.length, "");
+  if (lines.length === 1) return [`${indent}/* ${lines[0]} */`];
+  return [
+    `${indent}/* ${lines[0]}`,
+    ...lines.slice(1, -1).map((l) => `${indent}   ${l}`),
+    `${indent}   ${lines[lines.length - 1]} */`,
+  ];
+};
+/** An entry may carry a `lead`: the prose of the scoped part its classes came
+ *  from. A cva base is the only place that prose can live once the part has
+ *  stopped being a component — dropping it would leave a reader of the file
+ *  with `[&_li::before]:[content:'▪']` and no account of why. */
+const list = (entries, indent) =>
+  entries
+    .map((e) => `${e.lead ? remark(e.lead, indent).join("\n") + "\n" : ""}${indent}"${e.cls}",`)
+    .join("\n");
 
 /* ---------- one component file ---------- */
 
@@ -291,10 +355,30 @@ export function renderComponent(def, elements, keyOf) {
   const els = elementsFor(def.root, "the root");
   const polymorphic = els.length > 1;
 
+  /* Two kinds of part. One has a class and becomes a component of its own; the
+     other is SCOPED and cannot, because the element it styles carries no class
+     — its rules land on the root as arbitrary variants instead. */
+  const classParts = (def.parts ?? []).filter((p) => p.selector);
+  const scopedParts = (def.parts ?? []).filter((p) => p.within);
+
   let base = [
-    ...entriesOf(def.base.declarations, keyOf, where, tally),
-    ...stateEntriesOf(def.base.states, keyOf, where, tally),
+    /* `base` is optional since case-body, whose root is a scope rather than an
+       appearance. Its class list is entirely what it does to the prose inside it. */
+    ...entriesOf(def.base?.declarations, keyOf, where, tally),
+    ...stateEntriesOf(def.base?.states, keyOf, where, tally),
   ];
+  for (const part of scopedParts) {
+    const scope = scopeOf(part);
+    const sel = `${part.within} ${part.element.join(" ")}${part.pseudo ?? ""}`;
+    const entries = [
+      ...entriesOf(part.declarations, keyOf, `${where} → ${sel}`, tally, variantFor(scope)),
+      ...stateEntriesOf(part.states, keyOf, `${where} → ${sel}`, tally, scope),
+      ...positionEntriesOf(part.positions, keyOf, `${where} → ${sel}`, tally, scope),
+    ];
+    if (!entries.length) continue;
+    entries[0] = { ...entries[0], lead: `\`${sel}\`${part.$doc ? ` — ${part.$doc}` : ""}` };
+    base.push(...entries);
+  }
 
   /* One cva axis per kind the definition actually has. Every axis carries a
      `default` branch, so the unmodified component is a value of the type
@@ -398,7 +482,7 @@ export function renderComponent(def, elements, keyOf) {
      same terms the root is, because `.source__link` is a <button> and an <a> in
      its own canonical HTML. It still has no variants and no sizes — a companion
      selector that needs an axis is a component with its own definition. */
-  for (const part of def.parts ?? []) {
+  for (const part of classParts) {
     const PartName = pascal(`${def.id}-${part.name}`);
     const partFn = camel(`${def.id}-${part.name}`);
     const partEls = elementsFor(part.selector, `part \`${part.name}\``);
@@ -406,6 +490,7 @@ export function renderComponent(def, elements, keyOf) {
     const classes = [
       ...entriesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally),
       ...stateEntriesOf(part.states, keyOf, `${where} → ${part.selector}`, tally),
+      ...positionEntriesOf(part.positions, keyOf, `${where} → ${part.selector}`, tally),
     ];
     out += `\n`;
     if (part.$doc) out += tsdoc(part.$doc, "");
@@ -441,12 +526,14 @@ export function renderComponent(def, elements, keyOf) {
   return { source: out, tally, elements: els, exports: exportsOf(def) };
 }
 
-/** Every name a component's file exports, in emission order. */
+/** Every name a component's file exports, in emission order. A SCOPED part
+ *  exports nothing: it has no class to hang a className on, so its rules ship
+ *  as arbitrary variants in the root's own class list. */
 export function exportsOf(def) {
   const Name = pascal(def.id);
   const values = [camel(def.id), Name];
   const types = [`${Name}Props`, `${Name}Variants`];
-  for (const part of def.parts ?? []) {
+  for (const part of (def.parts ?? []).filter((p) => p.selector)) {
     const PartName = pascal(`${def.id}-${part.name}`);
     values.push(camel(`${def.id}-${part.name}`), PartName);
     types.push(`${PartName}Props`);

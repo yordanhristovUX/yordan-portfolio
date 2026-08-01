@@ -103,6 +103,19 @@ than a schema that can express everything and therefore constrains nothing.
   being written off — `link-grid` (3 selectors, descendant only) and `case-body` (8, descendant
   + positional) fail on one feature each. Splitting a block into a generated core and a small
   authored region is a legitimate third shape, and the marker scheme above already supports it.
+
+  **Both generate whole, and the split was not needed.** R4 took them first, and the reason
+  the third shape was not required is the one thing this note measured but did not weigh:
+  *descendant* and *positional* are not one feature each with nineteen faces. Each block needs
+  exactly one relation, and both relations are closeable at both ends. A scoped part names the
+  ancestor — checked to be the root, so there is one possible referent — and an array of bare
+  tag names, so the emitter supplies the combinator and `.case-body p strong` is sayable while
+  `.band > .rail--l` is not. A position is an enum with one member per block that has asked,
+  so `:first-child` is sayable and `:nth-last-child(-n+3)` is not a value the key accepts.
+  The wedge this note refuses is a schema that admits a *selector*; admitting a **relation
+  whose vocabulary is finite** is a different thing, and it is checkable in a way a selector
+  string never is. Whether that holds for the remaining seventeen is decided one block at a
+  time, with the block in front of you — which is the method this note argued for.
 - **`typography` fails on `computed` alone** (its `clamp()` values), which is a token
   question rather than a pattern one: those are `--text-*` steps and the block mostly maps a
   class to a step. It may be the best argument for a fourth value form (a token binding with

@@ -23,12 +23,14 @@
 
    `node scripts/build.mjs`          build tokens + system stats
    `node scripts/build.mjs --check`  build + six gates:
-                                     · assembly — the three GENERATED regions
-                                       of css/components.css (button, chip,
-                                       stat) byte-compare against a fresh
-                                       render of components/<id>/definition.json.
-                                       Phase R1 pilot; scripts/emit-css.mjs is
-                                       the emitter and documents the format.
+                                     · assembly — every GENERATED region of
+                                       css/components.css byte-compares against
+                                       a fresh render of its source, which is
+                                       components/<id>/definition.json for a
+                                       component and tokens/typography.json for
+                                       the type layer. Started as the R1 pilot
+                                       and grows with R4; scripts/emit-css.mjs
+                                       is the emitter and documents the format.
                                      · package — dist/tokens.dtcg.json and
                                        dist/tokens.d.ts byte-compare against a
                                        fresh generation. These two are a
@@ -472,6 +474,8 @@ const packaged = [
   ["dist/react/stat.tsx", reactSource("stat")],
   ["dist/react/footer.tsx", reactSource("footer")],
   ["dist/react/source.tsx", reactSource("source")],
+  ["dist/react/link-grid.tsx", reactSource("link-grid")],
+  ["dist/react/case-body.tsx", reactSource("case-body")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by
@@ -629,13 +633,13 @@ const componentsCssPath = join(root, "css", "components.css");
 const componentsCss = readFileSync(componentsCssPath, "utf8");
 
 /* ============================================================
-   THE ASSEMBLY — phase R1 pilot: button, chip, stat.
+   THE ASSEMBLY — started as the R1 pilot, now the R4 migration.
 
-   Those three blocks are no longer authored. Their appearance is data in
-   components/<id>/definition.json — variants, sizes, states, and the token
-   each property binds to — and scripts/emit-css.mjs renders that data into the
-   generated regions of css/components.css. The other twenty blocks are
-   authored source and are untouched by any of this.
+   A block in PILOT is no longer authored. Its appearance is data in
+   components/<id>/definition.json — variants, sizes, states, parts, and the
+   token each property binds to — and scripts/emit-css.mjs renders that data
+   into the generated regions of css/components.css. The blocks that are not in
+   PILOT are authored source and are untouched by any of this.
 
    The definitions themselves were loaded and coverage-checked further up,
    where pipeline 2 first needs them. What is left here is the DRIFT half: the
@@ -794,9 +798,9 @@ const specs = Object.fromEntries(components.map((id) => [id, readSpec(id)]));
    19 markdown files of inconsistent shape.
 
    R3 DECISION — THIS STAYS PARSED FROM THE SHIPPED CSS, and the reason is not
-   inertia. Three of twenty-three components now have a definition, which is a
-   richer source, and deriving their entries from it was the obvious move. It
-   is the wrong one, twice over.
+   inertia. A growing share of the twenty-three components now have a
+   definition, which is a richer source, and deriving their entries from it was
+   the obvious move. It is the wrong one, twice over.
 
    FIRST, IT WOULD DESTROY THE PROOF. This file is currently byte-identical to
    what it was when all twenty-three blocks were hand-authored — which is the
