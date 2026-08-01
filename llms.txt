@@ -60,9 +60,9 @@ Tags: Product Designer, Shipped, Design System, iOS & Android, White-label, Acce
 - **Tax Advice — USD Accounts** (Fintech · cross-border) — The USD bank account feature for a cross-border tax refund service, designed end to end from proposition to launch.
 - **Painted Auto Parts** (Internal order system) — Complex order and project management UI for a top US auto parts distributor.
 - **Go Guide App** (Consumer mobile app) — First-ever mobile app for Bulgaria's leading lifestyle media brand. Shipped.
-- **Payment / Crypto / Stocks** (Fintech) — Full IA for a unified crypto, fiat, and stocks platform. 50+ Figma components and variants.
-- **Paraflow** (Corporate website) — Custom site with Laravel CMS for a leading enterprise IT integrator.
-- **Generative Art Platform** (NFT / Web3) — Full-scope design for an artist discovery platform serving the NFT community.
+- **Payment / Crypto / Stocks** (Fintech · concept) — A self-initiated concept, not client work: one IA unifying crypto, fiat and stock trading. 50+ Figma components and variants.
+- **Paraflow** (Corporate website) — Fully custom site and design system for a leading enterprise IT integrator, on a Laravel CMS.
+- **Generative Art Platform** (NFT / Web3 · concept) — A concept study, not client work: an artist discovery platform for the NFT community, designed full scope from IA to UI.
 
 ## Experience
 
