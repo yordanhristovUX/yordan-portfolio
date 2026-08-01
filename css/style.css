@@ -197,7 +197,18 @@ html { scroll-behavior: smooth; }
 /* ============ Reduced motion ============ */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  /* `transition-duration: 0s`, NOT the boilerplate 0.01ms. `transition-property`
+     defaults to `all`, so any universal duration — however small — turns every
+     style write into a tween whose progress is still 0 for the rest of the task
+     that wrote it. A write-then-measure pass then reads the value from BEFORE
+     its own write: js/automata.js's terminator settle became S(n+1) = f(S(n))
+     with no fixpoint, and the page's bands oscillated at ~5Hz for as long as it
+     was open — under exactly the preference that asks for stillness. 0s means
+     what this block means: the change happens, in no time, synchronously. The
+     only thing 0.01ms buys over 0s is a `transitionend` event, and nothing in
+     this repo waits for one under reduce (js/peek.js branches on the media
+     query instead). */
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; }
   .js [data-reveal] { opacity: 1; transform: none; }
   .js [data-rise] { transform: none; }
 }
