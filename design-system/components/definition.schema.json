@@ -27,6 +27,7 @@
           { "$ref": "#/$defs/rule-size" },
           { "$ref": "#/$defs/rule-part" },
           { "$ref": "#/$defs/rule-state" },
+          { "$ref": "#/$defs/rule-contains" },
           { "$ref": "#/$defs/rule-position" },
           { "$ref": "#/$defs/rule-at" }
         ]
@@ -174,7 +175,7 @@
       "type": "object",
       "required": ["kind", "name", "declarations"],
       "additionalProperties": false,
-      "oneOf": [{ "required": ["selector"] }, { "required": ["within", "element"] }, { "required": ["within", "class"] }],
+      "oneOf": [{ "required": ["selector"] }, { "required": ["within", "element"] }, { "required": ["within", "class"] }, { "required": ["within", "child"] }],
       "properties": {
         "kind": { "const": "part" },
         "name": { "$ref": "#/$defs/name" },
@@ -192,6 +193,11 @@
         "class": {
           "$ref": "#/$defs/selector",
           "$doc": "A SCOPED PART WHOSE TARGET IS A CLASS RATHER THAN A TAG — `.sec--tint .well`, and `section-head` is the block that forced it. The scoped form was `within` + `element[]` because the two blocks that forced THAT one styled markup carrying no classes at all. This one is the opposite case and just as common: the descendant has a class, and the class belongs to somebody else. `.well` is skeleton's, and the tint is a fact about what a tinted section does to the well inside it — a rule the section owns about an element it does not. It is the same relation with the same closure, which is the whole test: ONE selector, of exactly the shape `root` and a modifier's `selector` already take, with the combinator supplied by the emitter. `.sec--tint .well` is sayable; `.band > .rail--l` is not, and no combination of these keys makes it so. It is a SINGLE selector and not an array because nothing has asked for a chain — `element` is an array because `.case-body p strong` exists, and this key will grow the same way, with the block that needs it. THE COUPLING IS RECORDED, NOT HIDDEN: `within` must still name a rule this definition declares, so the ancestor half is always ours; the target half is a foreign class, exactly as a bare tag name is foreign markup, and it lands in dist/components.json's class list for this component because that file parses the shipped CSS."
+        },
+        "child": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*$",
+          "$doc": "THE CHILD COMBINATOR, AND THE ONE RULE THAT KEEPS IT FROM BEING THE WEDGE. `profile` is the block that forced it: `.profile > div` is the wrapper the markup puts round each dt/dd pair so the grid has a row to place, and it has to be a CHILD — a descendant selector would style a <div> nested anywhere inside a value. PATTERNS.md refuses `.band > .rail--l` and this is not that, because of the closure written here and enforced by the build: A CHILD COMBINATOR MAY ONLY REACH A BARE TAG NAME, AND A CLASS MAY ONLY BE REACHED BY A DESCENDANT COMBINATOR. `.profile > div` is sayable; `.band > .rail--l` is not, and there is no combination of `child`, `class` and `element` that produces it — the two keys are mutually exclusive by the same `oneOf` that separates the other shapes. That is the whole line, and it is a line about SPECIFICITY OF REACH rather than about punctuation: a child combinator plus a bare tag reaches markup, which the component owns; a child combinator plus a class reaches another component's element at a fixed depth, which is the coupling nothing here may write. A STRING and not an array: `> div > p` is a path, and a path is what `within` refuses."
         },
         "pseudo": {
           "enum": ["::before"],
@@ -231,6 +237,22 @@
         "declarations": { "$ref": "#/$defs/declarations" }
       }
     },
+    "rule-contains": {
+      "$doc": "WHAT THE ELEMENT HAS INSIDE IT — `.ph:has(img)`, and `media` is the block that forced it. It is a third member of a vocabulary that now has three: a STATE is something the user does, a POSITION is something the document is, and a CONTAINS is something the element holds. Calling it a state would have been the easy shape and the wrong word — nobody hovers a figure into having an image in it — and `media`'s whole idea is that the frame steps aside when the content arrives, which is a fact about the content. The ARGUMENT is one bare tag name or one class and nothing else, which is the same closure `element` and `class` have on a scoped part: `:has(img)` and `:has(.x)` are sayable, `:has(> p + span)` is not, and no combination of these keys makes it so. Pipeline 2 emits it as the arbitrary variant `[&:has(img)]:` rather than Tailwind's own `has-[img]:` — the same refusal to translate that `[&:hover]:` records, and for the same reason: a shorter class that compiles to a different selector is not a transcription.",
+      "type": "object",
+      "required": ["kind", "name", "of", "declarations"],
+      "additionalProperties": false,
+      "oneOf": [{ "required": ["element"] }, { "required": ["class"] }],
+      "properties": {
+        "kind": { "const": "contains" },
+        "name": { "$ref": "#/$defs/name" },
+        "of": { "$ref": "#/$defs/reference" },
+        "element": { "type": "string", "pattern": "^[a-z][a-z0-9]*$", "$doc": "One bare tag name. A STRING and not an array, because `:has(p strong)` is a path and nothing has asked for one — `element` on a part is an array because `.case-body p strong` exists, and this key grows the same way if a block ever needs it." },
+        "class": { "$ref": "#/$defs/selector", "$doc": "One class. The other half of the same closure the scoped part's `class` records: the thing being looked for may belong to somebody else, and the relation is still finite." },
+        "$doc": { "type": "string" },
+        "declarations": { "$ref": "#/$defs/declarations" }
+      }
+    },
     "rule-position": {
       "$doc": "WHERE A RULE SITS AMONG ITS SIBLINGS, from a CLOSED vocabulary. `.case-body h3:first-child` drops the rule above the first heading because a page does not open on a line — a real declaration about position, and the reason it is not a `state` is that a state is something the user does and a position is something the document is. The vocabulary is an enum rather than a selector string precisely so it cannot grow into `:nth-last-child(-n+3):nth-child(3n+1)` by increments; a member is minted by the block that needs it, in the same commit. Pipeline 2 renders the whole thing as one arbitrary variant, so the position rides inside `[&…]:` rather than becoming Tailwind's `first:` — same argument as `:hover`, and the same refusal to invent.",
       "type": "object",
@@ -240,7 +262,7 @@
         "kind": { "const": "position" },
         "name": { "$ref": "#/$defs/name" },
         "of": { "$ref": "#/$defs/reference" },
-        "at": { "enum": ["first", "last"], "$doc": "`first` → `:first-child`, `last` → `:last-child`. Two members, because two shapes have asked: case-body's opening heading drops the rule above it, and entry / fact drop the divider after the last one in a run. Add the next member with the block that needs it and not before — the value of a closed vocabulary is what it refuses." },
+        "at": { "enum": ["first", "last", "odd"], "$doc": "`first` → `:first-child`, `last` → `:last-child`, `odd` → `:nth-child(odd)`. Three members, because three shapes have asked: case-body's opening heading drops the rule above it, entry and fact drop the divider after the last one in a run, and profile's two-column grid puts the gutter on the left-hand pairs only. Add the next member with the block that needs it and not before — the value of a closed vocabulary is what it refuses, and `odd` is worth noticing as the first member that is a SET of siblings rather than one." },
         "$doc": { "type": "string" },
         "declarations": { "$ref": "#/$defs/declarations" }
       }
@@ -284,7 +306,7 @@
       "additionalProperties": false,
       "properties": {
         "name": { "$ref": "#/$defs/name" },
-        "at": { "enum": ["first", "last"] },
+        "at": { "enum": ["first", "last", "odd"] },
         "$doc": { "type": "string" },
         "declarations": { "$ref": "#/$defs/declarations" }
       }

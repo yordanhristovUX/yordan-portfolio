@@ -1,0 +1,101 @@
+{
+  "$doc": "Media slot's appearance, as data — the source of the `@component media` block in css/components.css and of dist/react/media.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. MEDIA IS ONE OF THE TWO BLOCKS THAT FORCED THE RULES INTO AN ORDERED LIST, and reading it top to bottom is the argument: the frame, the tall variant, the label — and then, four rules down and after a part, `.ph:has(img)`, which is the paragraph where the frame steps aside because real artwork arrived. A fixed cascade would have emitted that directly under `.ph`, which is different bytes and a different reading: the has-an-image case is a topic, not a state of the root that happens to sort second. It also forced `contains` itself. `:has(img)` is not a state — nobody hovers a figure into having a picture in it — and it is not a position; it is what the element HOLDS, which is a third thing and now a third kind. Both of its consequences are here: the rule on the frame, and `.ph:has(img) .ph__label`, a part scoped to a rule that owns no selector of its own, which is the shape only a named reference can reach.",
+  "$schema": "../definition.schema.json",
+  "id": "media",
+  "block": {
+    "title": "Media slot",
+    "note": ["Drop an <img> inside a .ph and the frame styling steps aside."]
+  },
+  "root": ".ph",
+  "rules": [
+    {
+      "kind": "base",
+      "$doc": "The empty frame: a dashed box at 16:9 with its label centred in it. Dashed rather than solid because the border is a placeholder's own chrome — it says `something goes here`, which a solid rule would not.",
+      "declarations": [
+        { "set": { "aspect-ratio": "16 / 9" } },
+        { "set": { "border": ["1px", "dashed", { "token": "chrome-border-strong" }] } },
+        { "set": { "background": { "token": "chrome-bg" } } },
+        { "set": { "display": "flex", "flex-direction": "column", "align-items": "center", "justify-content": "center" } },
+        { "set": { "gap": { "token": "space-2" } } },
+        { "set": { "margin": [{ "token": "space-6" }, "0"] } },
+        { "set": { "max-width": "none" } }
+      ]
+    },
+    {
+      "kind": "variant",
+      "name": "tall",
+      "selector": ".ph--tall",
+      "$doc": "4:3 rather than 16:9 — a screenshot of a page rather than a cover. One declaration, and it is a dimension of the same frame, which is why it is a variant of `.ph` and not a second component.",
+      "declarations": [{ "set": { "aspect-ratio": "4 / 3" } }]
+    },
+    {
+      "kind": "part",
+      "name": "label",
+      "selector": ".ph__label",
+      "$doc": "What belongs in the slot, in the mono chrome voice every other label in the system uses. Centred and padded rather than positioned, because it is the flex child of a centring box and the padding is what keeps a long label off the dashed edge.",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-mono" } } },
+        {
+          "set": {
+            "font-size": { "token": "text-2xs" },
+            "font-weight": { "token": "weight-medium" },
+            "letter-spacing": { "token": "tracking-wide-lg" },
+            "text-transform": "uppercase"
+          }
+        },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "text-align": "center" } },
+        { "set": { "padding": ["0", { "token": "space-4" }] } }
+      ]
+    },
+    {
+      "kind": "contains",
+      "name": "with-image",
+      "of": "base",
+      "element": "img",
+      "$doc": "THE FRAME STEPS ASIDE. Once a real <img> is inside, every one of the placeholder's own decisions is wrong — the dashed border is chrome around content, the tinted background sits behind an opaque picture, and the 16:9 ratio would crop or letterbox artwork that has a ratio of its own. So all three are undone by the content rather than by a class somebody has to remember to add, which is the whole reason this is a `contains` and not a variant.",
+      "declarations": [{ "set": { "border": "0", "background": "none", "aspect-ratio": "auto" } }]
+    },
+    {
+      "kind": "part",
+      "name": "label-hidden",
+      "within": "with-image",
+      "class": ".ph__label",
+      "$doc": "The label describes what is missing, so it has nothing to say once the picture is there. Scoped to the contains rather than given a modifier, for the same reason: no markup should have to remember to hide it. It is the first scoped part whose target class is one this same definition declares — `within` names a rule and the target names an element, and those are two different jobs, so a class of ours in the second slot is not a special case.",
+      "declarations": [{ "set": { "display": "none" } }]
+    },
+    {
+      "kind": "part",
+      "name": "image",
+      "within": "base",
+      "element": ["img"],
+      "$doc": "The picture itself, filling the width and keeping its own height. `display: block` kills the inline baseline gap under it, which would otherwise show as a few pixels of frame that nothing declared.",
+      "declarations": [{ "set": { "width": "100%", "height": "auto", "display": "block" } }]
+    },
+    {
+      "kind": "part",
+      "name": "grid",
+      "selector": ".ph-grid",
+      "$doc": "A two-up gallery — before and after, or two views. A part rather than a variant because it is the wrapper a pair of frames sits in, exactly as `.chips` is for chips, and no frame knows how many siblings it has.",
+      "declarations": [
+        { "set": { "display": "grid", "grid-template-columns": "1fr 1fr", "gap": { "token": "space-4" } } },
+        { "set": { "margin": [{ "token": "space-6" }, "0"] } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "grid-slot",
+      "within": "grid",
+      "class": ".ph",
+      "$doc": "A frame inside the gallery gives up its own vertical margin: the grid's gap is the spacing between the two, and the block margin above and below belongs to the grid. Scoped to the wrapper and targeting the root's own class, which is the honest shape — it is a fact about a frame in a gallery, and a lone frame must keep its margin.",
+      "declarations": [{ "set": { "margin": "0" } }]
+    },
+    {
+      "kind": "at",
+      "condition": "below-640",
+      "inline": true,
+      "$doc": "One column. Two 16:9 frames side by side on a phone are two letterboxes, and a gallery is a comparison — which needs each image big enough to read rather than both visible at once.",
+      "rules": [{ "of": "grid", "declarations": [{ "set": { "grid-template-columns": "1fr" } }] }]
+    }
+  ]
+}

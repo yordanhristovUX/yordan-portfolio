@@ -1,0 +1,89 @@
+{
+  "$doc": "Profile's appearance, as data — the source of the `@component profile` block in css/components.css and of dist/react/profile.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. PROFILE IS THE OTHER BLOCK THAT FORCED THE ORDERED LIST, and its case is the mirror of media's: `.profile > div:nth-child(odd)` is written at the FOOT, after every part, beside the query that undoes it — because the right-hand gutter and its removal at one column are one thought, and a fixed cascade would have emitted the position directly under the rule it qualifies, three rules earlier. It also forced `child`. `.profile > div` has to be a child: the markup wraps each dt/dd pair in a <div> so the grid has a row to place, and a descendant selector would style a <div> nested anywhere inside a value. The closure that keeps that from being the wedge PATTERNS.md refuses is written in the schema and enforced by the build — a child combinator may only reach a BARE TAG, and a class may only be reached by a descendant — so `.profile > div` is sayable and `.band > .rail--l` is not.",
+  "$schema": "../definition.schema.json",
+  "id": "profile",
+  "block": {
+    "title": "Profile (definition list)"
+  },
+  "root": ".profile",
+  "rules": [
+    {
+      "kind": "base",
+      "$doc": "A <dl> laid out as two columns of pairs. The type is mono and small because this is a scannable index of facts rather than prose — the same voice a fact title or a chip uses, at the step above the floor.",
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "1fr 1fr" } },
+        { "set": { "border-top": { "token": "rule" } } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-xs" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "pair",
+      "within": "base",
+      "child": "div",
+      "$doc": "One label-and-value pair, which the markup wraps in a <div> so that the outer grid has a single box to place. It is a grid of its own — a fixed label track and a fluid value — so every label in both columns lines up on the same edge. A CHILD and not a descendant: a <div> inside a value is content, not a row, and a descendant selector would lay it out as one.",
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "7rem 1fr" } },
+        { "set": { "gap": { "token": "space-4" } } },
+        { "set": { "padding": [{ "token": "space-3" }, "0"] } },
+        { "set": { "border-bottom": { "token": "rule" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "term",
+      "within": "base",
+      "element": ["dt"],
+      "$doc": "The label. Uppercase mono at the label ink — the chrome voice, so the value beside it reads as the content and the term as its heading.",
+      "declarations": [
+        { "set": { "color": { "token": "chrome-label" } } },
+        {
+          "set": {
+            "font-weight": { "token": "weight-medium" },
+            "letter-spacing": { "token": "tracking-wide-lg" },
+            "text-transform": "uppercase"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "value",
+      "within": "base",
+      "element": ["dd"],
+      "$doc": "The fact itself, at body ink. One declaration, and the <dd>'s own margin is already off in the foundation reset.",
+      "declarations": [{ "set": { "color": { "token": "content-body" } } }]
+    },
+    {
+      "kind": "part",
+      "name": "ok",
+      "within": "base",
+      "class": ".is-ok",
+      "$doc": "A positive status value — one per list, and spec.md is where that rule lives because it is about markup rather than appearance. `.is-ok` is a state class the page owns rather than this component, which is why it is a scoped part on a foreign class: the profile decides what an affirmative value looks like inside it, and does not decide what is affirmative.",
+      "declarations": [{ "set": { "color": { "token": "accent" }, "font-weight": { "token": "weight-semibold" } } }]
+    },
+    {
+      "kind": "position",
+      "name": "left-column",
+      "of": "pair",
+      "at": "odd",
+      "$doc": "The gutter between the two columns, put on the left-hand pairs rather than in the grid's own `gap`, so that the border-bottom of every pair runs the full width of its column and the two columns of rules read as one ruled table. It is the first `odd` in the position vocabulary, and the first member of it that names a SET of siblings rather than one.",
+      "declarations": [{ "set": { "padding-right": { "token": "space-7" } } }]
+    },
+    {
+      "kind": "at",
+      "condition": "below-860",
+      "$doc": "One column. The gutter goes with the second column it was separating — the same two facts as above, stated the other way round, which is what makes this an override of named rules rather than a second layout.",
+      "rules": [
+        { "of": "base", "declarations": [{ "set": { "grid-template-columns": "1fr" } }] },
+        {
+          "of": "pair",
+          "positions": [{ "name": "left-column", "at": "odd", "declarations": [{ "set": { "padding-right": "0" } }] }]
+        }
+      ]
+    }
+  ]
+}

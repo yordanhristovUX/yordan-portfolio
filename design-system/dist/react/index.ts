@@ -34,3 +34,7 @@ export { entry, Entry, entryRole, EntryRole, entryOrg, EntryOrg, entrySpan, Entr
 export type { EntryProps, EntryVariants, EntryRoleProps, EntryOrgProps, EntrySpanProps, EntryLedeProps, EntryListProps } from "./entry";
 export { sectionHead, SectionHead, sectionHeadHead, SectionHeadHead, sectionHeadTitle, SectionHeadTitle, sectionHeadNote, SectionHeadNote } from "./section-head";
 export type { SectionHeadProps, SectionHeadVariants, SectionHeadHeadProps, SectionHeadTitleProps, SectionHeadNoteProps } from "./section-head";
+export { media, Media, mediaLabel, MediaLabel, mediaGrid, MediaGrid } from "./media";
+export type { MediaProps, MediaVariants, MediaLabelProps, MediaGridProps } from "./media";
+export { profile, Profile } from "./profile";
+export type { ProfileProps, ProfileVariants } from "./profile";

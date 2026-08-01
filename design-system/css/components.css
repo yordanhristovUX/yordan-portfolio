@@ -1499,7 +1499,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 .tools__row dd { font-size: var(--text-md); }
 @media (max-width: 620px) { .tools__row { grid-template-columns: 1fr; gap: var(--space-1); } }
 
-/* ---- authored:profile — relational-selectors ---- */
+/* ---- generated:profile — do not edit, source: components/profile/definition.json ---- */
 /* ============ Profile (definition list) ============ @component profile */
 .profile {
   display: grid;
@@ -1526,6 +1526,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .profile { grid-template-columns: 1fr; }
   .profile > div:nth-child(odd) { padding-right: 0; }
 }
+/* ---- /generated:profile ---- */
 
 /* ---- generated:fact — do not edit, source: components/fact/definition.json ---- */
 /* ============ Facts ============ @component fact */
@@ -1562,7 +1563,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:fact ---- */
 
-/* ---- authored:media — relational-selectors ---- */
+/* ---- generated:media — do not edit, source: components/media/definition.json ---- */
 /* ============ Media slot ============ @component media
    Drop an <img> inside a .ph and the frame styling steps aside. */
 .ph {
@@ -1591,6 +1592,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 .ph-grid .ph { margin: 0; }
 @media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }
+/* ---- /generated:media ---- */
 
 /* ---- generated:stat — do not edit, source: components/stat/definition.json ---- */
 /* ============ Stat ============ @component stat

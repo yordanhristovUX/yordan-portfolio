@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -1286,6 +1286,143 @@
       "declarations": {
         "background": "{surface-raised}"
       }
+    },
+    "media .ph": {
+      "kind": "base",
+      "declarations": {
+        "align-items": "center",
+        "aspect-ratio": "16 / 9",
+        "background": "{chrome-bg}",
+        "border": "1px dashed {chrome-border-strong}",
+        "display": "flex",
+        "flex-direction": "column",
+        "gap": "{space-2}",
+        "justify-content": "center",
+        "margin": "{space-6} 0",
+        "max-width": "none"
+      }
+    },
+    "media .ph:has(img)": {
+      "kind": "base contains",
+      "declarations": {
+        "aspect-ratio": "auto",
+        "background": "none",
+        "border": "0"
+      }
+    },
+    "media .ph--tall": {
+      "kind": "variant",
+      "declarations": {
+        "aspect-ratio": "4 / 3"
+      }
+    },
+    "media .ph__label": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "font-family": "{font-mono}",
+        "font-size": "{text-2xs}",
+        "font-weight": "{weight-medium}",
+        "letter-spacing": "{tracking-wide-lg}",
+        "padding": "0 {space-4}",
+        "text-align": "center",
+        "text-transform": "uppercase"
+      }
+    },
+    "media .ph:has(img) .ph__label": {
+      "kind": "scoped part",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "media .ph img": {
+      "kind": "scoped part",
+      "declarations": {
+        "display": "block",
+        "height": "auto",
+        "width": "100%"
+      }
+    },
+    "media .ph-grid": {
+      "kind": "part",
+      "declarations": {
+        "display": "grid",
+        "gap": "{space-4}",
+        "grid-template-columns": "1fr 1fr",
+        "margin": "{space-6} 0"
+      }
+    },
+    "media .ph-grid @below-640": {
+      "kind": "part at below-640",
+      "declarations": {
+        "grid-template-columns": "1fr"
+      }
+    },
+    "media .ph-grid .ph": {
+      "kind": "scoped part",
+      "declarations": {
+        "margin": "0"
+      }
+    },
+    "profile .profile": {
+      "kind": "base",
+      "declarations": {
+        "border-top": "{rule}",
+        "display": "grid",
+        "font-family": "{font-mono}",
+        "font-size": "{text-xs}",
+        "grid-template-columns": "1fr 1fr"
+      }
+    },
+    "profile .profile > div": {
+      "kind": "scoped part",
+      "declarations": {
+        "border-bottom": "{rule}",
+        "display": "grid",
+        "gap": "{space-4}",
+        "grid-template-columns": "7rem 1fr",
+        "padding": "{space-3} 0"
+      }
+    },
+    "profile .profile > div:nth-child(odd)": {
+      "kind": "scoped part position",
+      "declarations": {
+        "padding-right": "{space-7}"
+      }
+    },
+    "profile .profile dt": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "font-weight": "{weight-medium}",
+        "letter-spacing": "{tracking-wide-lg}",
+        "text-transform": "uppercase"
+      }
+    },
+    "profile .profile dd": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{content-body}"
+      }
+    },
+    "profile .profile .is-ok": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{accent}",
+        "font-weight": "{weight-semibold}"
+      }
+    },
+    "profile .profile @below-860": {
+      "kind": "at below-860",
+      "declarations": {
+        "grid-template-columns": "1fr"
+      }
+    },
+    "profile .profile > div @below-860:nth-child(odd)": {
+      "kind": "at below-860 position",
+      "declarations": {
+        "padding-right": "0"
+      }
     }
   },
   "exports": {
@@ -1342,6 +1479,12 @@
     },
     "./react/section-head": {
       "target": "./dist/react/section-head.tsx"
+    },
+    "./react/media": {
+      "target": "./dist/react/media.tsx"
+    },
+    "./react/profile": {
+      "target": "./dist/react/profile.tsx"
     }
   }
 }

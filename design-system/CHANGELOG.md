@@ -5,6 +5,32 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.8.0 — 2026-08-01
+
+Minor — 19 change(s).
+
+### Added
+
+- definition `media .ph img` added
+- definition `media .ph__label` added
+- definition `media .ph--tall` added
+- definition `media .ph-grid .ph` added
+- definition `media .ph-grid @below-640` added
+- definition `media .ph-grid` added
+- definition `media .ph:has(img) .ph__label` added
+- definition `media .ph:has(img)` added
+- definition `media .ph` added
+- definition `profile .profile .is-ok` added
+- definition `profile .profile @below-860` added
+- definition `profile .profile > div @below-860:nth-child(odd)` added
+- definition `profile .profile > div:nth-child(odd)` added
+- definition `profile .profile > div` added
+- definition `profile .profile dd` added
+- definition `profile .profile dt` added
+- definition `profile .profile` added
+- export `./react/media` added
+- export `./react/profile` added
+
 ## 1.7.0 — 2026-08-01
 
 Minor — 8 change(s).

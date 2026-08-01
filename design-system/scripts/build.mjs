@@ -499,6 +499,8 @@ const packaged = [
   ["dist/react/fact.tsx", reactSource("fact")],
   ["dist/react/entry.tsx", reactSource("entry")],
   ["dist/react/section-head.tsx", reactSource("section-head")],
+  ["dist/react/media.tsx", reactSource("media")],
+  ["dist/react/profile.tsx", reactSource("profile")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by

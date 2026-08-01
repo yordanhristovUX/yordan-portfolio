@@ -166,10 +166,21 @@ const declOf = (declarations) => {
 
 const definitionSurface = {};
 for (const def of defs) {
-  const put = (kind, selector, rule) => {
-    definitionSurface[`${def.id} ${selector}`] = { kind, declarations: declOf(rule.declarations) };
+  const put = (kind, selector, rule, publishOwn = true) => {
+    if (publishOwn) definitionSurface[`${def.id} ${selector}`] = { kind, declarations: declOf(rule.declarations) };
     for (const s of rule.states ?? []) {
       definitionSurface[`${def.id} ${selector}${s.suffix}`] = { kind: `${kind} state`, declarations: declOf(s.declarations) };
+    }
+    /* A CONTAINS applies on the strength of what the consumer's markup holds,
+       which makes it the most published of the three: `.ph:has(img)` fires the
+       moment somebody drops an <img> in, with nothing on either side asking
+       for it. The argument is in the key because `:has(img)` and `:has(.x)`
+       are two rules and only the argument says which. */
+    for (const c of rule.contains ?? []) {
+      definitionSurface[`${def.id} ${selector}:has(${c.element ?? c.class})`] = {
+        kind: `${kind} contains`,
+        declarations: declOf(c.declarations),
+      };
     }
     /* A position is a rule a consumer's markup can land on without asking for
        it — `.case-body h3:first-child` applies to whatever the content pipeline
@@ -203,7 +214,14 @@ for (const def of defs) {
      any selector, and only the key records that. */
   for (const block of def.at ?? []) {
     for (const o of block.rules) {
-      put(`at ${block.condition}`, `${selectorOf(def, o.of)} @${block.condition}`, o);
+      /* An override that declares nothing DIRECTLY publishes no rule of its own,
+         only the positions under it — `profile` restates one column and, of
+         `.profile > div`, nothing but its odd-child gutter. An entry with an
+         empty declaration map would claim a rule that ships no bytes. The
+         effect-only MODIFIER is the opposite case and keeps its empty entry:
+         `.sec--tint` declares nothing and its name is still `variant="tint"`,
+         so the name is the published thing. */
+      put(`at ${block.condition}`, `${selectorOf(def, o.of)} @${block.condition}`, o, Boolean(o.declarations));
     }
   }
 }

@@ -38,8 +38,8 @@ dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to t
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 11 generated,
-                        15 authored, each with a marker naming its reason)
+css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 13 generated,
+                        13 authored, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -175,13 +175,15 @@ renderer. Three consequences, and the first is the one that pays for the rest:
   selector), so the loader computes that view from the list. It is a query, not a second
   source.
 
-### The nine constructs R4 added, and the block that forced each
+### The eleven constructs R4 added, and the block that forced each
 
 | construct | what it says | forced by |
 | --- | --- | --- |
 | a **scoped part** — `within` + `element[]` + `pseudo?` | a rule on markup that carries no class: `.link-grid a`, `.case-body p strong`, `.entry__list li::before` | `link-grid`, `case-body`, then `entry` and `fact` widened `within` from the root to any earlier rule |
 | **`rules`** — one ordered list, each entry tagged by `kind` | the block's rules in stylesheet order, so a rule may sit where the stylesheet puts it rather than where a cascade would | `media` and `profile`, which group their rules by topic (see above) |
-| **`positions`** — `at: first \| last` | where a rule sits among its siblings: `.case-body h3:first-child`, `.entry:last-child` | `case-body` (`first`), `entry` and `fact` (`last`) |
+| **`positions`** — `at: first \| last \| odd` | where a rule sits among its siblings: `.case-body h3:first-child`, `.entry:last-child`, `.profile > div:nth-child(odd)` | `case-body` (`first`), `entry` and `fact` (`last`), `profile` (`odd`) |
+| **`contains`** — `of` + one `element` or one `class` | what the element HOLDS: `.ph:has(img)`, the rule that makes a placeholder frame step aside when real artwork arrives | `media` |
+| a part's **`child`**, beside `element[]` and `class` | a child combinator, which may only ever reach a BARE TAG: `.profile > div` is sayable, `.band > .rail--l` is not | `profile` |
 | **`at`** — `condition` + `rules: [{ of, … }]` | a set of overrides under one condition, with the condition NAMED in `tokens.json` and each rule NAMED rather than re-selected | `fact` and `entry`, which write the same breakpoint for the same reason |
 | a rule-level **`note`** | a comment above a rule, distinct from a group's note inside the braces | `entry`'s `.entry__span` |
 | **`inline`** on an `at` | render the query on one line — `@media … { .sel { … } }` — one override, one group, no ornament | `section-head`'s `.sec__note`, and `ask-fab` writes the same shape |
@@ -189,11 +191,15 @@ renderer. Three consequences, and the first is the one that pays for the rest:
 | an **effect-only modifier** — a variant with neither `declarations` nor `aliases` | `.sec--tint` declares nothing; its whole effect is a scoped part on a descendant | `section-head` |
 | **`expr`** — `{"expr": "calc({space-3} - 2px)"}` | computed geometry with its bindings still interpolated rather than written as `var()` | `section-head`'s head padding, which subtracts the two rule widths that bracket it |
 
-Six of those are closed at both ends on purpose, and that is what keeps them from being the
+Eight of those are closed at both ends on purpose, and that is what keeps them from being the
 wedge `PATTERNS.md` refuses. A scoped part's ancestor must **name** a rule the same definition
-declares above it, and its target is bare tag names or one class, with the combinator supplied
-by the emitter — so `.case-body p strong` and `.sec--tint .well` are sayable and
-`.band > .rail--l` is not. A position is an enum with one member per block that has asked. An
+declares above it, and its target is bare tag names, one class or one child tag, with the
+combinator supplied by the emitter — so `.case-body p strong`, `.sec--tint .well` and
+`.profile > div` are sayable and `.band > .rail--l` is not: `child` and `class` are separate
+keys and a part may carry exactly one, so *"a child combinator may only reach a bare tag name,
+and a class may only be reached by a descendant"* is structural rather than a convention. A
+`contains` argument is the same closure again, one tag or one class inside the `:has()`. A
+position is an enum with one member per block that has asked. An
 `at` condition is a name resolved in `tokens/tokens.json`'s `$conditions`, so a definition
 cannot invent a breakpoint; a new one is a decision recorded in the one
 file where a literal may be written. And an `expr`'s `{name}` is a reference into `tokens.json`,
@@ -554,7 +560,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly eighteen** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly twenty** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -579,6 +585,8 @@ published.
 "@yordan/design-system/react/fact"
 "@yordan/design-system/react/entry"
 "@yordan/design-system/react/section-head"
+"@yordan/design-system/react/media"          // R4 batch 2, with `contains` and `child`
+"@yordan/design-system/react/profile"
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —

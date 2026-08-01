@@ -79,7 +79,7 @@ import { utilitiesFor, STATE_PREFIX } from "./emit-tailwind.mjs";
 /* The selector arithmetic, imported rather than re-derived: pipeline 1 and
    pipeline 2 must agree about what `within` + `element` + `pseudo` names, and
    the only way to guarantee that is for one of them to own it. */
-import { POSITION_SUFFIX, conditionValues, partSelector } from "./emit-css.mjs";
+import { POSITION_SUFFIX, conditionValues, selectorsByName, containsArg } from "./emit-css.mjs";
 
 /* ---------- names ---------- */
 const pascal = (s) => s.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join("");
@@ -155,10 +155,14 @@ function entriesOf(declarations, keyOf, where, tally, prefix = "") {
    own banner in scripts/emit-tailwind.mjs for the argument in full.
    ============================================================ */
 
-/** `_a`, `_p_strong`, `_li::before`, `_.well` — the scoped half of the variant,
- *  or "". A class target rides in exactly the same bracket a tag path does:
- *  `[&_.well]:` compiles to `& .well`, which is the selector pipeline 1 writes. */
-const scopeOf = (part) => (part.within ? `_${(part.element ?? [part.class]).join("_")}${part.pseudo ?? ""}` : "");
+/** `_a`, `_p_strong`, `_li::before`, `_.well`, `>div` — the scoped half of the
+ *  variant, or "". A class target rides in exactly the same bracket a tag path
+ *  does: `[&_.well]:` compiles to `& .well`, which is the selector pipeline 1
+ *  writes. A CHILD is the one step that is not a `_`: `[&>div]:` compiles to
+ *  `& > div`, which is again exactly the stylesheet's selector — Tailwind's
+ *  arbitrary variant takes the combinator as written, so nothing is translated. */
+const scopeOf = (part) =>
+  !part.within ? "" : part.child ? `>${part.child}` : `_${(part.element ?? [part.class]).join("_")}${part.pseudo ?? ""}`;
 
 /** The variant prefix for a scope and/or a selector suffix; "" when neither. */
 const variantFor = (scope, suffix = "") => (scope || suffix ? `[&${scope}${suffix}]:` : "");
@@ -404,7 +408,9 @@ export function renderComponent(def, elements, keyOf) {
      other is SCOPED and cannot, because the element it styles carries no class
      — its rules land on the root as arbitrary variants instead. */
   const classParts = (def.parts ?? []).filter((p) => !p.within);
-  const scopedParts = (def.parts ?? []).filter((p) => p.within);
+  /* Every selector the definition declares, resolved once by the loader's own
+     arithmetic — so this tier names the selector that actually ships. */
+  const selectors = selectorsByName(def);
 
   let base = [
     /* `base` is optional since case-body, whose root is a scope rather than an
@@ -452,58 +458,63 @@ export function renderComponent(def, elements, keyOf) {
   const branchNamed = (kind, name) =>
     axes.find((a) => a.prop === (kind === "variants" ? "variant" : "size"))?.branches.find((b) => b.name === name);
 
-  /* ---- where a scoped part's classes go, and why it is not always the root ----
+  /* ---- where a rule with no class of its own puts its classes ----
      `[&_small]:` compiles to "a <small> anywhere inside the element wearing this
      class". `.fact__num small` is a <small> inside `.fact__num` — so the class
      belongs on `.fact__num`, and putting it on `.facts` would style every
      <small> in the block. That is not a smaller mistake than dropping the rule;
-     it is a wider one. `within` names the host, and the host's class list is the
-     sink: the root's base when it is the root, a part's own cva when it is a
-     part. Pipeline 1 has the same fact written as a selector and needs no rule
-     for it, which is exactly the asymmetry this function exists to absorb. */
-  const hostOf = (part) => {
-    if (part.within === "base") return { sink: base, host: "base" };
-    const host = classParts.find((p) => p.name === part.within);
-    if (host) return { sink: partEntries.get(host.name), host: host.name };
-    /* A MODIFIER CAN BE THE HOST, and `.sec--tint .well` is why. The tint's
-       class is on the root, so the descendant's utilities go on the root too —
-       but only when the variant is chosen, which in cva means they belong to
-       that BRANCH rather than to the base list. Putting them in the base would
-       tint every section; putting them anywhere else would need a component
-       for an element skeleton owns. The branch is the honest sink, and it is
-       the same rule the other two follow: `within` names the host. */
-    for (const kind of ["variants", "sizes"]) {
-      const m = (def[kind] ?? []).find((x) => x.name === part.within);
-      if (m) return { sink: branchNamed(kind, m.name).entries, host: m.name };
-    }
-    throw new Error(
-      `${where}: the scoped part \`${part.name}\` is \`within\` \`${part.within}\`, which is neither the root, a ` +
-        `part with a class of its own, nor a variant or size. Pipeline 1 renders that as a descendant selector; this ` +
-        `tier needs a class list to put the descendant's utilities ON, and a rule with no host would be emitted ` +
-        `against the root — which is a WIDER selector than the stylesheet's, not a narrower one.`
-    );
-  };
+     it is a wider one. So a rule that owns no class list rides in an arbitrary
+     variant on the nearest ancestor that does, and `within` / `of` name the
+     ancestor. Pipeline 1 has the same fact written as a selector and needs no
+     rule for it, which is exactly the asymmetry this absorbs.
+
+     THE WALK IS IN LIST ORDER, so an ancestor is always anchored before the
+     rule naming it — the same guarantee the loader's backwards-only reference
+     rule gives — and a chain composes: `.ph:has(img) .ph__label` is a scoped
+     part whose host is a CONTAINS whose host is the base, and it emits
+     `[&:has(img)_.ph__label]:hidden` on the root. */
 
   /** The class list a rule's utilities belong in, by the NAME that names it —
    *  the root's own, a class part's cva, or an axis branch's. */
+  const branchOf = (name) => axes.flatMap((a) => a.branches).find((b) => b.name === name);
   const sinkFor = (name) =>
     name === "base" ? base : partEntries.get(name) ?? branchOf(name)?.entries ?? null;
-  const branchOf = (name) => axes.flatMap((a) => a.branches).find((b) => b.name === name);
 
   const scopeByName = new Map();
-  for (const part of scopedParts) {
-    const scope = scopeOf(part);
-    const sel = partSelector(part);
-    const { sink, host } = hostOf(part);
-    scopeByName.set(part.name, { scope, host });
+  /** The anchor of a rule: which class list, and the selector suffix to wear.
+   *  A MODIFIER CAN BE ONE, and `.sec--tint .well` is why — the tint's class is
+   *  on the root, so the descendant's utilities go on the root too, but only
+   *  when the variant is chosen, which in cva means they belong to that BRANCH
+   *  rather than to the base list. Putting them in the base would tint every
+   *  section; putting them anywhere else would need a component for an element
+   *  skeleton owns. */
+  const anchor = (r, name) => {
+    const known = scopeByName.get(name);
+    if (known) return known;
+    if (sinkFor(name)) return { scope: "", host: name };
+    throw new Error(
+      `${where}: \`${r.name}\` names \`${name}\`, which is neither the root, a part with a class of its own, nor a ` +
+        `variant or size. Pipeline 1 renders it as a selector; this tier needs a class list to put the utilities ON, ` +
+        `and a rule with no host would be emitted against the root — which is a WIDER selector than the stylesheet's, ` +
+        `not a narrower one.`
+    );
+  };
+
+  for (const r of def.rules) {
+    const owner = r.kind === "contains" ? r.of : r.kind === "part" && r.within ? r.within : null;
+    if (owner === null) continue;
+    const parent = anchor(r, owner);
+    const scope = parent.scope + (r.kind === "contains" ? `:has(${containsArg(r)})` : scopeOf(r));
+    scopeByName.set(r.name, { scope, host: parent.host });
+    const sel = selectors.get(r.name);
     const entries = [
-      ...entriesOf(part.declarations, keyOf, `${where} → ${sel}`, tally, variantFor(scope)),
-      ...stateEntriesOf(part.states, keyOf, `${where} → ${sel}`, tally, scope),
-      ...positionEntriesOf(part.positions, keyOf, `${where} → ${sel}`, tally, scope),
+      ...entriesOf(r.declarations, keyOf, `${where} → ${sel}`, tally, variantFor(scope)),
+      ...stateEntriesOf(r.states, keyOf, `${where} → ${sel}`, tally, scope),
+      ...positionEntriesOf(r.positions, keyOf, `${where} → ${sel}`, tally, scope),
     ];
     if (!entries.length) continue;
-    entries[0] = { ...entries[0], lead: `\`${sel}\`${part.$doc ? ` — ${part.$doc}` : ""}` };
-    sink.push(...entries);
+    entries[0] = { ...entries[0], lead: `\`${sel}\`${r.$doc ? ` — ${r.$doc}` : ""}` };
+    sinkFor(parent.host).push(...entries);
   }
 
   /* The at-rules at the FOOT. An override names a rule, so its classes go

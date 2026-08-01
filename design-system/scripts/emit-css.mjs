@@ -171,7 +171,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -281,6 +281,7 @@ export const RULE_FORM = {
   size: "rule-size",
   part: "rule-part",
   state: "rule-state",
+  contains: "rule-contains",
   position: "rule-position",
   at: "rule-at",
 };
@@ -345,7 +346,12 @@ const terms = (value) => (Array.isArray(value) ? value : [value]);
 /** The whole positional vocabulary; see the schema's `position`. A member is
  *  minted by the block that needs it — `first` by case-body, `last` by entry
  *  and fact — and the enum in the schema is kept in step with this object. */
-export const POSITION_SUFFIX = { first: ":first-child", last: ":last-child" };
+export const POSITION_SUFFIX = { first: ":first-child", last: ":last-child", odd: ":nth-child(odd)" };
+
+/** What a `contains` rule looks for, as a selector: one bare tag or one class.
+ *  Both halves are closed, which is why `:has()` is a member of this vocabulary
+ *  and not a door into arbitrary relational CSS. */
+export const containsArg = (r) => r.element ?? r.class;
 
 /** A part's selector. The loader resolves a scoped part's once, so both
  *  emitters read one string rather than each joining the pieces — the
@@ -369,11 +375,13 @@ export function selectorsByName(def) {
     if (r.kind === "base") continue;
     else if (r.kind === "variant" || r.kind === "size") out.set(r.name, r.selector);
     else if (r.kind === "part") {
-      out.set(
-        r.name,
-        r.selector ?? `${out.get(r.within)} ${r.element ? r.element.join(" ") : r.class}${r.pseudo ?? ""}`
-      );
+      /* A CHILD combinator reaches a bare tag; everything else is a descendant.
+         The two are separate keys so that `> .class` — the one combination this
+         format refuses — cannot be assembled out of the pieces. */
+      const step = r.child ? `> ${r.child}` : `${r.element ? r.element.join(" ") : r.class}${r.pseudo ?? ""}`;
+      out.set(r.name, r.selector ?? `${out.get(r.within)} ${step}`);
     } else if (r.kind === "state") out.set(r.name, stateSelector(out.get(r.of), r.suffix));
+    else if (r.kind === "contains") out.set(r.name, `${out.get(r.of)}:has(${containsArg(r)})`);
     else if (r.kind === "position") out.set(r.name, `${out.get(r.of)}${POSITION_SUFFIX[r.at]}`);
   }
   return out;
@@ -570,7 +578,7 @@ export function loadDefinition(id) {
   const references = [];
   (def.rules ?? []).forEach((r, i) => {
     if (r.kind === "part" && r.within !== undefined) references.push([i, r.within, `\`${r.name}\` is scoped \`within\``]);
-    if (r.kind === "state" || r.kind === "position") references.push([i, r.of, `\`${r.name}\` is a ${r.kind} \`of\``]);
+    if (r.kind === "state" || r.kind === "position" || r.kind === "contains") references.push([i, r.of, `\`${r.name}\` is a ${r.kind} \`of\``]);
     if ((r.kind === "variant" || r.kind === "size") && r.aliases) references.push([i, r.aliases.of, `\`${r.name}\` aliases`]);
     if (r.kind === "at") for (const o of r.rules) references.push([i, o.of, `an \`at ${r.condition}\` override names`]);
   });
@@ -698,17 +706,18 @@ export function loadDefinition(id) {
          position of a state is the block that decides what the contract calls
          it. A state IS still nameable — an alias names one — just not owned. */
       case "state":
+      case "contains":
       case "position": {
         const owner = byName.get(r.of);
         if (!["base", "variant", "size", "part"].includes(owner?.kind)) {
           bad(
             `\`${r.name}\` is a ${r.kind} \`of\` \`${r.of}\`, which is ${owner ? `a ${owner.kind}` : "the root and not a rule"} ` +
-              `and so has no rule of its own for it to hang off. Both other emitters read a state and a position through ` +
-              `their owner, so the owner is a base, a variant, a size or a part${r.of === "base" ? " — and this definition declares no `base` rule above it" : ""}`
+              `and so has no rule of its own for it to hang off. Both other emitters read a state, a contains and a ` +
+              `position through their owner, so the owner is a base, a variant, a size or a part${r.of === "base" ? " — and this definition declares no `base` rule above it" : ""}`
           );
           break;
         }
-        (owner[r.kind === "state" ? "states" : "positions"] ??= []).push(r);
+        (owner[{ state: "states", contains: "contains", position: "positions" }[r.kind]] ??= []).push(r);
         byName.set(r.name, r);
         break;
       }
@@ -865,13 +874,15 @@ export function renderBlock(def, conditions = {}) {
       case "part":
         if (r.break) out += "\n";
         out += lead(r, "");
-        out += rule(r.selector ?? sel(r.name), r.declarations, where);
+        out += rule(sel(r.name), r.declarations, where);
         break;
+      /* A state, a contains and a position are one relation each on the rule
+         `of` names, and all three resolve through the same map — the suffix
+         arithmetic is done once, where the vocabulary lives. */
       case "state":
-        out += rule(stateSelector(sel(r.of), r.suffix), r.declarations, where);
-        break;
+      case "contains":
       case "position":
-        out += rule(`${sel(r.of)}${POSITION_SUFFIX[r.at]}`, r.declarations, where);
+        out += rule(sel(r.name), r.declarations, where);
         break;
       /* An INLINE at renders on one line, because that is how the stylesheet
          writes a footnote on one rule. The loader has already refused anything
