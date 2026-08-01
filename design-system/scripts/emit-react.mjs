@@ -1,0 +1,320 @@
+#!/usr/bin/env node
+/* ============================================================
+   THE REACT TIER — components/<id>/definition.json → dist/react/<id>.tsx.
+   Zero dependencies; a template string, like scripts/emit-css.mjs.
+
+   Phase R2a, and the second consumer of the SAME definitions pipeline 1
+   already renders to CSS. That is the point of the exercise: one file per
+   component describes its appearance, and two emitters read it — one produces
+   the block in css/components.css that the vanilla site loads, the other
+   produces a typed React component the Next app imports. Neither is a
+   translation of the other; both are renderings of the definition, which is
+   why they cannot drift apart the way two hand-written implementations do.
+
+   ── WHAT IS GENERATED, AND WHAT IS DELIBERATELY NOT ──
+
+   GENERATED: the cva map (base classes, one entry per variant and per size,
+   states as Tailwind prefixes), the variant TYPES, the element, the className
+   merge, and the HTML props passthrough. Styling is data.
+
+   NOT GENERATED, and not coming: behaviour. There is no focus management, no
+   keyboard handling, no ARIA and no state in any file this emitter writes. A
+   component that needs those gets them hand-authored by the consumer, on top.
+   The one thing here that looks like behaviour is Button rendering <a> or
+   <button>, and it is not a decision this emitter makes — see below.
+
+   ── THE ELEMENT COMES FROM THE SPEC, NOT FROM THE DEFINITION ──
+
+   design-system/README.md says the canonical HTML in each spec.md "is not an
+   example — it is THE pattern", and build.mjs already parses those fences to
+   check that every class named in one has a rule. So the element a component
+   renders is READ from that fence rather than restated in the definition:
+
+     button/spec.md    <a class="btn">…  <a class="btn btn--solid">…  <button class="btn btn--small">…
+     chip/spec.md      <span class="chip">…      inside <div class="chips">…
+     stat/spec.md      <span class="stat">…
+
+   Button is polymorphic because its canonical HTML uses two elements, not
+   because anybody decided a button component ought to be. If the fence ever
+   shows one element, the generated component stops being polymorphic in the
+   same commit — and if it shows a pair this emitter has no rule for, the build
+   fails rather than guessing a discriminant.
+
+   ── CLASSNAME IS APPENDED, NOT MERGED ──
+
+   `cx` is clsx, re-exported by cva. It concatenates; it does not resolve two
+   conflicting Tailwind utilities, because CSS resolves those by STYLESHEET
+   order and nothing in a class attribute can change that. A consumer who needs
+   last-one-wins override semantics adds tailwind-merge themselves — this
+   package will not take the dependency on their behalf, and pretending the
+   merge happens would be worse than saying it does not.
+
+   ── THE ONE EXTERNAL IMPORT ──
+
+   `class-variance-authority` is a bare specifier in a published file and is
+   the CONSUMER's dependency, declared in apps/next rather than here. This
+   package installs nothing: `design-system/package.json` has no `dependencies`
+   and gains none. React is likewise the consumer's, and is imported for types
+   only.
+   ============================================================ */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { utilitiesFor, STATE_PREFIX } from "./emit-tailwind.mjs";
+
+/* ---------- names ---------- */
+const pascal = (s) => s.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join("");
+const camel = (s) => { const p = pascal(s); return p[0].toLowerCase() + p.slice(1); };
+
+/* ---------- the element, out of the spec's canonical HTML ---------- */
+const HTML_FENCE = /```html\r?\n([\s\S]*?)```/g;
+const TAG = /<([a-z][\w-]*)\b[^>]*\sclass="([^"]*)"/g;
+
+/**
+ * class → the elements the canonical HTML puts it on, in order of appearance.
+ * @returns {Map<string, string[]>}
+ */
+export function elementsInSpec(specText) {
+  const out = new Map();
+  for (const fence of specText.matchAll(HTML_FENCE)) {
+    for (const m of fence[1].matchAll(TAG)) {
+      for (const cls of m[2].split(/\s+/).filter(Boolean)) {
+        const list = out.get(`.${cls}`) ?? [];
+        if (!list.includes(m[1])) list.push(m[1]);
+        out.set(`.${cls}`, list);
+      }
+    }
+  }
+  return out;
+}
+
+/* ---------- declarations → classes ---------- */
+function classesOf(declarations, keyOf, where, tally) {
+  const out = [];
+  for (const group of declarations ?? []) {
+    for (const [prop, value] of Object.entries(group.set)) {
+      const { classes, arbitrary } = utilitiesFor(prop, value, keyOf, where);
+      if (arbitrary) tally.arbitrary += classes.length;
+      out.push(...classes);
+    }
+  }
+  return out;
+}
+
+function statesOf(states, keyOf, where, tally) {
+  const out = [];
+  for (const s of states ?? []) {
+    const prefix = STATE_PREFIX[s.suffix];
+    if (!prefix) {
+      throw new Error(
+        `${where}: the state \`${s.name}\` appends \`${s.suffix}\`, which scripts/emit-tailwind.mjs has no Tailwind ` +
+          `variant prefix for. Add it to STATE_PREFIX — a state this emitter cannot name is a state the React ` +
+          `component would silently drop.`
+      );
+    }
+    out.push(...classesOf(s.declarations, keyOf, `${where} → ${s.name}`, tally).map((c) => prefix + c));
+  }
+  return out;
+}
+
+/* ---------- prose ---------- */
+const wrap = (text, width, indent) => {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = "";
+  for (const w of words) {
+    if (line && (line + " " + w).length > width) { lines.push(line); line = w; }
+    else line = line ? `${line} ${w}` : w;
+  }
+  if (line) lines.push(line);
+  return lines.map((l, i) => (i ? `${indent}${l}` : l));
+};
+const tsdoc = (text, indent) => {
+  const lines = wrap(text, 92 - indent.length, "");
+  if (lines.length === 1) return `${indent}/** ${lines[0]} */\n`;
+  return `${indent}/**\n${lines.map((l) => `${indent} * ${l}`).join("\n")}\n${indent} */\n`;
+};
+const list = (classes, indent) => classes.map((c) => `${indent}"${c}",`).join("\n");
+
+/* ---------- one component file ---------- */
+
+/**
+ * @param {object} def          the parsed definition.json
+ * @param {Map<string,string[]>} elements  from elementsInSpec
+ * @param {(name:string)=>string|null} keyOf  token name → @theme key
+ */
+export function renderComponent(def, elements, keyOf) {
+  const where = `components/${def.id}/definition.json`;
+  const tally = { arbitrary: 0 };
+  const Name = pascal(def.id);
+  const fn = camel(def.id);
+
+  const els = elements.get(def.root);
+  if (!els || !els.length) {
+    throw new Error(
+      `components/${def.id}/spec.md: its canonical HTML never puts \`${def.root}\` on an element, so this emitter ` +
+        `cannot know what to render. The fence in a spec is THE pattern — add the class to it.`
+    );
+  }
+  const polymorphic = els.length > 1;
+  if (polymorphic && !(els.length === 2 && els.includes("a") && els.includes("button"))) {
+    throw new Error(
+      `components/${def.id}/spec.md: its canonical HTML puts \`${def.root}\` on ${els.map((e) => `<${e}>`).join(" and ")}. ` +
+        `The only polymorphic pair this emitter has a discriminant for is <a> / <button>, which it tells apart by ` +
+        `\`href\`. Decide the discriminant and add it here rather than letting the generator pick one.`
+    );
+  }
+
+  const base = [
+    ...classesOf(def.base.declarations, keyOf, where, tally),
+    ...statesOf(def.base.states, keyOf, where, tally),
+  ];
+
+  /* One cva axis per kind the definition actually has. An axis carries a
+     `default` entry that adds nothing, so the unmodified component is a value
+     of the type rather than the absence of one. */
+  const axes = [];
+  if (def.variants?.length) axes.push({ prop: "variant", items: def.variants });
+  if (def.sizes?.length) axes.push({ prop: "size", items: def.sizes });
+
+  let out = header(def, `dist/react/${def.id}.tsx`);
+  out += `import { cva, cx, type VariantProps } from "class-variance-authority";\n`;
+  out += `import type { ComponentPropsWithoutRef } from "react";\n\n`;
+
+  /* the cva map */
+  out += tsdoc(`The class map for \`${def.root}\`, rendered from its definition. Base, then each state as a Tailwind prefix.`, "");
+  if (!axes.length) {
+    /* No variants and no sizes: the same one-argument shape a part gets, so a
+       component with one appearance does not look like one whose axes went
+       missing. */
+    out += `export const ${fn} = cva([\n${list(base, "  ")}\n]);\n\n`;
+  } else {
+    out += `export const ${fn} = cva(\n  [\n${list(base, "    ")}\n  ]`;
+    out += `,\n  {\n    variants: {\n`;
+    for (const axis of axes) {
+      out += `      ${axis.prop}: {\n        default: "",\n`;
+      for (const item of axis.items) {
+        const classes = [
+          ...classesOf(item.declarations, keyOf, `${where} → ${item.selector}`, tally),
+          ...statesOf(item.states, keyOf, `${where} → ${item.selector}`, tally),
+        ];
+        if (item.$doc) out += tsdoc(item.$doc, "        ");
+        out += `        ${item.name}: [\n${list(classes, "          ")}\n        ],\n`;
+      }
+      out += `      },\n`;
+    }
+    out += `    },\n    defaultVariants: { ${axes.map((a) => `${a.prop}: "default"`).join(", ")} },\n  }`;
+    out += `\n);\n\n`;
+  }
+
+  out += `export type ${Name}Variants = VariantProps<typeof ${fn}>;\n\n`;
+
+  /* props + component */
+  const own = `${Name}Variants & { className?: string }`;
+  const args = axes.map((a) => a.prop);
+  const call = args.length ? `${fn}({ ${args.join(", ")} })` : `${fn}()`;
+  const destructure = [...args, "className"].join(", ");
+
+  if (polymorphic) {
+    out += tsdoc(
+      `The props of \`<${Name} />\`. A union rather than one type, because the canonical HTML in ` +
+        `components/${def.id}/spec.md renders this on <a> AND on <button>: pass \`href\` and it is a link, omit it ` +
+        `and it is a button, and the element's own attributes follow the branch you chose.`,
+      ""
+    );
+    out += `export type ${Name}Props =\n`;
+    out += `  | (${own} & { href: string } & Omit<ComponentPropsWithoutRef<"a">, "className" | "href">)\n`;
+    out += `  | (${own} & { href?: undefined } & Omit<ComponentPropsWithoutRef<"button">, "className">);\n\n`;
+    out += tsdoc(`Renders the canonical pattern of components/${def.id}/spec.md. Styling only — behaviour is the consumer's.`, "");
+    out += `export function ${Name}(props: ${Name}Props) {\n`;
+    out += `  if (props.href !== undefined) {\n`;
+    out += `    const { ${destructure}, ...rest } = props;\n`;
+    out += `    return <a className={cx(${call}, className)} {...rest} />;\n`;
+    out += `  }\n`;
+    out += `  const { ${destructure}, ...rest } = props;\n`;
+    out += `  return <button className={cx(${call}, className)} {...rest} />;\n`;
+    out += `}\n`;
+  } else {
+    const el = els[0];
+    out += `export type ${Name}Props = ${own} & Omit<ComponentPropsWithoutRef<"${el}">, "className">;\n\n`;
+    out += tsdoc(`Renders the canonical pattern of components/${def.id}/spec.md: a <${el}>. Styling only — behaviour is the consumer's.`, "");
+    out += `export function ${Name}({ ${destructure}, ...rest }: ${Name}Props) {\n`;
+    out += `  return <${el} className={cx(${call}, className)} {...rest} />;\n`;
+    out += `}\n`;
+  }
+
+  /* parts — a companion selector that is not a modifier of the root */
+  for (const part of def.parts ?? []) {
+    const PartName = pascal(`${def.id}-${part.name}`);
+    const partFn = camel(`${def.id}-${part.name}`);
+    const partEls = elements.get(part.selector);
+    if (!partEls || partEls.length !== 1) {
+      throw new Error(
+        `components/${def.id}/spec.md: its canonical HTML puts \`${part.selector}\` on ` +
+          `${partEls ? partEls.map((e) => `<${e}>`).join(" and ") : "nothing"}. A part must appear on exactly one element.`
+      );
+    }
+    const el = partEls[0];
+    const classes = classesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally);
+    out += `\n`;
+    if (part.$doc) out += tsdoc(part.$doc, "");
+    out += `export const ${partFn} = cva([\n${list(classes, "  ")}\n]);\n\n`;
+    out += `export type ${PartName}Props = { className?: string } & Omit<ComponentPropsWithoutRef<"${el}">, "className">;\n\n`;
+    out += tsdoc(`The \`${part.selector}\` half of the pattern in components/${def.id}/spec.md: a <${el}>.`, "");
+    out += `export function ${PartName}({ className, ...rest }: ${PartName}Props) {\n`;
+    out += `  return <${el} className={cx(${partFn}(), className)} {...rest} />;\n`;
+    out += `}\n`;
+  }
+
+  return { source: out, tally, elements: els, exports: exportsOf(def) };
+}
+
+/** Every name a component's file exports, in emission order. */
+export function exportsOf(def) {
+  const Name = pascal(def.id);
+  const values = [camel(def.id), Name];
+  const types = [`${Name}Props`, `${Name}Variants`];
+  for (const part of def.parts ?? []) {
+    const PartName = pascal(`${def.id}-${part.name}`);
+    values.push(camel(`${def.id}-${part.name}`), PartName);
+    types.push(`${PartName}Props`);
+  }
+  return { values, types };
+}
+
+/* ---------- the barrel ---------- */
+export function renderIndex(defs) {
+  let out = header(null, "dist/react/index.ts");
+  for (const def of defs) {
+    const { values, types } = exportsOf(def);
+    out += `export { ${values.join(", ")} } from "./${def.id}";\n`;
+    out += `export type { ${types.join(", ")} } from "./${def.id}";\n`;
+  }
+  return out;
+}
+
+/* ---------- the provenance banner ---------- */
+function header(def, rel) {
+  /* Never `components/*` + `/definition.json` for the barrel: that substring
+     closes the comment this string is inside, and the file stops parsing. The
+     generated artefact is the only place that would have shown it. */
+  const source = def ? `components/${def.id}/definition.json` : "the pilot definitions, components/<id>/definition.json";
+  return (
+    `/* GENERATED by scripts/build.mjs from ${source} — do not edit.\n` +
+    `   Edit the definition and run \`npm run build\`; \`build.mjs --check\` byte-compares this file,\n` +
+    `   so a hand-edit fails the build rather than being silently overwritten.\n\n` +
+    `   Published as @yordan/design-system/react${def ? `/${def.id}` : ""} (${rel}).\n` +
+    (def
+      ? `   The element comes from the canonical HTML in components/${def.id}/spec.md, which\n` +
+        `   design-system/README.md calls THE pattern rather than an example.\n`
+      : `   The barrel. Every name below is generated; nothing is re-exported by hand.\n`) +
+    `\n` +
+    `   STYLING IS DATA, BEHAVIOUR IS CODE. There is no state, no effect, no event handler and\n` +
+    `   no ARIA here, and none is coming — those are the consumer's, written by hand. This file\n` +
+    `   is a class map, a type and an element.\n\n` +
+    `   REQUIRES, from the consumer: tailwindcss v4 with @yordan/design-system/tokens.css and\n` +
+    `   tokens.tailwind.css imported and this directory named in an @source; the peer packages\n` +
+    `   class-variance-authority and react; and a build that transpiles TSX out of node_modules\n` +
+    `   (Next: \`transpilePackages: ["@yordan/design-system"]\`). This package declares no\n` +
+    `   dependencies of its own and installs nothing. */\n`
+  );
+}

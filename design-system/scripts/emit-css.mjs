@@ -210,15 +210,30 @@ export function regionOf(css, id) {
   return { start, end: c, body: css.slice(start, c) };
 }
 
-/** Every pilot region re-rendered from its definition. */
-export function renderAll() {
-  const rendered = new Map();
+/**
+ * Every pilot definition, in PILOT order. Both emitters start here — pipeline 1
+ * renders these to css/components.css, pipeline 2 to dist/react/ — so the load
+ * and its error reporting live in one place rather than once per consumer.
+ * @returns {{defs: object[], errors: string[]}}
+ */
+export function loadAll() {
+  const defs = [];
   const errors = [];
   for (const id of PILOT) {
     const { def, error } = loadDefinition(id);
-    if (error) { errors.push(error); continue; }
+    if (error) errors.push(error);
+    else defs.push(def);
+  }
+  return { defs, errors };
+}
+
+/** Every pilot region re-rendered from its definition. */
+export function renderAll(defs) {
+  const rendered = new Map();
+  const errors = [];
+  for (const def of defs ?? loadAll().defs) {
     try {
-      rendered.set(id, renderBlock(def));
+      rendered.set(def.id, renderBlock(def));
     } catch (e) {
       errors.push(e.message);
     }
@@ -271,7 +286,9 @@ if (isMain) {
   const CHECK = process.argv.includes("--check");
   const path = join(root, "css", "components.css");
   const css = readFileSync(path, "utf8");
-  const { rendered, errors } = renderAll();
+  const { defs, errors: loadErrors } = loadAll();
+  const { rendered, errors: renderErrors } = renderAll(defs);
+  const errors = [...loadErrors, ...renderErrors];
   if (errors.length) {
     console.error(`✗ component definitions failed to render:\n  - ${errors.join("\n  - ")}`);
     process.exit(1);

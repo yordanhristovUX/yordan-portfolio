@@ -5,6 +5,7 @@
   "type": "module",
   "description": "AI-ready, repo-first design system for the blueprint portfolio. Source of truth: tokens/tokens.json + components/*/spec.md + css/components.css. See README.md.",
   "//": "`private: true` and no `publishConfig`: this is consumed by `file:`, never from a registry. `version` is still real — scripts/contract-diff.mjs enforces it against the committed contract in RELEASED.json, so a consumer pinning a range gets a semver promise a publish step would otherwise have to make. `exports` is the same statement the boundary gate makes: dist/ and css/ are published, everything else here is private, and a subpath not listed below is unreachable rather than merely undocumented. `assets/` is in `files` and NOT in `exports` on purpose — avatar.svg is fetched by URL from markup, never resolved as a module.",
+  "//exports": "ELEVEN subpaths, and it was six until phase R2a. The five new ones are the Tailwind + React tier: tokens.tailwind.css binds Tailwind v4's @theme namespaces to the custom properties tokens.css already defines, and ./react/<id> is one generated, typed component per pilot definition. They are ENUMERATED rather than a `./react/*` wildcard for the same reason the other six are: a subpath that is not listed is unreachable, and a wildcard would publish whatever happens to land in the directory. The React entries resolve to .tsx SOURCE — a consumer transpiles them (Next: transpilePackages) and brings class-variance-authority and react itself; this package still declares no dependencies.",
   "files": [
     "dist",
     "css",
@@ -16,7 +17,12 @@
     "./components.json": "./dist/components.json",
     "./tokens.flat.json": "./dist/tokens.flat.json",
     "./tokens.dtcg.json": "./dist/tokens.dtcg.json",
-    "./tokens.d.ts": "./dist/tokens.d.ts"
+    "./tokens.d.ts": "./dist/tokens.d.ts",
+    "./tokens.tailwind.css": "./dist/tokens.tailwind.css",
+    "./react": "./dist/react/index.ts",
+    "./react/button": "./dist/react/button.tsx",
+    "./react/chip": "./dist/react/chip.tsx",
+    "./react/stat": "./dist/react/stat.tsx"
   },
   "scripts": {
     "//emit": "PHASE R1 PILOT. Three components (button, chip, stat) have their appearance authored as data in components/<id>/definition.json, and their blocks in css/components.css are GENERATED regions rendered from it. `emit:css` writes them; `build.mjs --check` re-renders them in memory and byte-compares, so a hand-edit inside a region fails the build. It runs first in `build` for the obvious reason — the check that follows would otherwise be comparing against a stale file. It is deliberately NOT a step of the ROOT `npm run build`: see the header of scripts/emit-css.mjs.",

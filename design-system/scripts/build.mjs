@@ -57,9 +57,14 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-/* The component-CSS emitter. Its header documents the definition format and
-   why the WRITE side of it lives there rather than here. */
-import { PILOT, definitionPath, renderAll, checkRegions } from "./emit-css.mjs";
+/* PIPELINE 1 — the component-CSS emitter. Its header documents the definition
+   format and why the WRITE side of it lives there rather than here. */
+import { PILOT, definitionPath, loadAll, renderAll, checkRegions } from "./emit-css.mjs";
+/* PIPELINE 2 — the same definitions, rendered for a Tailwind + React consumer.
+   Both artefact sets are written through `packaged` below, so both are
+   byte-compared by --check rather than regenerated in place. */
+import { renderThemeCss, themeKeyOf } from "./emit-tailwind.mjs";
+import { elementsInSpec, renderComponent, renderIndex } from "./emit-react.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CHECK = process.argv.includes("--check");
@@ -365,13 +370,108 @@ const dtsOut =
   `/** A \`var()\` reference to a token that exists — usable wherever a CSS string is taken. */\n` +
   `export type DesignTokenVar = \`var(\${DesignTokenName})\`;\n`;
 
+/* ============================================================
+   PIPELINE 2 — dist/tokens.tailwind.css + dist/react/
+
+   Phase R2a. The same three definitions pipeline 1 renders into
+   css/components.css are rendered again here, for a Next.js consumer: a
+   Tailwind v4 @theme file that binds Tailwind's namespaces to the custom
+   properties dist/tokens.css already defines, and one typed React component
+   per definition. Neither is a translation of the other — both are renderings
+   of the same data, which is the property two hand-written front ends cannot
+   have.
+
+   THE DEFINITIONS ARE LOADED HERE, EARLY, because both pipelines need them and
+   a missing one is a coverage failure rather than a rendering failure. For a
+   pilot id the trinity of CSS block + spec.md + story is a QUARTET, and this
+   is the leg that enforces it — unconditionally, not only under --check,
+   because neither emitter can render without it.
+
+   THEMING IS NOT FORKED, and that is structural rather than promised: every
+   entry in the @theme block is a `var()` reference to the runtime token, so a
+   Tailwind utility lands on whatever dist/tokens.css says that token is — light,
+   dark, pinned, printed or stepped at the grid break. See the header of
+   scripts/emit-tailwind.mjs for the one exception and why it is safe.
+   ============================================================ */
+const { defs: definitions, errors: definitionErrors } = loadAll();
+if (definitionErrors.length) {
+  console.error(
+    `✗ coverage check failed — a pilot component's appearance source is missing or unreadable:\n  - ${definitionErrors.join("\n  - ")}\n` +
+      `  ${PILOT.length} components (${PILOT.join(", ")}) are rendered from\n` +
+      `  ${PILOT.map(definitionPath).join(", ")} — into css/components.css by scripts/emit-css.mjs,\n` +
+      `  and into dist/react/ by scripts/emit-react.mjs. For those three the trinity is a quartet:\n` +
+      `  CSS block + spec.md + story + definition.json.`
+  );
+  process.exit(1);
+}
+
+/** A token name → the Tailwind @theme variable it becomes, or null if it stays plain. */
+const themeKey = (name) => themeKeyOf(name, groupOf.get(name));
+
+/* Both emitters refuse rather than guess — an unclassified token group, a
+   restated token that grew a mode, a state with no Tailwind prefix, a spec
+   whose canonical HTML names no element. Each of those is a real decision
+   somebody has to make, so they surface as a named failure here rather than as
+   a stack trace: the message IS the instruction. */
+const fatal = (what, e) => {
+  console.error(`✗ ${what}:\n  ${String(e.message).split("\n").join("\n  ")}`);
+  process.exit(1);
+};
+
+let tailwindOut;
+try {
+  tailwindOut = renderThemeCss(categories);
+} catch (e) {
+  fatal("tailwind theme check — tokens.json and the @theme map disagree", e);
+}
+
+const reactSources = new Map();
+let arbitraryClasses = 0;
+for (const def of definitions) {
+  try {
+    const specText = readFileSync(join(root, "components", def.id, "spec.md"), "utf8");
+    const { source, tally } = renderComponent(def, elementsInSpec(specText), themeKey);
+    arbitraryClasses += tally.arbitrary;
+    reactSources.set(def.id, source);
+  } catch (e) {
+    fatal(`react check — components/${def.id}/definition.json cannot be rendered to a component`, e);
+  }
+}
+const reactSource = (id) => {
+  const source = reactSources.get(id);
+  if (!source) throw new Error(`packaged names dist/react/${id}.tsx and no definition rendered it — PILOT and the packaged list disagree`);
+  return source;
+};
+
 /* --check compares; a plain build writes. Comparing BEFORE writing is the
    point: writing first would erase the evidence and turn every hand-edit into
-   a pass. */
+   a pass.
+
+   THE PATHS ARE LITERALS ON PURPOSE, one line each. test/drift.test.js reads
+   this array out of this file's source to recompute the root drift gate's
+   pathspec list, so a fourth generated component has to be typed here — where
+   it is visible in a diff — rather than appearing from a loop. */
 const packaged = [
   ["dist/tokens.dtcg.json", dtcgOut],
   ["dist/tokens.d.ts", dtsOut],
+  ["dist/tokens.tailwind.css", tailwindOut],
+  ["dist/react/index.ts", renderIndex(definitions)],
+  ["dist/react/button.tsx", reactSource("button")],
+  ["dist/react/chip.tsx", reactSource("chip")],
+  ["dist/react/stat.tsx", reactSource("stat")],
 ];
+mkdirSync(join(root, "dist", "react"), { recursive: true });
+/* Every rendered component must have a line above; the reverse is checked by
+   reactSource. Together they make PILOT and the published surface agree. */
+for (const id of reactSources.keys()) {
+  if (!packaged.some(([rel]) => rel === `dist/react/${id}.tsx`)) {
+    console.error(
+      `✗ dist/react/${id}.tsx is rendered and is not in the \`packaged\` list in scripts/build.mjs, so it would be\n` +
+        `  written by nothing and compared by nothing. Add the line — the paths there are literals deliberately.`
+    );
+    process.exit(1);
+  }
+}
 if (CHECK) {
   const drift = [];
   for (const [rel, want] of packaged) {
@@ -396,13 +496,15 @@ if (CHECK) {
   if (drift.length) {
     console.error(
       `✗ package check failed — a published artefact was hand-edited or is stale:\n  - ${drift.join("\n  - ")}\n` +
-        `  These two files are the package surface another repo installs, so they are byte-compared\n` +
-        `  rather than regenerated in place. Edit tokens/tokens.json and run \`npm run build\`.`
+        `  These ${packaged.length} files are the package surface another repo installs, so they are byte-compared\n` +
+        `  rather than regenerated in place. Edit tokens/tokens.json or the component's definition.json\n` +
+        `  and run \`npm run build\`.`
     );
     process.exit(1);
   }
   console.log(
-    `✓ package check          (dist/tokens.dtcg.json + dist/tokens.d.ts byte-identical to a fresh build)`
+    `✓ package check          (${packaged.length} published artefacts byte-identical to a fresh build: ` +
+      `tokens.dtcg.json, tokens.d.ts, tokens.tailwind.css, react/ ×${reactSources.size + 1})`
   );
 } else {
   for (const [rel, out] of packaged) writeFileSync(join(root, rel), out);
@@ -416,6 +518,16 @@ if (CHECK) {
       `${Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${n} ${t}`).join(", ")})`
   );
   console.log(`✓ dist/tokens.d.ts       (${dtsNames.length} names, ${dtsGroups.length} groups)`);
+  const themed = (tailwindOut.match(/^ {2}--/gm) ?? []).length;
+  const referenced = (tailwindOut.match(/^ {2}--[\w-]+: var\(--/gm) ?? []).length;
+  console.log(
+    `✓ dist/tokens.tailwind.css (${themed} of ${Object.keys(flat).length} tokens in @theme, ` +
+      `${referenced} as var() references, ${themed - referenced} restated)`
+  );
+  console.log(
+    `✓ dist/react/            (${reactSources.size} components + index, ` +
+      `${arbitraryClasses} arbitrary-property classes)`
+  );
 }
 
 /* ---------- ../content/system.generated.json ----------
@@ -512,22 +624,15 @@ const componentsCss = readFileSync(componentsCssPath, "utf8");
    generated regions of css/components.css. The other twenty blocks are
    authored source and are untouched by any of this.
 
-   TWO ASSERTIONS, in the order a failure is easiest to act on.
-
-   1. COVERAGE. For a pilot id, definition.json is the fourth leg: the trinity
-      of CSS block + spec.md + story becomes a quartet. It is asserted HERE
-      rather than in the coverage gate below, and unconditionally rather than
-      under --check, because the emitter cannot render without it — a plain
-      build that quietly skipped a missing definition would leave the region on
-      disk unverified and call itself a success.
-
-   2. DRIFT. The regions are re-rendered IN MEMORY and byte-compared against
-      what is on disk, which is the same discipline dist/tokens.dtcg.json and
-      dist/tokens.d.ts get, and for the same reason: comparing after writing
-      turns every hand-edit into a pass. Under --check a difference is fatal
-      and names the region, its definition source and the first differing
-      line. On a plain build it is a warning, because `npm run build` in this
-      directory runs emit-css.mjs first and a plain build's job is dist/.
+   The definitions themselves were loaded and coverage-checked further up,
+   where pipeline 2 first needs them. What is left here is the DRIFT half: the
+   regions are re-rendered IN MEMORY and byte-compared against what is on disk,
+   which is the same discipline the published artefacts get, and for the same
+   reason — comparing after writing turns every hand-edit into a pass. Under
+   --check a difference is fatal and names the region, its definition source
+   and the first differing line. On a plain build it is a warning, because
+   `npm run build` in this directory runs emit-css.mjs first and a plain
+   build's job is dist/.
 
    WHAT DOES NOT CHANGE THIS PHASE: dist/components.json is still DERIVED by
    parsing css/components.css and each spec's frontmatter, exactly as before.
@@ -536,14 +641,9 @@ const componentsCss = readFileSync(componentsCssPath, "utf8");
    counts are untouched. R3 decides whether components.json starts reading the
    definitions instead.
    ============================================================ */
-const { rendered: generatedRegions, errors: definitionErrors } = renderAll();
-if (definitionErrors.length) {
-  console.error(
-    `✗ coverage check failed — a pilot component's appearance source is missing or unreadable:\n  - ${definitionErrors.join("\n  - ")}\n` +
-      `  ${PILOT.length} components (${PILOT.join(", ")}) have their block in css/components.css GENERATED from\n` +
-      `  ${PILOT.map(definitionPath).join(", ")}. For those three the trinity is a quartet:\n` +
-      `  CSS block + spec.md + story + definition.json.`
-  );
+const { rendered: generatedRegions, errors: renderErrors } = renderAll(definitions);
+if (renderErrors.length) {
+  console.error(`✗ a definition failed to render to CSS:\n  - ${renderErrors.join("\n  - ")}`);
   process.exit(1);
 }
 {
