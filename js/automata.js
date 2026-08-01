@@ -241,6 +241,21 @@
        second run to grow or alternate. Run it twice and the second pass writes
        the same pixels as the first.
 
+     · THE WRITES MUST LAND SYNCHRONOUSLY, AND A STYLESHEET CAN SILENTLY BREAK
+       THAT. "Pure function of the un-slacked layout" assumes a write is in the
+       next read, and a CSS transition on the terminator's height makes it not
+       be: a tween's progress is 0 for the rest of the task that started it, so
+       every rect below reads the PREVIOUS pass's layout instead of the reset
+       one, and the pass becomes S(n+1) = f(S(n)) with no fixpoint. Not
+       hypothetical — css/style.css's reduced-motion block used the boilerplate
+       `transition-duration: 0.01ms` on `*`, and `transition-property` defaults
+       to `all`, so under reduce the hero terminator alternated 16.75px ↔ 2px at
+       ~5Hz for as long as the page was open, with the ResizeObserver refiring
+       on every swing. That rule now says 0s, and this pass no longer trusts it:
+       the terminator is the one element this file writes, so the pass pins
+       `transition: none` on each one for its own duration and hands the
+       property back to the stylesheet after one flush.
+
      One pass, not an iteration: `getBoundingClientRect()` flushes layout, so
      walking the bands in document order measures band N with every band above
      it already settled. */
@@ -257,6 +272,7 @@
       const term = band.querySelector(":scope > .term");
       const rail = band.querySelector(":scope > .rail--l");
       if (!term || !rail) continue;          // no terminator, or a band with no well
+      term.style.transition = "none";        // a measurement, not a movement — see above
       term.style.setProperty("--term-slack", "0px");
       plates.push({ band, term, rail });
     }
@@ -273,6 +289,13 @@
       const drop = box.bottom - root.getBoundingClientRect().top;
       const short = (cell - (((drop % cell) + cell) % cell)) % cell;
       if (offLattice(short, cell)) term.style.setProperty("--term-slack", short + "px");
+    }
+    /* One flush so the LAST plate's write commits while its transitions are
+       still off — every earlier write was flushed by the next plate's own
+       measurement — then the property goes back to the stylesheet. */
+    if (plates.length) {
+      void plates[plates.length - 1].term.offsetHeight;
+      for (const { term } of plates) term.style.transition = "";
     }
   }
 
