@@ -303,6 +303,13 @@
     <section class="band sec" id="notable">
       <header class="sec__head">
         <h2 class="sec__title t-title">Notable Projects</h2>
+        <!-- Page chrome, not content: the same `.sec__note` slot Selected work
+             above uses for "Click a project for the full case study". It points
+             at the assistant rather than at a case study, because these nine
+             have no pages of their own — the peek sheet is all the detail the
+             markup carries, and the rest is a question away. Hidden below
+             640px by components.css, like every other note. -->
+        <span class="sec__note">More on any of these — ask the assistant.</span>
       </header>
       <div class="well well--flush">
         <!-- content:more-projects -->
