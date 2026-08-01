@@ -203,12 +203,23 @@ const NODE_DEFAULT_PATTERNS = [
    what a contributor types without thinking — still executes these.
    The fix is a rename in the owning slice, not another entry here.
 
-   Empty, and worth keeping empty. It held one entry —
+   Empty is the ideal. It held one entry —
    design-system/scripts/test-storybook.mjs, the Chromium-driving Storybook
    harness — until 90bb7df renamed it storybook-gates.mjs, which is what an
    entry here is meant to provoke. The staleness assertion below is why the
-   entry could not outlive the rename. */
-const NOT_A_TEST_DESPITE_THE_NAME = {};
+   entry could not outlive the rename.
+
+   The entry below is the exception the rename rule allows for: the filename is
+   NOT this repo's to choose. Storybook's test-runner resolves its jest config
+   by that exact conventional name from the project root, so renaming it out of
+   Node's `test-*` pattern would break the a11y/visual gates. It is a config
+   module (module.exports of jest settings) — a bare `node --test` executes it
+   as an empty passing "test", which is inert. Owner: design-system. If
+   Storybook ever grows a config-path flag, take the rename and delete this. */
+const NOT_A_TEST_DESPITE_THE_NAME = {
+  "design-system/test-runner-jest.config.cjs":
+    "Storybook test-runner convention filename — not renameable without breaking the story gates",
+};
 
 test("nothing outside test/ can rejoin the suite by being named like one", () => {
   /* The guard for the next one. A file called `test-anything.mjs`, or any
