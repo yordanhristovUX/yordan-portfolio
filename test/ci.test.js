@@ -464,6 +464,7 @@ test("the workflow states the report-only window the runner actually enforces", 
    above.
    ============================================================ */
 const nextYml = readFileSync(new URL(".github/workflows/next.yml", root), "utf8");
+const pagesYml = readFileSync(new URL(".github/workflows/pages-a11y.yml", root), "utf8");
 
 /** A workflow's executable half — full-line `#` comments dropped.
  *
@@ -488,7 +489,7 @@ test("every workflow in the repo is one this file knows about", () => {
      deleting one fails this whole file with an ENOENT naming the path, before
      any assertion runs. What has nothing behind it is a new .yml nobody wrote a
      section for. */
-  const known = ["ci.yml", "design-system.yml", "next.yml"];
+  const known = ["ci.yml", "design-system.yml", "next.yml", "pages-a11y.yml"];
   const onDisk = readdirSync(fileURLToPath(new URL(".github/workflows", root))).sort();
   assert.deepEqual(
     onDisk,
@@ -508,6 +509,7 @@ test("the three workflows pin the same Node", () => {
     ["ci.yml", yml],
     ["design-system.yml", dsYml],
     ["next.yml", nextYml],
+    ["pages-a11y.yml", pagesYml],
   ].map(([name, src]) => [name, src.match(/node-version:\s*"([^"]+)"/)?.[1]]);
   for (const [name, v] of versions) assert.ok(v, `${name} no longer pins a node-version`);
   assert.equal(
@@ -611,6 +613,7 @@ test("no workflow reaches for a secret", () => {
     ["ci.yml", uncommented(yml)],
     ["design-system.yml", uncommented(dsYml)],
     ["next.yml", uncommented(nextYml)],
+    ["pages-a11y.yml", uncommented(pagesYml)],
   ]) {
     assert.doesNotMatch(
       source,
