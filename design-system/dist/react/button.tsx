@@ -28,7 +28,7 @@ export const button = cva(
     "inline-block",
     "font-mono",
     "font-semibold",
-    "tracking-[0.05em]",
+    "tracking-step-wide",
     "border",
     "border-solid",
     "border-content-primary",

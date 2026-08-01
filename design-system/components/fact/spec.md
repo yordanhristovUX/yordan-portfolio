@@ -28,7 +28,9 @@ message — never decorative numbers.
 
 `--chrome-label-strong`, `--content-body`, `--content-muted`, `--content-primary`,
 `--font-display`, `--font-mono`, `--rule`, `--rule-strong`, `--surface-page`, `--text-2xs`,
-`--text-display`, `--text-sm`, `--text-unit`, `--space-1`, `--space-2`, `--space-6`
+`--text-display`, `--text-sm`, `--text-unit`, `--space-1`, `--space-2`, `--space-6`,
+`--tracking-wide-2xl`, `--weight-black`, `--weight-bold`, `--weight-semibold`,
+`--width-hero`
 
 ## Behaviour
 

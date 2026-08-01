@@ -45,7 +45,8 @@ Full-width list rows. Two members of the family:
 `--content-primary`, `--font-display`, `--font-mono`, `--primary`, `--rule`,
 `--surface-raised`, `--text-base`, `--text-heading`, `--text-md`, `--text-sm`, `--text-sub`,
 `--text-xs`, `--pad`, `--space-1`, `--space-2`, `--space-3`, `--space-4`, `--space-7`,
-`--space-flow`
+`--space-flow`, `--tracking-wide`, `--tracking-wide-lg`, `--weight-bold`,
+`--weight-extrabold`, `--weight-semibold`, `--width-body`, `--width-normal`, `--width-sub`
 
 `--text-sub` is `.idx__name`'s size below 900px. A project name cannot carry section-heading
 level in a ~400px column — measured, it wrapped worse at 1280px than at 1024px, because the

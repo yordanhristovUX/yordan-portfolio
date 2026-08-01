@@ -25,7 +25,7 @@ invert to ink on hover.
 ## Tokens
 
 `--chrome-label-strong`, `--content-inverse`, `--font-mono`, `--primary`, `--rule`,
-`--text-xs`, `--pad`, `--space-4`
+`--text-xs`, `--pad`, `--space-4`, `--tracking-wide`, `--weight-medium`
 
 ## A11y
 

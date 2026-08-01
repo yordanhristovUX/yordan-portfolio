@@ -10,8 +10,8 @@
     "declarations": [
       { "set": { "display": "inline-block" } },
       { "set": { "font-family": { "token": "font-mono" } } },
-      { "set": { "font-size": { "token": "text-2xs" }, "font-weight": "500" } },
-      { "set": { "letter-spacing": "0.06em", "text-transform": "uppercase" } },
+      { "set": { "font-size": { "token": "text-2xs" }, "font-weight": { "token": "weight-medium" } } },
+      { "set": { "letter-spacing": { "token": "tracking-wide" }, "text-transform": "uppercase" } },
       { "set": { "padding": [{ "token": "space-1" }, { "token": "space-2" }] } },
       { "set": { "border": ["1px", "solid", { "token": "chrome-border-strong" }] } },
       { "set": { "color": { "token": "chrome-label-strong" } } }

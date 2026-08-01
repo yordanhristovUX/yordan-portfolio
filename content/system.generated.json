@@ -1,8 +1,8 @@
 {
   "$generatedBy": "design-system/scripts/build.mjs — do not edit",
-  "tokens": 83,
-  "values": 147,
-  "light": 83,
+  "tokens": 103,
+  "values": 167,
+  "light": 103,
   "dark": 23,
   "print": 36,
   "wide": 5,

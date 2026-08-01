@@ -29,7 +29,7 @@ export const chip = cva(
     "font-mono",
     "text-step-2xs",
     "font-medium",
-    "tracking-[0.06em]",
+    "tracking-step-wide",
     "uppercase",
     "py-space-1",
     "px-space-2",

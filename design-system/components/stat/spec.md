@@ -25,7 +25,7 @@ Fact — no title/label structure, just the number in a strong-rule box.
 ## Tokens
 
 `--content-primary`, `--font-display`, `--rule-strong`, `--text-display`, `--space-1`,
-`--space-2`, `--space-4`, `--space-6`
+`--space-2`, `--space-4`, `--space-6`, `--weight-black`, `--width-hero`
 
 ## AI notes
 

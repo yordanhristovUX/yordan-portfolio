@@ -217,8 +217,9 @@ Numbers and the 375px arithmetic: `components/nav/spec.md`.
 ## Tokens
 
 `--chrome-bg`, `--chrome-border-strong`, `--chrome-label`, `--content-primary`,
-`--font-display`, `--font-mono`, `--rule-strong`, `--scrim`, `--surface-page`,
-`--text-2xs`, `--text-sub`, `--space-1`, `--space-3`, `--space-4`, `--space-5`
+`--font-display`, `--font-mono`, `--rule-strong`, `--scrim`, `--surface-page`, `--text-2xs`,
+`--text-sub`, `--space-1`, `--space-3`, `--space-4`, `--space-5`, `--tracking-tight`,
+`--tracking-wide`, `--weight-extrabold`, `--width-title`
 
 No `prefers-color-scheme` anywhere in this block, and no colour in any `@media print`. The
 portrait's edge is a `dark` value on `chrome-border-strong` in `tokens.json`, which is the

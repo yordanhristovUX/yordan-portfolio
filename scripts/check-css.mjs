@@ -4,7 +4,7 @@
 
    `node scripts/check-css.mjs`
 
-   Six rules that the design system states in prose and, until now,
+   Seven rules that the design system states in prose and, until now,
    nothing enforced. Prose does not survive contact with a deadline:
    the colour half of the token layer held for months because every
    colour had a semantic name and no ramp value was reachable outside
@@ -26,6 +26,8 @@
    THE RULES
 
    1. No literal `font-size` in components.css or a page stylesheet.
+      1b. And none for the three type tiers R4 minted —
+      `font-weight`, `letter-spacing`, `font-variation-settings`.
       Every size is a `--text-*` step, or the keyword `inherit` — an
       inherited size is a relationship, not a value, and the scale is
       whatever the parent already picked.
@@ -189,6 +191,48 @@ for (const file of STYLESHEETS) {
           `use \`font-size: var(--text-*)\` so the gate can see it.`
       );
     }
+  }
+}
+
+/* ============ 1b. the other three type tiers ============
+   R4 minted `--weight-*`, `--tracking-*` and `--width-*`, so three more
+   properties joined `font-size` in having a token tier — and a tier that is
+   not enforced is a suggestion. The file carried 33 bare `font-weight`
+   numbers at six values, 28 `letter-spacing` values at nine, and 13
+   `font-variation-settings` axis settings at six: the same shape the type
+   scale had at 89 declarations and 40 values, one tier down.
+
+   `line-height` is deliberately NOT here, and the reason is a condition
+   rather than a preference: twelve distinct values across nineteen
+   declarations is drift to be consolidated before it is tokenised, not drift
+   to be enshrined in tokens.json. A tier of twelve steps with one consumer
+   each fails the rule that retired `action`. When it is consolidated it gets a
+   tier, and this list gets a fourth row on the same day. */
+let tieredDecls = 0;
+const TIERS = [
+  { prop: "font-weight", tier: "--weight-*", what: "six weight steps" },
+  { prop: "letter-spacing", tier: "--tracking-*", what: "two tracking families" },
+  { prop: "font-variation-settings", tier: "--width-*", what: "six display-width steps" },
+];
+/* `0` and `normal` are the same exemption zero gets on the spacing side: they
+   are not steps on a ramp, they are the absence of one. `.tools__row dt`
+   cancelling the tracking it inherits is a relationship, not a value. */
+const TIER_OK = /^(var\(\s*--[a-z0-9-]+\s*(,[^)]*)?\)|inherit|initial|unset|revert|revert-layer|normal|none|0|0em)$/i;
+
+for (const file of STYLESHEETS) {
+  const raw = readFileSync(file, "utf8");
+  const src = blankComments(raw);
+  for (const d of declarations(src)) {
+    const tier = TIERS.find((t) => t.prop === d.prop);
+    if (!tier) continue;
+    tieredDecls++;
+    if (TIER_OK.test(d.value.replace(/\s*!important$/, ""))) continue;
+    problems.push(
+      `${at(file, raw, d.index)}  \`${d.sel} { ${d.prop}: ${d.value} }\` is a literal. ` +
+        `R4 gave this property a token tier — pick a \`${tier.tier}\` step (${tier.what}) from ` +
+        `design-system/tokens/tokens.json, or add one there if none fits. A value that exists in only ` +
+        `one place is drift, not a decision.`
+    );
   }
 }
 
@@ -483,7 +527,7 @@ if (problems.length) {
 }
 console.log(
   `✓ css check              (${STYLESHEETS.length} stylesheets, ${SITE_JS.length} site scripts, ` +
-    `${HTML_PAGES.length} pages · ${sizedDecls} font-size declarations, all tokens · ` +
+    `${HTML_PAGES.length} pages · ${sizedDecls} font-size and ${tieredDecls} weight/tracking/width declarations, all tokens · ` +
     `0 colour literals · 0 prefers-color-scheme · skeleton clean · ` +
     `${solidCounts.map(([f, n]) => `${f.replace(/\.html$/, "")}:${n}`).join(" ")} solid buttons · ` +
     `automata lattice ${latticeRem}rem (${latticeRem * ROOT_PX}px) ≥ ${LATTICE_FLOOR_REM}rem, ` +

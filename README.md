@@ -34,7 +34,7 @@ generations. "An old sketchbook with machines that help."
 - **Repo-first tokens** — [`tokens/tokens.json`](design-system/tokens/tokens.json) is the
   only place a colour, a type size or a spacing step is born; a zero-dependency script
   generates the CSS variables the site loads and a flat JSON that AI agents and the Figma
-  push read. 83 tokens carrying 147 values across light, dark, print and wide, in two tiers
+  push read. 103 tokens carrying 167 values across light, dark, print and wide, in two tiers
   (raw ramps → semantic layer).
 - **Light, dark and paper from one source** — a themed token carries its `dark` value (and,
   where it matters, its `print` value) beside its light one; the build emits the media

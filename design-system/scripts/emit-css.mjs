@@ -121,15 +121,34 @@ function tokenNames() {
   return tokenCache;
 }
 
-/* A structural literal is not an escape hatch. These three families have a
-   token tier, and scripts/check-css.mjs refuses a literal for each of them —
-   in CSS. It has never read a definition.json, so without this a colour could
-   walk into the system through the one door the stylesheet gate does not
-   watch. `font-weight` and `letter-spacing` are deliberately absent: they have
-   no token tier, so a literal is the honest answer there and not a leak. */
+/* A structural literal is not an escape hatch. Every family below has a token
+   tier, and scripts/check-css.mjs refuses a literal for each of them — in CSS.
+   It has never read a definition.json, so without this a raw value could walk
+   into the system through the one door the stylesheet gate does not watch.
+
+   R4 FLIPPED TWO OF THESE. `font-weight` and `letter-spacing` were exempt in
+   R3 for a stated reason — they had no token tier, so a literal was the honest
+   answer rather than a leak. R4 minted both tiers, so the reason expired and
+   the exemption with it. `font-variation-settings` joined them for the same
+   reason. That is the shape a well-behaved exemption has: a condition, not a
+   permission.
+
+   WHAT IS STILL EXEMPT, and why it is not an oversight. `line-height` has
+   twelve distinct values across nineteen declarations, which is drift to be
+   consolidated before it is tokenised rather than drift to be enshrined in
+   tokens.json — a tier of twelve steps with one consumer each fails this
+   system's own rule that a semantic tier earns its keep by being consumed. It
+   is on the owner's review list. So is `max-width`, which is a measure rather
+   than a type property. */
 const AS_COLOUR = /^(#[0-9a-f]{3,8}|(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\()/i;
 const SIZED = new Set(["font-size"]);
 const SPACED = new Set(["padding", "margin", "gap", "row-gap", "column-gap", "inset", "top", "right", "bottom", "left"]);
+/** prop → the tier a literal should have come from. */
+const TIERED = {
+  "font-weight": ["--weight-*", "the six steps of the weight tier"],
+  "letter-spacing": ["--tracking-*", "the two families of the tracking ramp"],
+  "font-variation-settings": ["--width-*", "the six steps of the display width axis"],
+};
 
 /** Walk every declaration in a definition: `fn(prop, value, where)`. */
 function eachDeclaration(def, fn) {
@@ -211,6 +230,9 @@ export function loadDefinition(id) {
       if (typeof t !== "string") continue;
       if (AS_COLOUR.test(t.trim())) {
         bad(`\`${where}\` writes the colour literal \`${t}\` on \`${prop}\`. Colours are born in tokens.json and reach a definition as {"token": "…"} — scripts/check-css.mjs refuses this in CSS and cannot see it here`);
+      } else if (TIERED[prop]) {
+        const [tier, what] = TIERED[prop];
+        bad(`\`${where}\` writes \`${prop}: ${t}\` as a structural literal. R4 minted ${tier} — ${what} — so bind one; this was legal until the tier existed and stopped being legal the day it did`);
       } else if (SIZED.has(prop)) {
         bad(`\`${where}\` writes \`${prop}: ${t}\` as a structural literal. Every size is a --text-* step; bind one, or add a step to tokens.json if none fits`);
       } else if (SPACED.has(prop) && t.trim() !== "0") {
@@ -279,11 +301,13 @@ export function loadDefinition(id) {
 /** Twelve, on both sides, in every banner of components.css. */
 const BAR = "=".repeat(12);
 
-/** A comment at `indent`, continuation lines aligned under the text after `/*`. */
+/** A comment at `indent`, continuation lines aligned under the text after `/*`.
+ *  An empty line stays empty rather than becoming indent-plus-nothing: a
+ *  paragraph break inside a note is a blank line, not five spaces. */
 function comment(lines, indent) {
   const head = `${indent}/* ${lines[0]}`;
   if (lines.length === 1) return `${head} */\n`;
-  return `${head}\n${lines.slice(1).map((l) => `${indent}   ${l}`).join("\n")} */\n`;
+  return `${head}\n${lines.slice(1).map((l) => (l === "" ? "" : `${indent}   ${l}`)).join("\n")} */\n`;
 }
 
 /** A declaration value → CSS. The three forms are documented in the header. */
@@ -320,7 +344,8 @@ function rule(selector, declarations, where) {
 function banner(def) {
   const head = `/* ${BAR} ${def.block.title} ${BAR} @component ${def.id}`;
   const note = def.block.note ?? [];
-  return note.length ? `${head}\n${note.map((l) => `   ${l}`).join("\n")} */\n` : `${head} */\n`;
+  /* An empty line stays empty — a paragraph break is a blank line, not three spaces. */
+  return note.length ? `${head}\n${note.map((l) => (l === "" ? "" : `   ${l}`)).join("\n")} */\n` : `${head} */\n`;
 }
 
 /** A whole block: banner, base, base states, variants (+ their states), sizes, parts.
@@ -345,9 +370,149 @@ export function renderBlock(def) {
   return out;
 }
 
+/* ============================================================
+   THE TYPOGRAPHY LAYER — tokens/typography.json → the `generated:typography`
+   region of css/components.css.
+
+   Phase R4. The type scale's PRESENTATION tier, as a table: one row per level
+   of the hierarchy, and every family, size, weight, width and tracking in it is
+   a token binding. It is generated for the reason the owner gave in one line —
+   typography should not be authored — and it is generated by THIS emitter
+   rather than through the component pipeline, for two reasons that are worth
+   keeping straight.
+
+   A LEVEL IS NOT A COMPONENT. A definition describes one element's appearance
+   and produces a React component with props; a typographic level is a utility
+   class applied to whatever element a page already has. Nothing about `.t-lead`
+   wants a `<TLead>`.
+
+   AND ONE OF THEM COULD NOT SURVIVE THE OTHER PIPELINE ANYWAY. `.t-title` sets
+   `line-height` twice — a modern `round()` value behind a plain fallback — and
+   a fallback pair cannot be expressed in a class attribute, which has no order.
+   Making typography a definition would have meant either dropping the fallback
+   on one surface or teaching the component schema a construct only one surface
+   could honour. A CSS-only layer is the honest shape.
+
+   The levels are validated against the SAME `$defs` the component schema uses
+   — value forms, groups, notes, selectors — assembled at load rather than
+   copied, so the two shapes cannot drift into disagreeing about what a value is.
+   ============================================================ */
+
+const TYPOGRAPHY_PATH = "tokens/typography.json";
+
+/** The component schema's shared definitions, wrapped in the levels shape. */
+function typographySchema() {
+  const base = schema();
+  return {
+    $doc: `Assembled at load from ${SCHEMA_PATH}'s $defs — never copied, so a change to what a value is reaches both files.`,
+    type: "object",
+    required: ["block", "levels"],
+    additionalProperties: false,
+    properties: {
+      $doc: { type: "string" },
+      $schema: { type: "string" },
+      block: { $ref: "#/$defs/block" },
+      levels: {
+        type: "array",
+        minItems: 1,
+        items: {
+          type: "object",
+          required: ["name", "selector", "declarations"],
+          additionalProperties: false,
+          properties: {
+            name: { type: "string", pattern: "^[a-z][a-z0-9-]*$" },
+            selector: { $ref: "#/$defs/selector" },
+            $doc: { type: "string" },
+            declarations: { $ref: "#/$defs/declarations" },
+            variants: {
+              type: "array",
+              minItems: 1,
+              items: {
+                type: "object",
+                required: ["name", "selector", "declarations"],
+                additionalProperties: false,
+                properties: {
+                  name: { type: "string", pattern: "^[a-z][a-z0-9-]*$" },
+                  selector: { $ref: "#/$defs/selector" },
+                  $doc: { type: "string" },
+                  declarations: { $ref: "#/$defs/declarations" },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    $defs: base.$defs,
+  };
+}
+
+/** @returns {{table: object|null, errors: string[]}} */
+export function loadTypography() {
+  const abs = join(root, "tokens", "typography.json");
+  if (!existsSync(abs)) return { table: null, errors: [`${TYPOGRAPHY_PATH} is missing — the typography block of css/components.css is generated from it`] };
+  let table;
+  try {
+    table = JSON.parse(readFileSync(abs, "utf8"));
+  } catch (e) {
+    return { table: null, errors: [`${TYPOGRAPHY_PATH} is not valid JSON — ${e.message}`] };
+  }
+  let shape;
+  try {
+    shape = validate(typographySchema(), table);
+  } catch (e) {
+    return { table: null, errors: [`${SCHEMA_PATH} cannot be used to validate ${TYPOGRAPHY_PATH} — ${e.message}`] };
+  }
+  if (shape.length) return { table: null, errors: formatErrors(shape, TYPOGRAPHY_PATH) };
+
+  const errors = [];
+  const known = tokenNames();
+  const seen = new Set();
+  for (const level of table.levels) {
+    for (const rule of [level, ...(level.variants ?? [])]) {
+      if (seen.has(rule.selector)) errors.push(`${TYPOGRAPHY_PATH}: \`${rule.selector}\` is declared twice`);
+      seen.add(rule.selector);
+      for (const g of rule.declarations) {
+        for (const [prop, v] of Object.entries(g.set)) {
+          for (const t of terms(v)) {
+            if (t && typeof t === "object" && !known.has(t.token)) {
+              errors.push(`${TYPOGRAPHY_PATH}: level \`${level.name}\` binds \`{"token": "${t.token}"}\` on \`${prop}\`, and tokens.json defines no such token`);
+            } else if (typeof t === "string" && (AS_COLOUR.test(t.trim()) || TIERED[prop] || SIZED.has(prop))) {
+              errors.push(`${TYPOGRAPHY_PATH}: level \`${level.name}\` writes \`${prop}: ${t}\` as a literal, and that property has a token tier`);
+            }
+          }
+        }
+      }
+    }
+    for (const v of level.variants ?? []) {
+      const want = `${level.selector}--${v.name}`;
+      if (v.selector !== want) errors.push(`${TYPOGRAPHY_PATH}: level \`${level.name}\` variant \`${v.name}\` has the selector \`${v.selector}\`, and a variant of \`${level.selector}\` named \`${v.name}\` is \`${want}\``);
+    }
+  }
+  return errors.length ? { table: null, errors } : { table, errors: [] };
+}
+
+/** One blank line between levels, none between a level and its own variants —
+ *  the paragraph in the stylesheet is the row in the table. */
+export function renderTypography(table) {
+  const where = TYPOGRAPHY_PATH;
+  let out = banner({ block: table.block, id: "typography" });
+  table.levels.forEach((level, i) => {
+    if (i) out += "\n";
+    out += rule(level.selector, level.declarations, where);
+    for (const v of level.variants ?? []) out += rule(v.selector, v.declarations, where);
+  });
+  return out;
+}
+
 /* ---------- the assembly ---------- */
 
-export const openMarker = (id) => `/* ---- generated:${id} — do not edit, source: ${definitionPath(id)} ---- */`;
+/** Which file a generated region comes from. The three components come from
+ *  their definitions; the typography layer comes from the levels table, which
+ *  is not a component and does not pretend to be one. */
+export const sourceOf = (id) => (id === "typography" ? TYPOGRAPHY_PATH : definitionPath(id));
+
+export const openMarker = (id) => `/* ---- generated:${id} — do not edit, source: ${sourceOf(id)} ---- */`;
 export const closeMarker = (id) => `/* ---- /generated:${id} ---- */`;
 
 /**
@@ -385,13 +550,23 @@ export function loadAll() {
   return { defs, errors };
 }
 
-/** Every pilot region re-rendered from its definition. */
+/** Every generated region re-rendered from its source — the three component
+ *  definitions, and the typography layer. */
 export function renderAll(defs) {
   const rendered = new Map();
   const errors = [];
   for (const def of defs ?? loadAll().defs) {
     try {
       rendered.set(def.id, renderBlock(def));
+    } catch (e) {
+      errors.push(e.message);
+    }
+  }
+  const { table, errors: typoErrors } = loadTypography();
+  if (typoErrors.length) errors.push(...typoErrors);
+  else {
+    try {
+      rendered.set("typography", renderTypography(table));
     } catch (e) {
       errors.push(e.message);
     }
@@ -416,7 +591,7 @@ export function checkRegions(css, rendered) {
     let i = 0;
     while (i < Math.min(g.length, w.length) && g[i] === w[i]) i++;
     drift.push(
-      `generated:${id} (source: ${definitionPath(id)}) differs from a fresh render at line ${i + 1} of the region:\n` +
+      `generated:${id} (source: ${sourceOf(id)}) differs from a fresh render at line ${i + 1} of the region:\n` +
         `      in components.css: ${JSON.stringify(g[i] ?? "<end of region>")}\n` +
         `      from the definition: ${JSON.stringify(w[i] ?? "<end of region>")}`
     );

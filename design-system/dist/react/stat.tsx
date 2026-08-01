@@ -27,7 +27,7 @@ export const stat = cva([
   "inline-block",
   "font-display",
   "font-black",
-  "[font-variation-settings:'wdth'_115]",
+  "[font-variation-settings:var(--width-hero)]",
   "text-step-display",
   "text-content-primary",
   "[border:var(--rule-strong)]",

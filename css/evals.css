@@ -44,7 +44,7 @@
   left: 0;
   color: var(--chrome-label);
 }
-.ev-prose strong { color: var(--content-primary); font-weight: 600; }
+.ev-prose strong { color: var(--content-primary); font-weight: var(--weight-semibold); }
 .ev-prose code {
   font-family: var(--font-mono);
   font-size: var(--text-code);
@@ -58,7 +58,7 @@
 
 .ev-note {
   font-size: var(--text-xs);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--chrome-label-strong);
   padding: var(--space-3) 0;

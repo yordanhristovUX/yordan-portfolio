@@ -41,7 +41,7 @@
 }
 .cv-head__name { margin-bottom: var(--space-3); }
 .cv-head__disciplines {
-  font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: var(--text-xs); letter-spacing: var(--tracking-wide-lg); text-transform: uppercase;
   color: var(--chrome-label);
   margin-bottom: var(--space-6);
 }
@@ -67,7 +67,7 @@
   color: var(--content-primary);
 }
 .cv-facts {
-  font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: var(--text-xs); letter-spacing: var(--tracking-wide); text-transform: uppercase;
   color: var(--chrome-label-strong);
   padding: var(--space-3) 0;
   border-top: var(--rule);
@@ -192,10 +192,10 @@
      display type in its own column, in print it is bold prose in a sentence. */
   .tools__row dt {
     display: inline;
-    font-family: var(--font-body); font-weight: 600;
+    font-family: var(--font-body); font-weight: var(--weight-semibold);
     font-size: var(--text-md); text-transform: none; letter-spacing: 0;
   }
-  .tools__row dt::after { content: " — "; font-weight: 400; }
+  .tools__row dt::after { content: " — "; font-weight: var(--weight-regular); }
   .tools__row dd { display: inline; }
 
   /* ---- unexpected facts: a bordered three-column figure becomes one line ----
@@ -205,10 +205,10 @@
   .fact { display: inline; padding: 0; border: 0; }
   .fact + .fact::before { content: " · "; }
   .fact__num {
-    font-family: var(--font-body); font-size: var(--text-base); font-weight: 600;
+    font-family: var(--font-body); font-size: var(--text-base); font-weight: var(--weight-semibold);
     line-height: inherit;
   }
-  .fact__num small { font-size: inherit; font-weight: 600; margin-left: 0.5mm; }
+  .fact__num small { font-size: inherit; font-weight: var(--weight-semibold); margin-left: 0.5mm; }
   .fact__title { display: inline; font-size: var(--text-base); letter-spacing: 0; }
   .fact__title::before { content: " "; }
 }

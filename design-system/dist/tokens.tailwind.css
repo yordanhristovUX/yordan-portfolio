@@ -5,7 +5,7 @@
    this system's token layer: it binds Tailwind's @theme namespaces to the custom
    properties dist/tokens.css already defines. `--check` byte-compares this file.
 
-   IT CONTAINS NO COLOUR, SIZE OR SPACING VALUE. 51 of 83 tokens are mapped, and all
+   IT CONTAINS NO COLOUR, SIZE OR SPACING VALUE. 65 of 103 tokens are mapped, and all
    but the three font stacks are a `var()` REFERENCE rather than a copy. That is the
    whole design: dark, pinned-theme, print and wide-viewport values are emitted by
    dist/tokens.css and reach a Tailwind utility through the same cascade they reach a
@@ -36,6 +36,9 @@
    | automata (1) | — stays a plain custom property | an rgb channel triplet read by js/automata.js through getComputedStyle — a value with no CSS property to belong to |
    | font (3 of 3) | --font-* | restated — the key IS the token name, so a reference would be a cycle |
    | text (13 of 15) | --text-step-* | var() reference to the runtime token |
+   | weight (6 of 6) | --font-weight-* | var() reference to the runtime token |
+   | tracking (8 of 8) | --tracking-step-* | var() reference to the runtime token |
+   | width (6) | — stays a plain custom property | the display family's `wdth` axis. Tailwind has no namespace for font-variation-settings; a component reaches it as [font-variation-settings:var(--width-hero)], which keeps the token |
    | space (13 of 13) | --spacing-* | var() reference to the runtime token |
    | border (2) | — stays a plain custom property | whole `border` shorthands (width + style + colour). Tailwind has no namespace for one; a component reaches them as [border:var(--rule-strong)], which keeps the token and therefore keeps the theme |
 
@@ -111,6 +114,24 @@
   --text-step-display-hero: var(--text-display-hero);
   /* text-code: held out — an em RATIO, not a step — "a fraction of whatever set me", which a fixed utility cannot express */
   /* text-unit: held out — the same, for the unit suffix riding on a display number */
+
+  /* --- weight → --font-weight-*, reference --- */
+  --font-weight-regular: var(--weight-regular);
+  --font-weight-medium: var(--weight-medium);
+  --font-weight-semibold: var(--weight-semibold);
+  --font-weight-bold: var(--weight-bold);
+  --font-weight-extrabold: var(--weight-extrabold);
+  --font-weight-black: var(--weight-black);
+
+  /* --- tracking → --tracking-step-*, reference --- */
+  --tracking-step-tight-xl: var(--tracking-tight-xl);
+  --tracking-step-tight-lg: var(--tracking-tight-lg);
+  --tracking-step-tight: var(--tracking-tight);
+  --tracking-step-wide-sm: var(--tracking-wide-sm);
+  --tracking-step-wide: var(--tracking-wide);
+  --tracking-step-wide-lg: var(--tracking-wide-lg);
+  --tracking-step-wide-xl: var(--tracking-wide-xl);
+  --tracking-step-wide-2xl: var(--tracking-wide-2xl);
 
   /* --- space → --spacing-*, reference --- */
   --spacing-space-1: var(--space-1);

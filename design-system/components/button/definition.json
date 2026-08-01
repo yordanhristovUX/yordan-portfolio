@@ -14,7 +14,7 @@
     "declarations": [
       { "set": { "display": "inline-block" } },
       { "set": { "font-family": { "token": "font-mono" } } },
-      { "set": { "font-size": { "token": "text-xs" }, "font-weight": "600", "letter-spacing": "0.05em" } },
+      { "set": { "font-size": { "token": "text-xs" }, "font-weight": { "token": "weight-semibold" }, "letter-spacing": { "token": "tracking-wide" } } },
       { "set": { "padding": [{ "token": "space-3" }, { "token": "space-5" }] } },
       { "set": { "border": ["1px", "solid", { "token": "content-primary" }] } },
       { "set": { "color": { "token": "content-primary" } } },

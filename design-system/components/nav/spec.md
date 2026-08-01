@@ -113,9 +113,10 @@ segment for the link's right edge to butt against.
 `--accent` (dot), `--chrome-bg`, `--chrome-border`, `--chrome-border-strong`,
 `--chrome-label`, `--chrome-label-strong`, `--content-inverse`, `--content-primary`,
 `--accent`, `--font-mono`, `--primary`, `--shadow-drop` (the offset drop shadow),
-`--text-xs`, `--text-sm` (the identity's one-step-up on the docked mobile bar — desktop
-stays `--text-xs`, so the measured widths above remain true), `--space-2`, `--space-3`,
-`--space-5`
+`--text-xs`,
+`--text-sm` (the identity's one-step-up on the docked mobile bar — desktop stays `--text-xs`,
+so the measured widths above remain true), `--space-2`, `--space-3`, `--space-5`,
+`--tracking-wide-sm`, `--weight-semibold`
 
 **`--accent` is the primary action's ground**, and this is the only place in the system where
 the accent is a ground rather than a mark. A solid ink segment carried the right hierarchy and

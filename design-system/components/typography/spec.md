@@ -59,8 +59,10 @@ fluid steps in particular *need* one.
 
 `--chrome-label-strong`, `--content-body`, `--content-muted`, `--content-primary`,
 `--font-body`, `--font-display`, `--font-mono`, `--space-6`, `--text-display`,
-`--text-display-hero`, `--text-display-xl`, `--text-lead`, `--text-statement`, `--text-title`,
-`--text-xs`
+`--text-display-hero`, `--text-display-xl`, `--text-lead`, `--text-statement`,
+`--text-title`, `--text-xs`, `--tracking-tight`, `--tracking-tight-lg`,
+`--tracking-tight-xl`, `--tracking-wide-2xl`, `--weight-black`, `--weight-extrabold`,
+`--weight-medium`, `--width-body`, `--width-display`, `--width-hero`, `--width-title`
 
 `--text-statement` is new, and `.t-statement` no longer shares `--text-title`. The two differ
 by **shape of response**, not by level: a title is one line in a strip that must land on the

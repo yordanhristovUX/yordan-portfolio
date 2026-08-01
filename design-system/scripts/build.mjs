@@ -312,9 +312,12 @@ const dtcgBanner =
   "name, so the spec's own escape hatch is used and the key is namespaced. " +
   "$VALUE IS THE AUTHORED CSS STRING, including clamp() and em ratios. The dimension type's " +
   "{value,unit} object form cannot express either, and this scale is built on both. " +
-  '$TYPE "other" is not a DTCG type. It marks the three tokens whose value is a CSS keyword or ' +
-  "a raw rgb channel triplet — color-scheme, accent-rgb, automata-cell-rgb — which exist to be " +
-  "recomposed at runtime rather than consumed as a typed design value. Treat them as opaque strings.";
+  '$TYPE "other" is not a DTCG type. It marks every token whose value is a CSS keyword, a raw rgb ' +
+  "channel triplet, a bare font-weight number or a variable-font axis setting — color-scheme, " +
+  "accent-rgb, automata-cell-rgb, the six weight steps and the six width steps. DTCG has a " +
+  "fontWeight type but only for the named keywords, and no type at all for an axis tag plus a " +
+  "number; all of these exist to be consumed as-is rather than as a typed design value. Treat " +
+  "them as opaque strings.";
 
 const dtcg = {
   $description: dtcgBanner,
@@ -889,7 +892,7 @@ if (CHECK) {
   }
   console.log(
     `✓ coverage check         (${components.length} components, each with spec.md + story; ` +
-      `${generatedRegions.size} of them also with definition.json)`
+      `${definitions.length} of them also with definition.json, and typography from its levels table)`
   );
 
   /* ---------- counts gate: the generated prose must still quote the truth ----------

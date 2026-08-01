@@ -423,6 +423,86 @@
     "value": "0.38em",
     "description": "The unit suffix riding on a display number (`+`, `%`, `×`). A ratio for the same reason: it must stay proportional to the number it annotates, whatever size that number lands at."
   },
+  "weight.weight-regular": {
+    "cssVar": "--weight-regular",
+    "value": "400"
+  },
+  "weight.weight-medium": {
+    "cssVar": "--weight-medium",
+    "value": "500"
+  },
+  "weight.weight-semibold": {
+    "cssVar": "--weight-semibold",
+    "value": "600"
+  },
+  "weight.weight-bold": {
+    "cssVar": "--weight-bold",
+    "value": "700"
+  },
+  "weight.weight-extrabold": {
+    "cssVar": "--weight-extrabold",
+    "value": "800"
+  },
+  "weight.weight-black": {
+    "cssVar": "--weight-black",
+    "value": "900"
+  },
+  "tracking.tracking-tight-xl": {
+    "cssVar": "--tracking-tight-xl",
+    "value": "-0.02em"
+  },
+  "tracking.tracking-tight-lg": {
+    "cssVar": "--tracking-tight-lg",
+    "value": "-0.015em"
+  },
+  "tracking.tracking-tight": {
+    "cssVar": "--tracking-tight",
+    "value": "-0.01em"
+  },
+  "tracking.tracking-wide-sm": {
+    "cssVar": "--tracking-wide-sm",
+    "value": "0.04em"
+  },
+  "tracking.tracking-wide": {
+    "cssVar": "--tracking-wide",
+    "value": "0.06em"
+  },
+  "tracking.tracking-wide-lg": {
+    "cssVar": "--tracking-wide-lg",
+    "value": "0.08em"
+  },
+  "tracking.tracking-wide-xl": {
+    "cssVar": "--tracking-wide-xl",
+    "value": "0.1em"
+  },
+  "tracking.tracking-wide-2xl": {
+    "cssVar": "--tracking-wide-2xl",
+    "value": "0.12em"
+  },
+  "width.width-hero": {
+    "cssVar": "--width-hero",
+    "value": "\"wdth\" 115"
+  },
+  "width.width-display": {
+    "cssVar": "--width-display",
+    "value": "\"wdth\" 112"
+  },
+  "width.width-title": {
+    "cssVar": "--width-title",
+    "value": "\"wdth\" 110"
+  },
+  "width.width-sub": {
+    "cssVar": "--width-sub",
+    "value": "\"wdth\" 108"
+  },
+  "width.width-body": {
+    "cssVar": "--width-body",
+    "value": "\"wdth\" 105"
+  },
+  "width.width-normal": {
+    "cssVar": "--width-normal",
+    "value": "\"wdth\" 100"
+  },
   "space.space-1": {
     "cssVar": "--space-1",
     "value": "0.25rem"

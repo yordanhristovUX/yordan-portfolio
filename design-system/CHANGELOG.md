@@ -5,6 +5,42 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.2.0 — 2026-08-01
+
+Minor — 26 change(s).
+
+### Added
+
+- token `tracking.tracking-tight-lg` added
+- token `tracking.tracking-tight-xl` added
+- token `tracking.tracking-tight` added
+- token `tracking.tracking-wide-2xl` added
+- token `tracking.tracking-wide-lg` added
+- token `tracking.tracking-wide-sm` added
+- token `tracking.tracking-wide-xl` added
+- token `tracking.tracking-wide` added
+- token `weight.weight-black` added
+- token `weight.weight-bold` added
+- token `weight.weight-extrabold` added
+- token `weight.weight-medium` added
+- token `weight.weight-regular` added
+- token `weight.weight-semibold` added
+- token `width.width-body` added
+- token `width.width-display` added
+- token `width.width-hero` added
+- token `width.width-normal` added
+- token `width.width-sub` added
+- token `width.width-title` added
+
+### Changed
+
+- definition `button .btn` `font-weight` "600" → "{weight-semibold}"
+- definition `button .btn` `letter-spacing` "0.05em" → "{tracking-wide}"
+- definition `chip .chip` `font-weight` "500" → "{weight-medium}"
+- definition `chip .chip` `letter-spacing` "0.06em" → "{tracking-wide}"
+- definition `stat .stat` `font-variation-settings` "\"wdth\" 115" → "{width-hero}"
+- definition `stat .stat` `font-weight` "900" → "{weight-black}"
+
 ## 1.1.0 — 2026-08-01
 
 No classified contract change. Newly tracked from this version: definitions (9 entries), exports (11 entries) — recorded as the baseline, not classified as additions.

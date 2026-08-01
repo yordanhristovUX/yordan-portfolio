@@ -133,4 +133,4 @@ Jan 2026 – Present · Sofia · Hybrid
 
 ## The design system
 
-83 tokens carrying 147 values across light, dark, print and wide · 23 components, each enforced as CSS + spec.md + Storybook story.
+103 tokens carrying 167 values across light, dark, print and wide · 23 components, each enforced as CSS + spec.md + Storybook story.

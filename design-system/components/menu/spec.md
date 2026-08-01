@@ -92,7 +92,7 @@ None. One menu per document, `id="site-menu"`.
 `--accent`, `--action-hover`, `--chrome-bg`, `--chrome-border`, `--chrome-label`,
 `--content-inverse`, `--content-primary`, `--font-display`, `--font-mono`, `--primary`,
 `--rule`, `--rule-strong`, `--space-3`, `--space-4`, `--space-5`, `--space-6`,
-`--surface-page`, `--text-sm`, `--text-title`, `--text-xs`
+`--surface-page`, `--text-sm`, `--text-title`, `--text-xs`, `--tracking-wide-sm`
 
 The head is bar chrome on purpose — `--chrome-bg`, `--font-mono`, `--text-xs` are the bar's
 own voice, and `--chrome-border` is Close's left seam, the same edge every bar segment

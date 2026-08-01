@@ -22,8 +22,8 @@ Dark slate chrome strip closing the page: copyright + one line of voice.
 
 ## Tokens
 
-`--chrome-bg-strong`, `--chrome-label-on-strong` (text), `--font-mono`, `--text-2xs`, `--pad`,
-`--space-2`, `--space-4`, `--space-7`
+`--chrome-bg-strong`, `--chrome-label-on-strong` (text), `--font-mono`, `--text-2xs`,
+`--pad`, `--space-2`, `--space-4`, `--space-7`, `--tracking-wide`
 
 ## AI notes
 

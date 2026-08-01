@@ -37,7 +37,7 @@ Small bordered mono label for metadata: project tags, case-study meta, statuses.
 ## Tokens
 
 `--chrome-border-strong`, `--chrome-label-strong`, `--content-inverse`, `--font-mono`,
-`--primary`, `--text-2xs`, `--space-1`, `--space-2`
+`--primary`, `--text-2xs`, `--space-1`, `--space-2`, `--tracking-wide`, `--weight-medium`
 
 ## A11y
 

@@ -1,0 +1,150 @@
+{
+  "$doc": "THE TYPE SYSTEM AS A TABLE. One row per level of the hierarchy, and every typographic property of every level is either a token binding or a structural keyword — there is not one raw family, size, weight, width or tracking value in this file. scripts/emit-css.mjs renders it into the `generated:typography` region of css/components.css, and scripts/build.mjs --check byte-compares the result, so the levels are the source and the CSS is the consequence. WHY THIS IS A TABLE AND NOT A COMPONENT DEFINITION. A definition describes one element's appearance and produces a React component with props; a typographic level is a utility class applied to whatever element the page already has. They also differ in a way that decides it: `.t-title` sets `line-height` TWICE, a modern value behind a fallback, and a fallback pair cannot survive translation into a class attribute — a class attribute has no order. So this layer is CSS-only by construction, which is honest, and the components pipeline stays free of a construct that only one surface could honour. WHAT IS STILL A LITERAL, AND WHY THAT IS A CONDITION RATHER THAN A PERMISSION. `line-height` and `max-width` are not bound, because neither has a token tier: line-height has twelve distinct values across nineteen declarations in the stylesheet, which is drift to be consolidated before it is tokenised rather than drift to be enshrined in tokens.json — a tier of twelve steps with one consumer each fails this system's own rule that a semantic tier earns its keep by being consumed. `max-width` here is a MEASURE, a limit on line length, which is a different job from spacing. Both are on the owner's review list, and the day either gets a tier the guard in scripts/emit-css.mjs gains a row and these become errors, exactly as font-weight and letter-spacing did in R4.",
+  "block": {
+    "title": "Typography scale",
+    "note": [
+      "One voice per level; components and pages compose these instead",
+      "of declaring their own font stacks.",
+      "",
+      "Every size here is a step of the `--text-*` ramp in tokens.json. A level",
+      "that needs its own size is a new step in the token file, not a number typed",
+      "here.",
+      "",
+      "`.t-title` and `.t-statement` USED to share `--text-title`, on the argument",
+      "that they are the same level wearing different weights and cases. They are",
+      "not — they differ by SHAPE OF RESPONSE, which is the distinction the scale",
+      "now turns on. A title is a single line in a strip that has to land on the",
+      "lattice, so it steps at the grid break and the step costs nothing. A",
+      "statement is a 7-19 line paragraph in a measure, so stepping it moves it",
+      "from six lines to ten on one pixel of resize. The title steps; the statement",
+      "gets an authored curve. See the `text` $doc in tokens.json."
+    ]
+  },
+  "levels": [
+    {
+      "name": "display",
+      "selector": ".t-display",
+      "$doc": "The poster voice: the display family at its widest and heaviest, uppercase, tracked in. Three sizes, and each is a step whose size is set by the WIDTH OF ITS BOX rather than by its level — which is why all three are clamps in tokens.json and why the width axis eases back at the smallest of them.",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-display" } } },
+        { "set": { "font-weight": { "token": "weight-black" } } },
+        { "set": { "font-variation-settings": { "token": "width-hero" } } },
+        { "set": { "text-transform": "uppercase" } },
+        { "set": { "letter-spacing": { "token": "tracking-tight-lg" } } },
+        { "set": { "line-height": "0.95" } },
+        { "set": { "color": { "token": "content-primary" } } }
+      ],
+      "variants": [
+        {
+          "name": "hero",
+          "selector": ".t-display--hero",
+          "declarations": [
+            {
+              "set": {
+                "font-size": { "token": "text-display-hero" },
+                "line-height": "0.9",
+                "letter-spacing": { "token": "tracking-tight-xl" }
+              }
+            }
+          ]
+        },
+        {
+          "name": "xl",
+          "selector": ".t-display--xl",
+          "declarations": [{ "set": { "font-size": { "token": "text-display-xl" } } }]
+        },
+        {
+          "name": "lg",
+          "selector": ".t-display--lg",
+          "declarations": [
+            {
+              "set": {
+                "font-size": { "token": "text-display" },
+                "font-variation-settings": { "token": "width-display" }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "title",
+      "selector": ".t-title",
+      "$doc": "A section title. One level down from display in weight and width, and the only level whose leading is computed rather than chosen — it has to land on the lattice.",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-display" } } },
+        { "set": { "font-weight": { "token": "weight-extrabold" } } },
+        { "set": { "font-variation-settings": { "token": "width-title" } } },
+        { "set": { "font-size": { "token": "text-title" } } },
+        {
+          "note": [
+            "A WHOLE NUMBER OF CELLS, which is what makes the section head land — see",
+            "the `.sec__head` block. `1` was the defect: it makes the line box the font",
+            "size exactly, so the head's height was whatever the type happened to be and",
+            "landed on a lattice line only by luck.",
+            "",
+            "Two declarations, not @supports: a browser without `round()` keeps 1.1,",
+            "which is no worse than the 1 it replaces. 0.8em is derived rather than",
+            "chosen — Archivo's cap height is 0.69em and capitals clear their box at",
+            "L >= 0.71F, so 0.8 has room to spare. It matters because js/main.js splits",
+            "`.sec__title` with GSAP `mask: \"lines\"`, which wraps every line in an",
+            "overflow:hidden box the height of its line box: too tight a box clips the",
+            "capitals permanently, and that clipping is not recoverable by scrolling."
+          ],
+          "set": { "line-height": "1.1" }
+        },
+        { "set": { "line-height": "round(up, 0.8em, var(--space-6))" } },
+        { "set": { "text-transform": "uppercase" } },
+        { "set": { "letter-spacing": { "token": "tracking-tight" } } },
+        { "set": { "color": { "token": "content-primary" } } }
+      ]
+    },
+    {
+      "name": "statement",
+      "selector": ".t-statement",
+      "$doc": "The one statement per section: display type set as a paragraph. Same weight as a title, narrower on the width axis because it runs to many lines, and it is the level that carries a measure.",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-display" } } },
+        { "set": { "font-weight": { "token": "weight-extrabold" } } },
+        { "set": { "font-variation-settings": { "token": "width-body" } } },
+        { "set": { "font-size": { "token": "text-statement" } } },
+        { "set": { "line-height": "1.15" } },
+        { "set": { "color": { "token": "content-primary" } } },
+        { "set": { "max-width": "56rem" } }
+      ]
+    },
+    {
+      "name": "lead",
+      "selector": ".t-lead",
+      "$doc": "The reading lede. The first level that sets no family and no weight: body prose inherits both, and a level that does not change a property should not restate it.",
+      "declarations": [
+        { "set": { "font-size": { "token": "text-lead" } } },
+        { "set": { "line-height": "1.55" } },
+        { "set": { "color": { "token": "content-body" } } },
+        { "set": { "max-width": "46rem" } }
+      ]
+    },
+    {
+      "name": "kicker",
+      "selector": ".t-kicker",
+      "$doc": "A short qualifying line under a title. It is a colour and a measure and nothing else — the size it lands at is whatever set it.",
+      "declarations": [{ "set": { "color": { "token": "content-muted" }, "max-width": "30rem" } }]
+    },
+    {
+      "name": "label",
+      "selector": ".t-label",
+      "$doc": "The mono chrome label: the widest tracking on the ramp, uppercase, at the standard chrome step. It is the level the chip and the button are cut from, which is why those three share a family and a case.",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-xs" }, "font-weight": { "token": "weight-medium" } } },
+        {
+          "set": {
+            "letter-spacing": { "token": "tracking-wide-2xl" },
+            "text-transform": "uppercase"
+          }
+        },
+        { "set": { "color": { "token": "chrome-label-strong" } } }
+      ]
+    }
+  ]
+}

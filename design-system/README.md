@@ -37,11 +37,12 @@ dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to t
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 20 blocks authored, 3 generated)
+css/components.css      every component's styles (an ASSEMBLY: 19 blocks authored, 4 generated)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
 components/*/definition.json  appearance as data — THREE components so far, see "Definitions"
+tokens/typography.json  the type levels table — the typography block is generated from it
 components/definition.schema.json  the schema, EXTRACTED from those three (build.mjs validates)
 scripts/validate-json.mjs  the ~150-line JSON Schema subset validator, zero-dep
 PATTERNS.md             the R4 design note: which blocks can be definitions, measured (5 of 24)
@@ -182,6 +183,54 @@ apply at once and in the React tier they land in one class attribute, which has 
 either every combination is meant and the two touch disjoint properties, or somebody has to
 say which wins. `emit-react.mjs` checks the claim against its own collision analysis and fails
 naming both branches and the property. **An emitter must not be the one to decide.**
+
+### Typography is generated, not authored (R4)
+
+`css/components.css`'s typography block is a **fourth generated region**, rendered from
+`tokens/typography.json` — a table with one row per level of the hierarchy. Every family,
+size, weight, width and tracking in it is a token binding; there is not one raw typographic
+value in the file.
+
+It is **not** a component definition, for two reasons that are worth keeping straight. A
+definition describes one element's appearance and produces a React component with props;
+a typographic level is a utility class applied to whatever element a page already has —
+nothing about `.t-lead` wants a `<TLead>`. And `.t-title` sets `line-height` **twice**, a
+`round()` value behind a plain fallback, which cannot be expressed in a class attribute
+because a class attribute has no order. Making typography a definition would have meant
+dropping the fallback on one surface or teaching the component schema a construct only one
+surface could honour. A CSS-only layer is the honest shape.
+
+The levels are validated against the **same `$defs`** the component schema uses — value
+forms, groups, notes, selectors — assembled at load rather than copied, so the two cannot
+drift into disagreeing about what a value is.
+
+### Three more type tiers, and the exemption that expired
+
+R4 minted **`--weight-*` (6), `--tracking-*` (8) and `--width-*` (6)**. Before it, the
+stylesheet carried 33 bare `font-weight` numbers at six values, 28 `letter-spacing` values at
+nine, and 13 `font-variation-settings` axis settings at six — the same shape the type scale
+had at 89 declarations and 40 values, one tier down.
+
+**The tracking ramp is the interesting one.** The positive family is a plain 0.02em ramp —
+0.04 / 0.06 / 0.08 / 0.10 / 0.12 — and exactly one value was off it: `0.05em`, on five
+selectors including the button. Folding it into `0.06em` is the one deliberate appearance
+change of the phase, and it is what turns nine numbers into two families with a step. The
+negative family is display type pulled together, finer because the type is bigger: -0.01em at
+a section title, -0.02em at the hero.
+
+`font-weight` and `letter-spacing` were **exempt** from the definition literal guard in R3,
+for a stated reason: they had no token tier, so a literal was the honest answer rather than a
+leak. R4 minted the tiers, so **the reason expired and the exemption with it** — both are now
+refused in a definition, and `check-css.mjs` refuses them in CSS as rule 1b. That is the shape
+a well-behaved exemption has: a condition, not a permission.
+
+**What is still exempt, and why that is also a condition.** `line-height` has twelve distinct
+values across nineteen declarations — drift to be consolidated *before* it is tokenised, not
+drift to be enshrined in `tokens.json`. A tier of twelve steps with one consumer each fails
+this system's own rule that a semantic tier earns its keep by being consumed, which is the
+rule that retired `action`. It is on the owner's review list, and the day it is consolidated
+it gets a tier and `check-css.mjs` gains a fourth row. `max-width` is a *measure*, a different
+job from spacing, and is on the same list.
 
 ### `dist/components.json` stays parsed from the shipped CSS
 
@@ -567,8 +616,8 @@ READMEs, the **dark count**. Those figures are a claim the site makes about itse
 public, so they get the same enforcement as component coverage — during one session they
 went stale twice, which is exactly the drift this system exists to prevent.
 
-- **tokens** — entries in `tokens.json` (83)
-- **values** — light + dark + print + wide authored values across those tokens (147). Note this is
+- **tokens** — entries in `tokens.json` (103)
+- **values** — light + dark + print + wide authored values across those tokens (167). Note this is
   not the number of declarations in `dist/tokens.css`, which is higher: the dark block is
   emitted twice, once for the media query and once for the pinned override.
 - **components** — directories under `components/` (23)

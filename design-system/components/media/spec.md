@@ -33,7 +33,7 @@ frame styling steps aside automatically (`:has(img)`).
 ## Tokens
 
 `--chrome-bg`, `--chrome-border-strong`, `--chrome-label`, `--font-mono`, `--text-2xs`,
-`--space-2`, `--space-4`, `--space-6`
+`--space-2`, `--space-4`, `--space-6`, `--tracking-wide-lg`, `--weight-medium`
 
 ## A11y
 

@@ -39,7 +39,9 @@ None. An entry with no bullets simply omits `.entry__list`; an entry with no sub
 
 `--chrome-label`, `--content-muted`, `--content-primary`, `--font-display`, `--font-mono`,
 `--primary`, `--rule`, `--text-2xs`, `--text-md`, `--text-sub`, `--text-xs`, `--pad`,
-`--space-1`, `--space-2`, `--space-3`, `--space-6`, `--space-7`, `--space-flow`
+`--space-1`, `--space-2`, `--space-3`, `--space-6`, `--space-7`, `--space-flow`,
+`--tracking-wide`, `--weight-extrabold`, `--weight-regular`, `--weight-semibold`,
+`--width-sub`
 
 ## A11y
 

@@ -120,6 +120,9 @@ export const THEME_MAP = {
   automata: { ns: null, why: "an rgb channel triplet read by js/automata.js through getComputedStyle — a value with no CSS property to belong to" },
   font: { ns: "font", mode: "restate" },
   text: { ns: "text-step" },
+  weight: { ns: "font-weight" },
+  tracking: { ns: "tracking-step" },
+  width: { ns: null, why: "the display family's `wdth` axis. Tailwind has no namespace for font-variation-settings; a component reaches it as [font-variation-settings:var(--width-hero)], which keeps the token" },
   space: { ns: "spacing" },
   border: { ns: null, why: "whole `border` shorthands (width + style + colour). Tailwind has no namespace for one; a component reaches them as [border:var(--rule-strong)], which keeps the token and therefore keeps the theme" },
 };
@@ -145,19 +148,30 @@ export const PLAIN = {
 /**
  * The `@theme` variable a token becomes, or null if it stays plain.
  *
- * `--color-*`   key is the token's own name         → bg-surface-page
- * `--spacing-*` key is the token's own name         → px-space-5, p-pad
- * `--text-*`    key is `step-` + the name minus `text-` → text-step-xs
- * `--font-*`    key IS the token name (restated)    → font-mono
+ * `--color-*`        key is the token's own name              → bg-surface-page
+ * `--spacing-*`      key is the token's own name              → px-space-5, p-pad
+ * `--text-*`         key is `step-` + the name minus `text-`  → text-step-xs
+ * `--tracking-*`     key is `step-` + the name minus `tracking-` → tracking-step-wide
+ * `--font-weight-*`  key is the name minus `weight-`          → font-semibold
+ * `--font-*`         key IS the token name (restated)         → font-mono
  *
- * The spacing and type keys keep a word the namespace does not supply, and
- * that is deliberate rather than clumsy. `--spacing-3` would generate `p-3`
- * and SHADOW Tailwind's own numeric scale, silently redefining a class the
- * ecosystem already defines; `p-space-3` cannot be confused with it and names
- * the token it came from. `--text-xs` would shadow Tailwind's `text-xs` the
- * same way, and would additionally collide with this system's own `--text-xs`,
- * which carries `print` and `wide` values a restated copy could not follow.
- * "step" is tokens.json's own word for these thirteen.
+ * THE RULE UNDER THE IRREGULARITY IS ONE SENTENCE: shadow a Tailwind default
+ * only where the value is unchanged.
+ *
+ * `--spacing-3` would generate `p-3` and silently redefine a class the
+ * ecosystem already defines, so spacing keeps the token's whole name and
+ * `p-space-3` cannot be confused with it. `--text-xs` would shadow Tailwind's
+ * `text-xs` AND collide with this system's own `--text-xs`, which carries
+ * `print` and `wide` values a restated copy could not follow — so the type
+ * steps take "step", which is tokens.json's own word for the thirteen.
+ * `--tracking-tight` would shadow Tailwind's, whose value is -0.025em against
+ * this system's -0.01em: a different number under a name a consumer already
+ * knows, which is the worst of the three cases, so tracking takes "step" too.
+ *
+ * The weight tier is the one place shadowing is RIGHT. `--font-weight-semibold`
+ * resolves to 600 and Tailwind's resolves to 600; the design system's weight
+ * tier IS the standard CSS weight scale, so `font-semibold` keeps meaning what
+ * every reader already thinks it means, and gains a token behind it.
  */
 export function themeKeyOf(name, group) {
   if (PLAIN[name]) return null;
@@ -170,6 +184,10 @@ export function themeKeyOf(name, group) {
       return `--spacing-${name}`;
     case "text-step":
       return `--text-step-${name.replace(/^text-/, "")}`;
+    case "tracking-step":
+      return `--tracking-step-${name.replace(/^tracking-/, "")}`;
+    case "font-weight":
+      return `--font-weight-${name.replace(/^weight-/, "")}`;
     case "font":
       return `--${name}`;
     default:
@@ -179,7 +197,13 @@ export function themeKeyOf(name, group) {
 
 /** The suffix a utility carries — the theme key minus its namespace prefix. */
 export const utilitySuffix = (key) =>
-  key.replace(/^--color-/, "").replace(/^--spacing-/, "").replace(/^--text-/, "").replace(/^--/, "");
+  key
+    .replace(/^--color-/, "")
+    .replace(/^--spacing-/, "")
+    .replace(/^--font-weight-/, "")
+    .replace(/^--text-/, "")
+    .replace(/^--tracking-/, "")
+    .replace(/^--/, "");
 
 /* ============================================================
    3. THE ARTEFACT
@@ -429,9 +453,11 @@ export function utilitiesFor(prop, value, keyOf, where) {
     return same([`${prefix}-${suffix(value.token)}`], sets);
   }
 
-  /* A family and a size, each of which has its own namespace. */
+  /* The four type properties that each have a namespace of their own. */
   if (prop === "font-family" && isToken(value)) return same([`font-${value.token.replace(/^font-/, "")}`], ["font-family"]);
   if (prop === "font-size" && isToken(value)) return same([`text-${suffix(value.token)}`], ["font-size"]);
+  if (prop === "font-weight" && isToken(value)) return same([`font-${suffix(value.token)}`], ["font-weight"]);
+  if (prop === "letter-spacing" && isToken(value)) return same([`tracking-${suffix(value.token)}`], ["letter-spacing"]);
 
   /* Padding and margin, per edge. `0` is Tailwind's own zero rather than a
      token. Each class reports only the edges it writes, so a base `py-` and a

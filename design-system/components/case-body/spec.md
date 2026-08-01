@@ -71,7 +71,8 @@ modal has no URL, and a case study that cannot be linked to is evidence nobody c
 ## Tokens
 
 `--content-primary`, `--font-display`, `--primary`, `--rule`, `--text-2xs`, `--text-sub`,
-`--space-2`, `--space-3`, `--space-4`, `--space-6`, `--space-7`
+`--space-2`, `--space-3`, `--space-4`, `--space-6`, `--space-7`, `--weight-extrabold`,
+`--weight-semibold`, `--width-sub`
 
 `--primary` and `--text-2xs` are the list marker's: it is drawn small and in the brand ink, so
 a list reads as a set of marks rather than as punctuation.

@@ -81,7 +81,7 @@ html { scroll-behavior: smooth; }
 .tx__mail {
   display: inline-block;
   margin-top: var(--space-6);
-  font-size: var(--text-md); letter-spacing: 0.05em;
+  font-size: var(--text-md); letter-spacing: var(--tracking-wide);
   color: var(--chrome-label-strong);
   border-bottom: 1px solid var(--chrome-border-strong);
   padding-bottom: 2px; /* the underline's offset from the baseline, not spacing */
@@ -175,7 +175,7 @@ html { scroll-behavior: smooth; }
   gap: var(--space-1);
   max-width: 20rem;
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: var(--weight-extrabold);
   font-size: var(--text-sub);
   line-height: 1.15;
   color: var(--content-primary);
@@ -186,8 +186,8 @@ html { scroll-behavior: smooth; }
 .work__next span {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
-  font-weight: 400;
-  letter-spacing: 0.1em;
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-wide-xl);
   color: var(--chrome-label);
   text-transform: none;
 }

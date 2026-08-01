@@ -6,7 +6,7 @@
    source for the one thing this system exists to have one of. `--check` byte-compares
    this file, so a hand-edit fails the build rather than being silently overwritten. */
 
-/** Every custom property `dist/tokens.css` defines on `:root` (83). */
+/** Every custom property `dist/tokens.css` defines on `:root` (103). */
 export type DesignTokenName =
   | "--accent"
   | "--accent-rgb"
@@ -90,7 +90,27 @@ export type DesignTokenName =
   | "--text-sub"
   | "--text-title"
   | "--text-unit"
-  | "--text-xs";
+  | "--text-xs"
+  | "--tracking-tight"
+  | "--tracking-tight-lg"
+  | "--tracking-tight-xl"
+  | "--tracking-wide"
+  | "--tracking-wide-2xl"
+  | "--tracking-wide-lg"
+  | "--tracking-wide-sm"
+  | "--tracking-wide-xl"
+  | "--weight-black"
+  | "--weight-bold"
+  | "--weight-extrabold"
+  | "--weight-medium"
+  | "--weight-regular"
+  | "--weight-semibold"
+  | "--width-body"
+  | "--width-display"
+  | "--width-hero"
+  | "--width-normal"
+  | "--width-sub"
+  | "--width-title";
 
 /** The editorial groups of `tokens/tokens.json`, as `tokens.dtcg.json` nests them. */
 export type DesignTokenGroup =
@@ -108,6 +128,9 @@ export type DesignTokenGroup =
   | "automata"
   | "font"
   | "text"
+  | "weight"
+  | "tracking"
+  | "width"
   | "space"
   | "border";
 

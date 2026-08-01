@@ -43,7 +43,8 @@
         "--shadow-drop",
         "--space-2",
         "--space-4",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide-sm"
       ]
     },
     {
@@ -83,7 +84,9 @@
         "--space-3",
         "--space-5",
         "--text-2xs",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide",
+        "--weight-semibold"
       ]
     },
     {
@@ -211,7 +214,12 @@
         "--text-md",
         "--text-sm",
         "--text-sub",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide-lg",
+        "--tracking-wide-sm",
+        "--tracking-wide-xl",
+        "--weight-extrabold",
+        "--width-body"
       ]
     },
     {
@@ -250,7 +258,10 @@
         "--space-6",
         "--space-7",
         "--text-2xs",
-        "--text-sub"
+        "--text-sub",
+        "--weight-extrabold",
+        "--weight-semibold",
+        "--width-sub"
       ]
     },
     {
@@ -396,7 +407,10 @@
         "--text-2xs",
         "--text-md",
         "--text-sm",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide",
+        "--tracking-wide-lg",
+        "--weight-semibold"
       ]
     },
     {
@@ -431,7 +445,9 @@
         "--primary",
         "--space-1",
         "--space-2",
-        "--text-2xs"
+        "--text-2xs",
+        "--tracking-wide",
+        "--weight-medium"
       ]
     },
     {
@@ -516,7 +532,11 @@
         "--space-5",
         "--surface-page",
         "--text-2xs",
-        "--text-sub"
+        "--text-sub",
+        "--tracking-tight",
+        "--tracking-wide",
+        "--weight-extrabold",
+        "--width-title"
       ]
     },
     {
@@ -576,7 +596,12 @@
         "--text-2xs",
         "--text-md",
         "--text-sub",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide",
+        "--weight-extrabold",
+        "--weight-regular",
+        "--weight-semibold",
+        "--width-sub"
       ]
     },
     {
@@ -627,7 +652,12 @@
         "--text-2xs",
         "--text-display",
         "--text-sm",
-        "--text-unit"
+        "--text-unit",
+        "--tracking-wide-2xl",
+        "--weight-black",
+        "--weight-bold",
+        "--weight-semibold",
+        "--width-hero"
       ]
     },
     {
@@ -656,7 +686,8 @@
         "--space-2",
         "--space-4",
         "--space-7",
-        "--text-2xs"
+        "--text-2xs",
+        "--tracking-wide"
       ]
     },
     {
@@ -687,7 +718,9 @@
         "--primary",
         "--rule",
         "--space-4",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide",
+        "--weight-medium"
       ]
     },
     {
@@ -730,7 +763,9 @@
         "--space-2",
         "--space-4",
         "--space-6",
-        "--text-2xs"
+        "--text-2xs",
+        "--tracking-wide-lg",
+        "--weight-medium"
       ]
     },
     {
@@ -797,7 +832,8 @@
         "--surface-page",
         "--text-sm",
         "--text-title",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide-sm"
       ]
     },
     {
@@ -871,7 +907,9 @@
         "--space-3",
         "--space-5",
         "--text-sm",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide-sm",
+        "--weight-semibold"
       ]
     },
     {
@@ -907,7 +945,10 @@
         "--space-3",
         "--space-4",
         "--space-7",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide-lg",
+        "--weight-medium",
+        "--weight-semibold"
       ]
     },
     {
@@ -989,7 +1030,15 @@
         "--text-md",
         "--text-sm",
         "--text-sub",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-wide",
+        "--tracking-wide-lg",
+        "--weight-bold",
+        "--weight-extrabold",
+        "--weight-semibold",
+        "--width-body",
+        "--width-normal",
+        "--width-sub"
       ]
     },
     {
@@ -1140,7 +1189,9 @@
         "--space-2",
         "--space-3",
         "--text-2xs",
-        "--text-sm"
+        "--text-sm",
+        "--tracking-wide-2xl",
+        "--weight-semibold"
       ]
     },
     {
@@ -1169,7 +1220,9 @@
         "--space-2",
         "--space-4",
         "--space-6",
-        "--text-display"
+        "--text-display",
+        "--weight-black",
+        "--width-hero"
       ]
     },
     {
@@ -1296,7 +1349,18 @@
         "--text-lead",
         "--text-statement",
         "--text-title",
-        "--text-xs"
+        "--text-xs",
+        "--tracking-tight",
+        "--tracking-tight-lg",
+        "--tracking-tight-xl",
+        "--tracking-wide-2xl",
+        "--weight-black",
+        "--weight-extrabold",
+        "--weight-medium",
+        "--width-body",
+        "--width-display",
+        "--width-hero",
+        "--width-title"
       ]
     }
   ]

@@ -72,7 +72,7 @@ None. States are data: `data-collapsed` present or absent.
 ## Tokens
 
 `--accent`, `--content-inverse`, `--font-mono`, `--primary`, `--shadow-drop`, `--space-2`,
-`--space-4`, `--text-xs`
+`--space-4`, `--text-xs`, `--tracking-wide-sm`
 
 `--accent` is the ground and `--content-inverse` the label — the same pair as `.bar__action`,
 because it is the same action. `--primary` is hover, for the bar's reason: blue at rest is an

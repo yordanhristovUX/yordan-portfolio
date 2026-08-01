@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -335,6 +335,86 @@
     "text.text-unit": {
       "cssVar": "--text-unit",
       "value": "0.38em"
+    },
+    "weight.weight-regular": {
+      "cssVar": "--weight-regular",
+      "value": "400"
+    },
+    "weight.weight-medium": {
+      "cssVar": "--weight-medium",
+      "value": "500"
+    },
+    "weight.weight-semibold": {
+      "cssVar": "--weight-semibold",
+      "value": "600"
+    },
+    "weight.weight-bold": {
+      "cssVar": "--weight-bold",
+      "value": "700"
+    },
+    "weight.weight-extrabold": {
+      "cssVar": "--weight-extrabold",
+      "value": "800"
+    },
+    "weight.weight-black": {
+      "cssVar": "--weight-black",
+      "value": "900"
+    },
+    "tracking.tracking-tight-xl": {
+      "cssVar": "--tracking-tight-xl",
+      "value": "-0.02em"
+    },
+    "tracking.tracking-tight-lg": {
+      "cssVar": "--tracking-tight-lg",
+      "value": "-0.015em"
+    },
+    "tracking.tracking-tight": {
+      "cssVar": "--tracking-tight",
+      "value": "-0.01em"
+    },
+    "tracking.tracking-wide-sm": {
+      "cssVar": "--tracking-wide-sm",
+      "value": "0.04em"
+    },
+    "tracking.tracking-wide": {
+      "cssVar": "--tracking-wide",
+      "value": "0.06em"
+    },
+    "tracking.tracking-wide-lg": {
+      "cssVar": "--tracking-wide-lg",
+      "value": "0.08em"
+    },
+    "tracking.tracking-wide-xl": {
+      "cssVar": "--tracking-wide-xl",
+      "value": "0.1em"
+    },
+    "tracking.tracking-wide-2xl": {
+      "cssVar": "--tracking-wide-2xl",
+      "value": "0.12em"
+    },
+    "width.width-hero": {
+      "cssVar": "--width-hero",
+      "value": "\"wdth\" 115"
+    },
+    "width.width-display": {
+      "cssVar": "--width-display",
+      "value": "\"wdth\" 112"
+    },
+    "width.width-title": {
+      "cssVar": "--width-title",
+      "value": "\"wdth\" 110"
+    },
+    "width.width-sub": {
+      "cssVar": "--width-sub",
+      "value": "\"wdth\" 108"
+    },
+    "width.width-body": {
+      "cssVar": "--width-body",
+      "value": "\"wdth\" 105"
+    },
+    "width.width-normal": {
+      "cssVar": "--width-normal",
+      "value": "\"wdth\" 100"
     },
     "space.space-1": {
       "cssVar": "--space-1",
@@ -691,8 +771,8 @@
         "display": "inline-block",
         "font-family": "{font-mono}",
         "font-size": "{text-xs}",
-        "font-weight": "600",
-        "letter-spacing": "0.05em",
+        "font-weight": "{weight-semibold}",
+        "letter-spacing": "{tracking-wide}",
         "padding": "{space-3} {space-5}",
         "text-align": "center",
         "transition": "background-color 0.2s, color 0.2s",
@@ -734,8 +814,8 @@
         "display": "inline-block",
         "font-family": "{font-mono}",
         "font-size": "{text-2xs}",
-        "font-weight": "500",
-        "letter-spacing": "0.06em",
+        "font-weight": "{weight-medium}",
+        "letter-spacing": "{tracking-wide}",
         "padding": "{space-1} {space-2}",
         "text-transform": "uppercase"
       }
@@ -764,8 +844,8 @@
         "display": "inline-block",
         "font-family": "{font-display}",
         "font-size": "{text-display}",
-        "font-variation-settings": "\"wdth\" 115",
-        "font-weight": "900",
+        "font-variation-settings": "{width-hero}",
+        "font-weight": "{weight-black}",
         "margin": "{space-2} {space-6} {space-4} 0",
         "padding": "{space-1} {space-4}"
       }

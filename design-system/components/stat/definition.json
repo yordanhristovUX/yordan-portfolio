@@ -14,8 +14,8 @@
   "base": {
     "declarations": [
       { "set": { "display": "inline-block" } },
-      { "set": { "font-family": { "token": "font-display" }, "font-weight": "900" } },
-      { "set": { "font-variation-settings": "\"wdth\" 115" } },
+      { "set": { "font-family": { "token": "font-display" }, "font-weight": { "token": "weight-black" } } },
+      { "set": { "font-variation-settings": { "token": "width-hero" } } },
       { "set": { "font-size": { "token": "text-display" } } },
       { "set": { "color": { "token": "content-primary" } } },
       { "set": { "border": { "token": "rule-strong" } } },
