@@ -3,12 +3,12 @@
   "version": 2,
   "generatedBy": "evals/run.mjs — do not edit",
   "contentVersion": 1,
-  "corpusHash": "926314512d1eaf76",
+  "corpusHash": "43413e53aa94810c",
   "questionsHash": "001a02d3a171c99c",
   "corpus": {
     "chunks": 99,
     "terms": 1435,
-    "avgdl": 39.1717,
+    "avgdl": 39.1515,
     "projects": 14,
     "experience": 6,
     "manifestChars": 4637
@@ -44,7 +44,7 @@
     "method": "Wilson score interval, two-sided 95%; normal interval on the mean for MRR",
     "note": "n=49 retrieval and n=16 abstention questions. One question is 0.0204 of a retrieval rate."
   },
-  "embeddings": "voyage-3.5, 99 chunk + 65 question vectors cached in evals/vectors.json (corpus 926314512d1eaf76)",
+  "embeddings": "voyage-3.5, 99 chunk + 65 question vectors cached in evals/vectors.json (corpus 43413e53aa94810c)",
   "arms": [
     {
       "arm": "tools-only",
@@ -183,16 +183,16 @@
     {
       "arm": "bm25",
       "hit1": {
-        "value": 0.4082,
-        "lo": 0.2822,
-        "hi": 0.5475,
-        "half": 0.1327
+        "value": 0.449,
+        "lo": 0.3185,
+        "hi": 0.5868,
+        "half": 0.1342
       },
       "hit3": {
-        "value": 0.6327,
-        "lo": 0.4927,
-        "hi": 0.7533,
-        "half": 0.1303
+        "value": 0.6735,
+        "lo": 0.5338,
+        "hi": 0.7879,
+        "half": 0.1271
       },
       "hit5": {
         "value": 0.7959,
@@ -213,16 +213,16 @@
         "half": 0.1203
       },
       "mrr": {
-        "value": 0.5456,
-        "lo": 0.4316,
-        "hi": 0.6596,
-        "half": 0.114
+        "value": 0.5806,
+        "lo": 0.4659,
+        "hi": 0.6953,
+        "half": 0.1147
       },
       "mrrAtProductionDepth": {
-        "value": 0.5456,
-        "lo": 0.4316,
-        "hi": 0.6596,
-        "half": 0.114
+        "value": 0.5806,
+        "lo": 0.4659,
+        "hi": 0.6953,
+        "half": 0.1147
       },
       "abstain": {
         "value": 0.375,
@@ -230,8 +230,8 @@
         "hi": 0.6136,
         "half": 0.2144
       },
-      "separability": 0.8833,
-      "separabilityScored": 0.8133,
+      "separability": 0.8871,
+      "separabilityScored": 0.8194,
       "separabilityDetail": {
         "pairs": 784,
         "emptyDriven": 294,
@@ -256,14 +256,14 @@
           "half": 0.2596
         },
         "cross-cutting": {
-          "score": 0.7692,
+          "score": 0.8462,
           "n": 13,
-          "half": 0.2104
+          "half": 0.1895
         },
         "metric": {
-          "score": 0.625,
+          "score": 0.75,
           "n": 8,
-          "half": 0.2787
+          "half": 0.2596
         },
         "structured-only": {
           "score": 0.4,
@@ -283,9 +283,9 @@
       },
       "byShape": {
         "lookup": {
-          "score": 0.5952,
+          "score": 0.6429,
           "n": 42,
-          "half": 0.1423
+          "half": 0.1392
         },
         "temporal": {
           "score": 0,
@@ -451,16 +451,16 @@
     {
       "arm": "tools-gated",
       "hit1": {
-        "value": 0.1429,
-        "lo": 0.071,
-        "hi": 0.2667,
-        "half": 0.0979
+        "value": 0.1633,
+        "lo": 0.0851,
+        "hi": 0.2904,
+        "half": 0.1026
       },
       "hit3": {
-        "value": 0.2041,
-        "lo": 0.1148,
-        "hi": 0.3364,
-        "half": 0.1108
+        "value": 0.2245,
+        "lo": 0.1302,
+        "hi": 0.3588,
+        "half": 0.1143
       },
       "hit5": {
         "value": 0.2857,
@@ -481,16 +481,16 @@
         "half": 0.1228
       },
       "mrr": {
-        "value": 0.1905,
-        "lo": 0.0917,
-        "hi": 0.2892,
-        "half": 0.0988
+        "value": 0.2092,
+        "lo": 0.1047,
+        "hi": 0.3137,
+        "half": 0.1045
       },
       "mrrAtProductionDepth": {
-        "value": 0.1905,
-        "lo": 0.0917,
-        "hi": 0.2892,
-        "half": 0.0988
+        "value": 0.2092,
+        "lo": 0.1047,
+        "hi": 0.3137,
+        "half": 0.1045
       },
       "abstain": {
         "value": 0.9375,
@@ -498,8 +498,8 @@
         "hi": 0.9889,
         "half": 0.1361
       },
-      "separability": 0.6779,
-      "separabilityScored": 0.7,
+      "separability": 0.6792,
+      "separabilityScored": 0.75,
       "separabilityDetail": {
         "pairs": 784,
         "emptyDriven": 300,
@@ -529,9 +529,9 @@
           "half": 0.1597
         },
         "metric": {
-          "score": 0.25,
+          "score": 0.375,
           "n": 8,
-          "half": 0.2596
+          "half": 0.2787
         },
         "structured-only": {
           "score": 0.8,
@@ -551,9 +551,9 @@
       },
       "byShape": {
         "lookup": {
-          "score": 0.2143,
+          "score": 0.2381,
           "n": 42,
-          "half": 0.1212
+          "half": 0.1252
         },
         "temporal": {
           "score": 0,
@@ -585,16 +585,16 @@
     {
       "arm": "embeddings",
       "hit1": {
-        "value": 0.6122,
-        "lo": 0.4725,
-        "hi": 0.7357,
-        "half": 0.1316
+        "value": 0.6531,
+        "lo": 0.5131,
+        "hi": 0.7708,
+        "half": 0.1288
       },
       "hit3": {
-        "value": 0.7959,
-        "lo": 0.6636,
-        "hi": 0.8852,
-        "half": 0.1108
+        "value": 0.8163,
+        "lo": 0.6864,
+        "hi": 0.9002,
+        "half": 0.1069
       },
       "hit5": {
         "value": 0.8571,
@@ -603,10 +603,10 @@
         "half": 0.0979
       },
       "ent1": {
-        "value": 0.7347,
-        "lo": 0.5974,
-        "hi": 0.8379,
-        "half": 0.1203
+        "value": 0.7143,
+        "lo": 0.5759,
+        "hi": 0.8215,
+        "half": 0.1228
       },
       "ent3": {
         "value": 0.8571,
@@ -615,16 +615,16 @@
         "half": 0.0979
       },
       "mrr": {
-        "value": 0.717,
-        "lo": 0.612,
-        "hi": 0.8221,
-        "half": 0.1051
+        "value": 0.7459,
+        "lo": 0.6428,
+        "hi": 0.8491,
+        "half": 0.1031
       },
       "mrrAtProductionDepth": {
-        "value": 0.717,
-        "lo": 0.612,
-        "hi": 0.8221,
-        "half": 0.1051
+        "value": 0.7459,
+        "lo": 0.6428,
+        "hi": 0.8491,
+        "half": 0.1031
       },
       "abstain": {
         "value": 0,
@@ -658,9 +658,9 @@
           "half": 0.1622
         },
         "cross-cutting": {
-          "score": 0.7692,
+          "score": 0.8462,
           "n": 13,
-          "half": 0.2104
+          "half": 0.1895
         },
         "metric": {
           "score": 1,
@@ -685,9 +685,9 @@
       },
       "byShape": {
         "lookup": {
-          "score": 0.8095,
+          "score": 0.8333,
           "n": 42,
-          "half": 0.1166
+          "half": 0.1114
         },
         "temporal": {
           "score": 1,
@@ -737,10 +737,10 @@
         "half": 0.1251
       },
       "ent1": {
-        "value": 0.2857,
-        "lo": 0.1785,
-        "hi": 0.4241,
-        "half": 0.1228
+        "value": 0.2653,
+        "lo": 0.1621,
+        "hi": 0.4026,
+        "half": 0.1203
       },
       "ent3": {
         "value": 0.3265,
@@ -749,16 +749,16 @@
         "half": 0.1271
       },
       "mrr": {
-        "value": 0.2509,
-        "lo": 0.1385,
-        "hi": 0.3632,
-        "half": 0.1123
+        "value": 0.2532,
+        "lo": 0.1405,
+        "hi": 0.366,
+        "half": 0.1127
       },
       "mrrAtProductionDepth": {
-        "value": 0.2509,
-        "lo": 0.1385,
-        "hi": 0.3632,
-        "half": 0.1123
+        "value": 0.2532,
+        "lo": 0.1405,
+        "hi": 0.366,
+        "half": 0.1127
       },
       "abstain": {
         "value": 0.875,
@@ -857,11 +857,11 @@
       "b": "bm25",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 10,
+      "wins": 9,
       "losses": 2,
-      "discordant": 12,
-      "p": 0.0386,
-      "significant": true,
+      "discordant": 11,
+      "p": 0.0654,
+      "significant": false,
       "note": "the ranker that ships against the free offline floor",
       "winIds": [
         "proj-meta-pipeline",
@@ -871,7 +871,6 @@
         "skill-education",
         "cross-local-government",
         "cross-design-systems-where",
-        "metric-spetema-products",
         "metric-marathon",
         "metric-deadlift"
       ],
@@ -885,10 +884,10 @@
       "b": "tools-only",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 19,
+      "wins": 20,
       "losses": 3,
-      "discordant": 22,
-      "p": 0.000855,
+      "discordant": 23,
+      "p": 0.000488,
       "significant": true,
       "note": "semantic ranking against structured name lookup",
       "winIds": [
@@ -906,6 +905,7 @@
         "cross-local-government",
         "cross-conflicting-audiences",
         "cross-production-code",
+        "cross-b2b-b2c",
         "cross-white-label",
         "cross-biggest-improvement",
         "metric-marathon",
@@ -923,11 +923,11 @@
       "b": "tools-only",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 14,
-      "losses": 6,
+      "wins": 15,
+      "losses": 5,
       "discordant": 20,
-      "p": 0.115,
-      "significant": false,
+      "p": 0.0414,
+      "significant": true,
       "note": "lexical ranking against structured name lookup",
       "winIds": [
         "proj-audit-severity",
@@ -939,6 +939,7 @@
         "skill-languages",
         "cross-conflicting-audiences",
         "cross-production-code",
+        "cross-b2b-b2c",
         "cross-white-label",
         "cross-figma-not-source",
         "cross-no-build-step",
@@ -950,8 +951,7 @@
         "proj-mindromeda",
         "proj-football",
         "exp-studio-kipo",
-        "cross-design-systems-where",
-        "metric-spetema-products"
+        "cross-design-systems-where"
       ]
     },
     {
@@ -959,10 +959,10 @@
       "b": "hybrid",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 12,
-      "losses": 6,
+      "wins": 13,
+      "losses": 5,
       "discordant": 18,
-      "p": 0.238,
+      "p": 0.0963,
       "significant": false,
       "note": "does appending BM25 beneath the tools arm cost anything",
       "winIds": [
@@ -974,6 +974,7 @@
         "skill-motion",
         "cross-conflicting-audiences",
         "cross-production-code",
+        "cross-b2b-b2c",
         "cross-white-label",
         "cross-figma-not-source",
         "cross-no-build-step",
@@ -984,8 +985,7 @@
         "proj-mindromeda",
         "proj-football",
         "exp-studio-kipo",
-        "cross-design-systems-where",
-        "metric-spetema-products"
+        "cross-design-systems-where"
       ]
     },
     {
@@ -994,9 +994,9 @@
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
       "wins": 0,
-      "losses": 26,
-      "discordant": 26,
-      "p": 2.98e-8,
+      "losses": 27,
+      "discordant": 27,
+      "p": 1.49e-8,
       "significant": true,
       "note": "what refusing on a gate miss costs the ranker",
       "winIds": [],
@@ -1018,6 +1018,7 @@
         "cross-app-stores",
         "cross-conflicting-audiences",
         "cross-production-code",
+        "cross-b2b-b2c",
         "cross-white-label",
         "cross-open-source",
         "cross-biggest-improvement",
@@ -1034,16 +1035,15 @@
       "b": "bm25",
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
-      "wins": 4,
-      "losses": 22,
+      "wins": 3,
+      "losses": 23,
       "discordant": 26,
-      "p": 0.000534,
+      "p": 0.000088,
       "significant": true,
       "note": "the gated counterfactual against free offline BM25",
       "winIds": [
         "proj-meta-pipeline",
         "proj-football",
-        "metric-spetema-products",
         "metric-deadlift"
       ],
       "lossIds": [
@@ -1059,6 +1059,7 @@
         "cross-app-stores",
         "cross-conflicting-audiences",
         "cross-production-code",
+        "cross-b2b-b2c",
         "cross-white-label",
         "cross-open-source",
         "cross-figma-not-source",
@@ -1077,9 +1078,9 @@
       "metric": "hit@3",
       "test": "exact two-sided McNemar",
       "wins": 0,
-      "losses": 21,
-      "discordant": 21,
-      "p": 9.54e-7,
+      "losses": 22,
+      "discordant": 22,
+      "p": 4.77e-7,
       "significant": true,
       "note": "what refusing on a gate miss costs BM25",
       "winIds": [],
@@ -1096,6 +1097,7 @@
         "cross-app-stores",
         "cross-conflicting-audiences",
         "cross-production-code",
+        "cross-b2b-b2c",
         "cross-white-label",
         "cross-open-source",
         "cross-no-build-step",
