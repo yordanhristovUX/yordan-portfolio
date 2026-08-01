@@ -1,0 +1,209 @@
+{
+  "$doc": "The full-screen navigation sheet's appearance, as data — the source of the `@component menu` regions of css/components.css and of dist/react/menu.tsx. IT IS THE BLOCK THAT PUT A HOLE IN THE MIDDLE OF A REGION. Three of its rules cannot be written down here and none of them is at the end: `body:has(.menu[data-open])` styles the document, which no closure of the scoped-part vocabulary reaches, because `within` names a rule THIS definition declares and `body` never will be; `.menu__nav a + a` is an adjacent-sibling combinator, and this format supplies a descendant or a child and nothing else; and the foot carries `@media (prefers-reduced-motion: reduce)` and `@media print`, conditions `$conditions` holds no number for. So the definition declares three GAPS, the block is four generated regions with three authored fragments between them, and the census checks the two sides against each other. A prefix-only split would have counted 33 of 127 lines as generated and left the other 94 as one authored lump — which is the census measuring the wrong thing, and the reason the shape exists.",
+  "$schema": "../definition.schema.json",
+  "id": "menu",
+  "block": {
+    "title": "Menu (full-screen nav)",
+    "note": [
+      "The bar's navigation, unfolded. Below 700px the row of anchors becomes one",
+      "`.bar__menu` segment (owned by the nav block), and THIS is what that segment",
+      "summons: a sheet that covers the whole viewport — bar included — with the",
+      "same links at a size a thumb can hit.",
+      "",
+      "COVERING THE BAR IS THE SIMPLICITY, not a loss. The drawer already set the",
+      "precedent (it covers the bar too), and it makes menu and drawer mutually",
+      "exclusive BY CONSTRUCTION: each one's trigger lives under the other's sheet,",
+      "so no second overlay can be summoned and no layer arithmetic exists. The",
+      "page's primary action is deliberately NOT in here — the owner's rule is that",
+      "the chat is reachable without opening the menu; its mobile home is the",
+      "ask-fab at the bottom corner. The sheet carries navigation, plus the theme",
+      "control docked in its foot.",
+      "",
+      "Same skeleton as the drawer: JS toggles exactly one attribute (`data-open`)",
+      "and never writes a style; `visibility` with a delayed flip is what closes it,",
+      "so the exit transition finishes before the layer stops existing for the tab",
+      "order and the accessibility tree.",
+      "",
+      "THE SCROLL LOCK IS `:has()`, NOT A JS CLASS, and that is defensive rather",
+      "than fashionable: `body.is-locked` is bookkept by js/main.js from ITS layer",
+      "stack, and main.js does not load on every page this menu does. A selector",
+      "derived from `data-open` cannot disagree with the state that produced it."
+    ]
+  },
+  "root": ".menu",
+  "rules": [
+    {
+      "kind": "base",
+      "declarations": [
+        { "set": { "position": "fixed", "inset": "0" } },
+        {
+          "note": [
+            "Over the bar (100), under the drawer (400) — see the nav spec's map of",
+            "the floating layer."
+          ],
+          "set": { "z-index": "300" }
+        },
+        { "set": { "visibility": "hidden" } },
+        { "set": { "transition": "visibility 0s linear 0.28s" } }
+      ]
+    },
+    { "kind": "state", "name": "open", "of": "base", "suffix": "[data-open]", "declarations": [{ "set": { "visibility": "visible", "transition-delay": "0s" } }] },
+    {
+      "kind": "authored",
+      "reason": "foreign-selector",
+      "$doc": "`body:has(.menu[data-open]) { overflow: hidden; }` — the scroll lock. It is the rule that MINTED the census reason `foreign-selector`, and it is unreachable from here for a reason that is structural rather than a missing key: every relation this format has names a rule the same definition declares, and `body` is not one and never will be. Deriving the lock from `data-open` instead of from a JS class is deliberate and documented in the banner — a selector derived from the state that produced it cannot disagree with it — so the rule stays exactly where it is, and this gap is what accounts for it."
+    },
+    {
+      "kind": "part",
+      "name": "sheet",
+      "selector": ".menu__sheet",
+      "break": true,
+      "declarations": [
+        { "set": { "position": "absolute", "inset": "0" } },
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-rows": "auto minmax(0, 1fr)" } },
+        { "set": { "background": { "token": "surface-page" } } },
+        { "set": { "opacity": "0" } },
+        { "set": { "transform": "translateY(-0.75rem)" } },
+        { "set": { "transition": "opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" } }
+      ]
+    },
+    { "kind": "part", "name": "open-sheet", "within": "open", "class": ".menu__sheet", "declarations": [{ "set": { "opacity": "1", "transform": "none" } }] },
+    {
+      "kind": "part",
+      "name": "head",
+      "selector": ".menu__head",
+      "break": true,
+      "note": [
+        "THE HEAD IS A REPLICA OF THE DOCKED BAR, not merely bar-flavoured — same",
+        "height (the title's space-3 vertical padding, the identity's own formula),",
+        "same chrome, and Close occupying THE EXACT SLOT the Menu trigger holds in",
+        "the bar beneath: a full-height segment flush at the very right, same",
+        "space-5 padding, seam on its left edge. The owner named the defect: the",
+        "trigger and the way back were in different places, so the thumb that",
+        "opened the sheet had to travel to leave it. Now the press point does not",
+        "move — Menu opens, and Close is under the same thumb."
+      ],
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "stretch", "justify-content": "space-between" } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-xs" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide-sm" } } },
+        { "set": { "background": { "token": "chrome-bg" } } },
+        { "set": { "border-bottom": { "token": "rule-strong" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "title",
+      "selector": ".menu__title",
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center" } },
+        { "set": { "padding": [{ "token": "space-3" }, { "token": "space-5" }] } },
+        {
+          "note": [
+            "--text-sm, matching the bar identity's mobile step (the sheet only exists",
+            "below 700px): the head is a replica of the docked bar, and the title is",
+            "what sets its height — a size drift here would move Close out of the",
+            "trigger's slot."
+          ],
+          "set": { "font-size": { "token": "text-sm" } }
+        },
+        { "set": { "color": { "token": "chrome-label" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "close",
+      "selector": ".menu__close",
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center" } },
+        {
+          "note": [
+            "Same box as `.bar__menu`: the head's height (≈44px) clears the 44px",
+            "touch floor by construction, so no min-height is needed here."
+          ],
+          "set": { "padding": ["0", { "token": "space-5" }] }
+        },
+        {
+          "note": [
+            "THE PRESSED INK, AT REST — the owner named the defect this fixes: the",
+            "head's title and its Close were the same quiet mono, a caption and a",
+            "control wearing one coat. Close now carries the exact state the Menu",
+            "trigger shows at `[aria-expanded=\"true\"]` — you pressed the segment, it",
+            "went ink, and the sheet opened with that same ink segment in the same",
+            "slot, now reading Close. The passive title stays chrome-quiet; the one",
+            "pressable thing in the head is the one thing filled."
+          ],
+          "set": { "background": { "token": "primary" } }
+        },
+        { "set": { "color": { "token": "content-inverse" } } },
+        { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } },
+        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+      ]
+    },
+    { "kind": "state", "name": "close-hover", "of": "close", "suffix": ":hover", "declarations": [{ "set": { "background": { "token": "action-hover" } } }] },
+    {
+      "kind": "part",
+      "name": "body",
+      "selector": ".menu__body",
+      "break": true,
+      "note": [
+        "The body: links first, then the theme circle. One scroller for both, so",
+        "the utility can never be stranded off-screen apart from the list it",
+        "follows."
+      ],
+      "declarations": [
+        { "set": { "display": "flex", "flex-direction": "column", "justify-content": "center" } },
+        { "set": { "padding": [{ "token": "space-5" }, { "token": "space-6" }] } },
+        { "set": { "overflow-y": "auto" } },
+        {
+          "note": [
+            "iOS Safari ignores `overflow: hidden` on body, so the page behind the",
+            "sheet can rubber-band. Containing the chain here stops the common route:",
+            "a swipe that exhausts this scroller no longer hands its momentum to the",
+            "document. Not a complete lock — iOS has none this side of freezing the",
+            "body — but it closes the path a reader actually hits."
+          ],
+          "set": { "overscroll-behavior": "contain" }
+        }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "nav",
+      "selector": ".menu__nav",
+      "break": true,
+      "note": [
+        "The links: the page's own compass at reading size. Centred as a group, not",
+        "as lines — a nav is a list, not a poem."
+      ],
+      "declarations": [{ "set": { "display": "flex", "flex-direction": "column" } }]
+    },
+    {
+      "kind": "part",
+      "name": "nav-link",
+      "within": "nav",
+      "element": ["a"],
+      "declarations": [
+        { "set": { "font-family": { "token": "font-display" } } },
+        { "set": { "font-size": { "token": "text-title" } } },
+        { "set": { "line-height": "1.2" } },
+        { "set": { "color": { "token": "content-primary" } } },
+        { "set": { "padding": [{ "token": "space-4" }, "0"] } },
+        { "set": { "transition": "color 0.2s" } }
+      ]
+    },
+    {
+      "kind": "authored",
+      "reason": "relational-selectors",
+      "$doc": "`.menu__nav a + a { border-top: var(--rule); }` — the divider between links, drawn by the one on the right. An ADJACENT SIBLING combinator, and this format supplies exactly two: a descendant and a child, both chosen because each reaches markup the component owns at a depth it can state. `+` reaches a sibling, which is a fact about the ORDER of the host's children rather than about their nesting, and admitting it would need a vocabulary for that order — which is what `positions` is, and `positions` hangs off a rule rather than sitting between two. The block that wants both in one selector is the block that decides what that means."
+    },
+    { "kind": "state", "name": "nav-link-hover", "of": "nav-link", "suffix": ":hover", "declarations": [{ "set": { "color": { "token": "accent" } } }] },
+    {
+      "kind": "authored",
+      "reason": "unnamed-condition",
+      "$doc": "The foot: `@media (prefers-reduced-motion: reduce)`, which drops the sheet's transitions so it arrives in one frame rather than not at all, and `@media print`, which removes it. Both are conditions this system deliberately will not name — `$conditions` holds VIEWPORTS, each named for the number it carries, and neither a motion preference nor a sheet of paper has one. The reduced-motion rule also writes `.menu, .menu__sheet` as a selector LIST across two different rules, which is a second reason it could not be transcribed: a state's `suffix` may be a list because the two selectors share a subject, and these two do not."
+    }
+  ]
+}

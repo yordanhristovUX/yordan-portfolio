@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -2324,6 +2324,119 @@
       "declarations": {
         "margin-left": "0"
       }
+    },
+    "menu .menu": {
+      "kind": "base",
+      "declarations": {
+        "inset": "0",
+        "position": "fixed",
+        "transition": "visibility 0s linear 0.28s",
+        "visibility": "hidden",
+        "z-index": "300"
+      }
+    },
+    "menu .menu[data-open]": {
+      "kind": "base state",
+      "declarations": {
+        "transition-delay": "0s",
+        "visibility": "visible"
+      }
+    },
+    "menu .menu__sheet": {
+      "kind": "part",
+      "declarations": {
+        "background": "{surface-page}",
+        "display": "grid",
+        "grid-template-rows": "auto minmax(0, 1fr)",
+        "inset": "0",
+        "opacity": "0",
+        "position": "absolute",
+        "transform": "translateY(-0.75rem)",
+        "transition": "opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)"
+      }
+    },
+    "menu .menu[data-open] .menu__sheet": {
+      "kind": "scoped part",
+      "declarations": {
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    "menu .menu__head": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "stretch",
+        "background": "{chrome-bg}",
+        "border-bottom": "{rule-strong}",
+        "display": "flex",
+        "font-family": "{font-mono}",
+        "font-size": "{text-xs}",
+        "justify-content": "space-between",
+        "letter-spacing": "{tracking-wide-sm}"
+      }
+    },
+    "menu .menu__title": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "color": "{chrome-label}",
+        "display": "flex",
+        "font-size": "{text-sm}",
+        "padding": "{space-3} {space-5}"
+      }
+    },
+    "menu .menu__close": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "background": "{primary}",
+        "box-shadow": "inset 1px 0 0 {chrome-border}",
+        "color": "{content-inverse}",
+        "display": "flex",
+        "padding": "0 {space-5}",
+        "transition": "background-color 0.2s, color 0.2s"
+      }
+    },
+    "menu .menu__close:hover": {
+      "kind": "part state",
+      "declarations": {
+        "background": "{action-hover}"
+      }
+    },
+    "menu .menu__body": {
+      "kind": "part",
+      "declarations": {
+        "display": "flex",
+        "flex-direction": "column",
+        "justify-content": "center",
+        "overflow-y": "auto",
+        "overscroll-behavior": "contain",
+        "padding": "{space-5} {space-6}"
+      }
+    },
+    "menu .menu__nav": {
+      "kind": "part",
+      "declarations": {
+        "display": "flex",
+        "flex-direction": "column"
+      }
+    },
+    "menu .menu__nav a": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{content-primary}",
+        "font-family": "{font-display}",
+        "font-size": "{text-title}",
+        "line-height": "1.2",
+        "padding": "{space-4} 0",
+        "transition": "color 0.2s"
+      }
+    },
+    "menu .menu__nav a:hover": {
+      "kind": "scoped part state",
+      "declarations": {
+        "color": "{accent}"
+      }
     }
   },
   "exports": {
@@ -2404,6 +2517,9 @@
     },
     "./react/chat": {
       "target": "./dist/react/chat.tsx"
+    },
+    "./react/menu": {
+      "target": "./dist/react/menu.tsx"
     }
   }
 }

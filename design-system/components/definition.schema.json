@@ -30,7 +30,8 @@
           { "$ref": "#/$defs/rule-contains" },
           { "$ref": "#/$defs/rule-position" },
           { "$ref": "#/$defs/rule-at" },
-          { "$ref": "#/$defs/rule-keyframes" }
+          { "$ref": "#/$defs/rule-keyframes" },
+          { "$ref": "#/$defs/rule-authored" }
         ]
       },
       "$doc": "EVERY RULE THE BLOCK WRITES, IN STYLESHEET ORDER, EACH TAGGED BY KIND. This replaced five sections — `base`, `variants`, `sizes`, `parts`, `at` — whose order the emitter supplied as a fixed cascade, and `media` and `profile` are the two blocks that proved the cascade was an emitter's opinion rather than the stylesheet's shape. Both group their rules by TOPIC: media writes `.ph:has(img)` four rules after `.ph`, with a part in between, because the has-an-image case is a paragraph of its own; profile writes `.profile > div:nth-child(odd)` at the foot, after every part, because the odd-column padding belongs with the query that undoes it. Under a fixed cascade neither is expressible, and the two ways out were both worse: a `detach` flag on a rule would be an EMITTER HINT — a key that exists to move a line rather than to say something about the component — and this format refuses hints, which is the argument `break`'s own $doc already makes from the other side (a paragraph is a statement, so it is recorded rather than inferred). An ordered list says the same thing about the whole block: source order IS the cascade, so recording it is recording a fact, not accommodating a renderer. It also closes a shape nothing else could reach — a part scoped to a STATE (`.drawer[data-open] .drawer__sheet`, `.ph:has(img) .ph__label`), which needs to name a rule that has no section of its own to live in. THE PRICE, AND IT IS THE POINT: a reference is now a NAME (`of`, `within`) rather than a section path or a selector, so every rule carries one, every name is unique in its definition, and a name may only refer BACKWARDS — a stylesheet reads downwards, and so does this. The build derives `base` / `variants` / `sizes` / `parts` back out of the list for the two consumers that want a set rather than a sequence (the React axes, the contract projection); that is a query over the list, not a second source."
@@ -335,6 +336,21 @@
         "$doc": { "type": "string" },
         "note": { "$ref": "#/$defs/note", "$doc": "A comment above this override, indented one level with the rule it introduces. The same key a top-level rule carries, admitted here because `nav`'s mobile block writes one: `.bar__id`'s docked rule takes the identity one step UP the type ramp, and the eight lines saying why — and saying that the menu sheet's title must take the same step or the two heights drift — belong to that override and to nothing else. Without it the comment would have to become a group note, which the stylesheet renders inside the braces and is therefore different bytes." },
         "declarations": { "$ref": "#/$defs/declarations" }
+      }
+    },
+    "rule-authored": {
+      "$doc": "A GAP: the stylesheet writes a rule here that this format cannot hold, and the definition says so rather than pretending the block ends. It renders NOTHING — the generated region closes above it and reopens after it, and the authored lines in between carry their own `/* ---- authored:<id> — <reason> ---- */` marker, scanned for that fragment alone by scripts/build.mjs's census. `ask-fab` was the first block that needed a hole in a generated region and its hole was at the END, so a trailing remainder was enough; `menu`, `card` and `theme-toggle` have one in the MIDDLE, and a prefix-only split would have counted 33 of menu's 127 lines as generated and left the other 94 accounted for as one authored lump. WHY THE DEFINITION RECORDS IT AND NOT THE STYLESHEET ALONE: the emitter has to know where to stop, and the only file that knows which rules it holds is this one. It is also what makes the census a two-sided check rather than a marker count — the sequence of `reason`s here must equal the sequence of markers in the block, in order, so a gap that quietly grows a second rule fails the build. WHAT IT IS NOT: a passthrough. There is no key here that carries CSS. A gap says a rule exists and why it is not expressible; it does not say what the rule is, which is the difference between a definition with a hole in it and a JSON transcription of a stylesheet.",
+      "type": "object",
+      "required": ["kind", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "authored" },
+        "reason": {
+          "type": "string",
+          "pattern": "^[a-z][a-z-]*$",
+          "$doc": "One of the census's CLOSED vocabulary — `relational-selectors`, `local-custom-property`, `unnamed-condition`, `foreign-selector`. The list lives in scripts/build.mjs and deliberately not here: it is the census's vocabulary, the census is what scans a fragment to prove the reason is true of it, and a second copy in a schema would be a list nothing checks. An unknown reason fails the build by name."
+        },
+        "$doc": { "type": "string", "$doc": "What the skipped rule is and why it cannot be written down. Prose, so it is not in the contract — but it is the thing a reader of this file needs most at a gap." }
       }
     },
     "rule-keyframes": {

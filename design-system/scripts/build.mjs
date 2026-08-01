@@ -61,7 +61,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 /* PIPELINE 1 — the component-CSS emitter. Its header documents the definition
    format and why the WRITE side of it lives there rather than here. */
-import { PILOT, definitionPath, loadAll, renderAll, checkRegions, openMarker, closeMarker, renderKeyframes, keyframesOf } from "./emit-css.mjs";
+import { PILOT, definitionPath, loadAll, renderAll, checkRegions, openMarker, closeMarker, regionKey, renderKeyframes, keyframesOf } from "./emit-css.mjs";
 /* PIPELINE 2 — the same definitions, rendered for a Tailwind + React consumer.
    Both artefact sets are written through `packaged` below, so both are
    byte-compared by --check rather than regenerated in place. */
@@ -527,6 +527,7 @@ const packaged = [
   ["dist/react/nav.tsx", reactSource("nav")],
   ["dist/react/drawer.tsx", reactSource("drawer")],
   ["dist/react/chat.tsx", reactSource("chat")],
+  ["dist/react/menu.tsx", reactSource("menu")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by
@@ -953,30 +954,56 @@ const markerAbove = (text, at) => text.slice(0, at).trimEnd().split("\n").pop() 
         );
         continue;
       }
-      const tail = b.body.slice(at + close.length);
+      let tail = b.body.slice(at + close.length);
       if (!tail.trim()) {
         generatedBlocks++;
         b.kind = "generated";
         continue;
       }
-      /* A SPLIT BLOCK. The remainder is scanned on its own, so it is given the
-         same shape a block has — the selector and body reads the vocabulary's
-         `found` functions do. */
+      /* A SPLIT BLOCK, and since `menu` it may be split more than once. What
+         follows a region's close is an authored FRAGMENT, which runs until the
+         next `generated:<id>#n` region opens or until the block ends. Each
+         fragment is scanned ALONE — a reason satisfied by a generated half
+         would be a reason that says nothing, since that half is expressible by
+         construction — and each declares its own reason, because two gaps in
+         one block are not obliged to have the same one. */
       b.kind = "split";
-      const first = tail.trim().split("\n")[0];
-      const m2 = AUTHORED_MARKER.exec(first);
-      if (!m2) {
-        problems.push(
-          `block "${b.title}" has ${tail.trim().split("\n").length} line(s) after its \`generated:${b.owner}\` region closes, and the\n` +
-            `      first of them is not a census marker. A block may be a generated CORE plus an authored REMAINDER —\n` +
-            `      ask-fab's two unnameable at-rules are why the shape exists — but the remainder accounts for itself:\n` +
-            `      write \`/* ---- authored:${b.owner} — <reason> ---- */\` on the line the region's close marker is followed by.`
-        );
-        continue;
+      b.reasons = [];
+      let ok = true;
+      let n = 2;
+      while (tail.trim()) {
+        const first = tail.trim().split("\n")[0];
+        const m2 = AUTHORED_MARKER.exec(first);
+        if (!m2) {
+          problems.push(
+            `block "${b.title}" has ${tail.trim().split("\n").length} line(s) after a \`generated:${b.owner}\` region closes, and the\n` +
+              `      first of them is not a census marker. A block may be a generated CORE with authored GAPS in it —\n` +
+              `      ask-fab's two unnameable at-rules and menu's \`body:has(…)\` are why the shape exists — but every\n` +
+              `      fragment accounts for itself: write \`/* ---- authored:${b.owner} — <reason> ---- */\` on the line\n` +
+              `      the region's close marker is followed by.`
+          );
+          ok = false;
+          break;
+        }
+        const nextOpen = tail.indexOf(openMarker(regionKey(b.owner, n)));
+        const fragment = nextOpen === -1 ? tail : tail.slice(0, nextOpen);
+        b.reasons.push(m2[2]);
+        if (!checkReason(`an authored fragment of block "${b.title}"`, b.owner, m2[1], m2[2], { body: fragment, selectors: selectorsIn(fragment) })) ok = false;
+        if (nextOpen === -1) break;
+        const nextClose = tail.indexOf(closeMarker(regionKey(b.owner, n)), nextOpen);
+        if (nextClose === -1) {
+          problems.push(
+            `block "${b.title}" opens the \`${regionKey(b.owner, n)}\` region and never closes it before the next block.\n` +
+              `      A region belongs to one block.`
+          );
+          ok = false;
+          break;
+        }
+        tail = tail.slice(nextClose + closeMarker(regionKey(b.owner, n)).length);
+        n++;
       }
-      const remainder = { body: tail, selectors: selectorsIn(tail) };
-      b.reason = m2[2];
-      if (checkReason(`the authored remainder of block "${b.title}"`, b.owner, m2[1], m2[2], remainder)) splitBlocks++;
+      b.reason = b.reasons[0];
+      if (ok) splitBlocks++;
       continue;
     }
     const m = AUTHORED_MARKER.exec(above);
@@ -992,6 +1019,28 @@ const markerAbove = (text, at) => text.slice(0, at).trimEnd().split("\n").pop() 
     b.kind = "authored";
     b.reason = m[2];
     checkReason(`block "${b.title}"`, b.owner, m[1], m[2], b);
+  }
+
+  /* THE CENSUS IS TWO-SIDED, and that is what a gap bought. A definition that
+     skips a rule SAYS SO — `{"kind": "authored", "reason": …}` in its rules
+     list — so the sequence of reasons it declares can be compared against the
+     sequence of markers the block actually carries. A marker count alone would
+     pass a gap that quietly grew a second rule, or a definition that stopped
+     believing in one; this fails naming both sides. */
+  {
+    const declared = new Map(definitions.map((def) => [def.id, def.rules.filter((r) => r.kind === "authored").map((r) => r.reason)]));
+    for (const b of blocks) {
+      const want = declared.get(b.owner);
+      if (!want) continue;
+      const got = b.kind === "split" ? b.reasons ?? [] : [];
+      if (want.join("|") === got.join("|")) continue;
+      problems.push(
+        `block "${b.title}" carries ${got.length} authored fragment(s) [${got.join(", ") || "none"}] and\n` +
+          `      ${definitionPath(b.owner)} declares ${want.length} gap(s) [${want.join(", ") || "none"}]. A definition that\n` +
+          `      skips a rule says so, in order, so the two sides of the split are checked against each other rather\n` +
+          `      than the markers being counted on their own.`
+      );
+    }
   }
   if (problems.length) {
     console.error(`✗ census check failed — css/components.css is an assembly, and every block must say which half it is in:\n  - ${problems.join("\n  - ")}`);

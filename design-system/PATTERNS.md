@@ -325,6 +325,33 @@ attribute holds declarations, so pipeline 2 carries it as `dist/keyframes.css` r
 class, which is the first time the two pipelines have needed different *shapes* of artefact for
 one construct rather than different renderings of one.
 
+### The seventh finding is that a block's holes are not at its end, and `menu` is why
+
+The third shape — a generated core plus an authored remainder — landed with `ask-fab`, and the
+sentence that describes it has a hidden assumption in it: *"a remainder that is everything
+after the close marker."* That is true of `ask-fab` because its two unnameable rules happen to
+be its last two, and it was read as the general case for one release.
+
+`menu` has three unnameable rules and not one of them is at the end. `body:has(.menu[data-open])`
+is the seventh rule of twenty; `.menu__nav a + a` is the second-to-last; the foot query is the
+last. Under a prefix-only split, `menu` generates 33 of its 127 lines and the other 94 are
+accounted for as one authored lump whose declared reason is satisfied by whichever of the three
+features the scan happens to find first. **That is the census measuring the wrong thing** — the
+same failure the note describes for a reason satisfied by the generated half.
+
+So a definition may declare a **gap**, and the important thing about it is what it does not
+carry. It has no key that holds CSS. `{"kind": "authored", "reason": "foreign-selector"}` says
+*a rule exists here and this is why it is not expressible*, and says nothing about what the rule
+is — the lines stay in the stylesheet, untouched by the emitter and by the splice. A gap that
+could carry the rule would be the wedge this note refuses, wearing a census marker.
+
+It pays for itself by making the census **two-sided**. Until now a split block was checked by
+reading its markers; a definition had no opinion about how many holes it had, so a hole that
+grew a second rule was invisible and a definition that stopped needing one was invisible too.
+The reasons a definition declares must now equal the markers the block carries, in order, and
+the build names both sides when they disagree. `ask-fab` adopted the form in the same commit
+without moving a byte, which is the sign the shape was the general one all along.
+
 - **`typography` fails on `computed` alone** (its `clamp()` values), which is a token
   question rather than a pattern one: those are `--text-*` steps and the block mostly maps a
   class to a step. It may be the best argument for a fourth value form (a token binding with

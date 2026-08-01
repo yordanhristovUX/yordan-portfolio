@@ -183,7 +183,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer", "chat"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer", "chat", "menu"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -893,6 +893,18 @@ export function checkDefinition(def, id, rel) {
     }
   }
 
+  /* ---- two gaps in a row are one gap ----
+     Each gap ends a region and the next rule opens the next one, so two
+     adjacent gaps would bracket a region with nothing in it — a marker pair
+     around no CSS, and two census markers with one authored fragment between
+     them. The stylesheet cannot tell them apart either: what is between two
+     gaps is the authored lines, and they are one run. */
+  (def.rules ?? []).forEach((r, i) => {
+    if (r.kind === "authored" && def.rules[i + 1]?.kind === "authored") {
+      bad(`rules[${i}] and rules[${i + 1}] are both \`authored\` gaps. Two gaps in a row are one gap — the authored lines between them are one run, and a region with nothing in it is a marker pair around no CSS`);
+    }
+  });
+
   /* ---- a part with no declarations is a SCOPE, and a scope needs an occupant ----
      It emits nothing, so the only thing that makes it real is a later rule
      naming it. One that nothing names is a rule that says nothing at all, which
@@ -1172,6 +1184,37 @@ function banner(def) {
  *  had not said. Every selector here is resolved from a NAME the list declares
  *  earlier, so a rule cannot end up pointing at an element another rule does not. */
 export function renderBlock(def, conditions = {}) {
+  return renderRegions(def, conditions).map((r) => r.body).join("");
+}
+
+/**
+ * A definition renders as one or MORE regions, split at its `authored` gaps.
+ * `ask-fab` had a hole at the end of its block and a trailing remainder was
+ * enough; `menu` has one in the middle, and a prefix-only split would have
+ * counted a third of it as generated and left the rest as one authored lump.
+ * A gap renders nothing at all — it ends a region and the next rule opens the
+ * next one — so the authored lines the stylesheet keeps between them are
+ * untouched by both this emitter and the splice.
+ * @returns {{key: string, body: string}[]} — `key` is the id, then `id#2`, `id#3`…
+ */
+export function renderRegions(def, conditions = {}) {
+  /* An EMPTY body is a gap with nothing after it — `ask-fab`'s tail is the last
+     rule in its list — and an empty region would be a marker pair around
+     nothing. The loader refuses two gaps in a row, so the only empty a valid
+     definition can produce is a trailing one; dropping it here is what keeps
+     `ask-fab`'s bytes exactly what they were before gaps existed. */
+  return renderChunks(def, conditions)
+    .filter((chunk) => chunk !== null && chunk !== "")
+    .map((body, i) => ({ key: regionKey(def.id, i + 1), body }));
+}
+
+/** `menu`, `menu#2`, `menu#3`. The first is unindexed so every region that
+ *  existed before gaps did keeps the marker it already had. */
+export const regionKey = (id, n) => (n > 1 ? `${id}#${n}` : id);
+/** `menu#2` → `menu`. The id is what names the definition a region came from. */
+export const regionId = (key) => key.split("#")[0];
+
+function renderChunks(def, conditions = {}) {
   const where = definitionPath(def.id);
   const selectors = selectorsByName(def);
   const sel = (name) => selectors.get(name);
@@ -1179,9 +1222,18 @@ export function renderBlock(def, conditions = {}) {
      braces. The stylesheet draws that line and this only records it. */
   const lead = (r, pad) => (r.note?.length ? comments(r.note, pad) : "");
 
+  const chunks = [];
   let out = banner(def);
   for (const r of def.rules) {
     switch (r.kind) {
+      /* A GAP renders nothing and ENDS the region. The stylesheet writes a rule
+         here that this format cannot hold; the definition says so, the census
+         checks the marker beside it, and the lines themselves are never touched
+         by either this emitter or the splice. */
+      case "authored":
+        chunks.push(out, null);
+        out = "";
+        break;
       /* `base` is optional: case-body's root is a scope with no appearance of
          its own, and `.case-body { }` would claim a rule the file has not got. */
       case "base":
@@ -1264,7 +1316,8 @@ export function renderBlock(def, conditions = {}) {
         break;
     }
   }
-  return out;
+  chunks.push(out);
+  return chunks;
 }
 
 /* ============================================================
@@ -1455,10 +1508,13 @@ export function renderTypography(table) {
 /** Which file a generated region comes from. A component comes from its own
  *  definition; the typography layer comes from the levels table, which is not a
  *  component and does not pretend to be one. */
-export const sourceOf = (id) => (id === "typography" ? TYPOGRAPHY_PATH : definitionPath(id));
+export const sourceOf = (key) => (key === "typography" ? TYPOGRAPHY_PATH : definitionPath(regionId(key)));
 
-export const openMarker = (id) => `/* ---- generated:${id} — do not edit, source: ${sourceOf(id)} ---- */`;
-export const closeMarker = (id) => `/* ---- /generated:${id} ---- */`;
+/** A region KEY, not an id — `menu` and `menu#2` are two regions of one block,
+ *  and both name the same definition. The first is unindexed so every region
+ *  that existed before gaps did keeps exactly the marker it already had. */
+export const openMarker = (key) => `/* ---- generated:${key} — do not edit, source: ${sourceOf(key)} ---- */`;
+export const closeMarker = (key) => `/* ---- /generated:${key} ---- */`;
 
 /**
  * Locate one generated region in components.css.
@@ -1503,7 +1559,7 @@ export function renderAll(defs) {
   const conditions = Object.fromEntries(conditionValues());
   for (const def of defs ?? loadAll().defs) {
     try {
-      rendered.set(def.id, renderBlock(def, conditions));
+      for (const { key, body } of renderRegions(def, conditions)) rendered.set(key, body);
     } catch (e) {
       errors.push(e.message);
     }

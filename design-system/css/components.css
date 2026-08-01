@@ -1859,7 +1859,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:chat ---- */
 
-/* ---- authored:menu — foreign-selector ---- */
+/* ---- generated:menu — do not edit, source: components/menu/definition.json ---- */
 /* ============ Menu (full-screen nav) ============ @component menu
    The bar's navigation, unfolded. Below 700px the row of anchors becomes one
    `.bar__menu` segment (owned by the nav block), and THIS is what that segment
@@ -1893,7 +1893,10 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   transition: visibility 0s linear 0.28s;
 }
 .menu[data-open] { visibility: visible; transition-delay: 0s; }
+/* ---- /generated:menu ---- */
+/* ---- authored:menu — foreign-selector ---- */
 body:has(.menu[data-open]) { overflow: hidden; }
+/* ---- generated:menu#2 — do not edit, source: components/menu/definition.json ---- */
 
 .menu__sheet {
   position: absolute; inset: 0;
@@ -1977,8 +1980,13 @@ body:has(.menu[data-open]) { overflow: hidden; }
   padding: var(--space-4) 0;
   transition: color 0.2s;
 }
+/* ---- /generated:menu#2 ---- */
+/* ---- authored:menu — relational-selectors ---- */
 .menu__nav a + a { border-top: var(--rule); }
+/* ---- generated:menu#3 — do not edit, source: components/menu/definition.json ---- */
 .menu__nav a:hover { color: var(--accent); }
+/* ---- /generated:menu#3 ---- */
+/* ---- authored:menu — unnamed-condition ---- */
 
 @media (prefers-reduced-motion: reduce) {
   /* Arrive in one frame, not "no menu": the sheet is content, it simply stops

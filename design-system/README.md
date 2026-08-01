@@ -40,7 +40,7 @@ dist/react/*.tsx        generated typed React components, one per definition (+ 
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
 css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 17 generated,
-                        8 authored, 1 SPLIT, each with a marker naming its reason)
+                        7 authored, 2 SPLIT, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -107,6 +107,28 @@ two kinds, the reason is in the vocabulary, and the scan actually finds that fea
 block. A reason that has stopped being true is a block that should now be a definition, and
 the build says so by name. The count is reported on every `--check`, which is how "the file
 stopped being authored" becomes a number that moves rather than a claim.
+
+**A SPLIT BLOCK MAY HAVE ITS HOLE IN THE MIDDLE, and `menu` is why the shape grew.**
+`ask-fab`'s two unnameable rules are the last two in its block, so a generated core plus a
+trailing remainder was the whole story. `menu` has three holes and none of them is at the end:
+`body:has(.menu[data-open])` styles the document, `.menu__nav a + a` is an adjacent sibling,
+and the foot carries `prefers-reduced-motion` and `print`. A prefix-only split would have
+counted 33 of its 127 lines as generated and left the other 94 accounted for as one authored
+lump — the census measuring the wrong thing.
+
+So a definition may declare a **gap**: `{"kind": "authored", "reason": "…"}` in its rules list,
+which renders nothing, ends the generated region and lets the next rule open the next one. The
+block becomes an alternating sequence — `generated:menu`, an authored fragment, `generated:menu#2`,
+another, `generated:menu#3` — with the first region unindexed so every region that existed
+before gaps did keeps exactly the marker it already had. **A gap carries no CSS**: it says a
+rule exists here and why it is not expressible, and nothing about what the rule is. That is the
+difference between a definition with a hole in it and a JSON transcription of a stylesheet.
+
+It also makes the census **two-sided**, which a marker count could not be: the sequence of
+reasons the definition declares must equal the sequence of markers the block carries, in order,
+so a gap that quietly grows a second rule fails the build naming both sides. `ask-fab` adopted
+the gap form in the same commit — its bytes did not move and its remainder is now claimed in
+one file and proved in the other.
 
 **A block may also be BOTH, and `ask-fab` is the first.** `PATTERNS.md` predicted the third
 shape in one sentence and nothing had needed it: a generated core plus a small authored
@@ -189,7 +211,7 @@ renderer. Three consequences, and the first is the one that pays for the rest:
   selector), so the loader computes that view from the list. It is a query, not a second
   source.
 
-### The twenty-three constructs R4 added, and the block that forced each
+### The twenty-four constructs R4 added, and the block that forced each
 
 | construct | what it says | forced by |
 | --- | --- | --- |
@@ -215,6 +237,7 @@ renderer. Three consequences, and the first is the one that pays for the rest:
 | a **pseudo-element of a NAMED rule** — `within` + `pseudo`, nothing else | `.chat__trace-toggle::before`: a pseudo-element belongs to an element, and that element already has a rule with a name | `chat` |
 | **`::placeholder`** and **`::-webkit-details-marker`** | two more members of a closed pseudo enum, the vendor one as-spelled — the standard `::marker` does not reach a `<summary>`'s triangle | `chat` |
 | **`second` / `third` / `fourth`** positions | `:nth-child(2 \| 3 \| 4)` — three members and NOT one `nth` key taking a number, because a key that takes 2 takes `3n+1` | `chat`'s four streaming squares |
+| **`kind: "authored"`** — a GAP | a rule the stylesheet writes here that this format cannot hold, and why; renders nothing, ends the region, carries no CSS | `menu`, whose three holes are all in the middle |
 
 The ones that are *relations* are closed at both ends on purpose, and that is what keeps them
 from being the wedge `PATTERNS.md` refuses. A scoped part's ancestor must **name** a rule the same definition
@@ -634,7 +657,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly twenty-six** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly twenty-seven** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -668,6 +691,7 @@ published.
                                              // forced query-only rules and @keyframes
 "@yordan/design-system/react/drawer"         // nine of its rules are about components it HOSTS
 "@yordan/design-system/react/chat"           // the most rules of any block, and it needed the least
+"@yordan/design-system/react/menu"           // three regions with three authored gaps between them
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —

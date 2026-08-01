@@ -5,6 +5,26 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.4.0 — 2026-08-01
+
+Minor — 13 change(s).
+
+### Added
+
+- definition `menu .menu__body` added
+- definition `menu .menu__close:hover` added
+- definition `menu .menu__close` added
+- definition `menu .menu__head` added
+- definition `menu .menu__nav a:hover` added
+- definition `menu .menu__nav a` added
+- definition `menu .menu__nav` added
+- definition `menu .menu__sheet` added
+- definition `menu .menu__title` added
+- definition `menu .menu[data-open] .menu__sheet` added
+- definition `menu .menu[data-open]` added
+- definition `menu .menu` added
+- export `./react/menu` added
+
 ## 2.3.0 — 2026-08-01
 
 Minor — 46 change(s).

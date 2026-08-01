@@ -133,6 +133,11 @@
       "class": ".ask-fab__label",
       "$doc": "The label, folded away. Scoped to the STATE rather than given a modifier, which is the shape only a named reference can reach — `.ask-fab[data-collapsed]` owns no selector an author could quote, and this is the third block to need that (media's `.ph:has(img) .ph__label` and drawer's sheet are the others). The accessible name does not fold with it: it is an `aria-label` on the button and spec.md is where that rule lives.",
       "declarations": [{ "set": { "max-width": "0", "opacity": "0" } }]
+    },
+    {
+      "kind": "authored",
+      "reason": "unnamed-condition",
+      "$doc": "THE TAIL THIS BLOCK IS FAMOUS FOR, now said in the definition rather than only in the stylesheet. Two rules follow — `@media (prefers-reduced-motion: reduce)`, which stops the pill's transitions, and `@media print`, which removes it — and both are conditions this system deliberately will not name, because `$conditions` holds VIEWPORTS and each is named for the number it carries. A reduced-motion preference and a sheet of paper have no number. When ask-fab was the only split block the remainder needed no declaration here: there was one hole, it was at the end, and the marker in the CSS was the whole record. `menu` put a hole in the MIDDLE, so a gap became a rule in the list — and adopting it here costs no bytes and makes the census two-sided for this block too: the reason is now claimed in one place and proved in the other."
     }
   ]
 }
