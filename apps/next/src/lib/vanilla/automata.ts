@@ -2,7 +2,7 @@
 /* ============================================================
    Automata engine — the skeleton and the life are one system.
 
-   COPIED FROM js/automata.js @ ebc9900; fix upstream first. A bug found here is
+   COPIED FROM js/automata.js @ 5888dd2; fix upstream first. A bug found here is
    reported against js/automata.js, fixed there by its owner, and re-copied —
    never fixed only in this copy.
 
@@ -18,8 +18,13 @@
         field is declared with `!` rather than the code being reordered.
      3. `Region.dispose()` and the listener bookkeeping it needs. The source
         never removed a listener because a page teardown was a navigation.
-     4. ONE LINE IS NOT REPRODUCED, and it is a defect rather than a preference.
-        See the note above `document.fonts?.ready` below.
+
+   THERE IS NO FOURTH. This header used to carry one — a line of the engine the
+   copy did not reproduce, because `document.fonts?.ready` called `rebuild` with
+   a `pageRegions` that no longer existed upstream and could not be typed here.
+   That was reported upstream, fixed there at 20a162a, and the line is now
+   re-copied rather than re-derived. Every expression in the engine is the
+   source's again.
 
    WHAT THE ENGINE DOES, in the source's own words:
 
@@ -753,19 +758,11 @@ export function initAutomata(): AutomataHandle {
      — this is a re-settle as much as a rebuild, and it goes through the same
      path rather than getting a terminator pass of its own.
 
-     UPSTREAM DEFECT, AND THE ONE LINE OF THE ENGINE THIS COPY DOES NOT
-     REPRODUCE. js/automata.js @ 2e84323 line 720 reads
-
-         document.fonts?.ready.then(() => rebuild(pageRegions, document));
-
-     and `pageRegions` is defined nowhere in that file — it is the old name of
-     `all`, left behind when the case dialog's second region set was deleted. In
-     a browser it throws a ReferenceError inside the promise callback, so the
-     font-ready re-settle silently never runs: no visual break, because the
-     ResizeObserver below heals the same layout change a moment later, which is
-     exactly why it has survived. In TypeScript it does not compile, so it cannot
-     be carried verbatim. REPORTED UPSTREAM; when js/automata.js is fixed, this
-     line is re-copied rather than re-derived. */
+     The `destroyed` guard is the port's, and it is the teardown delta rather
+     than a second opinion about the rebuild: `fonts.ready` is a promise, so it
+     can resolve after the effect that started the engine has unmounted, and a
+     rebuild against disposed regions is work nobody asked for. The call inside
+     it is the source's. */
   document.fonts?.ready.then(() => {
     if (!destroyed) rebuild(all, document);
   });
