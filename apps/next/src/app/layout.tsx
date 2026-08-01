@@ -11,6 +11,17 @@
    page imports its own stylesheet, so Next emits them in layout-then-page
    order, which is the same order.
 
+   THE FOURTH IMPORT IS NEW AND SITS THIRD: ./globals.css, which is the whole
+   of the Tailwind pipeline — the design system's tokens.tailwind.css plus the
+   utilities the generated components in @yordan/design-system/react name. It
+   goes AFTER tokens.css (every @theme entry in it is a var() reference into
+   that file) and after components.css (its utilities style the three pilot
+   elements that no longer carry `.btn`/`.chip`/`.stat`), and BEFORE the page
+   stylesheet, which stays last. Read its header before changing the order: it
+   imports Tailwind's parts by hand rather than as one line, because Preflight
+   would overwrite the Foundation block of components.css and because a LAYERED
+   utility loses to that block's `a {}` and `button {}` rules outright.
+
    Fonts are a <link> to /fonts/fonts.css rather than an import, and that is
    deliberate: fonts.css addresses its woff2 files relatively, and an import
    would move it to a hashed URL under /_next/static/css/ while the fonts stayed
@@ -29,6 +40,7 @@ import { NO_FLASH_THEME, THEME_COLORS } from "@/lib/theme-script";
 
 import "@yordan/design-system/tokens.css";
 import "@yordan/design-system/components.css";
+import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

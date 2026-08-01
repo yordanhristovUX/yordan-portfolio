@@ -14,15 +14,18 @@
   },
   "dependencies": {
     "@yordan/design-system": "file:../../design-system",
+    "class-variance-authority": "0.7.1",
     "next": "16.2.12",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "0.0.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
     "@types/node": "26.1.2",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
+    "tailwindcss": "4.3.3",
     "typescript": "6.0.3"
   }
 }

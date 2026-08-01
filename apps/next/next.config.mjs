@@ -33,6 +33,17 @@ const nextConfig = {
   trailingSlash: false,
   images: { unoptimized: true },
   reactStrictMode: true,
+  /* THE PACKAGE SHIPS TSX SOURCE, DELIBERATELY, SO THIS APP COMPILES IT.
+
+     @yordan/design-system's exports map resolves ./react/<id> to
+     dist/react/<id>.tsx — generated files, not a build output. The package
+     declares no dependencies and runs no build step of its own (its
+     package.json says so in as many words), which is what keeps the design
+     system framework-agnostic: it publishes a class map, a type and an
+     element, and the consumer that wants React brings React. Without this
+     line Next hands the .tsx to the default loader as node_modules
+     JavaScript and the build fails on the first `<a>`. */
+  transpilePackages: ["@yordan/design-system"],
   /* THE REPO ROOT, DELIBERATELY, AND IT IS NOT A WORKSPACE.
 
      Turbopack's "root" is the lowest directory the build may read from, not a

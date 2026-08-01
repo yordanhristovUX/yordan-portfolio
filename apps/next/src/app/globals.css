@@ -1,0 +1,95 @@
+/* ============================================================
+   The Tailwind half of the cascade — pipeline 2, and nothing else.
+
+   This app now consumes the design system through TWO pipelines at once, and
+   this file is the whole of the second one:
+
+     pipeline 1  css/components.css + the DS class names        (20 components)
+     pipeline 2  @yordan/design-system/react/* + utilities       (button, chip, stat)
+
+   Tailwind is here for exactly one reason: to build the utility classes the
+   GENERATED components in @yordan/design-system/react name in their cva maps.
+   It owns no page, no layout and no colour. Every value it can express comes
+   from dist/tokens.tailwind.css, which is 51 `var()` references into
+   dist/tokens.css and not one literal — so a utility and a hand-written rule
+   read the same custom property and therefore the same dark, print and
+   wide-viewport value.
+
+   ── WHY THIS IS NOT `@import "tailwindcss"` ──────────────────────────────
+
+   Two deliberate deviations from the one-line import, each of which would be a
+   visible defect if it were dropped.
+
+   1. NO PREFLIGHT. `@import "tailwindcss"` pulls `tailwindcss/preflight.css`
+      into @layer base, and this site already has a base layer: the Foundation
+      block at the top of components.css owns the box model, `body`, `a`,
+      `button`, `::selection` and `:focus-visible`. Two resets do not compose —
+      Preflight would relayer margins the page's own reset already zeroed,
+      restyle every heading and list on four pages, and hand `img` a
+      `display: block` the card plates are not laid out for. The app's look is
+      owned by tokens.css + components.css + the page stylesheet. So the theme
+      and the utilities are imported on their own and Preflight is never
+      resolved.
+
+   2. THE UTILITIES ARE UNLAYERED, AND THAT IS THE LOAD-BEARING LINE.
+      The documented no-preflight recipe is `@import "tailwindcss/utilities.css"
+      layer(utilities)`. It does not work here, and the reason is the cascade
+      rather than the specificity: EVERY normal declaration in an unlayered
+      rule beats EVERY normal declaration in a layered one, whatever the
+      selectors say. components.css is unlayered, and its Foundation block
+      contains
+
+          a      { color: inherit; text-decoration: none; }
+          button { font: inherit; color: inherit; background: none; border: 0; }
+
+      With the utilities in @layer utilities, those two element rules win
+      outright: a swapped `<Button href>` renders with `color: inherit` instead
+      of `text-content-primary`, and a swapped `<Button>` renders with no
+      border and no hover fill — measured, not feared. Unlayered, the utilities
+      compete on specificity exactly as `.btn` did (0-1-0 beats 0-0-1) and the
+      swap is invisible.
+
+      Their POSITION is last on purpose too: the utilities are the styling of
+      the components they build, and a use site that passes `className` expects
+      what it passed to take effect. They still lose to the page stylesheets,
+      which each page imports after this file — the same order the vanilla
+      pages' <link> tags establish, where css/style.css is last.
+
+   3. SOURCE DETECTION IS EXPLICIT. `source(none)` turns off Tailwind's
+      automatic scan and the two `@source` lines below say what to read
+      instead. Automatic detection roots at the nearest repository root, which
+      is the REPO's — one directory above this app owns eight other slices, and
+      a class scanner reading `index.html`, `js/` and `evals/` would be this
+      consumer reaching across a boundary to build its own CSS. The second line
+      is required by the package's own header: Tailwind never scans
+      node_modules, and without it the generated components render unstyled.
+   ============================================================ */
+
+/* The default theme, in the lowest layer there is. It is tree-shaken — only a
+   variable an emitted utility actually references survives — and it is layered
+   so that every name it shares with the design system (`--font-mono`,
+   `--text-xs`, `--spacing`) loses to the unlayered `:root` in tokens.css. */
+@import "tailwindcss/theme.css" layer(theme);
+
+/* The design system's Tailwind tier. tokens.css is imported ahead of this by
+   src/app/layout.tsx — it is NOT optional, because every @theme entry below is
+   a var() reference into it and none of them carries a value of its own. */
+@import "@yordan/design-system/tokens.tailwind.css";
+
+@import "tailwindcss/utilities.css" source(none);
+
+/* This app's own JSX — where the utility names are written by hand, in the
+   `className` of a generated component at a use site. TS AND TSX ONLY, which
+   is narrower than "src/" on purpose: a bare `@source "../"` also reads
+   src/styles/site/*.css, the four synced page stylesheets, and Tailwind's
+   scanner takes candidates from any text it is given. `position: absolute` in
+   another slice's stylesheet is not a class name, but `absolute` is a utility,
+   and it was emitting a couple of dozen of them — including `.container`,
+   `.uppercase` and `.border`, which are generic enough to collide with a real
+   class name one day. */
+@source "../**/*.{ts,tsx}";
+/* The generated components themselves, whose cva maps hold the rest. Named
+   through node_modules, which is the published route: the package's exports
+   map lists ./react/* and the boundary gate bans a path into the design
+   system's source. */
+@source "../../node_modules/@yordan/design-system/dist/react";
