@@ -18,16 +18,29 @@
    while this remains an app-layer question. It sits after globals.css and
    before the page stylesheets, which stay last.
 
-   THE FOURTH IMPORT IS NEW AND SITS THIRD: ./globals.css, which is the whole
-   of the Tailwind pipeline — the design system's tokens.tailwind.css plus the
-   utilities the generated components in @yordan/design-system/react name. It
-   goes AFTER tokens.css (every @theme entry in it is a var() reference into
-   that file) and after components.css (its utilities style the three pilot
-   elements that no longer carry `.btn`/`.chip`/`.stat`), and BEFORE the page
-   stylesheet, which stays last. Read its header before changing the order: it
-   imports Tailwind's parts by hand rather than as one line, because Preflight
-   would overwrite the Foundation block of components.css and because a LAYERED
-   utility loses to that block's `a {}` and `button {}` rules outright.
+   ./globals.css IS THE WHOLE OF THE TAILWIND PIPELINE — the design system's
+   tokens.tailwind.css, its keyframes.css, and the utilities the generated
+   components in @yordan/design-system/react name. It goes AFTER tokens.css
+   (every @theme entry in it is a var() reference into that file) and BEFORE
+   the page stylesheet, which stays last.
+
+   IT ALSO GOES BEFORE components.css, AND THAT ORDER MOVED IN R5 — read
+   globals.css's own header before changing it back. In one line: the four
+   SPLIT blocks put their authored remainder in components.css, that remainder
+   is overrides, and an override at 0-1-0 loses to a generated base utility at
+   0-1-0 emitted later. With globals.css last, the card grid's two-column step
+   at 960px, every `prefers-reduced-motion` cancellation and every `@media
+   print { display: none }` in an authored remainder stopped applying. Putting
+   components.css last restores the vanilla cascade exactly, and costs nothing,
+   because for any element carrying both a DS class and its utilities the two
+   files are two renderings of one definition and hold the same declarations.
+
+   The same file also imports Tailwind's parts by hand rather than as one line,
+   because Preflight would overwrite the Foundation block of components.css and
+   because a LAYERED utility loses to that block's `a {}` and `button {}` rules
+   outright, whatever the specificity says. That is about LAYERS and is
+   unaffected by the order above: unlayered utilities at 0-1-0 still beat those
+   element rules at 0-0-1 from either side of components.css.
 
    Fonts are a <link> to /fonts/fonts.css rather than an import, and that is
    deliberate: fonts.css addresses its woff2 files relatively, and an import
@@ -47,8 +60,8 @@ import { siteUrl } from "@/lib/content";
 import { NO_FLASH_THEME, THEME_COLORS } from "@/lib/theme-script";
 
 import "@yordan/design-system/tokens.css";
-import "@yordan/design-system/components.css";
 import "./globals.css";
+import "@yordan/design-system/components.css";
 import "./route-settle.css";
 
 export const metadata: Metadata = {

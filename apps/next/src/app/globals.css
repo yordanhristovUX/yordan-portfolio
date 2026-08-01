@@ -1,11 +1,25 @@
 /* ============================================================
    The Tailwind half of the cascade — pipeline 2, and nothing else.
 
-   This app now consumes the design system through TWO pipelines at once, and
-   this file is the whole of the second one:
+   This app consumes the design system through TWO pipelines at once, and this
+   file is the whole of the second one. R5 finished the cutover, so the split
+   is no longer by component — it is by WHAT IS BEING SAID about a component:
 
-     pipeline 1  css/components.css + the DS class names        (20 components)
-     pipeline 2  @yordan/design-system/react/* + utilities       (button, chip, stat)
+     pipeline 2  @yordan/design-system/react/* + these utilities
+                 — every app-authored element that has a React form
+     pipeline 1  css/components.css, which STAYS IMPORTED and carries
+                 (a) the six blocks with no React form and never will have one
+                     (the two @component-none blocks, skeleton, terminator,
+                     project-row) plus the authored HALVES of the four split
+                     blocks — card's seven gaps, menu's three, theme-toggle's
+                     three, ask-fab's one; and
+                 (b) the markup this app renders from an ARTEFACT rather than
+                     authoring: src/components/evals-regions.tsx and
+                     src/components/chat/blocks.tsx.
+
+   Dropping components.css was never the end state. A Next page rendering
+   <CardGrid>/<Card> gets its grid hairlines from it, because `:nth-child(3n)`
+   and the orphan-row pair cannot be class attributes at all.
 
    Tailwind is here for exactly one reason: to build the utility classes the
    GENERATED components in @yordan/design-system/react name in their cva maps.
@@ -31,7 +45,9 @@
       and the utilities are imported on their own and Preflight is never
       resolved.
 
-   2. THE UTILITIES ARE UNLAYERED, AND THAT IS THE LOAD-BEARING LINE.
+   2. THE UTILITIES ARE UNLAYERED, AND SIT BEFORE components.css.
+
+      Two separate facts, and the second one MOVED in R5. Unlayered first:
       The documented no-preflight recipe is `@import "tailwindcss/utilities.css"
       layer(utilities)`. It does not work here, and the reason is the cascade
       rather than the specificity: EVERY normal declaration in an unlayered
@@ -47,13 +63,42 @@
       of `text-content-primary`, and a swapped `<Button>` renders with no
       border and no hover fill — measured, not feared. Unlayered, the utilities
       compete on specificity exactly as `.btn` did (0-1-0 beats 0-0-1) and the
-      swap is invisible.
+      swap is invisible. That has not changed and must not.
 
-      Their POSITION is last on purpose too: the utilities are the styling of
-      the components they build, and a use site that passes `className` expects
-      what it passed to take effect. They still lose to the page stylesheets,
-      which each page imports after this file — the same order the vanilla
-      pages' <link> tags establish, where css/style.css is last.
+      THEIR POSITION, HOWEVER, MOVED — from after components.css to before it,
+      and R5 is what made the old order wrong. While the only swapped elements
+      were Button, Chip and Stat, no element in the document carried a design
+      system class AND a utility, so the two files never met at equal
+      specificity and last-wins cost nothing. After the cutover almost every
+      element carries both, because six blocks have no React form at all and
+      four more are SPLIT — a generated core here plus an authored remainder
+      that only components.css can carry. Those remainders are overrides, and
+      an override at 0-1-0 loses to a base utility at 0-1-0 written later:
+
+          @media (max-width: 960px) { .card-grid { …repeat(2, 1fr) } }
+            vs  cardGrid()'s base  [grid-template-columns:repeat(3,_1fr)]
+          @media (prefers-reduced-motion: reduce) { .menu, .menu__sheet
+                                                    { transition: none } }
+            vs  menu()'s base      [transition:visibility_0s_linear_0.28s]
+          @media print { .theme { display: none } }
+            vs  themeToggle()'s    flex
+
+      With globals.css last, the two-column grid step, every reduced-motion
+      cancellation and every print suppression in an authored remainder lost —
+      measured on the first build of the swap, not feared. With it first,
+      components.css settles equal-specificity ties, which is EXACTLY the
+      vanilla cascade: on the shipped pages `.card-grid` and its 960px query
+      are two rules in one file, later wins, and the later one is the query.
+
+      Nothing is lost by the move, because the two pipelines are two renderings
+      of ONE definition: for any element carrying both, the generated half of
+      components.css and the cva map hold the same declarations, so which of
+      them wins a tie is unobservable. Only the authored half differs, and the
+      authored half is the half that has to win.
+
+      The utilities still lose to the page stylesheets, which each page imports
+      after this file — the same order the vanilla pages' <link> tags
+      establish, where css/style.css is last.
 
    3. SOURCE DETECTION IS EXPLICIT. `source(none)` turns off Tailwind's
       automatic scan and the two `@source` lines below say what to read
@@ -75,6 +120,25 @@
    src/app/layout.tsx — it is NOT optional, because every @theme entry below is
    a var() reference into it and none of them carries a value of its own. */
 @import "@yordan/design-system/tokens.tailwind.css";
+
+/* THE @KEYFRAMES, AND WHY THEY NEED A FILE. A class attribute holds
+   declarations; `@keyframes blink { … }` is not one, so pipeline 2 cannot
+   carry an animation the way it carries everything else. The design system
+   renders every keyframes rule any definition declares into dist/keyframes.css
+   and publishes it as its own subpath, and its README states the consequence
+   in as many words: a browser ignores an `animation:` naming keyframes that do
+   not exist, SILENTLY, and no gate on the package's side can see it.
+
+   Three animations reach this app through it — `blink` (the bar's status dot),
+   `theme-dial` (the toggle's auto lamp) and `chat-life` (the four thinking
+   squares). All three are ALSO declared in components.css, which this app
+   still loads, so this import is not what makes them run today; it is what
+   keeps them running on the day a definition mints a fourth, or a split block
+   moves its keyframes out of the authored half. Importing it is the contract,
+   not an optimisation, and it sits here — after tokens.tailwind.css,
+   before the utilities — in the order design-system/README.md documents:
+   tailwindcss → tokens.css → tokens.tailwind.css → keyframes.css. */
+@import "@yordan/design-system/keyframes.css";
 
 @import "tailwindcss/utilities.css" source(none);
 
