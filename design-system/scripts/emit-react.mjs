@@ -170,6 +170,15 @@ const scopeOf = (part) =>
   : !part.element && !part.class ? part.pseudo
   : `_${(part.element ?? [part.class]).join("_")}${part.pseudo ?? ""}`;
 
+/** EVERY scope a part contributes — one, or one per member when its `class` is
+ *  a selector list. Tailwind has no selector list, so a list emits each class
+ *  once per member, which is the same choice `stateEntriesOf` already makes for
+ *  a state's list `suffix` and for the same reason: the same cascade, a longer
+ *  attribute, and neither half dropped. `card`'s clipped media and note are the
+ *  pair that asked. */
+const scopesOf = (part) =>
+  Array.isArray(part.class) ? part.class.map((c) => `_${c}`) : [scopeOf(part)];
+
 /** The variant prefix for a scope and/or a selector suffix; "" when neither. */
 const variantFor = (scope, suffix = "") => (scope || suffix ? `[&${scope}${suffix}]:` : "");
 
@@ -546,14 +555,19 @@ export function renderComponent(def, elements, keyOf) {
     const owner = r.kind === "contains" ? r.of : r.kind === "part" && r.within ? r.within : null;
     if (owner === null) continue;
     const parent = anchor(r, owner);
-    const scope = parent.scope + (r.kind === "contains" ? containsSuffix(r) : scopeOf(r));
-    scopeByName.set(r.name, { scope, host: parent.host });
+    /* USUALLY ONE SCOPE, AND SOMETIMES A LIST. A part whose `class` is an array
+       is one rule under several selectors, so it contributes one variant per
+       member and REGISTERS NONE — the loader already refuses a part scoped
+       within it, exactly as it refuses one scoped within a list-suffix state,
+       because a list has no single selector to descend from. */
+    const scopes = (r.kind === "contains" ? [containsSuffix(r)] : scopesOf(r)).map((s) => parent.scope + s);
+    if (scopes.length === 1) scopeByName.set(r.name, { scope: scopes[0], host: parent.host });
     const sel = selectors.get(r.name);
-    const entries = [
+    const entries = scopes.flatMap((scope) => [
       ...entriesOf(r.declarations, keyOf, `${where} → ${sel}`, tally, variantFor(scope)),
       ...stateEntriesOf(r.states, keyOf, `${where} → ${sel}`, tally, scope),
       ...positionEntriesOf(r.positions, keyOf, `${where} → ${sel}`, tally, scope),
-    ];
+    ]);
     if (!entries.length) continue;
     entries[0] = { ...entries[0], lead: `\`${sel}\`${r.$doc ? ` — ${r.$doc}` : ""}` };
     sinkFor(parent.host).push(...entries);
@@ -588,14 +602,19 @@ export function renderComponent(def, elements, keyOf) {
           continue;
         }
         const parent = anchor(o, o.kind === "part" ? o.within : o.of);
-        const scope =
-          o.kind === "part" ? parent.scope + scopeOf(o)
-          : o.kind === "contains" ? parent.scope + containsSuffix(o)
-          : o.kind === "position" ? parent.scope + POSITION_SUFFIX[o.at]
-          : parent.scope;
-        scopeByName.set(o.name, { scope, host: parent.host });
+        /* One scope, or one per member of a class LIST — the same widening the
+           top-level walk above takes, so nothing is sayable inside a query that
+           is not sayable outside one. A list registers no scope, for the reason
+           given there. */
+        const scopes = (
+          o.kind === "part" ? scopesOf(o)
+          : o.kind === "contains" ? [containsSuffix(o)]
+          : o.kind === "position" ? [POSITION_SUFFIX[o.at]]
+          : [""]
+        ).map((s) => parent.scope + s);
+        if (scopes.length === 1) scopeByName.set(o.name, { scope: scopes[0], host: parent.host });
         const suffixes = o.kind === "state" ? (Array.isArray(o.suffix) ? o.suffix : [o.suffix]) : [null];
-        const entries = suffixes.flatMap((suffix) => {
+        const entries = scopes.flatMap((scope) => suffixes.flatMap((suffix) => {
           /* The same choice `stateEntriesOf` makes, for the same reason: an
              unscoped state wears the table's idiomatic prefix, a scoped one
              wears the whole selector in one bracket. */
@@ -608,7 +627,7 @@ export function renderComponent(def, elements, keyOf) {
             );
           }
           return entriesOf(o.declarations, keyOf, `${where} @${block.condition} ${o.name}`, tally, at + prefix);
-        });
+        }));
         if (!entries.length) continue;
         entries[0] = { ...entries[0], lead };
         sinkFor(parent.host).push(...entries);

@@ -5,6 +5,49 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.6.0 — 2026-08-01
+
+Minor — 36 change(s).
+
+### Added
+
+- definition `card .card @below-620` added
+- definition `card .card p` added
+- definition `card .card__more:hover,:active` added
+- definition `card .card__more` added
+- definition `card .card__note` added
+- definition `card .card__title` added
+- definition `card .card__type` added
+- definition `card .card--reveal .card__media img` added
+- definition `card .card--reveal .card__media, .card--reveal .card__note` added
+- definition `card .card--reveal` added
+- definition `card .card--ruled .card__title` added
+- definition `card .card--ruled` added
+- definition `card .card-grid @below-620` added
+- definition `card .card-grid` added
+- definition `card .card:last-child @below-620` added
+- definition `card .card:last-child` added
+- definition `card .card` added
+- definition `card .peek__frame img[hidden]` added
+- definition `card .peek__frame img` added
+- definition `card .peek__frame` added
+- definition `card .peek__text` added
+- definition `card .peek-sheet__body` added
+- definition `card .peek-sheet__close` added
+- definition `card .peek-sheet__frame img` added
+- definition `card .peek-sheet__head` added
+- definition `card .peek-sheet__note` added
+- definition `card .peek-sheet__panel` added
+- definition `card .peek-sheet__scrim` added
+- definition `card .peek-sheet__title` added
+- definition `card .peek-sheet[data-open] .peek-sheet__panel` added
+- definition `card .peek-sheet[data-open] .peek-sheet__scrim` added
+- definition `card .peek-sheet[data-open]` added
+- definition `card .peek-sheet` added
+- definition `card .peek[data-open]` added
+- definition `card .peek` added
+- export `./react/card` added
+
 ## 2.5.0 — 2026-08-01
 
 Minor — 7 change(s).

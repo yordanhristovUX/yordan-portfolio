@@ -40,7 +40,7 @@ dist/react/*.tsx        generated typed React components, one per definition (+ 
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
 css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 17 generated,
-                        6 authored, 3 SPLIT, each with a marker naming its reason)
+                        5 authored, 4 SPLIT, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -48,7 +48,10 @@ components/*/definition.json  appearance as data — the `PILOT` list, see "Defi
 tokens/typography.json  the type levels table — the typography block is generated from it
 components/definition.schema.json  the schema, EXTRACTED block by block (build.mjs validates)
 scripts/validate-json.mjs  the ~150-line JSON Schema subset validator, zero-dep
-PATTERNS.md             the R4 design note: which blocks can be definitions, measured (5 of 24)
+PATTERNS.md             the R4 design note: which blocks can be definitions, measured — plus
+                        R4's CLOSING RECORD (the census block by block, the 27-construct
+                        inventory) and THE OWNER'S REVIEW LIST, which is the one place every
+                        appearance decision the migration deferred is written down
 stories/*.stories.js    Storybook (CSF3, vanilla HTML strings)  (npm run storybook → :6006)
 figma/push-guide.md     the repeatable Figma Variables push (Figma MCP)
 scripts/contract-diff.mjs  dist/ vs RELEASED.json → the semver class the change needs
@@ -129,6 +132,13 @@ reasons the definition declares must equal the sequence of markers the block car
 so a gap that quietly grows a second rule fails the build naming both sides. `ask-fab` adopted
 the gap form in the same commit — its bytes did not move and its remainder is now claimed in
 one file and proved in the other.
+
+**`card` is the shape's limit case and the last block R4 took: eight regions with seven gaps
+between them.** Six of the seven are the grid's own hairline arithmetic — `:nth-child(3n)`, the
+orphan-row pair, and the whole two-column restatement at 960px — plus `body:has()` and three
+at-rules with unnameable conditions. It is the block where the census earns its keep: a
+prefix-only split, or one lump, would have said almost nothing true about a block whose entire
+idea is *where a card sits in the grid*.
 
 **A block may also be BOTH, and `ask-fab` is the first.** `PATTERNS.md` predicted the third
 shape in one sentence and nothing had needed it: a generated core plus a small authored
@@ -211,7 +221,7 @@ renderer. Three consequences, and the first is the one that pays for the rest:
   selector), so the loader computes that view from the list. It is a query, not a second
   source.
 
-### The twenty-four constructs R4 added, and the block that forced each
+### The twenty-seven constructs R4 added, and the block that forced each
 
 | construct | what it says | forced by |
 | --- | --- | --- |
@@ -238,6 +248,8 @@ renderer. Three consequences, and the first is the one that pays for the rest:
 | **`::placeholder`** and **`::-webkit-details-marker`** | two more members of a closed pseudo enum, the vendor one as-spelled — the standard `::marker` does not reach a `<summary>`'s triangle | `chat` |
 | **`second` / `third` / `fourth`** positions | `:nth-child(2 \| 3 \| 4)` — three members and NOT one `nth` key taking a number, because a key that takes 2 takes `3n+1` | `chat`'s four streaming squares |
 | **`kind: "authored"`** — a GAP | a rule the stylesheet writes here that this format cannot hold, and why; renders nothing, ends the region, carries no CSS | `menu`, whose three holes are all in the middle |
+| a scoped part's **`class` as an ARRAY**, plus **`wrap` on a part** | one rule under two of the component's OWN classes, `within` distributed over each — `.card--reveal .card__media, .card--reveal .card__note` — and the fact that the stylesheet writes the list across two lines | `card` |
+| a **`note` on a MODIFIER and on a POSITION** | a comment above a variant and above a `:last-child` rule — the last two kinds that could not carry one | `card`'s `.card--reveal` (two comments) and its `.card:last-child` |
 
 The ones that are *relations* are closed at both ends on purpose, and that is what keeps them
 from being the wedge `PATTERNS.md` refuses. A scoped part's ancestor must **name** a rule the same definition
@@ -256,6 +268,19 @@ would be a binding the census cannot count. `expr` is also the one construct tha
 rather than a relation, which is why admitting computed geometry did not widen what a rule can
 apply to: `@supports (grid-template-columns: round(down, 10%, 3px))` is still unsayable, and its
 condition being a computed value rather than a named viewport is the reason.
+
+**The array is the one relation whose closure is TIGHTER than the shape it widens, and that is
+the point of it.** A single `class` may name a FOREIGN class — `.sec--tint .well`, `.drawer
+.chat` — because that rule is one relation the component owns about somebody else's element,
+and the ancestor half is always ours. An array may not: every member has to be a class the same
+definition declares. The two are different claims. A single target says *this ancestor does
+this to that descendant*; a LIST says *these two selectors carry the same declarations*, and
+that second claim is only checkable when both ends are written down in the file making it.
+Admit one foreign member and `.a .x, .a .y` is sayable for any x and y, which is a selector list
+with arbitrary members — `PATTERNS.md`'s wedge wearing a comma. The guard is in the loader,
+mutation-tested, and it names the wedge when it fires. A class-array part also cannot be the
+`within` of another part, for the reason a list-suffix state cannot: a list has no single
+selector to descend from.
 
 **The last seven are `nav`'s, and six of them are facts about the stylesheet's TEXT.** That is
 the shape of the biggest block joining the format: `wrap`, a group's `break`, a `note` that is
@@ -657,7 +682,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly twenty-eight** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly twenty-nine** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -693,6 +718,8 @@ published.
 "@yordan/design-system/react/chat"           // the most rules of any block, and it needed the least
 "@yordan/design-system/react/menu"           // three regions with three authored gaps between them
 "@yordan/design-system/react/theme-toggle"   // the block that minted `foreign-scope`
+"@yordan/design-system/react/card"           // R4's LAST block — eight regions, seven gaps,
+                                             // and the one that forced a class ARRAY
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —

@@ -353,6 +353,58 @@ The reasons a definition declares must now equal the markers the block carries, 
 the build names both sides when they disagree. `ask-fab` adopted the form in the same commit
 without moving a byte, which is the sign the shape was the general one all along.
 
+### The eighth finding is that a LIST is a different claim from a relation, and `card` is why
+
+`card` is the last block of R4 and the biggest hole in the format was one rule:
+
+```css
+.card--reveal .card__media,
+.card--reveal .card__note { position: absolute; width: 1px; … }
+```
+
+Two selectors, one set of declarations, and nothing in the vocabulary reached it. It is not a
+state's list `suffix` — those share a subject and differ only in a pseudo-class, and these
+differ in the *element*. It is not `aliases`, which resolves to two rules and therefore
+different bytes. And it could not be a **gap** either, which is the interesting part: the closed
+census vocabulary has no reason that is *true* of that fragment. `relational-selectors` finds no
+combinator and no positional; `foreign-selector` needs a bare-tag subject; `foreign-scope` needs
+two BEM families and both ends are `card`; there is no at-rule and no local property. A gap with
+no findable reason would have been the census's first lie.
+
+So a scoped part's `class` may be an **array**, with `within` distributed over each member. The
+widening is exactly the one `element` already is, one axis over — and the closure it needed is
+the finding:
+
+> The SINGLE `class` form deliberately admits a **foreign** class. The ARRAY form deliberately
+> does not.
+
+That looks inconsistent and is the opposite. A single target says *this ancestor does this to
+that descendant* — one relation, whose ancestor half is always the definition's own, which is
+what makes `.sec--tint .well` and `.drawer .chat` honest. A list says *these two selectors carry
+the same declarations*, and that is a claim about both ends, checkable only when both ends are
+declared in the file making it. Admit one foreign member and `.a .x, .a .y` is sayable for any
+`x` and `y` — a selector list with arbitrary members, which is this note's wedge wearing a
+comma. The guard is in the loader, it names the wedge when it fires, and it is mutation-tested:
+a foreign class, a class that merely *resembles* the root (`.cardigan`), and a part scoped
+*within* a list all fail.
+
+**The other half of `card` is the census measuring the right thing, at last, on the block that
+needed it most.** Seven gaps, the most in the file, and every one of them is a relation rather
+than an appearance: three positional pairs that compute the grid's hairlines from where a card
+sits (`:nth-child(3n)`, `:nth-last-child(-n+3):nth-child(3n+1) ~ .card`, and the whole two-column
+restatement at 960px), `body:has()`, and three at-rules whose conditions this system will not
+name. The dividers are the block's entire idea — nine cells whose rules never trail into empty
+space — and they stay authored. That is not the format falling short of a key; it is the line
+this note drew in its first paragraph, holding on the twentieth block.
+
+One gap in it is worth reading twice. The 960px query **could** have been named in
+`$conditions`, and naming it would have bought nothing: the fragment is unreachable for its
+*selectors*, so it would still be a gap, and its declared reason would then read
+`unnamed-condition` — true of the at-rule and false of what actually stops it. A reason is
+load-bearing prose. The gate can only check that the feature is present; choosing which present
+feature to name is the author's, and choosing the wrong one is how a census starts lying while
+staying green.
+
 - **`typography` fails on `computed` alone** (its `clamp()` values), which is a token
   question rather than a pattern one: those are `--text-*` steps and the block mostly maps a
   class to a step. It may be the best argument for a fourth value form (a token binding with
@@ -402,3 +454,133 @@ structure and which is a token, and that was the fact no CSS parser could recove
 Revisit when R4 has all twenty-three border idioms in definitions. If the count for one shape
 is still five or more *and* it turns out to want a mode value, mint it then — as one additive
 change, with every consumer rebound in the same commit.
+
+## R4 COMPLETE — the closing record
+
+This note opened by measuring the file and predicting **five** generatable blocks of
+twenty-four. It ends with **twenty** definitions over twenty-six blocks, and the four times the
+prediction was wrong are the six findings above: every feature the scan called disqualifying
+turned out to have a finite vocabulary *in the blocks that asked*, except one.
+
+### The census, block by block, as it ships at 2.6.0
+
+`node design-system/scripts/build.mjs --check` prints the totals; this is the same statement
+with the names in it, so a reader can check the claim rather than trust the number.
+
+**GENERATED WHOLE — 17 blocks**
+
+`typography`¹ · `nav` · `section-head` · `button` · `chip` · `entry` · `definition-row` ·
+`profile` · `fact` · `media` · `stat` · `link-grid` · `footer` · `case-body` · `chat` ·
+`drawer` · `source`
+
+¹ generated from `tokens/typography.json` rather than from a component definition — it is a
+layer of utility classes, not a component. See the README for why that distinction is kept.
+
+**SPLIT — 4 blocks, 15 generated regions and 14 gaps between them**
+
+| block | regions | gaps, in order, with the reason the scan finds in each |
+| --- | --- | --- |
+| `card` | 8 | `relational-selectors` (`:nth-child(3n)`), `relational-selectors` (the orphan-row pair), `unnamed-condition` (`(hover: hover) and (pointer: fine)`), `foreign-selector` (`body:has()`), `unnamed-condition` (reduced motion + print), `unnamed-condition` (reduced motion), `relational-selectors` (the two-column step at 960px) |
+| `menu` | 3 | `foreign-selector` (`body:has()`), `relational-selectors` (`a + a`), `unnamed-condition` (reduced motion + print) |
+| `theme-toggle` | 3 | `foreign-scope` (`.menu__body .theme`), `unnamed-condition`, `unnamed-condition` |
+| `ask-fab` | 1 | `unnamed-condition` (reduced motion + print) |
+
+**AUTHORED WHOLE — 5 blocks, and each one is a *kind* of thing rather than a leftover**
+
+| block | reason | what the scan finds, and why it is not going to move |
+| --- | --- | --- |
+| Foundation (`@component none`) | `foreign-selector` | it styles `body`, `*` and the focus ring. There is no component here to be a definition of — that is what `@component none` says. |
+| `skeleton` | `local-custom-property` | `--rail-track`, a name the block invents for itself, inside a `@supports (grid-template-columns: round(down, 10%, 3px))`. **The one feature that never moved**, exactly as this note predicted on page one, and the one block it said not to start with. |
+| `terminator` | `local-custom-property` | the same, for the same reason. |
+| `project-row` | `relational-selectors` | `.idx li:last-child .idx__row` — a positional in the MIDDLE of a descendant path. It is the half of the old `row` component that the split put in this column, and the sentence describing it is the fifth finding above. |
+| Reduced motion (`@component none`) | `unnamed-condition` | one `@media (prefers-reduced-motion: reduce)` block that speaks for the whole document. Again: no component, so no definition. |
+
+**Totals: 26 blocks — 17 generated, 4 split, 5 authored. 19 census markers: 8
+`unnamed-condition`, 5 `relational-selectors`, 3 `foreign-selector`, 2 `local-custom-property`,
+1 `foreign-scope`.** Contract at 2.6.0: 103 tokens, 24 components, **239 definition rules**, 29
+export subpaths, 20 generated React components.
+
+### "No block unaccounted for" is now checkable end to end
+
+That sentence was the invariant this note asked for, and it was a claim until R4 built the three
+things that make it a gate. All three run on every `--check`, offline:
+
+1. **Every block is exactly one of three kinds.** A block that is neither inside a
+   `generated:<id>` region nor carrying an `authored:<id> — <reason>` marker fails by name.
+2. **Every declared reason is *found* in the fragment it is declared over** — the block for an
+   authored block, the fragment ALONE for each gap of a split one. The check asserts the feature
+   is present, never that it is disqualifying: proving the second would mean re-implementing the
+   schema inside the census, and then the census would agree with the emitter by construction.
+3. **The census is two-sided.** The sequence of `kind: "authored"` gaps a definition declares
+   must equal the sequence of markers its block carries, in order. A gap that quietly grows a
+   second rule, or a definition that stops believing in one, fails naming both sides.
+
+And underneath all three: every generated region is re-rendered **in memory** and byte-compared
+before anything is written, so the migration's whole claim — *a block joins by transcription* —
+is a gate rather than a review note. Twenty blocks joined and not one visual baseline moved.
+
+### The construct inventory — 27, by what they are for
+
+The per-construct table with the block that forced each is in `README.md`; this is the same set
+seen as the shape of the answer. **Every one of them is a reference into a finite set that is
+written down somewhere a gate can read.**
+
+- **Relations, closed at both ends (7).** A scoped part (`within` + `element[]` + `pseudo?`);
+  its `class` form; its **`class` ARRAY**; `child`; `contains` (+ `nothing`); `positions`; a
+  pseudo-element of a named rule. `within` always NAMES a rule the same definition declares;
+  a target is bare tags, one class, one own-class list, or one child tag. `.case-body p strong`,
+  `.profile > div` and `.card--reveal .card__media, .card--reveal .card__note` are sayable;
+  `.band > .rail--l` is not, and no combination of the keys assembles it.
+- **Conditions, named rather than written (4).** `at` with a `$conditions` name; `inline` on
+  one; a **query-only rule** inside one; `kind: "keyframes"`, whose at-rule has no condition at
+  all.
+- **Values (2).** `expr`, computed geometry with its bindings still interpolations; and the
+  three-form value itself (literal / binding / sequence), which is what lets a border record
+  which half is structure.
+- **Structure (6).** `rules` as ONE ordered list — the finding that paid for itself twice;
+  an effect-only modifier; a part or state with **no declarations** (a scope); an attribute
+  suffix with a value; the ordinals `second`/`third`/`fourth`; `::placeholder` and
+  `::-webkit-details-marker`.
+- **Text — six of them, and they are `nav`'s and `card`'s (7).** `wrap` on a group, on a state
+  and now **on a part**; a group's `break`; a `note` that is an array of arrays; a `note` on an
+  override, a state, a **modifier** and a **position**. A formatting key may only RECORD, never
+  CHOOSE: each is `const true` or an array of arrays, and each is refused where there is nothing
+  to record.
+- **The census itself (1).** `kind: "authored"` — a gap, which carries no CSS.
+
+### What R5's cutover needs to know
+
+- The published surface is **29 subpaths**, of which **20 are `./react/<id>`** — one per
+  definition, enumerated, never a wildcard. `dist/react/index.ts` is the barrel and exports both
+  the `cva` function and the component for every root **and every class part**: `card` alone
+  ships 18 pairs (`Card`, `CardGrid`, `CardPeekSheet`, `CardSheetFrame`, `CardPeek`…).
+- The consumption contract is unchanged and is documented in full in `README.md`'s "What a
+  consumer must provide": import order `tailwindcss` → `tokens.css` → `tokens.tailwind.css` →
+  `keyframes.css`; `@source` naming `…/@yordan/design-system/dist/react`; `cva` and `react` as
+  the consumer's own dependencies; a build that transpiles TSX out of `node_modules`.
+- Six blocks have **no React component and never will**: the two `@component none` blocks,
+  `skeleton`, `terminator`, `project-row`, and the authored halves of the four split blocks. A
+  split block's `.tsx` carries its generated core only — the gaps are CSS the consumer gets
+  through `components.css` and cannot get through a class attribute.
+
+## The owner's review list
+
+Everything R4 found and deliberately did **not** do, in one place, because the migration's rule
+was that it transcribes and never rewrites. Each is an *appearance* or *naming* decision, which
+is the owner's; none is a defect. The cost column is what approving it spends.
+
+| # | what | why it was deferred | what approving it costs |
+| --- | --- | --- | --- |
+| 1 | **The breakpoint ramp.** `$conditions` is twelve entries with no ramp — 480/560/600/620/640/699/720/760/860/1024/1199/1280 — each named for the number it carries. | Consolidating breakpoints is an appearance change, and this migration may not make one. A value-derived name records the decision without inventing a hierarchy. | Every consolidated pair moves a real layout at real widths; the names are in twenty definitions and the diff shows each. A rename is MAJOR. |
+| 2 | **`tracking-wide-xl`** has one consumer, and **`width-display` / `width-normal`** have one each. | Folding a step into its neighbour changes how type sits. A tier of one-consumer steps is the drift this system's own rule retires — but the fix is a look decision. | Three token names disappear (MAJOR) and four selectors change tracking or width by one step. |
+| 3 | **A leading tier.** `line-height` has twelve distinct values across nineteen declarations and is the one property still exempt from the literal guard. | It is drift to be **consolidated before** it is tokenised, not drift to enshrine: twelve steps with one consumer each fails the rule that retired `action`. | Consolidation moves line boxes, which moves the lattice under anything measured in cells. `check-css.mjs` gains a fourth row the day it lands. |
+| 4 | **A measure tier.** `max-width` is likewise exempt. | A measure is a different job from spacing and has no ramp to join. | One new tier, and every `max-width` in the file rebound in the same commit. |
+| 5 | **A motion tier.** All four motion values are literals: `0.2s` (26 uses — controls) and `0.28s` (12 — surfaces arriving), with `cubic-bezier(0.22, 1, 0.36, 1)` (5) and `ease` (4). Two registers, no names. | Found by a `next-app` agent reading the emitted arbitrary properties. Naming them is a token decision the migration had no licence to take. | Four tokens, ~45 declarations rebound, and a decision about whether the two registers are `--motion-control` / `--motion-surface` or something the animation people would recognise. |
+| 6 | **`--rule-chrome-strong`.** `1px solid var(--chrome-border-strong)` has five consumers. | R3 deferred it because four of the five were in blocks with no definition; they all have one now, so the count is real and the question is live. | One token, five rebinds — additive. The judgement is whether a composed border wants a name when it carries no mode value. |
+| 7 | **`card`'s orphan row, rewritten.** `.card:nth-last-child(-n+3):nth-child(3n+1)` and its `~ .card` twin, twice (3-up and 2-up). | Rewriting a selector is an appearance change however identical it renders, and R4 transcribes. | It is the block's hardest rule to read and would still not be expressible as a definition — the win is a reader's, not the census's. |
+| 8 | **`.profile--drawer`.** `.drawer .profile` and `.drawer .profile > div:nth-child(odd)` are the drawer re-laying-out a component it hosts. | A modifier on `profile` would put the fact where the component is, but it changes markup on a shipped page. | Two rules move from `drawer` to `profile`, `index.html` gains a class, and both definitions and the contract change. |
+| 9 | **`stat` and `fact__num` compose `.t-display`.** Both restate four of its five declarations — display family, `weight-black`, `width-hero`, `--text-display`. | Composing in markup is a markup change, and the type layer landed too late in R4 to spend the risk. | Two blocks shrink; two shipped pages gain `class="t-display t-display--lg"`; the visual baselines should not move, and "should not" is why it wants a deliberate run. |
+| 10 | **`@media (hover: hover)` on `:hover`.** Tailwind's `hover:` compiles to that query and `components.css` has none, so pipeline 2 emits `[&:hover]:` rather than invent one. | The query may well be the better behaviour. It is not the emitter's to decide, and it must be decided for BOTH surfaces at once. | A `media` key on a state, both emitters changed in one commit, and every hover in the system stops firing on a sticky tap — which is a real behavioural change on touch. |
+| 11 | **`!important` as a value-level key.** `card`'s `below-620` block writes three, transcribed as structural literals (`"0 !important"`, `[{token: "rule"}, "!important"]`). | It lands correctly as-is and both pipelines carry the same bytes, so `card` did not have to decide it. But `!important` changes the **cascade**, and a value form that can do that deserves a `$doc` saying so out loud rather than arriving as a string. | One key, closed and refused everywhere it is not already written; the argument is whether recording "this wins" as data makes it easier to add. |
+| 12 | **The part-selector-ownership wedge.** A part's own `selector` is not checked to belong to its component, so a declarations-less scope part could declare a foreign class and make `.a .b` sayable through the back door. | Soft: it is bolted by the React tier, which reads a class part's element out of the spec's canonical HTML and fails on a class the fence does not carry. Closing it properly is a rule about what a component may name. | A check that a part's `selector` shares the root's BEM family — which `.chips`, `.peek`, `.peek-sheet` and `.idx` would all fail today, so the rule needs a stated exception before it can be a gate. |
+| 13 | **`project-row` stays authored** on `relational-selectors`. | `.idx li:last-child .idx__row` puts a positional in the middle of a descendant path. Reaching it needs a construct nobody has designed. | Either a rewrite of the selector (an appearance risk) or a genuinely new relation — and this note's whole argument is that the second is decided with the block in front of you. |

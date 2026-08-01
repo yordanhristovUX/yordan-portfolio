@@ -1070,7 +1070,7 @@ body.is-locked { overflow: hidden; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 /* ---- /generated:chip ---- */
 
-/* ---- authored:card — relational-selectors ---- */
+/* ---- generated:card — do not edit, source: components/card/definition.json ---- */
 /* ============ Card ============ @component card */
 .card-grid {
   display: grid;
@@ -1081,11 +1081,17 @@ body.is-locked { overflow: hidden; }
   border-right: var(--rule);
   border-bottom: var(--rule);
 }
+/* ---- /generated:card ---- */
+/* ---- authored:card — relational-selectors ---- */
 .card:nth-child(3n) { border-right: 0; }
+/* ---- generated:card#2 — do not edit, source: components/card/definition.json ---- */
 /* An incomplete final row would otherwise trail a rule into empty space */
 .card:last-child { border-right: 0; }
+/* ---- /generated:card#2 ---- */
+/* ---- authored:card — relational-selectors ---- */
 .card:nth-last-child(-n+3):nth-child(3n+1),
 .card:nth-last-child(-n+3):nth-child(3n+1) ~ .card { border-bottom: 0; }
+/* ---- generated:card#3 — do not edit, source: components/card/definition.json ---- */
 /* ---- MINIMAL AT REST, EVERYTHING ON HOVER ----
    A notable card carries an eyebrow and a title and nothing else until it is
    hovered. The image and the description are both in the DOM the whole time
@@ -1164,9 +1170,12 @@ body.is-locked { overflow: hidden; }
   text-underline-offset: 3px;
 }
 .card__more:hover, .card__more:active { color: var(--accent); }
+/* ---- /generated:card#3 ---- */
+/* ---- authored:card — unnamed-condition ---- */
 @media (hover: hover) and (pointer: fine) {
   .card__more { display: none; }
 }
+/* ---- generated:card#4 — do not edit, source: components/card/definition.json ---- */
 
 /* ---- THE PEEK SHEET (touch) ----
    The mobile translation of the peek panel: one reusable surface, summoned
@@ -1185,7 +1194,10 @@ body.is-locked { overflow: hidden; }
   transition: visibility 0s linear 0.28s;
 }
 .peek-sheet[data-open] { visibility: visible; transition-delay: 0s; }
+/* ---- /generated:card#4 ---- */
+/* ---- authored:card — foreign-selector ---- */
 body:has(.peek-sheet[data-open]) { overflow: hidden; }
+/* ---- generated:card#5 — do not edit, source: components/card/definition.json ---- */
 
 .peek-sheet__scrim {
   position: absolute; inset: 0;
@@ -1249,11 +1261,14 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   line-height: 1.55;
   color: var(--content-body);
 }
+/* ---- /generated:card#5 ---- */
+/* ---- authored:card — unnamed-condition ---- */
 
 @media (prefers-reduced-motion: reduce) {
   .peek-sheet, .peek-sheet__panel, .peek-sheet__scrim { transition: none; }
 }
 @media print { .peek-sheet { display: none; } }
+/* ---- generated:card#6 — do not edit, source: components/card/definition.json ---- */
 
 /* ---- THE PEEK PANEL ----
    Built by js/peek.js, one per page, riding the pointer. It exists in no
@@ -1305,6 +1320,8 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   color: var(--content-body);
   margin: 0;
 }
+/* ---- /generated:card#6 ---- */
+/* ---- authored:card — unnamed-condition ---- */
 @media (prefers-reduced-motion: reduce) {
   /* The panel still appears — it is content, not decoration — it simply stops
      fading. Its position still follows the pointer, because a panel that
@@ -1312,6 +1329,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
      that moves. */
   .peek { transition: none; }
 }
+/* ---- generated:card#7 — do not edit, source: components/card/definition.json ---- */
 
 .card__type {
   display: block;
@@ -1333,6 +1351,8 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   border-top: 3px solid var(--primary);
 }
 .card p { font-size: var(--text-md); }
+/* ---- /generated:card#7 ---- */
+/* ---- authored:card — relational-selectors ---- */
 @media (max-width: 960px) {
   .card-grid { grid-template-columns: repeat(2, 1fr); }
   .card:nth-child(3n) { border-right: var(--rule); }
@@ -1341,11 +1361,13 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .card:nth-last-child(-n+2):nth-child(2n+1),
   .card:nth-last-child(-n+2):nth-child(2n+1) ~ .card { border-bottom: 0; }
 }
+/* ---- generated:card#8 — do not edit, source: components/card/definition.json ---- */
 @media (max-width: 620px) {
   .card-grid { grid-template-columns: 1fr; }
   .card { border-right: 0 !important; border-bottom: var(--rule) !important; }
   .card:last-child { border-bottom: 0 !important; }
 }
+/* ---- /generated:card#8 ---- */
 
 /* ---- authored:project-row — relational-selectors ---- */
 /* ============ Project row (work index) ============ @component project-row */

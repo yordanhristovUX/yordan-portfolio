@@ -1,0 +1,481 @@
+{
+  "$doc": "The notable-card grid and the two surfaces that read a card out — as data, and the source of the `@component card` regions of css/components.css and of dist/react/card.tsx. IT IS THE LAST BLOCK OF R4 AND THE ONE THAT FORCED A SELECTOR LIST OF PARTS. `.card--reveal .card__media, .card--reveal .card__note` is one rule under two of the card's own elements — six declarations that clip both, because clipping them is one decision said twice — and it is neither a state's list `suffix` (those share a subject) nor `aliases` (which resolves to two rules and different bytes). So a scoped part's `class` may be an ARRAY with `within` distributed over it, and the array's members must all be classes this definition declares: the single form's licence to name a FOREIGN class is exactly what the list trades away, because a list is a claim that two selectors share declarations and that is only checkable when both ends are ours. SEVEN GAPS, which is the most in the file, and every one of them is a relation rather than an appearance: three positional pairs that compute the grid's dividers from where a card sits, `body:has()`, and three at-rules whose conditions this system does not name. The grid rules are the block's whole idea — nine cells with hairlines that never trail into empty space — and they are the one part of it that stays authored, which is the census measuring the right thing rather than the format being short of a key. `.card-grid` comes FIRST in the list, before the base: it is a part (chip's `.chips` is the precedent) and an ordered list is the only shape that lets the container be described before the thing it contains, which is what the stylesheet does.",
+  "$schema": "../definition.schema.json",
+  "id": "card",
+  "block": { "title": "Card" },
+  "root": ".card",
+  "rules": [
+    {
+      "kind": "part",
+      "name": "grid",
+      "selector": ".card-grid",
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "repeat(3, 1fr)" } }
+      ]
+    },
+    {
+      "kind": "base",
+      "declarations": [
+        { "set": { "padding": [{ "token": "space-flow" }, { "token": "pad" }] } },
+        { "set": { "border-right": { "token": "rule" } } },
+        { "set": { "border-bottom": { "token": "rule" } } }
+      ]
+    },
+    {
+      "kind": "authored",
+      "reason": "relational-selectors",
+      "$doc": "`.card:nth-child(3n) { border-right: 0; }` — the right-hand column drops the rule that would otherwise draw the grid's outer edge. `positions` is a closed enum with one member per block that has asked, and it is closed precisely so it cannot grow into `3n` by increments: the moment a member takes a coefficient it is a selector fragment rather than a name for where a rule sits. Every divider rule in this block is the same finding, and the three gaps that carry them are what keeps the enum honest."
+    },
+    {
+      "kind": "position",
+      "name": "closing",
+      "of": "base",
+      "at": "last",
+      "note": ["An incomplete final row would otherwise trail a rule into empty space"],
+      "declarations": [{ "set": { "border-right": "0" } }]
+    },
+    {
+      "kind": "authored",
+      "reason": "relational-selectors",
+      "$doc": "`.card:nth-last-child(-n+3):nth-child(3n+1)` and the `~ .card` that follows it — the orphan-row pair, which drops the bottom rule under every card of an incomplete final row by finding the row's first cell and reaching sideways from it. Two positional pseudo-classes compounded on one subject and then a general sibling combinator, which is three things this format supplies none of. IT IS ALSO THE ONE FRAGMENT IN THIS BLOCK THAT IS ON THE OWNER'S REVIEW LIST AS A REWRITE rather than as a missing construct: the same effect is one `:nth-last-child` away from being sayable in a way a reader can check, and R4 may not touch it, because rewriting a selector is an appearance change however identical the result renders."
+    },
+    {
+      "kind": "variant",
+      "name": "reveal",
+      "selector": ".card--reveal",
+      "note": [
+        [
+          "---- MINIMAL AT REST, EVERYTHING ON HOVER ----",
+          "A notable card carries an eyebrow and a title and nothing else until it is",
+          "hovered. The image and the description are both in the DOM the whole time",
+          "and both are hidden by OPACITY, which is the load-bearing choice here:",
+          "",
+          "· The card's box never changes size, so revealing one card cannot reflow the",
+          "  other eight. A grid that reshuffles under the pointer is the failure this",
+          "  pattern usually ships with, and it is why the reveal is a substitution",
+          "  rather than an expansion.",
+          "· Opacity does not remove anything from the accessibility tree. A screen",
+          "  reader gets the description at rest, in reading order, with no hover to",
+          "  perform and no `aria-hidden` to work around.",
+          "",
+          "`min-height` is stated in CELLS so a card is a whole number of lattice",
+          "squares like everything else on the sheet, and so nine cards are one height",
+          "whatever their copy runs to.",
+          "",
+          "THE SCRIM IS A CONSTRAINT ON THE IMAGES, not a decoration. Type sits over",
+          "the picture, so the picture is held under a `--surface-page` wash at 0.88",
+          "and the text keeps its contrast against paper rather than against whatever",
+          "the photograph happens to be. The generated placeholders are light graph",
+          "paper, so today the wash is barely doing anything. A dark photograph would",
+          "need the wash raised — the alternative, per-image colour decisions, is the",
+          "thing a system exists to avoid."
+        ],
+        [
+          "A STATED HEIGHT, not a minimum, so nine cards are one height whatever their",
+          "copy runs to — a grid rather than nine tiles. Six lattice cells is enough for",
+          "an eyebrow and a title at two lines, and the card carries nothing else."
+        ]
+      ],
+      "declarations": [{ "set": { "position": "relative", "height": { "expr": "calc({space-6} * 6)" } } }]
+    },
+    {
+      "kind": "part",
+      "name": "clipped",
+      "within": "reveal",
+      "class": [".card__media", ".card__note"],
+      "wrap": true,
+      "break": true,
+      "$doc": "THE RULE THAT FORCED THE CLASS ARRAY. Two elements, one set of declarations, because clipping the image and clipping the description is one decision — the collapsed card IS the card — and writing it twice would say two things that could then drift apart. Both members are the card's own parts, which is the guard the array carries and the single form does not need.",
+      "note": [
+        "THE CARD KEEPS ITS IMAGE AND ITS DESCRIPTION, AND SHOWS NEITHER — at any",
+        "width, on any input. One rule, no media query: the collapsed card IS the",
+        "card, the owner's decision, and it is what lets the grid be nine boxes of",
+        "one fixed height everywhere. Both stay in the markup, in reading order,",
+        "visually clipped rather than display-hidden so a screen reader gets the",
+        "full description with no gesture to perform. Two consumers read them out:",
+        "the cursor panel on fine pointers, the peek sheet on coarse ones — both",
+        "are presentation over the same authored content.",
+        "",
+        "The honest cost, chosen over the override soup it replaces: a sighted",
+        "touch reader WITHOUT JS sees eyebrow + title and a dead trigger. The",
+        "content is still in the DOM, the accessibility tree and reader mode; the",
+        "detail view is the one thing that is JS's."
+      ],
+      "declarations": [
+        { "set": { "position": "absolute" } },
+        { "set": { "width": "1px" } },
+        { "set": { "height": "1px" } },
+        { "set": { "overflow": "hidden" } },
+        { "set": { "clip-path": "inset(50%)" } },
+        { "set": { "white-space": "nowrap" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "reveal-media",
+      "within": "reveal",
+      "class": ".card__media",
+      "$doc": "A SCOPE, not an appearance: `.card--reveal .card__media` has no rule of its own — the clipping above is written under a selector list and a list has no single selector to descend from — so the frame is declared here purely so the image inside it has an ancestor to name. Emits nothing, exactly as `.drawer .profile > div` does."
+    },
+    {
+      "kind": "part",
+      "name": "reveal-media-img",
+      "within": "reveal-media",
+      "element": ["img"],
+      "declarations": [{ "set": { "display": "block", "width": "100%", "height": "100%", "object-fit": "cover" } }]
+    },
+    {
+      "kind": "part",
+      "name": "note",
+      "selector": ".card__note",
+      "break": true,
+      "declarations": [
+        { "set": { "font-size": { "token": "text-sm" } } },
+        { "set": { "line-height": "1.5" } },
+        { "set": { "color": { "token": "content-body" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "more",
+      "selector": ".card__more",
+      "break": true,
+      "note": [
+        "THE TOUCH TRIGGER — a quiet link in the card's corner, the owner's spec.",
+        "It is authored in the card's markup like everything else; this block only",
+        "decides where it shows. Base = visible (the safe default for every device",
+        "without hover); the one override hides it exactly where the cursor panel",
+        "serves instead. js/peek.js wires it and injects nothing, so the page's",
+        "geometry after scripts is the geometry before them — the lattice",
+        "misalignment that JS-injected structure caused cannot recur."
+      ],
+      "declarations": [
+        { "set": { "position": "absolute" } },
+        { "set": { "right": { "token": "pad" }, "bottom": { "token": "space-3" } } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-2xs" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide-lg" } } },
+        { "set": { "padding": [{ "token": "space-2" }, "0"] } },
+        { "set": { "color": { "token": "chrome-label-strong" } } },
+        { "set": { "text-decoration": "underline" } },
+        { "set": { "text-underline-offset": "3px" } }
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "more-pressed",
+      "of": "more",
+      "suffix": [":hover", ":active"],
+      "declarations": [{ "set": { "color": { "token": "accent" } } }]
+    },
+    {
+      "kind": "authored",
+      "reason": "unnamed-condition",
+      "$doc": "`@media (hover: hover) and (pointer: fine) { .card__more { display: none; } }` — the one override that hides the touch trigger where the cursor panel serves instead. `$conditions` holds VIEWPORTS, each named for the number it carries, and this query has no number: it asks what the input device can do. Naming it there would put two different questions in one list and make `@media {name}` stop meaning at this width — the same refusal `prefers-reduced-motion` and `print` already carry."
+    },
+    {
+      "kind": "part",
+      "name": "peek-sheet",
+      "selector": ".peek-sheet",
+      "note": [
+        "---- THE PEEK SHEET (touch) ----",
+        "The mobile translation of the peek panel: one reusable surface, summoned",
+        "from the bottom, populated from whichever card was tapped. An inline",
+        "expansion was built first and read as stubborn — content shoving the grid",
+        "apart; a sheet keeps the grid a quiet list, exactly as the cursor panel",
+        "does on desktop. The head speaks the menu sheet's grammar: quiet title,",
+        "Close in the pressed ink, so \"how an overlay closes\" is one lesson",
+        "site-wide. Built by js/peek.js; exists in no markup."
+      ],
+      "break": true,
+      "declarations": [
+        { "set": { "position": "fixed", "inset": "0" } },
+        {
+          "note": [
+            "Over the bar (100) and the menu (300), under the drawer (400) — see the",
+            "nav spec's map of the floating layer."
+          ],
+          "set": { "z-index": "350" }
+        },
+        { "set": { "visibility": "hidden" } },
+        { "set": { "transition": "visibility 0s linear 0.28s" } }
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "sheet-open",
+      "of": "peek-sheet",
+      "suffix": "[data-open]",
+      "declarations": [{ "set": { "visibility": "visible", "transition-delay": "0s" } }]
+    },
+    {
+      "kind": "authored",
+      "reason": "foreign-selector",
+      "$doc": "`body:has(.peek-sheet[data-open]) { overflow: hidden; }` — the scroll lock, the same rule `menu` writes for the same reason and the same gap it minted `foreign-selector` for. Every relation this format has names a rule the same definition declares, and `body` is not one and never will be."
+    },
+    {
+      "kind": "part",
+      "name": "sheet-scrim",
+      "selector": ".peek-sheet__scrim",
+      "break": true,
+      "declarations": [
+        { "set": { "position": "absolute", "inset": "0" } },
+        { "set": { "background": { "token": "scrim" } } },
+        { "set": { "opacity": "0" } },
+        { "set": { "transition": "opacity 0.28s ease" } }
+      ]
+    },
+    { "kind": "part", "name": "open-scrim", "within": "sheet-open", "class": ".peek-sheet__scrim", "declarations": [{ "set": { "opacity": "1" } }] },
+    {
+      "kind": "part",
+      "name": "sheet-panel",
+      "selector": ".peek-sheet__panel",
+      "break": true,
+      "declarations": [
+        { "set": { "position": "absolute", "left": "0", "right": "0", "bottom": "0" } },
+        { "set": { "max-height": "80vh" } },
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-rows": "auto minmax(0, 1fr)" } },
+        { "set": { "background": { "token": "surface-page" } } },
+        { "set": { "box-shadow": ["inset 0 1px 0", { "token": "chrome-border-strong" }] } },
+        { "set": { "transform": "translateY(100%)" } },
+        { "set": { "transition": "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" } }
+      ]
+    },
+    { "kind": "part", "name": "open-panel", "within": "sheet-open", "class": ".peek-sheet__panel", "declarations": [{ "set": { "transform": "none" } }] },
+    {
+      "kind": "part",
+      "name": "sheet-head",
+      "selector": ".peek-sheet__head",
+      "break": true,
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "stretch", "justify-content": "space-between" } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-xs" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide-sm" } } },
+        { "set": { "background": { "token": "chrome-bg" } } },
+        { "set": { "border-bottom": { "token": "rule-strong" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "sheet-title",
+      "selector": ".peek-sheet__title",
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center" } },
+        { "set": { "padding": [{ "token": "space-3" }, { "token": "space-5" }] } },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "min-width": "0" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "sheet-close",
+      "selector": ".peek-sheet__close",
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center" } },
+        { "set": { "padding": ["0", { "token": "space-5" }] } },
+        { "set": { "background": { "token": "primary" } } },
+        { "set": { "color": { "token": "content-inverse" } } },
+        { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "sheet-body",
+      "selector": ".peek-sheet__body",
+      "break": true,
+      "declarations": [
+        { "set": { "padding": { "token": "space-5" } } },
+        { "set": { "overflow-y": "auto" } },
+        { "set": { "overscroll-behavior": "contain" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "sheet-frame",
+      "selector": ".peek-sheet__frame",
+      "$doc": "A SCOPE. The frame carries no declarations of its own — it is a wrapper the sheet's markup puts round the image so `js/peek.js` has one element to fill — and everything the reader sees is the rule below, on the image inside it."
+    },
+    {
+      "kind": "part",
+      "name": "sheet-frame-img",
+      "within": "sheet-frame",
+      "element": ["img"],
+      "declarations": [
+        { "set": { "display": "block" } },
+        { "set": { "width": "100%" } },
+        { "set": { "aspect-ratio": "8 / 5" } },
+        { "set": { "object-fit": "cover" } },
+        { "set": { "background-color": { "token": "chrome-grid" } } },
+        { "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "chrome-border" }] } },
+        { "set": { "margin-bottom": { "token": "space-4" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "sheet-note",
+      "selector": ".peek-sheet__note",
+      "declarations": [
+        { "set": { "margin": "0" } },
+        { "set": { "font-size": { "token": "text-base" } } },
+        { "set": { "line-height": "1.55" } },
+        { "set": { "color": { "token": "content-body" } } }
+      ]
+    },
+    {
+      "kind": "authored",
+      "reason": "unnamed-condition",
+      "$doc": "`@media (prefers-reduced-motion: reduce)`, which drops the sheet's three transitions so it arrives in one frame rather than not at all, and `@media print`, which removes it. Neither is a viewport, so neither has a number for `$conditions` to name it by. The reduced-motion rule also writes `.peek-sheet, .peek-sheet__panel, .peek-sheet__scrim` as a selector list across THREE different rules — a second reason it could not be transcribed, and the case that shows where the class array stops: those three do not share an ancestor, so nothing distributes over them."
+    },
+    {
+      "kind": "part",
+      "name": "peek",
+      "selector": ".peek",
+      "break": true,
+      "note": [
+        "---- THE PEEK PANEL ----",
+        "Built by js/peek.js, one per page, riding the pointer. It exists in no",
+        "markup: without that file there is no panel and the card shows its own",
+        "content instead.",
+        "",
+        "`pointer-events: none` is load-bearing, not hygiene. The panel is positioned",
+        "under the cursor's neighbourhood, so anything that could receive a pointer",
+        "event here would sit between the reader and the card being described — the",
+        "panel would swallow the `pointerleave` that dismisses it and then flicker",
+        "against its own presence.",
+        "",
+        "`position: fixed` with a `translate3d` transform: the panel tracks the",
+        "viewport rather than the document, so a scroll cannot leave it behind, and",
+        "moving it costs a composite rather than a layout."
+      ],
+      "declarations": [
+        { "set": { "position": "fixed" } },
+        { "set": { "top": "0" } },
+        { "set": { "left": "0" } },
+        { "set": { "z-index": "90" } },
+        { "set": { "width": "min(26rem, 70vw)" } },
+        {
+          "note": [
+            "The flip keeps the panel inside the viewport by moving it; this keeps it",
+            "inside one that is simply shorter than the panel, which the flip cannot",
+            "help with. Measured at a 408px-tall window the panel is 363px, so the",
+            "margin is real rather than theoretical."
+          ],
+          "set": { "max-height": "calc(100vh - 1rem)" }
+        },
+        { "set": { "overflow": "hidden" } },
+        { "set": { "pointer-events": "none" } },
+        { "set": { "background": { "token": "surface-raised" } } },
+        { "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "chrome-border" }, ",", { "token": "shadow-drop" }, "0 12px 32px -8px"] } },
+        { "set": { "padding": { "token": "space-3" } } },
+        { "set": { "opacity": "0" } },
+        { "set": { "transition": "opacity 0.18s ease" } },
+        { "set": { "will-change": "transform" } }
+      ]
+    },
+    { "kind": "state", "name": "peek-open", "of": "peek", "suffix": "[data-open]", "declarations": [{ "set": { "opacity": "1" } }] },
+    {
+      "kind": "part",
+      "name": "peek-frame",
+      "selector": ".peek__frame",
+      "declarations": [
+        { "set": { "display": "block" } },
+        { "set": { "aspect-ratio": "8 / 5" } },
+        { "set": { "overflow": "hidden" } },
+        { "set": { "background-color": { "token": "chrome-grid" } } },
+        { "set": { "margin-bottom": { "token": "space-3" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "peek-frame-img",
+      "within": "peek-frame",
+      "element": ["img"],
+      "declarations": [{ "set": { "display": "block", "width": "100%", "height": "100%", "object-fit": "cover" } }]
+    },
+    {
+      "kind": "state",
+      "name": "peek-frame-img-hidden",
+      "of": "peek-frame-img",
+      "suffix": "[hidden]",
+      "$doc": "The panel is reused across cards and a card without artwork leaves the image element in place with `hidden` set, so the attribute the markup already carries is the one thing styled — the same shape `nav` writes for a pressed action, one level in.",
+      "declarations": [{ "set": { "display": "none" } }]
+    },
+    {
+      "kind": "part",
+      "name": "peek-text",
+      "selector": ".peek__text",
+      "declarations": [
+        { "set": { "font-size": { "token": "text-sm" } } },
+        { "set": { "line-height": "1.5" } },
+        { "set": { "color": { "token": "content-body" } } },
+        { "set": { "margin": "0" } }
+      ]
+    },
+    {
+      "kind": "authored",
+      "reason": "unnamed-condition",
+      "$doc": "`@media (prefers-reduced-motion: reduce) { .peek { transition: none; } }`, with three lines saying why the panel still APPEARS — it is content, not decoration — and still follows the pointer. Same unnameable condition as the sheet's foot."
+    },
+    {
+      "kind": "part",
+      "name": "type",
+      "selector": ".card__type",
+      "break": true,
+      "declarations": [
+        { "set": { "display": "block" } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-2xs" }, "letter-spacing": { "token": "tracking-wide-xl" }, "text-transform": "uppercase" } },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "margin-bottom": { "token": "space-3" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "title",
+      "selector": ".card__title",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-display" }, "font-weight": { "token": "weight-extrabold" } } },
+        { "set": { "font-variation-settings": { "token": "width-body" } } },
+        { "set": { "font-size": { "token": "text-sub" } } },
+        { "set": { "color": { "token": "content-primary" } } },
+        { "set": { "text-transform": "uppercase" } },
+        { "set": { "margin-bottom": { "token": "space-3" } } }
+      ]
+    },
+    {
+      "kind": "variant",
+      "name": "ruled",
+      "selector": ".card--ruled",
+      "$doc": "An EFFECT-ONLY modifier, the shape `section-head`'s `.sec--tint` forced: `.card--ruled` declares nothing whatsoever and its whole effect is the rule below, a 3px ink bar above the title. Emitting `.card--ruled { }` would claim an appearance the stylesheet has not got."
+    },
+    {
+      "kind": "part",
+      "name": "ruled-title",
+      "within": "ruled",
+      "class": ".card__title",
+      "declarations": [
+        { "set": { "padding-top": { "token": "space-3" } } },
+        { "set": { "border-top": ["3px", "solid", { "token": "primary" }] } }
+      ]
+    },
+    { "kind": "part", "name": "para", "within": "base", "element": ["p"], "declarations": [{ "set": { "font-size": { "token": "text-md" } } }] },
+    {
+      "kind": "authored",
+      "reason": "relational-selectors",
+      "$doc": "The two-column step: `@media (max-width: 960px)` restates every divider rule for a grid of two, so it holds `:nth-child(3n)`, `:nth-child(2n)` and the orphan-row pair again. 960 IS DELIBERATELY NOT IN `$conditions`, and this is the one gap in the block where naming the condition would have been possible and would have bought nothing: the query is unreachable for its SELECTORS, so a name would leave the fragment authored for the same reason it is authored now, and the census would then record `unnamed-condition` — a reason that is true of the at-rule and false of what actually stops it. A gap's reason is load-bearing prose, and the load-bearing one here is relational."
+    },
+    {
+      "kind": "at",
+      "condition": "below-620",
+      "$doc": "One column, and every card keeps its bottom rule and loses its right one. THE THREE `!important`s ARE TRANSCRIBED AS STRUCTURAL LITERALS and that is a deferral rather than a decision: `!important` is part of a VALUE, so it widens nothing about what a rule applies to, and both pipelines carry it verbatim — pipeline 1 writes the declaration, pipeline 2 falls through to an arbitrary property with the same bytes. What it DOES change is the cascade, and a value form that could change the cascade is worth deciding out loud rather than by transcription, so it is on the owner's review list as a possible value-level key with a `$doc` of its own. What it is overriding is the three relational gaps above: they set a border from a position, and this query has to beat them at one width.",
+      "rules": [
+        { "of": "grid", "declarations": [{ "set": { "grid-template-columns": "1fr" } }] },
+        { "of": "base", "declarations": [{ "set": { "border-right": "0 !important", "border-bottom": [{ "token": "rule" }, "!important"] } }] },
+        { "of": "closing", "declarations": [{ "set": { "border-bottom": "0 !important" } }] }
+      ]
+    }
+  ]
+}

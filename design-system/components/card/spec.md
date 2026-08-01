@@ -27,6 +27,9 @@ One card component serves every card grid on the site — do not invent section-
     <span class="card__type">Fintech</span>
     <h3 class="card__title">Payment / Crypto / Stocks</h3>
     <p class="card__note">Full IA for a unified platform…</p>
+    <!-- The touch trigger, authored here and only WIRED by js/peek.js. CSS hides
+         it where the cursor panel serves instead. -->
+    <button class="card__more" type="button" aria-haspopup="dialog" data-card-more>Tap for details</button>
   </article>
 
   <!-- A PLAIN card: body is always visible, no media, no reveal. -->
@@ -39,6 +42,41 @@ One card component serves every card grid on the site — do not invent section-
     <h3 class="card__title">Platform-scale UX</h3>
     <p>Whole product surfaces…</p>
   </article>
+</div>
+```
+
+### The two detail surfaces, canonically
+
+Both are part of this component and neither lives inside a card. **The sheet** is authored
+once per page, beside the drawer; **the panel** is built by `js/peek.js` and exists in no
+markup at all. They are canonical here because they are the pattern — a page that writes
+either one differently is writing a different component.
+
+```html
+<!-- THE PEEK SHEET (touch) — authored once, beside the drawer in index.html.
+     js/peek.js populates it from the tapped card and toggles data-open. -->
+<div class="peek-sheet" data-peek-sheet>
+  <div class="peek-sheet__scrim" data-sheet-close></div>
+  <div class="peek-sheet__panel" role="dialog" aria-modal="true" tabindex="-1">
+    <div class="peek-sheet__head">
+      <span class="peek-sheet__title"></span>
+      <button class="peek-sheet__close" type="button" data-sheet-close>Close</button>
+    </div>
+    <div class="peek-sheet__body">
+      <span class="peek-sheet__frame"><img alt="" decoding="async" hidden></span>
+      <p class="peek-sheet__note"></p>
+    </div>
+  </div>
+</div>
+```
+
+```html
+<!-- THE PEEK PANEL (fine pointer) — one per page, built by js/peek.js and
+     appended to <body>. Without that file there is no panel and the card
+     shows nothing extra, which is the whole fallback. -->
+<div class="peek" aria-hidden="true" hidden>
+  <span class="peek__frame"><img alt="" decoding="async"></span>
+  <p class="peek__text"></p>
 </div>
 ```
 

@@ -81,7 +81,15 @@
                     not. Every half is closed — `within` NAMES an earlier rule of
                     this same definition, `element` is bare tag names, `class` is
                     one class selector — so a descendant is the only relation any
-                    of them can say.
+                    of them can say. `class` MAY ALSO BE AN ARRAY, and `card` is
+                    the block that forced it: `.card--reveal .card__media,
+                    .card--reveal .card__note` is one rule under two of the
+                    component's OWN parts, with `within` distributed over each.
+                    The array trades away exactly what the single form is for —
+                    every member has to be a class this definition declares —
+                    because a list is a claim that two selectors share
+                    declarations, and that is only checkable when both ends are
+                    ours.
      state          { name, of, suffix, declarations } — `suffix` is appended to
                     the selector of the rule `of` names, so `:hover` on
                     `.btn--solid` is a state OF the variant. An ARRAY suffix is a
@@ -183,7 +191,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer", "chat", "menu", "theme-toggle"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer", "chat", "menu", "theme-toggle", "card"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -457,6 +465,17 @@ export const containsSuffix = (r) => (r.nothing ? ":empty" : `:has(${containsArg
  *  combinator is supplied THERE and never by an author, in every shape. */
 export const partSelector = (part) => part.selector;
 
+/** The target classes of a class-scoped part, always as a list. One member for
+ *  the single form, N for the array `card` forced — so every consumer that has
+ *  to walk them (the selector arithmetic here, the ownership guard, the React
+ *  tier's scopes) reads one shape rather than branching on `Array.isArray`. */
+export const classList = (part) => (Array.isArray(part.class) ? part.class : [part.class]);
+
+/** The selector a class-array part renders under: one member per line, because
+ *  `wrap` records that the stylesheet writes it that way. Only pipeline 1 ever
+ *  sees this form — see the `wrap` $doc on `rule-part`. */
+export const wrappedClassSelector = (host, part) => classList(part).map((c) => `${host} ${c}`).join(",\n");
+
 /** A state's selector: one suffix, or a selector LIST when it carries several.
  *  `wrap` puts the list one selector per line, which is a fact about the
  *  stylesheet's text and not this function's opinion — see the schema. */
@@ -484,6 +503,12 @@ export function selectorsByName(def) {
          a descendant of it. Every other shape is a descendant or a child. */
       if (r.selector) out.set(r.name, r.selector);
       else if (!r.child && !r.element && !r.class) out.set(r.name, `${out.get(r.within)}${r.pseudo}`);
+      /* A CLASS ARRAY IS A SELECTOR LIST and `within` distributes over it —
+         `.card--reveal .card__media, .card--reveal .card__note`. Joined with
+         ", " HERE and never with the newline `wrap` records: this string is what
+         the contract keys by and what the React tier quotes, and neither wants a
+         line break. renderChunks re-joins it for the stylesheet. */
+      else if (Array.isArray(r.class)) out.set(r.name, classList(r).map((c) => `${out.get(r.within)} ${c}`).join(", "));
       else {
         const step = r.child ? `> ${r.child}` : `${r.element ? r.element.join(" ") : r.class}${r.pseudo ?? ""}`;
         out.set(r.name, `${out.get(r.within)} ${step}`);
@@ -810,7 +835,61 @@ export function checkDefinition(def, id, rel) {
           `selector LIST one selector per line, and a state with one suffix has no list and nothing to break at`
       );
     }
+    /* ---- A CLASS ARRAY IS A SELECTOR LIST, AND ITS MEMBERS MUST BE OURS ----
+       `.card--reveal .card__media, .card--reveal .card__note` is one rule under
+       two of card's own parts. The SINGLE `class` form admits a foreign class on
+       purpose — `.sec--tint .well` is a rule this component owns about
+       skeleton's element — and the array must not, because the two shapes make
+       different claims. A single target is one relation; a LIST is the claim
+       that two selectors share declarations, and that is only checkable when
+       both ends are declared in the file making it. Admit a foreign member and
+       `.a .x, .a .y` is sayable for any x and y — a selector list with arbitrary
+       members, which is PATTERNS.md's wedge wearing a comma. */
+    if (r.kind === "part" && Array.isArray(r.class)) {
+      const own = new Set(
+        everyRule
+          .filter((o) => ["part", "variant", "size"].includes(o.kind) && typeof o.selector === "string")
+          .map((o) => o.selector)
+      );
+      own.add(def.root);
+      const derived = (c) => c === def.root || c.startsWith(`${def.root}__`) || c.startsWith(`${def.root}--`);
+      for (const c of r.class) {
+        if (own.has(c) || derived(c)) continue;
+        bad(
+          `\`${r.name}\` lists \`${c}\` in its \`class\` array, and this definition declares no such class. A class ` +
+            `array is a SELECTOR LIST, and every member of one has to be this component's own — the root, a class ` +
+            `derived from it (\`${def.root}__…\`, \`${def.root}--…\`), or the \`selector\` of a part, a variant or a ` +
+            `size in this file. The single \`class\` form admits a foreign class because that rule is one relation this ` +
+            `component owns about somebody else's element; a list is a claim that two selectors share declarations, ` +
+            `which is only checkable when both ends are ours. Without this, \`.a .x, .a .y\` would be sayable for any ` +
+            `x and y, and the closure PATTERNS.md argues for would be a comment`
+        );
+      }
+      if (r.pseudo) {
+        bad(
+          `\`${r.name}\` has a \`class\` array and a \`pseudo\`. Nothing has asked for a pseudo-element on every member ` +
+            `of a selector list, and the block that wants one is the block that decides whether it belongs to each ` +
+            `member or to the list — which is a decision, not a rendering`
+        );
+      }
+    }
+    if (r.kind === "part" && r.wrap && !Array.isArray(r.class)) {
+      bad(
+        `\`${r.name}\` is a part with \`wrap\` and no \`class\` ARRAY. \`wrap\` records that the stylesheet writes the ` +
+          `selector LIST one selector per line, and a part with one target has no list and nothing to break at`
+      );
+    }
     if (r.kind === "part" && r.within !== undefined) {
+      /* A part whose target is a class LIST has no single selector to descend
+         from, exactly as a state with a list `suffix` has none. */
+      const scope = declaredAt.get(r.within)?.rule;
+      if (scope?.kind === "part" && Array.isArray(scope.class)) {
+        bad(
+          `\`${r.name}\` is scoped \`within\` \`${r.within}\`, a part whose \`class\` is a selector LIST. A list is two ` +
+            `selectors, so a descendant of it is two rules or one with a comma in the middle, and neither is a choice ` +
+            `this emitter may make — the same refusal a state with a list \`suffix\` already carries`
+        );
+      }
       /* A state whose suffix is a selector LIST has no single selector to
          descend from, so it cannot host a scoped part. The block that needs one
          is the block that decides what `.a:hover, .a:focus-visible .x` means. */
@@ -1246,7 +1325,9 @@ function renderChunks(def, conditions = {}) {
          scoped part `.sec--tint .well`, which is a rule further down the list. */
       case "variant":
       case "size":
-        if (r.declarations) out += rule(r.selector, r.declarations, where);
+        if (!r.declarations) break;
+        out += lead(r, "");
+        out += rule(r.selector, r.declarations, where);
         break;
       /* A part with no `declarations` is a SCOPE and emits nothing, the same
          refusal `base` being optional and `.sec--tint` both record: the rule
@@ -1254,11 +1335,15 @@ function renderChunks(def, conditions = {}) {
          `.drawer .profile > div { }` would claim an appearance the file has not
          got. Its `break` and `note` go with it — a comment above a rule that is
          not emitted has nothing to introduce. */
+      /* `wrap` is the one place a part's rendered selector is not the resolved
+         one: the stylesheet writes a class LIST one selector per line, and the
+         resolved string stays flat because the contract and the React tier read
+         it. Same fact about the text a state's `wrap` records. */
       case "part":
         if (!r.declarations) break;
         if (r.break) out += "\n";
         out += lead(r, "");
-        out += rule(sel(r.name), r.declarations, where);
+        out += rule(r.wrap ? wrappedClassSelector(sel(r.within), r) : sel(r.name), r.declarations, where);
         break;
       /* A state, a contains and a position are one relation each on the rule
          `of` names, and all three resolve through the same map — the suffix

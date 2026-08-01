@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -2494,6 +2494,320 @@
       "declarations": {
         "to": "{\"transform\":\"rotate(360deg)\"}"
       }
+    },
+    "card .card": {
+      "kind": "base",
+      "declarations": {
+        "border-bottom": "{rule}",
+        "border-right": "{rule}",
+        "padding": "{space-flow} {pad}"
+      }
+    },
+    "card .card:last-child": {
+      "kind": "base position",
+      "declarations": {
+        "border-right": "0"
+      }
+    },
+    "card .card--reveal": {
+      "kind": "variant",
+      "declarations": {
+        "height": "calc({space-6} * 6)",
+        "position": "relative"
+      }
+    },
+    "card .card--ruled": {
+      "kind": "variant",
+      "declarations": {}
+    },
+    "card .card-grid": {
+      "kind": "part",
+      "declarations": {
+        "display": "grid",
+        "grid-template-columns": "repeat(3, 1fr)"
+      }
+    },
+    "card .card--reveal .card__media, .card--reveal .card__note": {
+      "kind": "scoped part",
+      "declarations": {
+        "clip-path": "inset(50%)",
+        "height": "1px",
+        "overflow": "hidden",
+        "position": "absolute",
+        "white-space": "nowrap",
+        "width": "1px"
+      }
+    },
+    "card .card--reveal .card__media img": {
+      "kind": "scoped part",
+      "declarations": {
+        "display": "block",
+        "height": "100%",
+        "object-fit": "cover",
+        "width": "100%"
+      }
+    },
+    "card .card__note": {
+      "kind": "part",
+      "declarations": {
+        "color": "{content-body}",
+        "font-size": "{text-sm}",
+        "line-height": "1.5"
+      }
+    },
+    "card .card__more": {
+      "kind": "part",
+      "declarations": {
+        "bottom": "{space-3}",
+        "color": "{chrome-label-strong}",
+        "font-family": "{font-mono}",
+        "font-size": "{text-2xs}",
+        "letter-spacing": "{tracking-wide-lg}",
+        "padding": "{space-2} 0",
+        "position": "absolute",
+        "right": "{pad}",
+        "text-decoration": "underline",
+        "text-underline-offset": "3px"
+      }
+    },
+    "card .card__more:hover,:active": {
+      "kind": "part state",
+      "declarations": {
+        "color": "{accent}"
+      }
+    },
+    "card .peek-sheet": {
+      "kind": "part",
+      "declarations": {
+        "inset": "0",
+        "position": "fixed",
+        "transition": "visibility 0s linear 0.28s",
+        "visibility": "hidden",
+        "z-index": "350"
+      }
+    },
+    "card .peek-sheet[data-open]": {
+      "kind": "part state",
+      "declarations": {
+        "transition-delay": "0s",
+        "visibility": "visible"
+      }
+    },
+    "card .peek-sheet__scrim": {
+      "kind": "part",
+      "declarations": {
+        "background": "{scrim}",
+        "inset": "0",
+        "opacity": "0",
+        "position": "absolute",
+        "transition": "opacity 0.28s ease"
+      }
+    },
+    "card .peek-sheet[data-open] .peek-sheet__scrim": {
+      "kind": "scoped part",
+      "declarations": {
+        "opacity": "1"
+      }
+    },
+    "card .peek-sheet__panel": {
+      "kind": "part",
+      "declarations": {
+        "background": "{surface-page}",
+        "bottom": "0",
+        "box-shadow": "inset 0 1px 0 {chrome-border-strong}",
+        "display": "grid",
+        "grid-template-rows": "auto minmax(0, 1fr)",
+        "left": "0",
+        "max-height": "80vh",
+        "position": "absolute",
+        "right": "0",
+        "transform": "translateY(100%)",
+        "transition": "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)"
+      }
+    },
+    "card .peek-sheet[data-open] .peek-sheet__panel": {
+      "kind": "scoped part",
+      "declarations": {
+        "transform": "none"
+      }
+    },
+    "card .peek-sheet__head": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "stretch",
+        "background": "{chrome-bg}",
+        "border-bottom": "{rule-strong}",
+        "display": "flex",
+        "font-family": "{font-mono}",
+        "font-size": "{text-xs}",
+        "justify-content": "space-between",
+        "letter-spacing": "{tracking-wide-sm}"
+      }
+    },
+    "card .peek-sheet__title": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "color": "{chrome-label}",
+        "display": "flex",
+        "min-width": "0",
+        "padding": "{space-3} {space-5}"
+      }
+    },
+    "card .peek-sheet__close": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "background": "{primary}",
+        "box-shadow": "inset 1px 0 0 {chrome-border}",
+        "color": "{content-inverse}",
+        "display": "flex",
+        "padding": "0 {space-5}"
+      }
+    },
+    "card .peek-sheet__body": {
+      "kind": "part",
+      "declarations": {
+        "overflow-y": "auto",
+        "overscroll-behavior": "contain",
+        "padding": "{space-5}"
+      }
+    },
+    "card .peek-sheet__frame img": {
+      "kind": "scoped part",
+      "declarations": {
+        "aspect-ratio": "8 / 5",
+        "background-color": "{chrome-grid}",
+        "box-shadow": "inset 0 0 0 1px {chrome-border}",
+        "display": "block",
+        "margin-bottom": "{space-4}",
+        "object-fit": "cover",
+        "width": "100%"
+      }
+    },
+    "card .peek-sheet__note": {
+      "kind": "part",
+      "declarations": {
+        "color": "{content-body}",
+        "font-size": "{text-base}",
+        "line-height": "1.55",
+        "margin": "0"
+      }
+    },
+    "card .peek": {
+      "kind": "part",
+      "declarations": {
+        "background": "{surface-raised}",
+        "box-shadow": "inset 0 0 0 1px {chrome-border} , {shadow-drop} 0 12px 32px -8px",
+        "left": "0",
+        "max-height": "calc(100vh - 1rem)",
+        "opacity": "0",
+        "overflow": "hidden",
+        "padding": "{space-3}",
+        "pointer-events": "none",
+        "position": "fixed",
+        "top": "0",
+        "transition": "opacity 0.18s ease",
+        "width": "min(26rem, 70vw)",
+        "will-change": "transform",
+        "z-index": "90"
+      }
+    },
+    "card .peek[data-open]": {
+      "kind": "part state",
+      "declarations": {
+        "opacity": "1"
+      }
+    },
+    "card .peek__frame": {
+      "kind": "part",
+      "declarations": {
+        "aspect-ratio": "8 / 5",
+        "background-color": "{chrome-grid}",
+        "display": "block",
+        "margin-bottom": "{space-3}",
+        "overflow": "hidden"
+      }
+    },
+    "card .peek__frame img": {
+      "kind": "scoped part",
+      "declarations": {
+        "display": "block",
+        "height": "100%",
+        "object-fit": "cover",
+        "width": "100%"
+      }
+    },
+    "card .peek__frame img[hidden]": {
+      "kind": "scoped part state",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "card .peek__text": {
+      "kind": "part",
+      "declarations": {
+        "color": "{content-body}",
+        "font-size": "{text-sm}",
+        "line-height": "1.5",
+        "margin": "0"
+      }
+    },
+    "card .card__type": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "display": "block",
+        "font-family": "{font-mono}",
+        "font-size": "{text-2xs}",
+        "letter-spacing": "{tracking-wide-xl}",
+        "margin-bottom": "{space-3}",
+        "text-transform": "uppercase"
+      }
+    },
+    "card .card__title": {
+      "kind": "part",
+      "declarations": {
+        "color": "{content-primary}",
+        "font-family": "{font-display}",
+        "font-size": "{text-sub}",
+        "font-variation-settings": "{width-body}",
+        "font-weight": "{weight-extrabold}",
+        "margin-bottom": "{space-3}",
+        "text-transform": "uppercase"
+      }
+    },
+    "card .card--ruled .card__title": {
+      "kind": "scoped part",
+      "declarations": {
+        "border-top": "3px solid {primary}",
+        "padding-top": "{space-3}"
+      }
+    },
+    "card .card p": {
+      "kind": "scoped part",
+      "declarations": {
+        "font-size": "{text-md}"
+      }
+    },
+    "card .card-grid @below-620": {
+      "kind": "at below-620",
+      "declarations": {
+        "grid-template-columns": "1fr"
+      }
+    },
+    "card .card @below-620": {
+      "kind": "at below-620",
+      "declarations": {
+        "border-bottom": "{rule} !important",
+        "border-right": "0 !important"
+      }
+    },
+    "card .card:last-child @below-620": {
+      "kind": "at below-620",
+      "declarations": {
+        "border-bottom": "0 !important"
+      }
     }
   },
   "exports": {
@@ -2580,6 +2894,9 @@
     },
     "./react/theme-toggle": {
       "target": "./dist/react/theme-toggle.tsx"
+    },
+    "./react/card": {
+      "target": "./dist/react/card.tsx"
     }
   }
 }
