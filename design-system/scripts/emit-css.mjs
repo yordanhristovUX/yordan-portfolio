@@ -183,7 +183,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer", "chat"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -429,7 +429,17 @@ const terms = (value) => (Array.isArray(value) ? value : [value]);
 /** The whole positional vocabulary; see the schema's `position`. A member is
  *  minted by the block that needs it — `first` by case-body, `last` by entry
  *  and fact — and the enum in the schema is kept in step with this object. */
-export const POSITION_SUFFIX = { first: ":first-child", last: ":last-child", odd: ":nth-child(odd)" };
+export const POSITION_SUFFIX = {
+  first: ":first-child",
+  last: ":last-child",
+  odd: ":nth-child(odd)",
+  /* The ordinals are three members and not one `nth` key taking a number: a key
+     that takes 2 takes `3n+1` and `-n+3`, and then the enum is a selector
+     fragment. `chat`'s four streaming squares are what asked. */
+  second: ":nth-child(2)",
+  third: ":nth-child(3)",
+  fourth: ":nth-child(4)",
+};
 
 /** What a `contains` rule looks for, as a selector: one bare tag or one class.
  *  Both halves are closed, which is why `:has()` is a member of this vocabulary
@@ -469,8 +479,15 @@ export function selectorsByName(def) {
       /* A CHILD combinator reaches a bare tag; everything else is a descendant.
          The two are separate keys so that `> .class` — the one combination this
          format refuses — cannot be assembled out of the pieces. */
-      const step = r.child ? `> ${r.child}` : `${r.element ? r.element.join(" ") : r.class}${r.pseudo ?? ""}`;
-      out.set(r.name, r.selector ?? `${out.get(r.within)} ${step}`);
+      /* A PSEUDO-ELEMENT WITH NO TARGET joins its host with no space at all:
+         `.chat__trace-toggle::before` is that element's own pseudo-element, not
+         a descendant of it. Every other shape is a descendant or a child. */
+      if (r.selector) out.set(r.name, r.selector);
+      else if (!r.child && !r.element && !r.class) out.set(r.name, `${out.get(r.within)}${r.pseudo}`);
+      else {
+        const step = r.child ? `> ${r.child}` : `${r.element ? r.element.join(" ") : r.class}${r.pseudo ?? ""}`;
+        out.set(r.name, `${out.get(r.within)} ${step}`);
+      }
     } else if (r.kind === "state") out.set(r.name, stateSelector(out.get(r.of), r.suffix, r.wrap === true));
     else if (r.kind === "contains") out.set(r.name, `${out.get(r.of)}${containsSuffix(r)}`);
     else if (r.kind === "position") out.set(r.name, `${out.get(r.of)}${POSITION_SUFFIX[r.at]}`);
@@ -884,11 +901,12 @@ export function checkDefinition(def, id, rel) {
   {
     const named = new Set(references.map(([, , name]) => name));
     for (const r of everyRule) {
-      if (r.kind !== "part" || r.declarations || named.has(r.name)) continue;
+      if (!["part", "state"].includes(r.kind) || r.declarations || named.has(r.name)) continue;
       bad(
-        `\`${r.name}\` is a part with no \`declarations\` and nothing later names it. A part may omit its ` +
-          `declarations when it is a SCOPE rather than an appearance — \`.drawer .profile > div\` exists so its odd ` +
-          `children can be reached — but then something has to be scoped to it, or it emits nothing and means nothing`
+        `\`${r.name}\` is a ${r.kind} with no \`declarations\` and nothing later names it. A part or a state may omit ` +
+          `its declarations when it is a SCOPE rather than an appearance — \`.drawer .profile > div\` exists so its odd ` +
+          `children can be reached, \`.chat__trace[open]\` so an arrow can turn — but then something has to be scoped ` +
+          `to it, or it emits nothing and means nothing`
       );
     }
   }
@@ -1193,9 +1211,12 @@ export function renderBlock(def, conditions = {}) {
       /* A state, a contains and a position are one relation each on the rule
          `of` names, and all three resolve through the same map — the suffix
          arithmetic is done once, where the vocabulary lives. */
+      /* A state may also be a SCOPE with nothing of its own — `.chat__trace[open]`
+         exists so `.chat__trace[open] .chat__trace-toggle::before` can name it. */
       case "state":
       case "contains":
       case "position":
+        if (!r.declarations) break;
         out += lead(r, "");
         out += rule(sel(r.name), r.declarations, where);
         break;

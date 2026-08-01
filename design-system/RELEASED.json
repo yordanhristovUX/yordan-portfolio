@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -1981,6 +1981,349 @@
       "declarations": {
         "display": "none"
       }
+    },
+    "chat .chat": {
+      "kind": "base",
+      "declarations": {
+        "display": "grid",
+        "gap": "{space-5}"
+      }
+    },
+    "chat .chat__thread": {
+      "kind": "part",
+      "declarations": {
+        "border-top": "{rule}",
+        "display": "grid",
+        "gap": "0",
+        "max-height": "min(46rem, 75vh)",
+        "overflow-y": "auto",
+        "overscroll-behavior": "contain"
+      }
+    },
+    "chat .chat__thread:empty": {
+      "kind": "part contains",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "chat .chat__turn": {
+      "kind": "part",
+      "declarations": {
+        "border-bottom": "{rule}",
+        "display": "grid",
+        "gap": "{space-2}",
+        "padding": "{space-5} {pad} {space-5} 0"
+      }
+    },
+    "chat .chat__turn:last-child": {
+      "kind": "part position",
+      "declarations": {
+        "border-bottom": "0"
+      }
+    },
+    "chat .chat__turn--user": {
+      "kind": "part",
+      "declarations": {
+        "background": "{surface-raised}",
+        "padding-left": "{pad}"
+      }
+    },
+    "chat .chat__role": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}"
+      }
+    },
+    "chat .chat__turn--assistant .chat__role": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{accent}"
+      }
+    },
+    "chat .chat__body": {
+      "kind": "part",
+      "declarations": {
+        "display": "grid",
+        "gap": "{space-3}",
+        "min-width": "0"
+      }
+    },
+    "chat .chat__answer": {
+      "kind": "part",
+      "declarations": {
+        "display": "grid",
+        "gap": "{space-3}",
+        "min-width": "0"
+      }
+    },
+    "chat .chat__prose": {
+      "kind": "part",
+      "declarations": {
+        "line-height": "1.6",
+        "max-width": "44rem"
+      }
+    },
+    "chat .chat__prose strong": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{content-primary}",
+        "font-weight": "{weight-semibold}"
+      }
+    },
+    "chat .chat__why": {
+      "kind": "part",
+      "declarations": {
+        "border-left": "2px solid {chrome-border-strong}",
+        "color": "{content-muted}",
+        "font-size": "{text-sm}",
+        "max-width": "44rem",
+        "padding-left": "{space-3}"
+      }
+    },
+    "chat .chat__metric": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "display": "flex",
+        "flex-wrap": "wrap",
+        "gap": "{space-4}"
+      }
+    },
+    "chat .chat__metric .stat": {
+      "kind": "scoped part",
+      "declarations": {
+        "margin": "0"
+      }
+    },
+    "chat .chat__error": {
+      "kind": "part",
+      "declarations": {
+        "background": "{chrome-bg}",
+        "box-shadow": "inset 0 0 0 1px {chrome-border-strong}",
+        "color": "{content-body}",
+        "font-size": "{text-md}",
+        "max-width": "44rem",
+        "padding": "{space-3} {space-4}"
+      }
+    },
+    "chat .chat__note": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "font-size": "{text-xs}",
+        "letter-spacing": "{tracking-wide}",
+        "max-width": "44rem"
+      }
+    },
+    "chat .chat__state": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "color": "{chrome-label}",
+        "display": "flex",
+        "font-size": "{text-xs}",
+        "gap": "{space-2}",
+        "letter-spacing": "{tracking-wide-lg}",
+        "text-transform": "uppercase"
+      }
+    },
+    "chat .chat__cell": {
+      "kind": "part",
+      "declarations": {
+        "animation": "chat-life 1.6s steps(2) infinite",
+        "background": "{primary-muted}",
+        "flex-shrink": "0",
+        "height": "9px",
+        "width": "9px"
+      }
+    },
+    "chat .chat__cell:nth-child(2)": {
+      "kind": "part position",
+      "declarations": {
+        "animation-delay": "0.2s"
+      }
+    },
+    "chat .chat__cell:nth-child(3)": {
+      "kind": "part position",
+      "declarations": {
+        "animation-delay": "0.4s"
+      }
+    },
+    "chat .chat__cell:nth-child(4)": {
+      "kind": "part position",
+      "declarations": {
+        "animation-delay": "0.6s"
+      }
+    },
+    "chat .chat__state-label": {
+      "kind": "part",
+      "declarations": {
+        "margin-left": "{space-2}"
+      }
+    },
+    "chat .chat__trace": {
+      "kind": "part",
+      "declarations": {
+        "background": "{chrome-bg}",
+        "box-shadow": "inset 0 0 0 1px {chrome-border}",
+        "font-family": "{font-mono}",
+        "font-size": "{text-2xs}"
+      }
+    },
+    "chat .chat__trace-toggle": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label-strong}",
+        "cursor": "pointer",
+        "letter-spacing": "{tracking-wide}",
+        "list-style": "none",
+        "padding": "{space-2} {space-3}",
+        "text-transform": "uppercase"
+      }
+    },
+    "chat .chat__trace-toggle::-webkit-details-marker": {
+      "kind": "scoped part",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "chat .chat__trace-toggle::before": {
+      "kind": "scoped part",
+      "declarations": {
+        "content": "\"▸ \""
+      }
+    },
+    "chat .chat__trace[open] .chat__trace-toggle::before": {
+      "kind": "scoped part",
+      "declarations": {
+        "content": "\"▾ \""
+      }
+    },
+    "chat .chat__trace-list": {
+      "kind": "part",
+      "declarations": {
+        "list-style": "none"
+      }
+    },
+    "chat .chat__trace-row": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "baseline",
+        "border-top": "{rule}",
+        "color": "{chrome-label}",
+        "display": "flex",
+        "flex-wrap": "wrap",
+        "gap": "{space-2}",
+        "padding": "{space-2} {space-3}"
+      }
+    },
+    "chat .chat__trace-name": {
+      "kind": "part",
+      "declarations": {
+        "color": "{content-primary}",
+        "font-weight": "{weight-semibold}"
+      }
+    },
+    "chat .chat__trace-args": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "min-width": "0",
+        "word-break": "break-word"
+      }
+    },
+    "chat .chat__trace-result": {
+      "kind": "part",
+      "declarations": {
+        "color": "{content-body}"
+      }
+    },
+    "chat .chat__trace-ms": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "margin-left": "auto"
+      }
+    },
+    "chat .chat__form": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "end",
+        "display": "grid",
+        "gap": "{space-3}",
+        "grid-template-columns": "1fr auto"
+      }
+    },
+    "chat .chat__input": {
+      "kind": "part",
+      "declarations": {
+        "background": "{surface-page}",
+        "border": "1px solid {chrome-border-strong}",
+        "color": "{content-body}",
+        "font": "inherit",
+        "font-size": "{text-md}",
+        "min-height": "3rem",
+        "padding": "{space-3}",
+        "resize": "vertical",
+        "width": "100%"
+      }
+    },
+    "chat .chat__input:focus-visible": {
+      "kind": "part state",
+      "declarations": {
+        "border-color": "{accent}"
+      }
+    },
+    "chat .chat__input[aria-disabled=\"true\"]": {
+      "kind": "part state",
+      "declarations": {
+        "color": "{content-muted}"
+      }
+    },
+    "chat .chat__input::placeholder": {
+      "kind": "scoped part",
+      "declarations": {
+        "color": "{chrome-label}"
+      }
+    },
+    "chat .chat__status": {
+      "kind": "part",
+      "declarations": {
+        "color": "{chrome-label}",
+        "font-size": "{text-xs}"
+      }
+    },
+    "chat .chat__suggest": {
+      "kind": "part",
+      "declarations": {
+        "display": "flex",
+        "flex-wrap": "wrap",
+        "gap": "{space-2}"
+      }
+    },
+    "chat @keyframes chat-life": {
+      "kind": "keyframes",
+      "declarations": {
+        "50%": "{\"opacity\":\"0.15\"}"
+      }
+    },
+    "chat .chat__form @below-560": {
+      "kind": "at below-560",
+      "declarations": {
+        "grid-template-columns": "1fr"
+      }
+    },
+    "chat .chat__send @below-560": {
+      "kind": "at below-560 part",
+      "declarations": {
+        "width": "100%"
+      }
+    },
+    "chat .chat__trace-ms @below-560": {
+      "kind": "at below-560",
+      "declarations": {
+        "margin-left": "0"
+      }
     }
   },
   "exports": {
@@ -2058,6 +2401,9 @@
     },
     "./react/drawer": {
       "target": "./dist/react/drawer.tsx"
+    },
+    "./react/chat": {
+      "target": "./dist/react/chat.tsx"
     }
   }
 }

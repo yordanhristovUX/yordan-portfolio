@@ -1684,7 +1684,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 
 
 
-/* ---- authored:chat — relational-selectors ---- */
+/* ---- generated:chat — do not edit, source: components/chat/definition.json ---- */
 /* ============ Chat ============ @component chat
    The assistant surface: turn list, composer, streaming state and a
    collapsible tool trace. Lives inside a `.band`/`.well` like any other
@@ -1857,6 +1857,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .chat__send { width: 100%; }
   .chat__trace-ms { margin-left: 0; }
 }
+/* ---- /generated:chat ---- */
 
 /* ---- authored:menu — foreign-selector ---- */
 /* ============ Menu (full-screen nav) ============ @component menu

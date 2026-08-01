@@ -94,6 +94,18 @@ removed when it ends:
 </p>
 ```
 
+The three answer parts the table below names and this fence did not show. A metric is a
+`.stat` with a label beside it; an error is framed because something went wrong and the
+frame is the alarm; a note is the surface reporting what it did, and is deliberately not
+framed — a reader who pressed Stop must not be shown their own decision dressed as a
+failure. All three sit inside `.chat__answer`:
+
+```html
+<p class="chat__metric"><span class="stat">31%</span> faster first contentful paint</p>
+<p class="chat__error">The corpus is unavailable right now.</p>
+<p class="chat__note">Stopped.</p>
+```
+
 ## Elements
 
 | Class | Role |

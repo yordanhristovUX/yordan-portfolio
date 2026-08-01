@@ -176,6 +176,9 @@ for (const def of defs) {
        entry is the only thing that would notice it disappearing. */
     if (rule.declarations || !kind.endsWith("part")) definitionSurface[`${def.id} ${selector}`] = { kind, declarations: declOf(rule.declarations) };
     for (const s of rule.states ?? []) {
+      /* A state with no declarations is a scope and ships as no bytes — the
+         same omission a declarations-less part gets, one kind over. */
+      if (!s.declarations) continue;
       definitionSurface[`${def.id} ${selector}${s.suffix}`] = { kind: `${kind} state`, declarations: declOf(s.declarations) };
     }
     /* A CONTAINS applies on the strength of what the consumer's markup holds,

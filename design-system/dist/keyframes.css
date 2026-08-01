@@ -11,3 +11,6 @@
 
 /* nav */
 @keyframes blink { 50% { opacity: 0.25; } }
+
+/* chat */
+@keyframes chat-life { 50% { opacity: 0.15; } }

@@ -39,8 +39,8 @@ dist/keyframes.css      generated @keyframes — the one thing a class attribute
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 16 generated,
-                        9 authored, 1 SPLIT, each with a marker naming its reason)
+css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 17 generated,
+                        8 authored, 1 SPLIT, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -189,7 +189,7 @@ renderer. Three consequences, and the first is the one that pays for the rest:
   selector), so the loader computes that view from the list. It is a query, not a second
   source.
 
-### The twenty constructs R4 added, and the block that forced each
+### The twenty-three constructs R4 added, and the block that forced each
 
 | construct | what it says | forced by |
 | --- | --- | --- |
@@ -211,7 +211,10 @@ renderer. Three consequences, and the first is the one that pays for the rest:
 | a group's **`break`**, and a **`note` that is an array of arrays** | a paragraph inside a rule; two comments above one rule | `nav`'s `.bar__id` and `.bar__action` |
 | a **`note` on an override and on a state** | a comment above a rule that happens to sit inside a query, or to be a state | `nav`'s docked `.bar__id` and its `[aria-expanded="true"]` |
 | **`contains` + `nothing`** — `:empty` | what the element holds, answered with none; the one `contains` that is not a `:has()`, because `:has(*)` is a different selector | `drawer`'s hosted chat thread |
-| a **part with no `declarations`** | a part that is a SCOPE rather than an appearance; emits nothing, and the build refuses one nothing later names | `drawer`'s `.drawer .profile > div`, which the stylesheet never writes on its own |
+| a **part or STATE with no `declarations`** | a rule that is a SCOPE rather than an appearance; emits nothing, and the build refuses one nothing later names | `drawer`'s `.drawer .profile > div` and `chat`'s `.chat__trace[open]` |
+| a **pseudo-element of a NAMED rule** — `within` + `pseudo`, nothing else | `.chat__trace-toggle::before`: a pseudo-element belongs to an element, and that element already has a rule with a name | `chat` |
+| **`::placeholder`** and **`::-webkit-details-marker`** | two more members of a closed pseudo enum, the vendor one as-spelled — the standard `::marker` does not reach a `<summary>`'s triangle | `chat` |
+| **`second` / `third` / `fourth`** positions | `:nth-child(2 \| 3 \| 4)` — three members and NOT one `nth` key taking a number, because a key that takes 2 takes `3n+1` | `chat`'s four streaming squares |
 
 The ones that are *relations* are closed at both ends on purpose, and that is what keeps them
 from being the wedge `PATTERNS.md` refuses. A scoped part's ancestor must **name** a rule the same definition
@@ -631,7 +634,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly twenty-five** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly twenty-six** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -664,6 +667,7 @@ published.
 "@yordan/design-system/react/nav"            // the largest block in the file, and the one that
                                              // forced query-only rules and @keyframes
 "@yordan/design-system/react/drawer"         // nine of its rules are about components it HOSTS
+"@yordan/design-system/react/chat"           // the most rules of any block, and it needed the least
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —

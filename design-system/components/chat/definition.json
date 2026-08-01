@@ -1,0 +1,304 @@
+{
+  "$doc": "The assistant surface's appearance, as data — the source of the `@component chat` block in css/components.css and of dist/react/chat.tsx. IT IS THE BLOCK WITH THE MOST RULES IN THE FILE, and the striking thing about transcribing it is how little it needed: four members of one enum, two names in another, and a shape for a pseudo-element that belongs to a rule rather than to a tag path. Everything else was already sayable — the states, the scoped parts, the `:empty` thread, the keyframes, the query-only send button. `chat` is where the method PATTERNS.md argues for stops producing findings and starts producing transcriptions, which is the result a migration wants from its largest block.",
+  "$schema": "../definition.schema.json",
+  "id": "chat",
+  "block": {
+    "title": "Chat",
+    "note": [
+      "The assistant surface: turn list, composer, streaming state and a",
+      "collapsible tool trace. Lives inside a `.band`/`.well` like any other",
+      "section — it is a section of the page, not a widget floating over it.",
+      "",
+      "The thread has a max-height and scrolls internally. That is not",
+      "cosmetic: a rail cannot size the band (its only child is out of",
+      "flow — components/skeleton/spec.md), and a bounded thread stops the",
+      "WELL doing it instead. A conversation of any length leaves the band",
+      "exactly as tall as it started.",
+      "",
+      "Every colour here is a semantic token. There is no",
+      "`prefers-color-scheme` query in this file and adding one would be a",
+      "bug — a colour that differs in dark is a `dark` value in tokens.json."
+    ]
+  },
+  "root": ".chat",
+  "rules": [
+    { "kind": "base", "declarations": [{ "set": { "display": "grid", "gap": { "token": "space-5" } } }] },
+    {
+      "kind": "part",
+      "name": "thread",
+      "selector": ".chat__thread",
+      "break": true,
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "gap": "0" } },
+        { "set": { "max-height": "min(46rem, 75vh)" } },
+        { "set": { "overflow-y": "auto" } },
+        { "set": { "overscroll-behavior": "contain" } },
+        { "set": { "border-top": { "token": "rule" } } }
+      ]
+    },
+    { "kind": "contains", "name": "thread-empty", "of": "thread", "nothing": true, "declarations": [{ "set": { "display": "none" } }] },
+    {
+      "kind": "part",
+      "name": "turn",
+      "selector": ".chat__turn",
+      "break": true,
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "gap": { "token": "space-2" } } },
+        { "set": { "padding": [{ "token": "space-5" }, { "token": "pad" }, { "token": "space-5" }, "0"] } },
+        { "set": { "border-bottom": { "token": "rule" } } }
+      ]
+    },
+    { "kind": "position", "name": "turn-closing", "of": "turn", "at": "last", "declarations": [{ "set": { "border-bottom": "0" } }] },
+    {
+      "kind": "part",
+      "name": "turn-user",
+      "selector": ".chat__turn--user",
+      "$doc": "A PART AND NOT A VARIANT, and the reason is structural rather than a judgement about what a user turn is: a modifier's selector is its ROOT plus its name, and this component's root is `.chat`. `.chat__turn--user` modifies a part, and a part has no axis — a companion selector that needs one is a component with its own definition, which is the line that has held through sixteen blocks. So the two turn kinds are two parts, exactly as the stylesheet writes them.",
+      "declarations": [{ "set": { "background": { "token": "surface-raised" }, "padding-left": { "token": "pad" } } }]
+    },
+    { "kind": "part", "name": "role", "selector": ".chat__role", "break": true, "declarations": [{ "set": { "color": { "token": "chrome-label" } } }] },
+    {
+      "kind": "part",
+      "name": "turn-assistant",
+      "selector": ".chat__turn--assistant",
+      "$doc": "The assistant turn declares nothing of its own — a SCOPE, exactly as `.drawer .profile > div` is. Its whole effect is the role label inside it turning accent, which is the rule below."
+    },
+    { "kind": "part", "name": "assistant-role", "within": "turn-assistant", "class": ".chat__role", "declarations": [{ "set": { "color": { "token": "accent" } } }] },
+    { "kind": "part", "name": "body", "selector": ".chat__body", "break": true, "declarations": [{ "set": { "display": "grid", "gap": { "token": "space-3" }, "min-width": "0" } }] },
+    { "kind": "part", "name": "answer", "selector": ".chat__answer", "declarations": [{ "set": { "display": "grid", "gap": { "token": "space-3" }, "min-width": "0" } }] },
+    {
+      "kind": "part",
+      "name": "prose",
+      "selector": ".chat__prose",
+      "break": true,
+      "note": ["The only model-authored text on the page."],
+      "declarations": [{ "set": { "max-width": "44rem", "line-height": "1.6" } }]
+    },
+    { "kind": "part", "name": "prose-strong", "within": "prose", "element": ["strong"], "declarations": [{ "set": { "color": { "token": "content-primary" }, "font-weight": { "token": "weight-semibold" } } }] },
+    {
+      "kind": "part",
+      "name": "why",
+      "selector": ".chat__why",
+      "break": true,
+      "note": [
+        "One clause on why a project answers the question — model-authored,",
+        "so it reads as annotation rather than as the project's own copy."
+      ],
+      "declarations": [
+        { "set": { "font-size": { "token": "text-sm" } } },
+        { "set": { "color": { "token": "content-muted" } } },
+        { "set": { "padding-left": { "token": "space-3" } } },
+        { "set": { "border-left": ["2px", "solid", { "token": "chrome-border-strong" }] } },
+        { "set": { "max-width": "44rem" } }
+      ]
+    },
+    { "kind": "part", "name": "metric", "selector": ".chat__metric", "break": true, "declarations": [{ "set": { "display": "flex", "align-items": "center", "gap": { "token": "space-4" }, "flex-wrap": "wrap" } }] },
+    { "kind": "part", "name": "metric-stat", "within": "metric", "class": ".stat", "declarations": [{ "set": { "margin": "0" } }] },
+    {
+      "kind": "part",
+      "name": "error",
+      "selector": ".chat__error",
+      "break": true,
+      "declarations": [
+        { "set": { "padding": [{ "token": "space-3" }, { "token": "space-4" }] } },
+        { "set": { "background": { "token": "chrome-bg" } } },
+        { "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "chrome-border-strong" }] } },
+        { "set": { "font-size": { "token": "text-md" } } },
+        { "set": { "color": { "token": "content-body" } } },
+        { "set": { "max-width": "44rem" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "note",
+      "selector": ".chat__note",
+      "break": true,
+      "note": [
+        "A neutral notice: \"Stopped.\", or a deadline reached with partial content",
+        "already on screen. Deliberately NOT the error's framed box. An error is",
+        "framed because something went wrong and the frame is the alarm; a note is",
+        "the surface reporting what it did, and a reader who pressed Stop must not",
+        "be shown their own decision dressed as a failure. So: label colour, no",
+        "frame, no border — chrome, at the weight of chrome."
+      ],
+      "declarations": [
+        { "set": { "font-size": { "token": "text-xs" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide" } } },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "max-width": "44rem" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "state",
+      "selector": ".chat__state",
+      "break": true,
+      "note": [
+        "---- Streaming state ----",
+        "Four squares from the same vocabulary as the skeleton's automata, so",
+        "\"thinking\" reads as this site rather than as a generic spinner."
+      ],
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center", "gap": { "token": "space-2" } } },
+        { "set": { "font-size": { "token": "text-xs" }, "letter-spacing": { "token": "tracking-wide-lg" }, "text-transform": "uppercase" } },
+        { "set": { "color": { "token": "chrome-label" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "cell",
+      "selector": ".chat__cell",
+      "declarations": [
+        { "set": { "width": "9px", "height": "9px" } },
+        { "set": { "flex-shrink": "0" } },
+        { "set": { "background": { "token": "primary-muted" } } },
+        { "set": { "animation": "chat-life 1.6s steps(2) infinite" } }
+      ]
+    },
+    { "kind": "position", "name": "cell-2", "of": "cell", "at": "second", "declarations": [{ "set": { "animation-delay": "0.2s" } }] },
+    { "kind": "position", "name": "cell-3", "of": "cell", "at": "third", "declarations": [{ "set": { "animation-delay": "0.4s" } }] },
+    { "kind": "position", "name": "cell-4", "of": "cell", "at": "fourth", "declarations": [{ "set": { "animation-delay": "0.6s" } }] },
+    { "kind": "part", "name": "state-label", "selector": ".chat__state-label", "declarations": [{ "set": { "margin-left": { "token": "space-2" } } }] },
+    { "kind": "keyframes", "name": "chat-life", "inline": true, "steps": [{ "at": "50%", "declarations": [{ "set": { "opacity": "0.15" } }] }] },
+    {
+      "kind": "part",
+      "name": "trace",
+      "selector": ".chat__trace",
+      "break": true,
+      "note": [
+        "---- Tool trace ----",
+        "Open while the answer streams, collapsed the moment it completes. The",
+        "trace is evidence, not narration — but evidence arriving live is the",
+        "only thing on screen during the wait, so it earns the space until there",
+        "is an answer to give it back to. Collapsing on completion is also what",
+        "keeps it out of the log's single completion announcement."
+      ],
+      "declarations": [
+        { "set": { "background": { "token": "chrome-bg" } } },
+        { "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "chrome-border" }] } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-2xs" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "trace-toggle",
+      "selector": ".chat__trace-toggle",
+      "declarations": [
+        { "set": { "padding": [{ "token": "space-2" }, { "token": "space-3" }] } },
+        { "set": { "cursor": "pointer" } },
+        { "set": { "color": { "token": "chrome-label-strong" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide" }, "text-transform": "uppercase" } },
+        { "set": { "list-style": "none" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "trace-marker",
+      "within": "trace-toggle",
+      "pseudo": "::-webkit-details-marker",
+      "$doc": "The vendor pseudo, as-spelled. `list-style: none` above is what removes the standard marker; WebKit draws its disclosure triangle through this one instead, and the standard `::marker` does not reach it. A closed enum takes the name verbatim rather than teaching the format about vendor prefixes.",
+      "declarations": [{ "set": { "display": "none" } }]
+    },
+    { "kind": "part", "name": "trace-arrow", "within": "trace-toggle", "pseudo": "::before", "declarations": [{ "set": { "content": "\"▸ \"" } }] },
+    {
+      "kind": "state",
+      "name": "trace-open",
+      "of": "trace",
+      "suffix": "[open]",
+      "$doc": "A SCOPE and not an appearance — the open trace declares nothing itself; its whole effect is the arrow below it turning down. A state with no declarations is not a shape this format has, so it carries the one declaration the stylesheet gives it… which it does not. See `trace-open-arrow`: the rule the file writes is `.chat__trace[open] .chat__trace-toggle::before`, and the state exists so that selector can be named."
+    },
+    { "kind": "part", "name": "trace-open-arrow", "within": "trace-open", "class": ".chat__trace-toggle", "pseudo": "::before", "declarations": [{ "set": { "content": "\"▾ \"" } }] },
+    { "kind": "part", "name": "trace-list", "selector": ".chat__trace-list", "declarations": [{ "set": { "list-style": "none" } }] },
+    {
+      "kind": "part",
+      "name": "trace-row",
+      "selector": ".chat__trace-row",
+      "declarations": [
+        { "set": { "display": "flex", "flex-wrap": "wrap", "align-items": "baseline", "gap": { "token": "space-2" } } },
+        { "set": { "padding": [{ "token": "space-2" }, { "token": "space-3" }] } },
+        { "set": { "border-top": { "token": "rule" } } },
+        { "set": { "color": { "token": "chrome-label" } } }
+      ]
+    },
+    { "kind": "part", "name": "trace-name", "selector": ".chat__trace-name", "declarations": [{ "set": { "color": { "token": "content-primary" }, "font-weight": { "token": "weight-semibold" } } }] },
+    { "kind": "part", "name": "trace-args", "selector": ".chat__trace-args", "declarations": [{ "set": { "color": { "token": "chrome-label" }, "word-break": "break-word", "min-width": "0" } }] },
+    { "kind": "part", "name": "trace-result", "selector": ".chat__trace-result", "declarations": [{ "set": { "color": { "token": "content-body" } } }] },
+    { "kind": "part", "name": "trace-ms", "selector": ".chat__trace-ms", "declarations": [{ "set": { "margin-left": "auto", "color": { "token": "chrome-label" } } }] },
+    {
+      "kind": "part",
+      "name": "form",
+      "selector": ".chat__form",
+      "break": true,
+      "note": ["---- Composer ----"],
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "1fr auto" } },
+        { "set": { "gap": { "token": "space-3" } } },
+        { "set": { "align-items": "end" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "input",
+      "selector": ".chat__input",
+      "declarations": [
+        { "set": { "font": "inherit" } },
+        { "set": { "font-size": { "token": "text-md" } } },
+        { "set": { "color": { "token": "content-body" } } },
+        { "set": { "background": { "token": "surface-page" } } },
+        { "set": { "border": ["1px", "solid", { "token": "chrome-border-strong" }] } },
+        { "set": { "padding": { "token": "space-3" } } },
+        { "set": { "resize": "vertical" } },
+        { "set": { "min-height": "3rem" } },
+        { "set": { "width": "100%" } }
+      ]
+    },
+    { "kind": "part", "name": "input-placeholder", "within": "input", "pseudo": "::placeholder", "declarations": [{ "set": { "color": { "token": "chrome-label" } } }] },
+    { "kind": "state", "name": "input-focus", "of": "input", "suffix": ":focus-visible", "declarations": [{ "set": { "border-color": { "token": "accent" } } }] },
+    {
+      "kind": "state",
+      "name": "input-busy",
+      "of": "input",
+      "suffix": "[aria-disabled=\"true\"]",
+      "note": [
+        "Busy, not disabled. js/chat.js sets `aria-disabled` + `readOnly` and never",
+        "the `disabled` attribute: disabling the focused textarea drops focus to",
+        "<body> and re-enabling it does not put focus back, which strands the reader",
+        "at the top of a very long document. Because the field now KEEPS focus while",
+        "it is inert, the state needs a visible colour more than it did before."
+      ],
+      "declarations": [{ "set": { "color": { "token": "content-muted" } } }]
+    },
+    { "kind": "part", "name": "status", "selector": ".chat__status", "break": true, "declarations": [{ "set": { "font-size": { "token": "text-xs" }, "color": { "token": "chrome-label" } } }] },
+    {
+      "kind": "part",
+      "name": "suggest",
+      "selector": ".chat__suggest",
+      "break": true,
+      "note": [
+        "Prompts that seed the first question. Chips are display-only by",
+        "contract, so a suggestion the visitor can press is a small Button."
+      ],
+      "declarations": [{ "set": { "display": "flex", "flex-wrap": "wrap", "gap": { "token": "space-2" } } }]
+    },
+    {
+      "kind": "at",
+      "condition": "below-560",
+      "break": true,
+      "rules": [
+        { "of": "form", "declarations": [{ "set": { "grid-template-columns": "1fr" } }] },
+        {
+          "kind": "part",
+          "name": "send",
+          "selector": ".chat__send",
+          "$doc": "QUERY-ONLY. The submit button is a `.btn.btn--solid` at every width and the composer's own class says one thing about it and only on a phone: span the row it now has to itself. There is no unconditional `.chat__send` rule for an override to name, which is the construct `nav` forced.",
+          "declarations": [{ "set": { "width": "100%" } }]
+        },
+        { "of": "trace-ms", "declarations": [{ "set": { "margin-left": "0" } }] }
+      ]
+    }
+  ]
+}

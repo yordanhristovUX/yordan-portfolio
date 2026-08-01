@@ -185,7 +185,7 @@
       "type": "object",
       "required": ["kind", "name"],
       "additionalProperties": false,
-      "oneOf": [{ "required": ["selector"] }, { "required": ["within", "element"] }, { "required": ["within", "class"] }, { "required": ["within", "child"] }],
+      "oneOf": [{ "required": ["selector"] }, { "required": ["within", "element"] }, { "required": ["within", "class"] }, { "required": ["within", "child"] }, { "required": ["within", "pseudo"], "not": { "anyOf": [{ "required": ["element"] }, { "required": ["class"] }, { "required": ["child"] }, { "required": ["selector"] }] } }],
       "properties": {
         "kind": { "const": "part" },
         "name": { "$ref": "#/$defs/name" },
@@ -210,8 +210,8 @@
           "$doc": "THE CHILD COMBINATOR, AND THE ONE RULE THAT KEEPS IT FROM BEING THE WEDGE. `profile` is the block that forced it: `.profile > div` is the wrapper the markup puts round each dt/dd pair so the grid has a row to place, and it has to be a CHILD — a descendant selector would style a <div> nested anywhere inside a value. PATTERNS.md refuses `.band > .rail--l` and this is not that, because of the closure written here and enforced by the build: A CHILD COMBINATOR MAY ONLY REACH A BARE TAG NAME, AND A CLASS MAY ONLY BE REACHED BY A DESCENDANT COMBINATOR. `.profile > div` is sayable; `.band > .rail--l` is not, and there is no combination of `child`, `class` and `element` that produces it — the two keys are mutually exclusive by the same `oneOf` that separates the other shapes. That is the whole line, and it is a line about SPECIFICITY OF REACH rather than about punctuation: a child combinator plus a bare tag reaches markup, which the component owns; a child combinator plus a class reaches another component's element at a fixed depth, which is the coupling nothing here may write. A STRING and not an array: `> div > p` is a path, and a path is what `within` refuses."
         },
         "pseudo": {
-          "enum": ["::before"],
-          "$doc": "A drawn pseudo-element. `::before` is the only one css/components.css uses outside the foundation reset, and it draws the list marker — decoration rather than content, which is exactly why it is here and not in the markup. `::after` is not in the vocabulary because nothing has asked for it."
+          "enum": ["::before", "::placeholder", "::-webkit-details-marker"],
+          "$doc": "A pseudo-element on the part's target. `::before` came first — it draws the list marker, decoration rather than content, which is exactly why it is here and not in the markup — and `chat` added the other two, both as-spelled. `::placeholder` is a real element of a real control; `::-webkit-details-marker` is a VENDOR pseudo and is written with its prefix because that is what it is: the standard `::marker` does not match a `<summary>`'s disclosure triangle in WebKit, so `list-style: none` alone leaves the triangle on. A closed enum takes it verbatim rather than teaching the format about vendors, which is the difference between admitting a name and admitting a grammar — and `::after` is still absent, because nothing has asked for it. WITH `within` AND NOTHING ELSE it is a pseudo-element of the rule `within` names, joined with no space: `.chat__trace-toggle::before`. That form is `chat`'s, and it is why `pseudo` is not only a tail on a tag path — a pseudo-element belongs to an element, and the element here already has a rule with a name."
         },
         "$doc": { "type": "string" },
         "note": { "$ref": "#/$defs/note" },
@@ -228,7 +228,7 @@
     "rule-state": {
       "$doc": "A state hangs off its OWNER, not off the component: `suffix` is appended to the selector of the rule `of` names, so `:hover` on `.btn--solid` is a state of the variant. It used to be a nested array under that owner, which put it directly after the owner in the emitted cascade and nowhere else; as a list entry it can also sit four rules later, which is where `media` writes `.ph:has(img)` and where the fixed cascade broke.",
       "type": "object",
-      "required": ["kind", "name", "of", "suffix", "declarations"],
+      "required": ["kind", "name", "of", "suffix"],
       "additionalProperties": false,
       "properties": {
         "kind": { "const": "state" },
@@ -252,7 +252,10 @@
           "$doc": "THE SELECTOR LIST IS WRITTEN ONE SELECTOR PER LINE. The same fact about the text a group's `wrap` records, on the other side of the brace: `nav` writes `.bar__menu:hover,` and `.bar__menu[aria-expanded=\"true\"] { … }` on two lines because the second selector is 34 characters and the pair does not read on one, while `source` writes `.source__link:hover, .source__link:focus-visible { … }` on one because it does. Both are in the file and neither is the emitter's to choose. Refused unless `suffix` is a list — there is nothing to break at otherwise."
         },
         "$doc": { "type": "string" },
-        "declarations": { "$ref": "#/$defs/declarations" }
+        "declarations": {
+          "$ref": "#/$defs/declarations",
+          "$doc": "OPTIONAL for the reason a part's are, and `chat` is the block that asked: `.chat__trace[open]` has no rule of its own — the stylesheet writes `.chat__trace[open] .chat__trace-toggle::before` and nothing else about an open trace — so the state exists purely so that selector can NAME its ancestor. That is the shape the ordered list bought and the only form in which a part scoped to a state is sayable at all; a state that also had to declare something would have made it unsayable again. Emits nothing, and the build refuses one nothing later names."
+        }
       }
     },
     "rule-contains": {
@@ -285,7 +288,7 @@
         "kind": { "const": "position" },
         "name": { "$ref": "#/$defs/name" },
         "of": { "$ref": "#/$defs/reference" },
-        "at": { "enum": ["first", "last", "odd"], "$doc": "`first` → `:first-child`, `last` → `:last-child`, `odd` → `:nth-child(odd)`. Three members, because three shapes have asked: case-body's opening heading drops the rule above it, entry and fact drop the divider after the last one in a run, and profile's two-column grid puts the gutter on the left-hand pairs only. Add the next member with the block that needs it and not before — the value of a closed vocabulary is what it refuses, and `odd` is worth noticing as the first member that is a SET of siblings rather than one." },
+        "at": { "enum": ["first", "last", "odd", "second", "third", "fourth"], "$doc": "`first` → `:first-child`, `last` → `:last-child`, `odd` → `:nth-child(odd)`, and `second` / `third` / `fourth` → `:nth-child(2 | 3 | 4)`. The first three were minted by three shapes that asked: case-body's opening heading drops the rule above it, entry and fact drop the divider after the last one in a run, and profile's two-column grid puts the gutter on the left-hand pairs only. The ORDINALS are `chat`'s, and they are three members rather than one `nth` key taking a number on purpose — an `nth` key would take `3n+1` and `-n+3` too, and the moment it does, this enum has become a selector fragment. Four squares of a streaming indicator want four animation delays; a block that wants a fifth mints `fifth` in the commit that needs it, which is the whole method." },
         "$doc": { "type": "string" },
         "declarations": { "$ref": "#/$defs/declarations" }
       }

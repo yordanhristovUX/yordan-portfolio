@@ -5,6 +5,59 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.3.0 — 2026-08-01
+
+Minor — 46 change(s).
+
+### Added
+
+- definition `chat .chat__answer` added
+- definition `chat .chat__body` added
+- definition `chat .chat__cell:nth-child(2)` added
+- definition `chat .chat__cell:nth-child(3)` added
+- definition `chat .chat__cell:nth-child(4)` added
+- definition `chat .chat__cell` added
+- definition `chat .chat__error` added
+- definition `chat .chat__form @below-560` added
+- definition `chat .chat__form` added
+- definition `chat .chat__input::placeholder` added
+- definition `chat .chat__input:focus-visible` added
+- definition `chat .chat__input[aria-disabled="true"]` added
+- definition `chat .chat__input` added
+- definition `chat .chat__metric .stat` added
+- definition `chat .chat__metric` added
+- definition `chat .chat__note` added
+- definition `chat .chat__prose strong` added
+- definition `chat .chat__prose` added
+- definition `chat .chat__role` added
+- definition `chat .chat__send @below-560` added
+- definition `chat .chat__state-label` added
+- definition `chat .chat__state` added
+- definition `chat .chat__status` added
+- definition `chat .chat__suggest` added
+- definition `chat .chat__thread:empty` added
+- definition `chat .chat__thread` added
+- definition `chat .chat__trace-args` added
+- definition `chat .chat__trace-list` added
+- definition `chat .chat__trace-ms @below-560` added
+- definition `chat .chat__trace-ms` added
+- definition `chat .chat__trace-name` added
+- definition `chat .chat__trace-result` added
+- definition `chat .chat__trace-row` added
+- definition `chat .chat__trace-toggle::-webkit-details-marker` added
+- definition `chat .chat__trace-toggle::before` added
+- definition `chat .chat__trace-toggle` added
+- definition `chat .chat__trace[open] .chat__trace-toggle::before` added
+- definition `chat .chat__trace` added
+- definition `chat .chat__turn--assistant .chat__role` added
+- definition `chat .chat__turn--user` added
+- definition `chat .chat__turn:last-child` added
+- definition `chat .chat__turn` added
+- definition `chat .chat__why` added
+- definition `chat .chat` added
+- definition `chat @keyframes chat-life` added
+- export `./react/chat` added
+
 ## 2.2.0 — 2026-08-01
 
 Minor — 26 change(s).

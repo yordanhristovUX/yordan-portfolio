@@ -603,5 +603,7 @@ export const STATE_PREFIX = {
   "[data-collapsed]": "[&[data-collapsed]]:",
   "[data-ask]": "[&[data-ask]]:",
   "[data-open]": "[&[data-open]]:",
+  "[open]": "[&[open]]:",
   '[aria-expanded="true"]': "[&[aria-expanded='true']]:",
+  '[aria-disabled="true"]': "[&[aria-disabled='true']]:",
 };

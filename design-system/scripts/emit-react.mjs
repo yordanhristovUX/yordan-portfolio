@@ -162,7 +162,13 @@ function entriesOf(declarations, keyOf, where, tally, prefix = "") {
  *  `& > div`, which is again exactly the stylesheet's selector — Tailwind's
  *  arbitrary variant takes the combinator as written, so nothing is translated. */
 const scopeOf = (part) =>
-  !part.within ? "" : part.child ? `>${part.child}` : `_${(part.element ?? [part.class]).join("_")}${part.pseudo ?? ""}`;
+  !part.within ? ""
+  : part.child ? `>${part.child}`
+  /* A pseudo-element of the host itself — no `_`, because `[&::before]:`
+     compiles to `&::before` and `[&_::before]:` would compile to a descendant
+     of it, which is not a selector at all. */
+  : !part.element && !part.class ? part.pseudo
+  : `_${(part.element ?? [part.class]).join("_")}${part.pseudo ?? ""}`;
 
 /** The variant prefix for a scope and/or a selector suffix; "" when neither. */
 const variantFor = (scope, suffix = "") => (scope || suffix ? `[&${scope}${suffix}]:` : "");
