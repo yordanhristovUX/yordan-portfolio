@@ -236,7 +236,9 @@ export function useChat({ endpoint }: { endpoint: string }) {
           case "notice": {
             /* The gates, made visible. A dropped block or a stripped citation
                is the system working, so it belongs in the trace next to the
-               tool calls rather than being silent. */
+               tool calls rather than being silent. `counts: false` for the
+               same reason as `meta`: a gate firing is not a tool call, and
+               the count must stay a count of tool calls. */
             const d = data as NoticeFrame;
             addTrace({
               tool: d.kind === "retry" ? "retry" : "validate",
@@ -253,7 +255,7 @@ export function useChat({ endpoint }: { endpoint: string }) {
                       .filter(Boolean)
                       .join(" · "),
               ms: 0,
-              counts: true,
+              counts: false,
             });
             break;
           }
