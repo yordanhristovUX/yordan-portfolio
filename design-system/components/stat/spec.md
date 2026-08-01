@@ -12,6 +12,10 @@
 A single framed headline number inside prose (case-study outcomes). The loud sibling of
 Fact — no title/label structure, just the number in a strong-rule box.
 
+> **Its appearance is generated.** The CSS block lives in a generated region of
+> `css/components.css` and is rendered from `definition.json` beside this file. Change how a
+> stat *looks* there; when to reach for one at all stays here.
+
 ## Pattern
 
 ```html

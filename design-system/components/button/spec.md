@@ -11,6 +11,11 @@
 
 Rectangular mono-type action. Outline by default; solid ink for the primary action of a view.
 
+> **Its appearance is generated.** The CSS block lives in a generated region of
+> `css/components.css` and is rendered from `definition.json` beside this file. Change how a
+> button *looks* there; everything below — which element to use, the focus ring, the
+> one-solid rule — is behaviour and judgement, and stays here.
+
 ## Pattern
 
 ```html

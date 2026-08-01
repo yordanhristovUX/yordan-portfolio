@@ -11,6 +11,11 @@
 
 Small bordered mono label for metadata: project tags, case-study meta, statuses.
 
+> **Its appearance is generated.** The CSS block lives in a generated region of
+> `css/components.css` and is rendered from `definition.json` beside this file. Change how a
+> chip *looks* there; that it is display-only and never interactive is a rule about markup
+> and stays here.
+
 ## Pattern
 
 ```html

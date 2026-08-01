@@ -14,7 +14,9 @@ before touching any UI.** It is the entry point for humans and AI agents alike.
 2. **Every component is three things**: a CSS block in `css/components.css`, a spec in
    `components/<name>/spec.md`, and a story in `stories/<name>.stories.js`. The build's
    coverage check (`npm run build`) fails if any leg is missing. The same run also fails if
-   the counts the site advertises about itself have gone stale — see below.
+   the counts the site advertises about itself have gone stale — see below. Three
+   components (button, chip, stat) now have a **fourth** leg, `definition.json`, and their
+   CSS block is generated from it — see "Definitions" below; the other twenty do not.
 3. **Figma is an output, never a source.** Sync is one-way, repo → Figma, via the MCP
    procedure in `figma/push-guide.md`.
 4. **Themes are tokens, not queries.** A colour that changes between light and dark gets a
@@ -31,9 +33,11 @@ dist/tokens.flat.json   generated machine-readable tokens, aliases RESOLVED — 
 dist/tokens.dtcg.json   generated W3C Design Tokens export, aliases KEPT — for a second consumer
 dist/tokens.d.ts        generated TypeScript union of the token names — types only, no runtime
 dist/components.json    generated component contract (classes, variants, tokens per component)
-css/components.css      every component's styles (hand-authored, semantic tokens only)
+css/components.css      every component's styles (an ASSEMBLY: 20 blocks authored, 3 generated)
+scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
+components/*/definition.json  appearance as data — THREE components so far, see "Definitions"
 stories/*.stories.js    Storybook (CSF3, vanilla HTML strings)  (npm run storybook → :6006)
 figma/push-guide.md     the repeatable Figma Variables push (Figma MCP)
 scripts/contract-diff.mjs  dist/ vs RELEASED.json → the semver class the change needs
@@ -56,6 +60,73 @@ a component rather than to the copy: `avatar.svg` is the portrait
 `components/drawer/spec.md` prints on its plate. It is a derivative of the owner's export in
 `../content/assets/`, which stays untouched — content owns the words and the figures inside
 them, the system owns its own chrome.
+
+## Definitions — appearance as data (pilot scope: three components)
+
+**`css/components.css` is no longer entirely hand-authored.** Three of its blocks —
+**button, chip, stat** — are generated from `components/<id>/definition.json`, which holds
+that component's appearance as structured data: its variants, its sizes, its states, and
+which token each property binds to. The other twenty blocks are authored source and stay
+that way. This is phase R1 of a revision that ends with `components.css` receiving the same
+treatment `dist/tokens.css` already gets; **nothing here is settled beyond these three**, and
+the schema is deliberately not written down yet — it will be *extracted* from these three
+real cases rather than imposed on them.
+
+The file is therefore an **assembly**. A generated block sits between two markers:
+
+```css
+/* ---- generated:button — do not edit, source: components/button/definition.json ---- */
+/* ============ Button ============ @component button */
+.btn { … }
+/* ---- /generated:button ---- */
+```
+
+Same idiom as the `<!-- content:… -->` regions of `index.html`, and the same rule: **never
+edit inside one.** `scripts/build.mjs --check` re-renders every region *in memory* and
+byte-compares it against the file, so a hand-edit fails the build naming the region, the
+definition it came from and the first line that differs. Edit the definition and run
+`npm run emit:css` (or `npm run build`, which runs it first).
+
+The marker rule is `----` and not `====` on purpose: every banner in `components.css` is
+`====`, and `build.mjs` counts those banners to prove each one carries an `@component`
+marker. A region drawn with `=` would be counted as a banner missing its marker, and the
+census would have to learn an exception — a gate weakened by a comment style.
+
+**A value is one of three things, and telling them apart is the point of the file.**
+
+```jsonc
+{ "set": { "display": "inline-block" } }                        // structural literal
+{ "set": { "color": { "token": "content-primary" } } }          // a binding → var(--content-primary)
+{ "set": { "border": ["1px", "solid", { "token": "content-primary" }] } }   // a sequence of both
+```
+
+So `border: 1px solid var(--content-primary)` records, as data, that its width and style are
+structure while its colour is a token — a fact no parser recovers from the CSS. Declarations
+are **grouped**, because the authored CSS groups them and the grouping is a decision
+(`font-size / font-weight / letter-spacing` on one line is one thought); one group renders on
+one line, more than one renders as a block. Rendering order is the cascade: base, base
+states, each variant and its states, each size and its states, then parts.
+
+**Behaviour is not in a definition and is not coming.** Which element to use, focus
+management, keyboard, ARIA, "at most one `.btn--solid` per view" — those are judgement, and
+they stay in `spec.md` and in the gates. A definition answers *what does this look like*, and
+nothing else.
+
+Three consequences worth stating because they are easy to assume otherwise:
+
+- **`dist/components.json` is unchanged.** It is still derived by parsing `components.css`
+  and each spec's frontmatter. The generated blocks parse identically to the authored ones
+  they replaced — that is the pilot's whole claim — so the class census, the contract gate
+  and the advertised counts did not move.
+- **For a pilot id the trinity is a quartet**: CSS block + `spec.md` + story +
+  `definition.json`. A missing definition fails the build naming the file, on a plain build
+  as well as under `--check`, because the emitter cannot render without it.
+- **The write is not part of the root `npm run build`,** and that is a boundary rather than
+  an omission — `test/drift.test.js` derives the root drift gate's pathspec list from every
+  generator's write targets, and `components.css` is authored source with three generated
+  regions, not a `dist/` artefact. `scripts/emit-css.mjs`'s header has the full reasoning.
+  The regions are guarded by something stricter anyway: an in-memory byte compare that runs
+  before anything is written.
 
 ## The package surface, and the promise attached to it
 
@@ -349,7 +420,9 @@ masked.
    components are a variant of Card, Row, or Chip.
 2. Add the CSS block to `css/components.css`, with `@component <id>` on its banner.
    Semantic tokens only: `--text-*` for every size, `--space-*` for every gap, padding and
-   margin, no borders inside the skeleton (inset box-shadows).
+   margin, no borders inside the skeleton (inset box-shadows). **Authored, not a
+   definition** — the definition pipeline is three components wide and stays that way until
+   R3 has a schema; do not add a fourth by copying one.
 3. Write `components/<name>/spec.md` (pattern, variants, tokens, a11y, AI notes) and
    `stories/<name>.stories.js` with the same canonical HTML as the spec. The `## Tokens`
    list must name **every** token the block consumes — the build cross-checks it against
