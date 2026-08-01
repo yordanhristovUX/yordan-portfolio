@@ -20,6 +20,7 @@
    fail to do, four times over, silently.
    ============================================================ */
 import type { Metadata } from "next";
+import { Chip, ChipGroup } from "@yordan/design-system/react";
 
 import { AppLink } from "@/components/AppLink";
 import { Strip, Term } from "@/components/primitives";
@@ -247,12 +248,12 @@ export default function Page() {
             <div className="mcp-endpoint">
               <span className="mcp-endpoint__label mono">Endpoint</span>
               <code className="mcp-endpoint__url">{endpoint}</code>
-              <div className="chips">
-                <span className="chip chip--solid">Read-only</span>
-                <span className="chip">No auth</span>
-                <span className="chip">Stateless</span>
-                <span className="chip">8 tools</span>
-              </div>
+              <ChipGroup>
+                <Chip variant="solid">Read-only</Chip>
+                <Chip>No auth</Chip>
+                <Chip>Stateless</Chip>
+                <Chip>8 tools</Chip>
+              </ChipGroup>
             </div>
 
             <h3 className="mcp-sub t-label">Claude Code — one command</h3>

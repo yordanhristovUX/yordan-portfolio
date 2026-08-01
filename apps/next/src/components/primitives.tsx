@@ -2,9 +2,20 @@
    the generated work pages @ 2e84323. Not design-system components (they have
    no spec.md and no story, and are not new classes either): each is one
    element the pages already write by hand, given a name here so that the page
-   files read as their own structure rather than as a list of divs. */
+   files read as their own structure rather than as a list of divs.
+
+   TWO OF THEM ARE NOW WRAPPERS ROUND A GENERATED COMPONENT rather than round a
+   class string. `Btn` and `Chips` used to write `class="btn btn--solid"` and
+   `class="chip"` for components.css to match; they now call Button, Chip and
+   ChipGroup from @yordan/design-system/react, whose cva maps carry the same
+   declarations as Tailwind utilities. Nothing about what these two are for has
+   changed — they are still this app's local names for a repeated shape, and
+   the design system still owns the appearance. What changed is which of the
+   two pipelines delivers it. See src/app/globals.css. */
+import { Button, button, Chip, ChipGroup } from "@yordan/design-system/react";
+
 import { AppLink } from "@/components/AppLink";
-import { href } from "@/lib/routes";
+import { href, isRoute } from "@/lib/routes";
 import type { Link } from "@/lib/vanilla-copy";
 
 /** The living separator between two bands. */
@@ -22,20 +33,44 @@ export function Term() {
   return <div className="term" aria-hidden="true" />;
 }
 
-/** A button-shaped anchor. `variant: "solid"` is the filled one. */
+/* A button-shaped anchor. `variant: "solid"` is the filled one.
+
+   THE ONE PLACE THE TWO LINK MODELS HAVE TO MEET, and the branch below is the
+   reconciliation. The generated `Button` renders its OWN <a> when it is given
+   an `href` — that is the canonical HTML of components/button/spec.md, and it
+   is a plain anchor with no router in it. This app has a router, and
+   src/components/AppLink.tsx exists to send its own routes through it.
+
+   So the href decides, exactly as it already does in AppLink:
+
+     a route of this app  → <AppLink>, i.e. next/link's anchor, wearing the
+                            class map from `button({ variant })`. The cva map
+                            is exported beside the component precisely so a
+                            consumer that must own the element can still use
+                            the styling.
+     everything else      → <Button href>, the generated anchor, because an
+                            absolute URL, a mailto: and a bare #anchor were
+                            never going through the router anyway.
+
+   Both branches render the same tag with the same class string; what differs
+   is who navigates. Removing the branch and always using <Button href> would
+   ship a second site that full-page-loads its own routes. */
 export function Btn({ link, className, style }: { link: Link; className?: string; style?: React.CSSProperties }) {
-  const classes = ["btn", link.variant === "solid" ? "btn--solid" : "", className ?? ""]
-    .filter(Boolean)
-    .join(" ");
+  const to = href(link.href);
+  const variant = link.variant === "solid" ? "solid" : "default";
+  const external = link.external ? { target: "_blank", rel: "noopener" } : {};
+
+  if (isRoute(to)) {
+    return (
+      <AppLink className={[button({ variant }), className].filter(Boolean).join(" ")} href={to} style={style} {...external}>
+        {link.label}
+      </AppLink>
+    );
+  }
   return (
-    <AppLink
-      className={classes}
-      href={href(link.href)}
-      style={style}
-      {...(link.external ? { target: "_blank", rel: "noopener" } : {})}
-    >
+    <Button variant={variant} className={className} href={to} style={style} {...external}>
       {link.label}
-    </AppLink>
+    </Button>
   );
 }
 
@@ -51,12 +86,12 @@ export function GridLink({ link }: { link: Link }) {
 /** A project's tags. The accent tag is the one solid chip in the row. */
 export function Chips({ tags, accent }: { tags: string[]; accent?: string | null }) {
   return (
-    <div className="chips">
+    <ChipGroup>
       {tags.map((t) => (
-        <span key={t} className={t === accent ? "chip chip--solid" : "chip"}>
+        <Chip key={t} variant={t === accent ? "solid" : "default"}>
           {t}
-        </span>
+        </Chip>
       ))}
-    </div>
+    </ChipGroup>
   );
 }

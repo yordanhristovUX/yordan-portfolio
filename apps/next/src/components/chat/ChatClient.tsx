@@ -40,11 +40,28 @@
    not a new behaviour.
    ============================================================ */
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import type { Ref } from "react";
+
+import { Button } from "@yordan/design-system/react";
+import type { ButtonProps } from "@yordan/design-system/react";
 
 import { AnswerBlocks } from "@/components/chat/blocks";
 import { MAX_CHARS, useChat } from "@/lib/chat/useChat";
 import type { AssistantTurn } from "@/lib/chat/useChat";
 import { CHAT } from "@/lib/vanilla-copy";
+
+/* THE SEND BUTTON NEEDS A REF, AND THE GENERATED TYPE DOES NOT OFFER ONE.
+
+   `ButtonProps` is built from `ComponentPropsWithoutRef<"button">`, so `ref` is
+   not in it. React 19 passes `ref` to a function component as an ordinary prop
+   and the generated Button spreads `...rest` onto its element, so the ref DOES
+   attach at runtime — this is a hole in the published type, not in the
+   component. Widening it here is a one-line cast at one call site rather than a
+   local reimplementation of the button; the fix belongs in the emitter, and is
+   reported for R3. The ref is load-bearing: `onSubmit` compares it against the
+   submit event's `submitter` to tell a real click on Send from the Enter key's
+   requestSubmit(), which is what stops Enter becoming a cancel key. */
+const SendButton = Button as (props: ButtonProps & { ref?: Ref<HTMLButtonElement> }) => React.JSX.Element;
 
 function Trace({ turn }: { turn: AssistantTurn }) {
   const ref = useRef<HTMLDetailsElement>(null);
@@ -228,21 +245,25 @@ export function ChatClient({ endpoint }: { endpoint: string }) {
             }
           }}
         />
-        <button
-          className="btn btn--solid chat__send"
+        {/* `.chat__send` stays as `className` — it is the chat component's
+            own layout hook (full width below 640px) and outlives the swap;
+            what left is `.btn.btn--solid`, which is now `variant="solid"`. */}
+        <SendButton
+          variant="solid"
+          className="chat__send"
           ref={sendRef}
           type="submit"
           aria-disabled="false"
           {...(busy ? { "aria-label": "Stop generating this answer" } : {})}
         >
           {busy ? "Stop" : CHAT.send}
-        </button>
+        </SendButton>
       </form>
 
       <div className="chat__suggest">
         {CHAT.suggestions.map((s) => (
-          <button
-            className="btn btn--small"
+          <Button
+            size="small"
             type="button"
             key={s.ask}
             data-chat-ask={s.ask}
@@ -252,7 +273,7 @@ export function ChatClient({ endpoint }: { endpoint: string }) {
             }}
           >
             {s.label}
-          </button>
+          </Button>
         ))}
       </div>
 

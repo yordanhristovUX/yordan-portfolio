@@ -24,11 +24,50 @@ npx serve out        # what CI and the exit gate look at
 deletes the copies. `next.config.mjs` calls the sync at config load, so a bare
 `npx next build` works from a clean checkout too.
 
+**`npm install` is also how the design system gets here.** `.npmrc` sets
+`install-links=true`, so `@yordan/design-system` is packed and installed as a real
+directory rather than symlinked — read that file before removing the line, it is what
+makes the generated React components resolve `class-variance-authority` at all. The cost
+is that the installed copy does not follow a design-system rebuild until the next
+`npm install`. CI and Vercel run `npm ci`, which re-packs every time, so only a local
+tree can go stale.
+
+## Two style pipelines, on purpose
+
+Since phase R2b the design system reaches this app by **two** routes at once, and which
+one a component uses is the design system's decision, not this app's:
+
+| | pipeline 1 | pipeline 2 |
+| --- | --- | --- |
+| components | the other twenty | `button`, `chip`+`chips`, `stat` |
+| what arrives | `components.css` and a class contract | `@yordan/design-system/react/*` — a typed component, a cva class map |
+| what styles it | `.btn`, `.chip`, `.stat` in `components.css` | Tailwind utilities built from `tokens.tailwind.css` |
+| what this app writes | `className="chip chip--solid"` | `<Chip variant="solid">` |
+
+Both read the same custom properties out of `tokens.css`, so dark, print and the wide
+viewport reach a utility and a hand-written rule through the same cascade. There is no
+second set of values anywhere and there is no colour literal in either.
+
+`src/app/globals.css` is the whole of pipeline 2 and its header is the file to read
+before touching the cascade: Tailwind is imported in parts rather than as one line
+(Preflight would overwrite the Foundation block of `components.css`), and its utilities
+are deliberately **unlayered** (a layered utility loses outright to that block's `a {}`
+and `button {}` rules, whatever the specificity says).
+
+**Three surfaces still render `.chip`/`.stat` through `components.css` and are not
+swapped:** `src/components/evals-regions.tsx`, whose markup must stay byte-identical to
+the regions `evals/run.mjs` writes into `evals.html`; `src/components/chat/blocks.tsx`,
+which is the port of `js/answer-render.js` and reproduces its markup; and the chip that
+`evals-regions.tsx` embeds inside an artefact HTML string, which is not JSX at all. Those
+are generated-region renderers, so their markup is the artefact's, not this app's.
+
 ## What crosses the boundary, and how
 
 | Input | Route in | Where |
 | --- | --- | --- |
 | tokens.css, components.css | the `@yordan/design-system` package's `exports` | `src/app/layout.tsx` |
+| tokens.tailwind.css | the same `exports` map | `src/app/globals.css` |
+| `react/{button,chip,stat}` | the same `exports` map — generated TSX, transpiled here | the use sites below |
 | `surface-page`'s two values | `@yordan/design-system/tokens.flat.json` | `src/lib/theme-script.ts` |
 | the corpus | a build-time import of `content/dist/content.json` | `src/lib/content.ts` |
 | the corpus, again | copied to `public/corpus/` for the browser | `scripts/sync-artifacts.mjs` |
@@ -134,7 +173,23 @@ header of `AppLink.tsx`.
 
 Every page and every behaviour the vanilla site has is here: `/`, `/cv`, `/work/<id>`,
 `/mcp`, `/evals`, the chrome, and the assistant in the drawer. What remains is three things,
-and none of them is a half-finished feature.
+and none of them is a half-finished feature — plus one that is a defect and is written down
+so that nobody fixes it in the wrong place.
+
+**`Button`'s `variant="solid"` and `size="small"` do not take effect, and the bug is in the
+artefact rather than here.** cva puts a component's base classes and its variant's classes
+in the same `class` attribute, but a class attribute has no order — the STYLESHEET decides,
+and Tailwind sorts utilities by name. `text-content-inverse` (solid) is emitted before
+`text-content-primary` (base) and therefore loses; so are `px-space-3`, `py-space-2`,
+`text-step-2xs` (small) against `px-space-5`, `py-space-3`, `text-step-xs` (base), and
+`hover:bg-action-hover` against `hover:bg-primary`. Measured against the vanilla site: a
+solid button renders dark ink on its dark fill, and a small button renders at the default
+size. `Chip`'s solid variant is unaffected only by the accident that its names sort the
+other way. **The fix belongs in the definition the components are generated from** — a base
+declaration that a variant overrides has to move into the `default` variant, so that exactly
+one of the two ever applies — and it needs no `!important`, no `tailwind-merge` and no
+change in this app. Nothing here works around it: a styling gap is a design-system question,
+and papering over this one would hide it from the cross-surface comparison that found it.
 
 **Motion, deliberately.** No GSAP here. On the vanilla site `[data-rise]`/`[data-reveal]` are
 hidden only under the `js` class that a *confirmed* GSAP load adds, so a load failure shows

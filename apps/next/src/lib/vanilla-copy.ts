@@ -37,7 +37,9 @@
 export interface Link {
   label: string;
   href: string;
-  /** `"solid"` renders `.btn.btn--solid`; a plain button is `.btn`. */
+  /** The button's variant, as the vanilla markup's `.btn--solid` named it.
+      `Btn` in src/components/primitives.tsx now passes it to the generated
+      component as `variant="solid"`; the vanilla page still writes the class. */
   variant?: "solid";
   external?: boolean;
 }

@@ -12,6 +12,8 @@
    are hand-authored: nothing in here has a `content:` region, because none of
    them come from content/. The prose the assistant emits is model-authored;
    everything else it renders is resolved from content.json at runtime. */
+import { Button } from "@yordan/design-system/react";
+
 import { ChatClient } from "@/components/chat/ChatClient";
 import { chatEndpoint } from "@/lib/content";
 import { ASK } from "@/lib/vanilla-copy";
@@ -89,9 +91,14 @@ export function AskDrawer() {
             </h2>
             <p className="drawer__note">{ASK.note}</p>
           </span>
-          <button className="btn btn--small" type="button" data-drawer-close="" aria-label="Close the assistant">
+          {/* `size="small"` is what `.btn--small` was: chrome context, one
+              step down the padding ramp and one down the type ramp. The
+              `data-drawer-close` contract is untouched — the port in
+              src/lib/vanilla/drawer.ts finds this button by that attribute
+              and knows nothing about how it is styled. */}
+          <Button size="small" type="button" data-drawer-close="" aria-label="Close the assistant">
             {ASK.close}
-          </button>
+          </Button>
         </header>
         <div className="drawer__body">
           <ChatClient endpoint={chatEndpoint} />

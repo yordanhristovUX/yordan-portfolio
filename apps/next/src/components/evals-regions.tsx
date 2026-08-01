@@ -27,6 +27,16 @@
    NO CLASS NAME HERE IS NEW: `facts`, `fact`, `fact__num/__title/__label`,
    `tools`, `tools__row`, `chips`, `chip`, `chip--solid` are the design
    system's, and `ev-note` / `ev-prose` are css/evals.css's, synced in.
+
+   AND NONE OF THEM WAS SWAPPED TO THE GENERATED <Chip> IN R2b, for the reason
+   in the first paragraph: the exit gate for this page is a BYTE DIFF against
+   evals.html's regions. A `<Chip>` emits fifteen utility classes where the
+   artefact emits `class="chip"`, so swapping here would fail the one check that
+   proves the two renderers agree. One of these chips is not even JSX — the
+   counterfactual marker below is composed into an HTML string — which is the
+   same fact from the other side: this file reproduces an artefact's markup, so
+   the artefact's generator is where a class name changes first. These stay on
+   components.css until it does.
    ============================================================ */
 import type {
   ArmsRegion,

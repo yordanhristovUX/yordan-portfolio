@@ -18,6 +18,14 @@
         caller does not count it — which is also why the "no answer survived
         validation" verdict in useChat is computed from what actually rendered.
 
+   THIS FILE KEPT `.chip`, `.chips` AND `.stat` THROUGH THE R2b SWAP, and that
+   is the same rule as the paragraph above rather than an omission. Pipeline 2
+   — <Chip>, <Stat> from @yordan/design-system/react — replaced the class names
+   at every JSX USE SITE in this app; a renderer whose job is to reproduce
+   js/answer-render.js's markup is not a use site, it is a copy, and a copy that
+   emits different classes from its source has drifted. The elements below stay
+   styled by components.css until the vanilla renderer moves too.
+
    THE ONE PORT DIFFERENCE, and it is routing rather than content: hrefs that
    the corpus writes for the vanilla site (`evals.html`, `mcp.html`) are put
    through `href()` from src/lib/routes.ts, and internal ones render through

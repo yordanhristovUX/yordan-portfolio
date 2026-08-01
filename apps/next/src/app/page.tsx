@@ -15,6 +15,7 @@
    attributes are already where the motion port will look for them.
    ============================================================ */
 import type { Metadata } from "next";
+import { Chip } from "@yordan/design-system/react";
 
 import { AppLink } from "@/components/AppLink";
 import { AskAction, AskDrawer, AskFab } from "@/components/Ask";
@@ -165,11 +166,17 @@ export default function Page() {
                       </h3>
                       <span className="idx__desc">{p.summary}</span>
                     </span>
+                    {/* NOT a <ChipGroup>: the wrapper here is `.idx__tags`,
+                        the row's own track, which provides the same wrap and
+                        gap plus a `justify-content: flex-end` and a breakpoint
+                        that hides the whole set. `.chips` would be a second
+                        flex container inside it. The CHIPS are the design
+                        system's; the container is the index row's. */}
                     <span className="idx__tags">
                       {p.indexTags.map((t) => (
-                        <span key={t} className={t === p.accentTag ? "chip chip--solid" : "chip"}>
+                        <Chip key={t} variant={t === p.accentTag ? "solid" : "default"}>
                           {t}
-                        </span>
+                        </Chip>
                       ))}
                     </span>
                     <span className="idx__go mono" aria-hidden="true">

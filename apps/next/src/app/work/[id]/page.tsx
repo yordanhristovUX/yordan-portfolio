@@ -38,6 +38,7 @@ import { Fragment } from "react";
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Stat } from "@yordan/design-system/react";
 
 import { AppLink } from "@/components/AppLink";
 import { AskAction, AskDrawer, AskFab } from "@/components/Ask";
@@ -183,7 +184,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   {s === firstOutcome
                     ? project.metrics.map((m) => (
                         <p key={m.value}>
-                          <span className="stat">{m.value}</span>
+                          <Stat>{m.value}</Stat>
                         </p>
                       ))
                     : null}
