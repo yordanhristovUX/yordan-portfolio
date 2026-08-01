@@ -232,6 +232,11 @@ const code = await run(
   {
     env: {
       ...process.env,
+      /* Storybook's getProjectRoot() walks up looking for a `.git` DIRECTORY.
+         In a git worktree `.git` is a file, so the walk escapes into whatever
+         checkout contains the worktree and jest's rootDir lands there — where
+         the testMatch glob finds nothing. Pin it to this repo's root. */
+      STORYBOOK_PROJECT_ROOT: process.env.STORYBOOK_PROJECT_ROOT ?? resolve(ROOT, ".."),
       DS_TEST_MODE: MODE,
       DS_SNAPSHOT_DIR: SNAPSHOT_DIR,
       DS_DIFF_DIR: DIFF_DIR,
