@@ -1,6 +1,6 @@
 {
   "name": "@yordan/design-system",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "type": "module",
   "description": "AI-ready, repo-first design system for the blueprint portfolio. Source of truth: tokens/tokens.json + components/*/spec.md + css/components.css. See README.md.",
@@ -22,7 +22,8 @@
     "./react": "./dist/react/index.ts",
     "./react/button": "./dist/react/button.tsx",
     "./react/chip": "./dist/react/chip.tsx",
-    "./react/stat": "./dist/react/stat.tsx"
+    "./react/stat": "./dist/react/stat.tsx",
+    "./react/footer": "./dist/react/footer.tsx"
   },
   "scripts": {
     "//emit": "PHASE R1 PILOT. Three components (button, chip, stat) have their appearance authored as data in components/<id>/definition.json, and their blocks in css/components.css are GENERATED regions rendered from it. `emit:css` writes them; `build.mjs --check` re-renders them in memory and byte-compares, so a hand-edit inside a region fails the build. It runs first in `build` for the obvious reason — the check that follows would otherwise be comparing against a stale file. It is deliberately NOT a step of the ROOT `npm run build`: see the header of scripts/emit-css.mjs.",

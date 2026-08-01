@@ -18,11 +18,11 @@ descendant selector, a locally-defined custom property, and computed geometry
 
 ```
 GENERATABLE-SHAPED (5)              HAS A PATTERN FEATURE (19)
-  button        5 selectors           card    46 sel   at-rule, combinator, computed, descendant, positional
-  chip          3 selectors           chat    45 sel   at-rule, computed, descendant, positional
-  stat          1 selector            nav     28 sel   at-rule, computed, descendant
-  footer        1 selector            row     26 sel   at-rule, computed, descendant, positional
-  source        8 selectors           drawer  25 sel   at-rule, combinator, computed, descendant, positional
+  button        5 selectors  ✓ generated    card    46 sel   at-rule, combinator, computed, descendant, positional
+  chip          3 selectors  ✓ generated    chat    45 sel   at-rule, computed, descendant, positional
+  stat          1 selector   ✓ generated    nav     28 sel   at-rule, computed, descendant
+  footer        1 selector   ✓ generated    row     26 sel   at-rule, computed, descendant, positional
+  source        8 selectors  ← next        drawer  25 sel   at-rule, combinator, computed, descendant, positional
                                       skeleton 18 sel  at-rule, combinator, computed, descendant, local-prop
                                       menu    16 sel   at-rule, combinator, computed, descendant, positional
                                       entry   13 sel   at-rule, computed, descendant, positional

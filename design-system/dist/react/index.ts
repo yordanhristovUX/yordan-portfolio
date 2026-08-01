@@ -20,3 +20,5 @@ export { chip, Chip, chipGroup, ChipGroup } from "./chip";
 export type { ChipProps, ChipVariants, ChipGroupProps } from "./chip";
 export { stat, Stat } from "./stat";
 export type { StatProps, StatVariants } from "./stat";
+export { footer, Footer } from "./footer";
+export type { FooterProps, FooterVariants } from "./footer";

@@ -82,7 +82,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat"];
+export const PILOT = ["button", "chip", "stat", "footer"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -327,15 +327,16 @@ function rule(selector, declarations, where) {
     if (!g?.set || typeof g.set !== "object") throw new Error(`${where}: group ${i} of \`${selector}\` has no \`set\``);
     return {
       note: Array.isArray(g.note) && g.note.length ? g.note : null,
+      aside: typeof g.aside === "string" && g.aside ? g.aside : null,
       text: Object.entries(g.set).map(([p, v]) => `${p}: ${value(v, `${where} → ${selector} { ${p} }`)};`).join(" "),
     };
   });
   if (!groups.length) throw new Error(`${where}: \`${selector}\` declares nothing`);
-  if (groups.length === 1 && !groups[0].note) return `${selector} { ${groups[0].text} }\n`;
+  if (groups.length === 1 && !groups[0].note && !groups[0].aside) return `${selector} { ${groups[0].text} }\n`;
   let out = `${selector} {\n`;
   for (const g of groups) {
     if (g.note) out += comment(g.note, "  ");
-    out += `  ${g.text}\n`;
+    out += `  ${g.text}${g.aside ? ` /* ${g.aside} */` : ""}\n`;
   }
   return `${out}}\n`;
 }

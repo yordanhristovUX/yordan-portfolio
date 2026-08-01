@@ -5,6 +5,15 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.3.0 — 2026-08-01
+
+Minor — 2 change(s).
+
+### Added
+
+- definition `footer .foot` added
+- export `./react/footer` added
+
 ## 1.2.0 — 2026-08-01
 
 Minor — 26 change(s).

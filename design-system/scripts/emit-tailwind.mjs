@@ -477,7 +477,17 @@ export function utilitiesFor(prop, value, keyOf, where) {
     );
   }
 
-  if (prop === "gap" && isToken(value)) return same([`gap-${suffix(value.token)}`], expand("gap"));
+  /* `gap` takes one value or two — row then column, like the box shorthands. */
+  if (prop === "gap") {
+    const parts = Array.isArray(value) ? value : [value];
+    if (parts.length === 1 && isToken(parts[0])) return same([`gap-${suffix(parts[0].token)}`], expand("gap"));
+    if (parts.length === 2) {
+      return one([
+        { cls: isToken(parts[0]) ? `gap-y-${suffix(parts[0].token)}` : `gap-y-[${arbitrary(parts[0])}]`, sets: ["row-gap"] },
+        { cls: isToken(parts[1]) ? `gap-x-${suffix(parts[1].token)}` : `gap-x-[${arbitrary(parts[1])}]`, sets: ["column-gap"] },
+      ]);
+    }
+  }
 
   /* `border` in both of its forms: composed from parts, or a whole shorthand
      token. The composed form reports one longhand per part, which is what lets

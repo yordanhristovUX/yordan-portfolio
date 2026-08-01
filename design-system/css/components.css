@@ -1611,6 +1611,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 .link-grid a:hover { background: var(--primary); color: var(--content-inverse); }
 
+/* ---- generated:footer — do not edit, source: components/footer/definition.json ---- */
 /* ============ Footer ============ @component footer */
 .foot {
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2) var(--space-7);
@@ -1620,6 +1621,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   font-family: var(--font-mono);
   font-size: var(--text-2xs); letter-spacing: var(--tracking-wide);
 }
+/* ---- /generated:footer ---- */
 
 /* ============ Case study body ============ @component case-body
    The prose of a case study: headings ruled off from each other, a measure on

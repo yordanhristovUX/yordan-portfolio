@@ -87,6 +87,11 @@
           "items": { "type": "string", "pattern": "^[^\\n]*$" },
           "$doc": "A comment emitted above this group in pipeline 1, one array element per line. It belongs to the declaration it justifies rather than to the component, which is why it is here and not in spec.md."
         },
+        "aside": {
+          "type": "string",
+          "pattern": "^[^\\n]+$",
+          "$doc": "A comment emitted at the END of this group's line rather than above it — the form the stylesheet uses for a remark that qualifies one declaration without interrupting the block. Footer's two are the case that added it: `was its own clamp, one 0.5rem cap away from --pad's` sits beside the padding it explains, and hoisting it above would put four lines of preamble in front of a one-line rule. Pipeline 2 drops it: a class list has nowhere to put a comment, and inventing a TSDoc for a remark about a CSS declaration would be a second copy of prose that is already in the definition."
+        },
         "set": {
           "type": "object",
           "minProperties": 1,

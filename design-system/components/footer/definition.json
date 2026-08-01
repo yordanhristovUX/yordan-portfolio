@@ -1,0 +1,37 @@
+{
+  "$doc": "Footer's appearance, as data — the source of the `@component footer` block in css/components.css and of dist/react/footer.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. Footer is the first block outside the R1 pilot to generate, and it is the case that added `aside`: two of its declarations carry a remark that qualifies the value without deserving four lines above the rule. It has no variants, no sizes, no states and no parts — one selector, one rule, which is why it was in the audit's generatable-now column with no schema growth beyond that one comment form.",
+  "$schema": "../definition.schema.json",
+  "id": "footer",
+  "block": {
+    "title": "Footer"
+  },
+  "root": ".foot",
+  "base": {
+    "declarations": [
+      {
+        "set": {
+          "display": "flex",
+          "justify-content": "space-between",
+          "flex-wrap": "wrap",
+          "gap": [{ "token": "space-2" }, { "token": "space-7" }]
+        }
+      },
+      {
+        "aside": "was its own clamp, one 0.5rem cap away from --pad's — identical below 1600px, so it was never a decision",
+        "set": { "padding": [{ "token": "space-4" }, { "token": "pad" }] }
+      },
+      { "set": { "background": { "token": "chrome-bg-strong" } } },
+      {
+        "aside": "not chrome-border-strong: a border token read as text, which inverts to 2.7:1 in dark",
+        "set": { "color": { "token": "chrome-label-on-strong" } }
+      },
+      { "set": { "font-family": { "token": "font-mono" } } },
+      {
+        "set": {
+          "font-size": { "token": "text-2xs" },
+          "letter-spacing": { "token": "tracking-wide" }
+        }
+      }
+    ]
+  }
+}

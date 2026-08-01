@@ -37,7 +37,7 @@ dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to t
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 19 blocks authored, 4 generated)
+css/components.css      every component's styles (an ASSEMBLY: 18 blocks authored, 5 generated)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
