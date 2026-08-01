@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://yordanhristov.dev/design-system/definition.schema.json",
   "title": "Component definition",
-  "$doc": "EXTRACTED, NOT IMPOSED. Every construct below exists because one of the real definitions needed it, and nothing below exists because a schema felt incomplete without it. Button forced variants, sizes, states-hanging-off-their-owner and the note-on-a-declaration-group; chip forced `parts`, because `.chips` is the wrapper a set of chips sits in and calling it a variant would have cost the word its meaning; stat forced the sections to be OPTIONAL rather than empty, and is the case where a token binds a whole compound value; footer forced `aside`; source made a part a full rule. R4's migration adds two more, and both were forced by blocks whose CSS is nothing BUT the thing the construct expresses: `link-grid` and `case-body` style unclassed markup, which forced a SCOPED part (`within` + `element` + optional `pseudo`), and case-body's first heading forced `positions`, a closed enum rather than a selector. The two constructs that are not a shape but a CLAIM — `aliases` and `axes.orthogonal` — come from findings the pilot reported rather than from the CSS: two rules that are deliberately identical, and two axes that are deliberately a matrix. Both are checked, because an unchecked claim is a comment. WHAT IS NOT HERE: behaviour. No focus management, no keyboard, no ARIA, no state. A definition answers what this looks like and nothing else; the rest lives in spec.md and in code, and this schema refuses the keys that would let it drift. WHAT IS ALSO NOT HERE, and is the harder omission: anything freely relational. There is no at-rule, no locally-defined custom property and no computed geometry, and the one relation that IS here is closed at both ends — a scoped part's ancestor must be the root and its path is bare tag names, so it can say `.case-body p strong` and cannot say `.band > .rail--l`. A block that needs the rest is not expressible here and is not meant to be — see design-system/PATTERNS.md.",
+  "$doc": "EXTRACTED, NOT IMPOSED. Every construct below exists because one of the real definitions needed it, and nothing below exists because a schema felt incomplete without it. Button forced variants, sizes, states-hanging-off-their-owner and the note-on-a-declaration-group; chip forced `parts`, because `.chips` is the wrapper a set of chips sits in and calling it a variant would have cost the word its meaning; stat forced the sections to be OPTIONAL rather than empty, and is the case where a token binds a whole compound value; footer forced `aside`; source made a part a full rule. R4's migration adds two more, and both were forced by blocks whose CSS is nothing BUT the thing the construct expresses: `link-grid` and `case-body` style unclassed markup, which forced a SCOPED part (`within` + `element` + optional `pseudo`), and case-body's first heading forced `positions`, a closed enum rather than a selector. The two constructs that are not a shape but a CLAIM — `aliases` and `axes.orthogonal` — come from findings the pilot reported rather than from the CSS: two rules that are deliberately identical, and two axes that are deliberately a matrix. Both are checked, because an unchecked claim is a comment. WHAT IS NOT HERE: behaviour. No focus management, no keyboard, no ARIA, no state. A definition answers what this looks like and nothing else; the rest lives in spec.md and in code, and this schema refuses the keys that would let it drift. `section-head` then forced four at once, and all four are the same move one level further out: a scoped part whose target is a CLASS (`class`, for `.sec--tint .well`), a modifier that declares NOTHING because its whole effect is that part, a media query written IN PLACE under one rule rather than gathered at the foot (`in-place-conditional`), and computed geometry with its bindings still visible (`expr`, for `calc({space-3} - 2px)`). WHAT IS ALSO NOT HERE, and is the harder omission: anything freely relational. There is no locally-defined custom property, no at-rule whose condition is not a NAME resolved in tokens.json, and no free selector — and every relation that IS here is closed at both ends. A scoped part's ancestor must be a selector this same definition declares, and its target is bare tag names or one class, with the combinator supplied by the emitter, so it can say `.case-body p strong` and `.sec--tint .well` and cannot say `.band > .rail--l`. An `expr` is a VALUE, and a value cannot widen what a rule applies to; `@supports (grid-template-columns: round(down, 10%, 3px))` stays unsayable because its condition is a computed value rather than a viewport this system has named. A block that needs the rest is not expressible here and is not meant to be — see design-system/PATTERNS.md.",
   "type": "object",
   "required": ["id", "block", "root"],
   "additionalProperties": false,
@@ -69,18 +69,33 @@
       "additionalProperties": false,
       "properties": { "token": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } }
     },
-    "term": {
-      "$doc": "One term of a value: a structural literal, or a token binding.",
-      "oneOf": [
-        { "type": "string" },
-        { "$ref": "#/$defs/binding" }
-      ]
+    "expr": {
+      "$doc": "COMPUTED GEOMETRY WITH ITS BINDINGS STILL VISIBLE. `section-head` is the block that forced it: its head's padding is `calc(var(--space-3) - 2px) var(--pad) calc(var(--space-3) - 1px)`, and the two subtractions are the 2px `.sec` rule above the head and the 1px `.sec__head` rule below it, so the whole chrome sums to one lattice cell. That is measured arithmetic attached to a value, and there is no token for it — the terms it subtracts are BORDER WIDTHS, which are structure. PATTERNS.md lists `computed-geometry` as a feature that puts a block in the authored column, and the reading that survives contact with this block is the same one `at` needed: the question is never whether a feature is present but whether its vocabulary is finite. A `{name}` interpolation is a reference into tokens.json, checked exactly as `{\"token\": …}` is, so the census sees every binding inside a calc() and a typo fails the build. What this deliberately refuses: `var(` written by hand (a binding that the census could not see, which is the entire point of the key), an interpolation naming a token that does not exist, and a head other than calc / min / max / clamp / round. `@supports (grid-template-columns: round(down, 10%, 3px))` is still unsayable, because a CONDITION that is a computed value is a different thing from a VALUE that is computed — a value cannot widen what a rule applies to.",
+      "type": "object",
+      "required": ["expr"],
+      "additionalProperties": false,
+      "properties": {
+        "expr": {
+          "type": "string",
+          "pattern": "^(calc|min|max|clamp|round)\\(.+\\)$",
+          "$doc": "A CSS math function whose token references are written `{name}` rather than `var(--name)`. The build resolves them, checks each one exists, and refuses a literal `var(` — see the loader in scripts/emit-css.mjs."
+        }
+      }
     },
-    "value": {
-      "$doc": "THE THREE FORMS, and telling them apart is the point of the whole file. A plain string is a STRUCTURAL literal and is emitted verbatim (`inline-block`, `600`, `0.05em`); an object is a TOKEN BINDING; an array is a sequence of both, space-joined. So `[\"1px\", \"solid\", {\"token\": \"content-primary\"}]` records that a border's width and style are structure while its colour is a token — which is a fact no CSS parser can recover, and which is what lets pipeline 2 emit `border border-solid border-content-primary`. A structural literal is NOT an escape hatch for a value that should be a token: the build refuses a colour, a font-size or a non-zero spacing step written as one, because scripts/check-css.mjs reads CSS and would never see it here.",
+    "term": {
+      "$doc": "One term of a value: a structural literal, a token binding, or a computed expression.",
       "oneOf": [
         { "type": "string" },
         { "$ref": "#/$defs/binding" },
+        { "$ref": "#/$defs/expr" }
+      ]
+    },
+    "value": {
+      "$doc": "THE FORMS, and telling them apart is the point of the whole file. A plain string is a STRUCTURAL literal and is emitted verbatim (`inline-block`, `1fr auto`, `0`); a `{\"token\": …}` object is a TOKEN BINDING; a `{\"expr\": …}` object is COMPUTED GEOMETRY whose bindings are still interpolations rather than `var()` calls; an array is a sequence of those, space-joined. So `[\"1px\", \"solid\", {\"token\": \"content-primary\"}]` records that a border's width and style are structure while its colour is a token — which is a fact no CSS parser can recover, and which is what lets pipeline 2 emit `border border-solid border-content-primary`. A structural literal is NOT an escape hatch for a value that should be a token: the build refuses a colour, a font-size or a non-zero spacing step written as one, because scripts/check-css.mjs reads CSS and would never see it here.",
+      "oneOf": [
+        { "type": "string" },
+        { "$ref": "#/$defs/binding" },
+        { "$ref": "#/$defs/expr" },
         { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/term" } }
       ]
     },
@@ -148,6 +163,7 @@
         "$doc": { "type": "string" },
         "note": { "$ref": "#/$defs/note" },
         "declarations": { "$ref": "#/$defs/declarations" },
+        "at": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/in-place-conditional" }, "$doc": "A media query written IN PLACE, under this rule and before its states — `ask-fab`'s `@media (max-width: 699px) { .ask-fab { display: flex; } }`. See `in-place-conditional` for why this is a second shape of `at` rather than the same one." },
         "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } },
         "positions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/position" } }
       }
@@ -178,6 +194,17 @@
         "positions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/position" } }
       }
     },
+    "in-place-conditional": {
+      "$doc": "THE SECOND SHAPE OF THE WORD `at`, AND THE CALL IS DELIBERATE. There are two ways a stylesheet block writes a media query, this system's blocks use both, and they are not the same statement. `fact` and `entry` gather their overrides in a paragraph at the FOOT — several rules under one condition, restated as a group, which is the top-level `at` array and its `{of, …}` overrides. `section-head` and `ask-fab` write a query IN PLACE, on one line, directly under the rule it modifies and before that rule's own states: `@media (max-width: 640px) { .sec__note { display: none; } }`. That is not a paragraph of overrides, it is a footnote on one rule — so it hangs off the rule, needs no `of` (its owner IS the referent, which is one fewer cross-reference to keep honest), and RENDERS INLINE, because the stylesheet renders it inline and this migration transcribes. ONE GROUP, NO NOTE, NO ASIDE: the inline form is one line by construction, and a shape that would not fit on one is refused by the build rather than silently re-rendered as a block. The block that needs a multi-line query in place is the one that adds that shape, the way every other member of every other vocabulary here arrived. The condition is a NAME from tokens.json's `$conditions`, exactly as the top-level form's is — that half does not change, because it is the half that closes the vocabulary.",
+      "type": "object",
+      "required": ["condition", "declarations"],
+      "additionalProperties": false,
+      "properties": {
+        "condition": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "$doc": "An entry of `$conditions` in tokens.json. Checked by the build, which is the only thing that can see that file." },
+        "$doc": { "type": "string" },
+        "declarations": { "$ref": "#/$defs/declarations" }
+      }
+    },
     "alias": {
       "$doc": "TWO RULES THAT ARE DELIBERATELY IDENTICAL, SAID ONCE. `.btn--solid` and `.btn:hover` carry the same declarations because the outline button's hover IS the solid button at rest — a real relationship that, written twice, reads as duplication somebody should tidy. Declaring the alias makes the relationship the source and the duplication its consequence: both emitters resolve it before rendering, so the bytes are identical either way, and a reader who reaches for the tidy-up finds a statement instead of an accident. It is checked — the referenced state must exist — because an unchecked claim is a comment.",
       "type": "object",
@@ -190,11 +217,15 @@
       }
     },
     "modifier": {
-      "$doc": "One variant or one size. It declares EITHER its own declarations OR an alias to another rule's, never both and never neither.",
+      "$doc": "One variant or one size. THREE MUTUALLY EXCLUSIVE FORMS, and the third is R4's. It declares its own declarations, OR an alias to another rule's, OR — since `section-head` — NEITHER, because `.sec--tint` declares nothing whatsoever: it is a variant whose only effect is `.sec--tint .well { background: var(--surface-raised) }`, a scoped part on a descendant it does not own. The shape was `declarations XOR aliases`, and that was right for as long as every modifier's effect landed on its own element. Widening it deliberately rather than letting the tint become a `part` with a `--` in its selector is what keeps the word `variant` meaning the same thing in both pipelines: index.html writes `class=\"band sec sec--tint\"`, and React writes `variant=\"tint\"`, whichever element the declaration eventually lands on. `never both` is unchanged and is now stated by a `not` — the keyword scripts/validate-json.mjs gained for exactly this, because `required` can say a key is present and nothing could say a key is absent. Pipeline 1 emits no rule for a form-three modifier: `.sec--tint { }` would claim an appearance the file has not got, which is the same refusal `base` being optional records.",
       "type": "object",
       "required": ["name", "selector"],
       "additionalProperties": false,
-      "oneOf": [{ "required": ["declarations"] }, { "required": ["aliases"] }],
+      "oneOf": [
+        { "required": ["declarations"] },
+        { "required": ["aliases"] },
+        { "not": { "anyOf": [{ "required": ["declarations"] }, { "required": ["aliases"] }] } }
+      ],
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "$doc": "The value of the React prop: `variant=\"solid\"`. Renaming it is BREAKING and contract-diff.mjs says so." },
         "selector": { "$ref": "#/$defs/selector" },
@@ -221,7 +252,7 @@
       "type": "object",
       "required": ["name", "declarations"],
       "additionalProperties": false,
-      "oneOf": [{ "required": ["selector"] }, { "required": ["within", "element"] }],
+      "oneOf": [{ "required": ["selector"] }, { "required": ["within", "element"] }, { "required": ["within", "class"] }],
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
         "selector": { "$ref": "#/$defs/selector" },
@@ -235,6 +266,10 @@
           "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*$" },
           "$doc": "The element path under `within`, joined by descendant combinators: [\"p\", \"strong\"] is `.case-body p strong`. An ARRAY rather than a string, so the combinator is the emitter's and never the author's — a string would let `p > strong` in through a space."
         },
+        "class": {
+          "$ref": "#/$defs/selector",
+          "$doc": "A SCOPED PART WHOSE TARGET IS A CLASS RATHER THAN A TAG — `.sec--tint .well`, and `section-head` is the block that forced it. The scoped form was `within` + `element[]` because the two blocks that forced THAT one styled markup carrying no classes at all. This one is the opposite case and just as common: the descendant has a class, and the class belongs to somebody else. `.well` is skeleton's, and the tint is a fact about what a tinted section does to the well inside it — a rule the section owns about an element it does not. It is the same relation with the same closure, which is the whole test: ONE selector, of exactly the shape `root` and a modifier's `selector` already take, with the combinator supplied by the emitter. `.sec--tint .well` is sayable; `.band > .rail--l` is not, and no combination of these keys makes it so. It is a SINGLE selector and not an array because nothing has asked for a chain — `element` is an array because `.case-body p strong` exists, and this key will grow the same way, with the block that needs it. THE COUPLING IS RECORDED, NOT HIDDEN: `within` must still be a selector this definition declares, so the ancestor half is always ours; the target half is a foreign class, exactly as a bare tag name is foreign markup, and it lands in dist/components.json's class list for this component because that file parses the shipped CSS."
+        },
         "pseudo": {
           "enum": ["::before"],
           "$doc": "A drawn pseudo-element. `::before` is the only one css/components.css uses outside the foundation reset, and it draws the list marker — decoration rather than content, which is exactly why it is here and not in the markup. `::after` is not in the vocabulary because nothing has asked for it."
@@ -246,6 +281,7 @@
           "$doc": "Emit a blank line before this rule. A stylesheet block has paragraphs — `source` separates the list's chrome from the item that repeats inside it — and a paragraph is a statement about which rules belong together. Without this the emitter would have to either lose the break or invent one, and both are worse than recording it."
         },
         "declarations": { "$ref": "#/$defs/declarations" },
+        "at": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/in-place-conditional" }, "$doc": "A media query written IN PLACE, under this part — `section-head`'s `@media (max-width: 640px) { .sec__note { display: none; } }`. See `in-place-conditional`." },
         "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } },
         "positions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/position" } }
       }

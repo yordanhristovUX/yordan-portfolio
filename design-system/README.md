@@ -38,7 +38,7 @@ dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to t
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 13 blocks authored, 10 generated)
+css/components.css      every component's styles (an ASSEMBLY: 12 blocks authored, 11 generated)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -123,22 +123,42 @@ one line, more than one renders as a block. Rendering order is the cascade: base
 states and positions, each variant and its states, each size and its states, then parts, then
 the `at` blocks.
 
-### The four constructs R4 added, and the block that forced each
+### The eight constructs R4 added, and the block that forced each
 
 | construct | what it says | forced by |
 | --- | --- | --- |
 | a **scoped part** — `within` + `element[]` + `pseudo?` | a rule on markup that carries no class: `.link-grid a`, `.case-body p strong`, `.entry__list li::before` | `link-grid`, `case-body`, then `entry` and `fact` widened `within` from the root to any earlier part |
 | **`positions`** — `at: first \| last` | where a rule sits among its siblings: `.case-body h3:first-child`, `.entry:last-child` | `case-body` (`first`), `entry` and `fact` (`last`) |
-| **`at`** — `condition` + `rules: [{ of, … }]` | the `@media` blocks at the foot of a stylesheet block, with the condition NAMED in `tokens.json` and the rule NAMED rather than re-selected | `fact` and `entry`, which write the same breakpoint for the same reason |
+| **`at`** on the definition — `condition` + `rules: [{ of, … }]` | the `@media` **paragraph at the foot** of a stylesheet block, with the condition NAMED in `tokens.json` and the rule NAMED rather than re-selected | `fact` and `entry`, which write the same breakpoint for the same reason |
 | a rule-level **`note`** | a comment above a rule, distinct from a group's note inside the braces | `entry`'s `.entry__span` |
+| **`at`** on a rule — `condition` + `declarations` | the `@media` written **in place**, under the rule it modifies and before its states, rendered inline on one line | `section-head`'s `.sec__note`, and `ask-fab` writes the same shape |
+| a scoped part's **`class`**, beside `element[]` | the descendant has a class and the class belongs to somebody else: `.sec--tint .well` | `section-head` |
+| an **effect-only modifier** — a variant with neither `declarations` nor `aliases` | `.sec--tint` declares nothing; its whole effect is a scoped part on a descendant | `section-head` |
+| **`expr`** — `{"expr": "calc({space-3} - 2px)"}` | computed geometry with its bindings still interpolated rather than written as `var()` | `section-head`'s head padding, which subtracts the two rule widths that bracket it |
 
-Three of those are closed at both ends on purpose, and that is what keeps them from being the
+Six of those are closed at both ends on purpose, and that is what keeps them from being the
 wedge `PATTERNS.md` refuses. A scoped part's ancestor must be a selector the same definition
-already declares, and its path is bare tag names with the combinator supplied by the emitter —
-so `.case-body p strong` is sayable and `.band > .rail--l` is not. A position is an enum with
-one member per block that has asked. An `at` condition is a name resolved in
-`tokens/tokens.json`'s `$conditions`, so a definition cannot invent a breakpoint; a new one is
-a decision recorded in the one file where a literal may be written.
+already declares, and its target is bare tag names or one class, with the combinator supplied
+by the emitter — so `.case-body p strong` and `.sec--tint .well` are sayable and
+`.band > .rail--l` is not. A position is an enum with one member per block that has asked. An
+`at` condition is a name resolved in `tokens/tokens.json`'s `$conditions` in **both** of its
+shapes, so a definition cannot invent a breakpoint; a new one is a decision recorded in the one
+file where a literal may be written. And an `expr`'s `{name}` is a reference into `tokens.json`,
+checked exactly as `{"token": …}` is — a literal `var(` inside one is refused, because that
+would be a binding the census cannot count. `expr` is also the one construct that is a **value**
+rather than a relation, which is why admitting computed geometry did not widen what a rule can
+apply to: `@supports (grid-template-columns: round(down, 10%, 3px))` is still unsayable, and its
+condition being a computed value rather than a named viewport is the reason.
+
+**Two shapes wear the word `at`, and that is a decision rather than an overload.** A stylesheet
+block writes a media query in two places and they are two statements. `fact` and `entry` gather
+theirs in a paragraph at the foot — several rules under one condition, each naming the rule it
+overrides. `section-head` and `ask-fab` write one on a single line directly under the rule it
+modifies: that is a footnote on one rule, so it hangs off the rule, needs no `of` because its
+owner is the referent, and renders inline. The in-place form takes **one group, no note, no
+aside** — it is one line by construction, and the build refuses a shape that would not fit on
+one rather than choosing a rendering. The block that needs a multi-line query in place is the
+one that adds that shape.
 
 **`$conditions` is not a token group and is emitted into nothing.** CSS has no way to use a
 custom property in a media query — `@media var(--below-720)` fails silently — so publishing
@@ -479,7 +499,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly seventeen** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly eighteen** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -503,6 +523,7 @@ published.
 "@yordan/design-system/react/case-body"
 "@yordan/design-system/react/fact"
 "@yordan/design-system/react/entry"
+"@yordan/design-system/react/section-head"
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —

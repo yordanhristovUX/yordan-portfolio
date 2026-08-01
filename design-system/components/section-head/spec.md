@@ -15,14 +15,19 @@ Spans the whole sheet including the rails.
 ## Pattern
 
 ```html
-<header class="sec__head">
-  <h2 class="sec__title t-title">Selected work</h2>
-  <span class="sec__note">Click a project for the full case study</span>
-</header>
+<section class="band sec">
+  <header class="sec__head">
+    <h2 class="sec__title t-title">Selected work</h2>
+    <span class="sec__note">Click a project for the full case study</span>
+  </header>
+</section>
 ```
 
-Parent section: `<section class="band sec">` (adds the strong top rule);
-`.sec--tint` tints the section's well (used for Background).
+The `<section>` is part of the pattern rather than context around it: `.sec` draws the strong
+top rule the head's padding subtracts, and the two only add up to a whole lattice cell
+together. `.sec--tint` goes beside `.sec` and tints the section's `.well` (used for
+Background) — it declares nothing on itself, which is why it appears in the definition as a
+variant with no rule of its own.
 
 **The plate number is gone.** The accent-coloured `01`–`07` that led every head (a span
 whose class named it the section's "no") was removed by the owner: the sections are

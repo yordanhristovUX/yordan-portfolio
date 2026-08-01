@@ -139,6 +139,37 @@ and `at-rule` was the wrong reading of it.** The question is never "does this bl
 feature" but "does the feature have a finite vocabulary here". `skeleton`'s `@supports` does
 not. `fact`'s `@media` does — and the proof it does is that `entry` writes the same query for
 the same reason, which is the drift the construct closes rather than a coincidence it exploits.
+### `computed` was the next wrong reading, and `section-head` is why
+
+Same instrument, same misreading, one column over. The scan puts a block in the authored
+column if it needs computed geometry, and `section-head` needs
+`calc(var(--space-3) - 2px)` — so by the letter of the test it stays authored, and it
+generates.
+
+The reason is the reason above, said about a value instead of a condition. What makes a
+`calc()` dangerous to admit is not the arithmetic, it is that `var(--x)` inside a string is a
+binding **no gate can see**: the literal guard reads terms, the token census counts bindings,
+and both walk straight past a colour or a step hidden in a function call. So the form that
+landed does not admit a CSS string. `{"expr": "calc({space-3} - 2px)"}` interpolates a
+**name**, resolved by the emitter, checked against `tokens.json` exactly as `{"token": …}` is
+— and a literal `var(` inside one is refused, because that is the very thing the key exists to
+prevent. Both halves are references into finite sets again, and the `2px` that remains is a
+border width, which is structure and has no tier to come from.
+
+It is also worth saying what did *not* widen. An `expr` is a **value**, and a value cannot
+change what a rule applies to. Every argument in this note is about selectors — `.band >
+.rail--l`, a freer prelude, a condition that could hold anything — and none of them is reachable
+from a key that produces the right-hand side of a declaration. `@supports (grid-template-columns:
+round(down, 10%, 3px))` is still unsayable, and still has to be: its condition is a computed
+value rather than a viewport this system has named, which is the at-rule paragraph's line, not
+this one's.
+
+**Three of the four features are now the same finding.** `at-rule`, `descendant`/`positional`
+and `computed` each looked disqualifying and each turned out to have a finite vocabulary in the
+blocks that have asked. The one that has not moved is `local-custom-property` — `--rail-track`
+is a name a block invents for itself, and nothing outside that block can check it, name it or
+count it. If the mechanical test is going to keep one column, that is the entry it keeps.
+
 - **`typography` fails on `computed` alone** (its `clamp()` values), which is a token
   question rather than a pattern one: those are `--text-*` steps and the block mostly maps a
   class to a step. It may be the best argument for a fourth value form (a token binding with

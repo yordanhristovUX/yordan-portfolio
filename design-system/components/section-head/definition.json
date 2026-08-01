@@ -1,0 +1,116 @@
+{
+  "$doc": "Section head's appearance, as data — the source of the `@component section-head` block in css/components.css and of dist/react/section-head.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, {\"expr\": \"…\"} is computed geometry with its bindings still interpolated, and an array is a sequence of those. SECTION HEAD IS THE BLOCK THAT FORCED FOUR CONSTRUCTS, and they are one shape seen from four sides: a component that owns a rule about an element it does not own. `.sec--tint .well` is a scoped part whose TARGET is a class (`class`, beside `element[]`) and whose ancestor is a VARIANT rather than the root; `.sec--tint` itself declares nothing at all, which is a third form of modifier — its whole effect is that part, and calling it anything but a variant would cost the word its meaning, because index.html writes `class=\"band sec sec--tint\"` and React writes `variant=\"tint\"`. The head's padding is `calc(var(--space-3) - 2px) … calc(var(--space-3) - 1px)`, which is the first `expr`: measured arithmetic subtracting the two BORDER WIDTHS that bracket the head, so that the whole chrome sums to one lattice cell. And the note's `@media` is written IN PLACE under the rule it modifies rather than gathered at the foot, which is the second shape of `at` — see the schema's `in-place-conditional` for why those are two statements rather than one.",
+  "$schema": "../definition.schema.json",
+  "id": "section-head",
+  "block": {
+    "title": "Section head"
+  },
+  "root": ".sec",
+  "base": {
+    "$doc": "The section, not the head — the strong rule that opens every band. It is 2px, and the head's padding subtracts it, which is why those two rules cannot be moved apart without the arithmetic in the note below going wrong.",
+    "declarations": [{ "set": { "border-top": { "token": "rule-strong" } } }]
+  },
+  "variants": [
+    {
+      "name": "tint",
+      "selector": ".sec--tint",
+      "$doc": "A tinted section. It declares NOTHING on itself: the whole effect is the raised surface behind the well inside it, which is the `tinted-well` part below. A variant rather than a part with a `--` in its name, because that is what it is on both surfaces — the markup wears it beside `.sec` and the React prop is `variant=\"tint\"`, whichever element the one declaration eventually lands on."
+    }
+  ],
+  "parts": [
+    {
+      "name": "head",
+      "selector": ".sec__head",
+      "note": [
+        "---- THE HEAD LANDS ON THE LATTICE ----",
+        "Every section head used to leave a half-square under it, and the clamp was",
+        "blamed for years. It was not the clamp. It was `line-height: 1` on the title",
+        "plus the 2px `.sec` top rule that the arithmetic kept omitting:",
+        "(2 + 77.797) mod 24 = 7.797px, the exact offset measured at 1280px.",
+        "",
+        "The chrome is now one cell, algebraically:",
+        "",
+        "  2px  .sec border-top (rule-strong)",
+        "+ (--space-3 - 2px)    padding-top",
+        "+ the title's line box",
+        "+ (--space-3 - 1px)    padding-bottom",
+        "+ 1px  .sec__head border-bottom",
+        "= 1.5rem + line box, and 1.5rem IS --space-6, the cell.",
+        "",
+        "So the head is a whole number of cells whenever the line box is, which is",
+        "what the `round(up, …)` on `.t-title` below guarantees. Written against the",
+        "rem token rather than 24px so it survives a reader changing their root size.",
+        "",
+        "THE PLATE NUMBER IS GONE — `.sec__no`, the accent-coloured `01`–`07` that",
+        "led every head. The owner removed it: the sections are distinguishable by",
+        "name, and the number was plate decoration, not wayfinding. Worth recording",
+        "because it once bent this component's arithmetic: under `align-items:",
+        "baseline`, the number's descent could exceed the title's and stretch the",
+        "row past every item's own line box (measured 59.969px at 375px against a",
+        "predicted 26.4 + 32), which is why it carried `line-height: 1`. With two",
+        "items left — title and note — that failure mode has no carrier."
+      ],
+      "$doc": "The chrome band itself: a two-track grid, title against note, baseline-aligned so the two read as one line rather than as a heading with a caption beside it.",
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "1fr auto" } },
+        { "set": { "align-items": "baseline" } },
+        { "set": { "gap": { "token": "space-6" } } },
+        {
+          "set": {
+            "padding": [
+              { "expr": "calc({space-3} - 2px)" },
+              { "token": "pad" },
+              { "expr": "calc({space-3} - 1px)" }
+            ]
+          }
+        },
+        { "set": { "border-bottom": { "token": "rule" } } },
+        { "set": { "background": { "token": "chrome-bg" } } }
+      ]
+    },
+    {
+      "name": "title",
+      "selector": ".sec__title",
+      "note": [
+        "The middle track of the head grid. Typography comes from `.t-title` beside",
+        "it — this rule exists because the CELL needs something the utility cannot",
+        "give it: a grid item's automatic minimum is min-content, and one long",
+        "unbreakable title in Archivo at 2.9rem is wider than the sheet, so the",
+        "`1fr` track would blow past its share and push `.sec__note` off the band.",
+        "`min-width: 0` lets the track shrink and the title wrap instead."
+      ],
+      "$doc": "One declaration, and it is a grid fact rather than a typographic one — the voice of a section title is `.t-title`, which is the typography layer's and is applied beside this class rather than by it.",
+      "declarations": [{ "set": { "min-width": "0" } }]
+    },
+    {
+      "name": "note",
+      "selector": ".sec__note",
+      "$doc": "The optional hint at the right of the head. Chrome: the smallest step above the floor of the ramp, the label ink, and centred against the title's baseline row rather than sharing it, because a one-line hint beside a display line looks pinned rather than aligned.",
+      "declarations": [
+        {
+          "set": {
+            "font-size": { "token": "text-xs" },
+            "color": { "token": "chrome-label" },
+            "align-self": "center"
+          }
+        }
+      ],
+      "at": [
+        {
+          "condition": "below-640",
+          "$doc": "Gone, not wrapped: the note is the second thing in a two-track grid and there is no width left for it. That is why spec.md says it may never carry essential information — a rule the markup cannot enforce and this declaration is the reason for.",
+          "declarations": [{ "set": { "display": "none" } }]
+        }
+      ]
+    },
+    {
+      "name": "tinted-well",
+      "within": ".sec--tint",
+      "class": ".well",
+      "break": true,
+      "$doc": "What the tint actually tints. `.well` is skeleton's class and not this component's, which is the honest shape of the rule: a tinted section raises the surface of the well inside it, and no well knows what kind of section it is in. Scoped to the variant rather than to the root, so it is the tint that carries the coupling and not the head.",
+      "declarations": [{ "set": { "background": { "token": "surface-raised" } } }]
+    }
+  ]
+}

@@ -47,17 +47,22 @@
                     R4 a part is a FULL rule: states, positions, and polymorphic
                     on the same terms the root is. It has no variants or sizes —
                     a companion that needs an axis is a component with its own
-                    definition. TWO SHAPES:
+                    definition. THREE SHAPES:
                       { name, selector, … }              chip's `.chips`
-                      { name, within, element[], pseudo?, … }   scoped
-                    The scoped form is `.link-grid a`, `.case-body p strong`,
+                      { name, within, element[], pseudo?, … }   scoped, to a tag
+                      { name, within, class, … }         scoped, to a class
+                    The tag-scoped form is `.link-grid a`, `.case-body p strong`,
                     `.entry__list li::before` — a component styling markup that
                     carries no classes, which for case-body is deliberate: its
                     prose is compiled from markdown, and a class per element
-                    would put styling inside the content pipeline. Both halves
-                    are closed — `within` is the root or an earlier part of the
-                    same definition, `element` is bare tag names — so a
-                    descendant is the only relation it can say.
+                    would put styling inside the content pipeline. The
+                    class-scoped form is `.sec--tint .well`: the descendant DOES
+                    have a class and the class belongs to another component,
+                    which is a rule this component owns about an element it does
+                    not. Every half is closed — `within` is the root or an
+                    earlier rule of the same definition, `element` is bare tag
+                    names, `class` is one class selector — so a descendant is
+                    the only relation any of them can say.
      states[]       { name, suffix, declarations } — suffix is appended to the
                     owner's selector, so `:hover` on `.btn--solid` is a state
                     OF the variant and is emitted straight after it. An ARRAY
@@ -66,14 +71,31 @@
      positions[]    { name, at, declarations } — where a rule sits among its
                     siblings, from a CLOSED enum (`first`, `last`). A position is
                     what the document is; a state is what the user does.
-     at[]           { condition, rules: [{ of, declarations?, positions? }] } —
-                    the @media blocks at the foot of the block. `condition` is a
-                    NAME resolved in tokens.json's `$conditions`, and `of` names
-                    the rule being overridden (`base`, `parts.span`) rather than
-                    repeating its selector. Both are cross-references, and both
-                    are the point: `(max-width: 720px)` appeared in two blocks
-                    meaning the same thing with nothing saying so, and a media
-                    rule can no longer outlive the rule it overrides.
+     at[]           TWO SHAPES FOR ONE WORD, because a stylesheet writes a media
+                    query in two places and they are two statements.
+
+                    ON THE DEFINITION — { condition, rules: [{ of, … }] } — the
+                    @media paragraph at the FOOT of the block, several rules
+                    under one condition, each naming the rule it overrides
+                    (`base`, `parts.span`) rather than repeating its selector.
+                    `fact` and `entry` are the blocks; it renders as a block.
+
+                    ON A RULE — { condition, declarations } on `base` or on a
+                    part — the query written IN PLACE, directly under the rule it
+                    modifies and before that rule's own states, rendered INLINE
+                    on one line because that is how the stylesheet writes it:
+                    `@media (max-width: 640px) { .sec__note { display: none; } }`.
+                    No `of`, because the rule carrying it IS the referent. One
+                    group, no note, no aside — the inline form is one line by
+                    construction, and the build refuses a shape that would not
+                    fit on one rather than silently re-rendering it as a block.
+                    `section-head` and `ask-fab` are the blocks.
+
+                    `condition` is a NAME resolved in tokens.json's `$conditions`
+                    in both shapes, and that is the half that does not vary:
+                    `(max-width: 720px)` appeared in two blocks meaning the same
+                    thing with nothing saying so, and a media rule can no longer
+                    outlive the rule it overrides.
 
    A RULE'S `note` AND A GROUP'S `note` ARE TWO THINGS. A rule's is emitted above
    it at column 0 and explains the whole rule (`.entry__span`'s "Column 2, both
@@ -90,15 +112,24 @@
    also carry an `aside`, a comment emitted at the END of its line — footer's
    two are the case that added it.
 
-   A VALUE IS ONE OF THREE THINGS, and the difference is the point:
+   A VALUE IS ONE OF FOUR THINGS, and the difference is the point:
 
      "inline-block"                  a structural literal, emitted verbatim
      { "token": "space-3" }          a token binding → var(--space-3)
-     ["1px", "solid", {"token":"…"}] a sequence of the two, space-joined
+     { "expr": "calc({space-3} - 2px)" }
+                                     computed geometry → calc(var(--space-3) - 2px),
+                                     with the binding still a REFERENCE the census
+                                     reads rather than a var() the census cannot
+     ["1px", "solid", {"token":"…"}] a sequence of those, space-joined
 
    So `border: 1px solid var(--content-primary)` says, in data, that its width
    and style are structure and its colour is a token. Nothing else in this repo
-   could tell you that from the CSS.
+   could tell you that from the CSS. `expr` is the same claim one level in:
+   `calc(var(--space-3) - 2px)` is a token minus a border width, and writing the
+   token as `{space-3}` keeps the binding checkable — a name that does not
+   resolve fails the build exactly as `{"token": "typoo"}` does, and a literal
+   `var(` inside an expr is refused, because that is a binding the census could
+   not see.
 
    WHY THE WRITE LIVES HERE AND NOT IN build.mjs. build.mjs is a generator the
    root `npm run build` runs, and test/drift.test.js recomputes the root drift
@@ -123,7 +154,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -210,6 +241,20 @@ const TIERED = {
   "font-variation-settings": ["--width-*", "the six steps of the display width axis"],
 };
 
+/* ---------- computed geometry, with the bindings still visible ----------
+   `{"expr": "calc({space-3} - 2px)"}` is the fourth value form, and the only
+   reason it is not the wedge PATTERNS.md refuses is the interpolation: a
+   `{name}` is a reference into tokens.json, resolved HERE so both pipelines
+   resolve it the same way, and readable by the census exactly as a `{"token"}`
+   binding is. Written `var(--space-3)` by hand it would be a binding no gate
+   could check and no census could count, which is why that form is refused. */
+export const EXPR_REF = /\{([a-z][a-z0-9-]*)\}/g;
+export const isExpr = (v) => v !== null && typeof v === "object" && typeof v.expr === "string";
+/** `calc({space-3} - 2px)` → `calc(var(--space-3) - 2px)`. */
+export const exprCss = (source) => String(source).replace(EXPR_REF, (_, name) => `var(--${name})`);
+/** Every token an expr references, in order. */
+export const exprTokens = (source) => [...String(source).matchAll(EXPR_REF)].map((m) => m[1]);
+
 /** Walk every declaration in a definition: `fn(prop, value, where)`. */
 function eachDeclaration(def, fn) {
   const rules = [];
@@ -223,6 +268,13 @@ function eachDeclaration(def, fn) {
     }
     for (const p of rule.positions ?? []) {
       for (const g of p.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}@${p.name}`);
+    }
+    /* An IN-PLACE condition is a declaration on this rule under a media query,
+       and the guards below have to reach it for the same reason they reach the
+       foot's `at` blocks: a door neither of them watches is the door a raw
+       value walks through. */
+    for (const a of rule.at ?? []) {
+      for (const g of a.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label} @${a.condition}`);
     }
   }
   /* A declaration under a media query is a declaration: the literal guard and
@@ -271,9 +323,11 @@ const terms = (value) => (Array.isArray(value) ? value : [value]);
  *  and fact — and the enum in the schema is kept in step with this object. */
 export const POSITION_SUFFIX = { first: ":first-child", last: ":last-child" };
 
-/** A part's own selector: its class, or `within` + the element path + a pseudo. */
+/** A part's own selector: its class, or `within` + a descendant + a pseudo,
+ *  where the descendant is a path of bare tag names or a single class. The
+ *  combinator is supplied HERE and never by an author, in every shape. */
 export const partSelector = (part) =>
-  part.selector ?? `${part.within} ${part.element.join(" ")}${part.pseudo ?? ""}`;
+  part.selector ?? `${part.within} ${part.element ? part.element.join(" ") : part.class}${part.pseudo ?? ""}`;
 
 /** Every selector a definition declares, by the label the build names it with —
  *  `base`, `variants.solid`, `parts.span`. One vocabulary for naming a rule
@@ -347,11 +401,36 @@ export function loadDefinition(id) {
 
   if (def.id !== id) bad(`its \`id\` is ${JSON.stringify(def.id)}, and it sits in components/${id}/`);
 
-  /* Bindings resolve. */
+  /* Bindings resolve — including the ones INSIDE a computed expression, which
+     is the whole reason an expr interpolates a name instead of writing var(). */
   const known = tokenNames();
   eachDeclaration(def, (prop, value, where) => {
     for (const t of terms(value)) {
-      if (t && typeof t === "object" && !known.has(t.token)) {
+      if (t === null || typeof t !== "object") continue;
+      if (isExpr(t)) {
+        const refs = exprTokens(t.expr);
+        if (!refs.length) {
+          bad(
+            `\`${where}\` writes \`${prop}: {"expr": "${t.expr}"}\` with no \`{token}\` reference in it. An expr exists to keep a ` +
+              `BINDING visible inside computed geometry; a computed value with nothing bound is a structural literal, and should be ` +
+              `written as the plain string it is`
+          );
+        }
+        if (/var\s*\(/.test(t.expr)) {
+          bad(
+            `\`${where}\` writes \`var(\` inside \`${prop}: {"expr": "${t.expr}"}\`. Inside an expr a token is written \`{name}\` and ` +
+              `resolved by the emitter — that is the entire point of the key, because a hand-written var() is a binding this build ` +
+              `cannot check and the token census cannot count`
+          );
+        }
+        for (const name of refs) {
+          if (!known.has(name)) {
+            bad(`\`${where}\` interpolates \`{${name}}\` into \`${prop}\`, and tokens.json defines no such token — it would emit \`var(--${name})\` and render nothing`);
+          }
+        }
+        continue;
+      }
+      if (!known.has(t.token)) {
         bad(`\`${where}\` binds \`{"token": "${t.token}"}\` on \`${prop}\`, and tokens.json defines no such token — it would emit \`var(--${t.token})\` and render nothing`);
       }
     }
@@ -425,6 +504,35 @@ export function loadDefinition(id) {
     }
   }
 
+  /* An IN-PLACE `at` names the same finite set of conditions, and is refused if
+     it could not render on one line. The inline shape is not a formatting
+     preference — it is what section-head and ask-fab actually write, and this
+     migration transcribes rather than reformats. A rule whose in-place query
+     needs a paragraph is a real case and is the block that adds that shape. */
+  const inPlace = [];
+  if (def.base) inPlace.push(["base", def.base]);
+  for (const kind of ["variants", "sizes"]) for (const m of def[kind] ?? []) inPlace.push([`${kind}.${m.name}`, m]);
+  for (const p of def.parts ?? []) inPlace.push([`parts.${p.name}`, p]);
+  for (const [label, rule] of inPlace) {
+    for (const a of rule.at ?? []) {
+      if (!conditionNames().has(a.condition)) {
+        bad(
+          `\`${label}\` carries an in-place \`at\` naming the condition \`${a.condition}\`, and tokens.json's \`$conditions\` has ` +
+            `no such entry. A breakpoint is a literal, and this system has exactly one file where a literal may be written`
+        );
+      }
+      const groups = a.declarations ?? [];
+      if (groups.length !== 1 || groups[0].note || groups[0].aside) {
+        bad(
+          `\`${label}\`'s in-place \`at ${a.condition}\` has ${groups.length} declaration group(s)${groups.some((g) => g.note || g.aside) ? " and a comment" : ""}, ` +
+            `and the in-place form renders on ONE line — \`@media … { .sel { … } }\` — because that is how the stylesheet writes it. ` +
+            `Use the definition-level \`at\` array, which renders as a block, or add the multi-line in-place shape in the commit ` +
+            `that needs it. The emitter will not choose between two renderings of the same data`
+        );
+      }
+    }
+  }
+
   /* A definition renders a banner and whatever is under it. With `base` optional
      since case-body, "whatever" can be nothing at all — which is a block that
      claims a component and styles none of it. */
@@ -492,10 +600,11 @@ function comment(lines, indent) {
 function value(v, where) {
   if (typeof v === "string") return v;
   if (Array.isArray(v)) return v.map((t) => value(t, where)).join(" ");
+  if (isExpr(v)) return exprCss(v.expr);
   if (v && typeof v === "object" && typeof v.token === "string") return `var(--${v.token})`;
   throw new Error(
     `${where}: a declaration value must be a string (a structural literal), {"token":"name"} (a token ` +
-      `binding) or an array of those — got ${JSON.stringify(v)}`
+      `binding), {"expr":"calc({token} …)"} (computed geometry) or an array of those — got ${JSON.stringify(v)}`
   );
 }
 
@@ -534,7 +643,9 @@ function banner(def) {
  *  That order is the cascade — a variant must be able to beat the base, and a
  *  state of a variant must be able to beat the variant. A part's positions come
  *  after its own rule for the same reason: `.case-body h3:first-child` exists to
- *  undo three of `.case-body h3`'s declarations. */
+ *  undo three of `.case-body h3`'s declarations. An IN-PLACE `at` sits between a
+ *  rule and its states, which is where the two blocks that write one put it —
+ *  ask-fab's `@media (max-width: 699px)` is between `.ask-fab` and `.ask-fab:hover`. */
 export function renderBlock(def, conditions = {}) {
   const where = definitionPath(def.id);
   const states = (owner, list, pad) =>
@@ -544,6 +655,14 @@ export function renderBlock(def, conditions = {}) {
   /* A rule's own note sits above it at column 0; a group's note sits inside the
      braces. The stylesheet draws that line and this only records it. */
   const lead = (r, pad) => (r.note?.length ? comment(r.note, pad) : "");
+  /* An in-place condition renders on ONE line, under the rule that carries it
+     and before that rule's states — which is where the stylesheet writes it.
+     The loader has already refused anything that would not fit, so the inner
+     rule is a single line and this only unwraps it. */
+  const inPlace = (owner, list) =>
+    (list ?? [])
+      .map((a) => `@media ${conditions[a.condition]} { ${rule(owner, a.declarations, where).trimEnd()} }\n`)
+      .join("");
 
   let out = banner(def);
   /* `base` is optional: case-body's root is a scope with no appearance of its
@@ -551,22 +670,25 @@ export function renderBlock(def, conditions = {}) {
   if (def.base) {
     out += lead(def.base, "");
     out += rule(def.root, def.base.declarations, where);
+    out += inPlace(def.root, def.base.at);
     out += states(def.root, def.base.states, "");
     out += positions(def.root, def.base.positions, "");
   }
-  for (const v of def.variants ?? []) {
-    out += rule(v.selector, v.declarations, where);
-    out += states(v.selector, v.states, "");
-  }
-  for (const z of def.sizes ?? []) {
-    out += rule(z.selector, z.declarations, where);
-    out += states(z.selector, z.states, "");
+  /* A modifier that declares nothing emits nothing. `.sec--tint { }` would
+     claim an appearance the stylesheet has not got — the same refusal `base`
+     being optional records — and the tint's whole effect is the scoped part
+     `.sec--tint .well`, which is emitted below with the other parts. */
+  for (const m of [...(def.variants ?? []), ...(def.sizes ?? [])]) {
+    if (m.declarations) out += rule(m.selector, m.declarations, where);
+    out += inPlace(m.selector, m.at);
+    out += states(m.selector, m.states, "");
   }
   for (const p of def.parts ?? []) {
     if (p.break) out += "\n";
     out += lead(p, "");
     const sel = partSelector(p);
     out += rule(sel, p.declarations, where, "");
+    out += inPlace(sel, p.at);
     out += states(sel, p.states, "");
     out += positions(sel, p.positions, "");
   }

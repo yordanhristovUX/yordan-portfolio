@@ -966,6 +966,7 @@ body.is-locked { overflow: hidden; }
    components/theme-toggle/spec.md. */
 
 
+/* ---- generated:section-head — do not edit, source: components/section-head/definition.json ---- */
 /* ============ Section head ============ @component section-head */
 .sec { border-top: var(--rule-strong); }
 /* ---- THE HEAD LANDS ON THE LATTICE ----
@@ -1015,6 +1016,7 @@ body.is-locked { overflow: hidden; }
 @media (max-width: 640px) { .sec__note { display: none; } }
 
 .sec--tint .well { background: var(--surface-raised); }
+/* ---- /generated:section-head ---- */
 
 /* ---- generated:button — do not edit, source: components/button/definition.json ---- */
 /* ============ Button ============ @component button */

@@ -13,7 +13,17 @@
 
      type · const · enum · pattern · properties · required ·
      additionalProperties · propertyNames · minProperties ·
-     items · minItems · uniqueItems · oneOf · anyOf · $ref (local)
+     items · minItems · uniqueItems · oneOf · anyOf · not · $ref (local)
+
+   `not` ARRIVED WITH R4's EFFECT-ONLY MODIFIER, and it is worth saying which
+   block asked, because that is how every other vocabulary here grows. A
+   modifier declares its own declarations, OR aliases another rule's, OR — since
+   `section-head` — neither, because `.sec--tint` declares nothing at all and its
+   entire effect is a scoped part on a descendant. Three mutually exclusive forms
+   under a `oneOf`, and the third one is "has neither key", which is the one
+   shape the previous vocabulary could not state: `required` can say a key is
+   there and nothing could say a key is absent. `not` is that, and it is the
+   smallest keyword that closes it.
 
    A KEYWORD THIS FILE DOES NOT KNOW IS AN ERROR, NOT A NO-OP. That is the
    whole difference between a small validator and a broken one. If a schema
@@ -30,7 +40,7 @@
 /** Keywords that constrain. Anything else in a schema object must be here or known-ignored. */
 const ASSERTIONS = new Set([
   "type", "const", "enum", "pattern", "properties", "required", "additionalProperties",
-  "propertyNames", "minProperties", "items", "minItems", "uniqueItems", "oneOf", "anyOf", "$ref",
+  "propertyNames", "minProperties", "items", "minItems", "uniqueItems", "oneOf", "anyOf", "not", "$ref",
 ]);
 /** Annotations: present for a reader, meaningless to a checker. */
 const ANNOTATIONS = new Set(["$schema", "$id", "$defs", "title", "description", "$doc", "$comment", "examples", "default"]);
@@ -142,6 +152,17 @@ export function validate(schema, instance, rootPath = "") {
        "expected string, got object" from each of three alternatives is three
        true statements and no information; "matched 0 of 3 forms" plus the
        schema's own $doc is what tells you which form you meant. */
+    /* `not` is checked BEFORE the branch keywords, because a oneOf branch is
+       usually where it lives and a branch's own errors are discarded either
+       way. A subschema that produced no errors is one the instance matched,
+       which is exactly the thing `not` refuses. */
+    if (node.not !== undefined) {
+      const mark = errors.length;
+      const bad = check(node.not, value, path);
+      errors.length = mark; /* the subschema's errors are not the instance's */
+      if (bad === 0) fail("not", `matches a form this schema refuses — got ${show(value)}`);
+    }
+
     for (const keyword of ["oneOf", "anyOf"]) {
       if (node[keyword] === undefined) continue;
       const matched = node[keyword].filter((sub) => {

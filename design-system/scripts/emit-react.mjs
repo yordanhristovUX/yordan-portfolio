@@ -79,7 +79,7 @@ import { utilitiesFor, STATE_PREFIX } from "./emit-tailwind.mjs";
 /* The selector arithmetic, imported rather than re-derived: pipeline 1 and
    pipeline 2 must agree about what `within` + `element` + `pseudo` names, and
    the only way to guarantee that is for one of them to own it. */
-import { POSITION_SUFFIX, conditionValues } from "./emit-css.mjs";
+import { POSITION_SUFFIX, conditionValues, partSelector } from "./emit-css.mjs";
 
 /* ---------- names ---------- */
 const pascal = (s) => s.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join("");
@@ -155,8 +155,10 @@ function entriesOf(declarations, keyOf, where, tally, prefix = "") {
    own banner in scripts/emit-tailwind.mjs for the argument in full.
    ============================================================ */
 
-/** `_a`, `_p_strong`, `_li::before` — the scoped half of the variant, or "". */
-const scopeOf = (part) => (part.within ? `_${part.element.join("_")}${part.pseudo ?? ""}` : "");
+/** `_a`, `_p_strong`, `_li::before`, `_.well` — the scoped half of the variant,
+ *  or "". A class target rides in exactly the same bracket a tag path does:
+ *  `[&_.well]:` compiles to `& .well`, which is the selector pipeline 1 writes. */
+const scopeOf = (part) => (part.within ? `_${(part.element ?? [part.class]).join("_")}${part.pseudo ?? ""}` : "");
 
 /** The variant prefix for a scope and/or a selector suffix; "" when neither. */
 const variantFor = (scope, suffix = "") => (scope || suffix ? `[&${scope}${suffix}]:` : "");
@@ -213,6 +215,29 @@ function positionEntriesOf(positions, keyOf, where, tally, scope = "", at = "") 
    That is a lexical requirement of the class name, not a change to the query.
    ============================================================ */
 const conditionVariant = (condition) => `[@media${String(condition).replace(/\s+/g, "")}]:`;
+
+/* An IN-PLACE `at` — the second shape of the word, a media query written under
+   one rule rather than gathered at the foot — needs no sink lookup at all: its
+   owner IS the rule, so its classes join that rule's own list wearing the same
+   at-rule variant a foot override wears. Pipeline 1 renders the two shapes
+   differently because the stylesheet writes them differently; here they are
+   genuinely the same thing, which is worth stating rather than looking like an
+   omission. */
+function atEntriesOf(list, keyOf, where, tally, scope = "") {
+  const out = [];
+  const conditions = conditionValues();
+  for (const a of list ?? []) {
+    const at = conditionVariant(conditions.get(a.condition));
+    const entries = entriesOf(a.declarations, keyOf, `${where} @${a.condition}`, tally, at + variantFor(scope));
+    if (!entries.length) continue;
+    entries[0] = {
+      ...entries[0],
+      lead: `Under \`@media ${conditions.get(a.condition)}\` (\`${a.condition}\`)${a.$doc ? ` — ${a.$doc}` : ""}`,
+    };
+    out.push(...entries);
+  }
+  return out;
+}
 
 const keySetOf = (entries) => new Set(entries.flatMap((e) => [...e.keys]));
 const hits = (entry, keys) => [...entry.keys].some((k) => keys.has(k));
@@ -385,6 +410,7 @@ export function renderComponent(def, elements, keyOf) {
     /* `base` is optional since case-body, whose root is a scope rather than an
        appearance. Its class list is entirely what it does to the prose inside it. */
     ...entriesOf(def.base?.declarations, keyOf, where, tally),
+    ...atEntriesOf(def.base?.at, keyOf, where, tally),
     ...stateEntriesOf(def.base?.states, keyOf, where, tally),
     ...positionEntriesOf(def.base?.positions, keyOf, where, tally),
   ];
@@ -397,11 +423,34 @@ export function renderComponent(def, elements, keyOf) {
       part.name,
       [
         ...entriesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally),
+        ...atEntriesOf(part.at, keyOf, `${where} → ${part.selector}`, tally),
         ...stateEntriesOf(part.states, keyOf, `${where} → ${part.selector}`, tally),
         ...positionEntriesOf(part.positions, keyOf, `${where} → ${part.selector}`, tally),
       ],
     ])
   );
+
+  /* THE AXES ARE BUILT BEFORE THE SCOPED PARTS, and the order is load-bearing
+     rather than tidy. `.sec--tint .well` is a scoped part whose host is a
+     VARIANT — the tint declares nothing itself and its whole effect is that
+     descendant — so the class list a scoped part writes into may be a branch's,
+     which has to exist before anything can be pushed into it. `disjoin` still
+     runs last, on the final contents. */
+  const axes = [];
+  const branchesOf = (items) =>
+    items.map((item) => ({
+      name: item.name,
+      $doc: item.$doc,
+      entries: [
+        ...entriesOf(item.declarations, keyOf, `${where} → ${item.selector}`, tally),
+        ...atEntriesOf(item.at, keyOf, `${where} → ${item.selector}`, tally),
+        ...stateEntriesOf(item.states, keyOf, `${where} → ${item.selector}`, tally),
+      ],
+    }));
+  if (def.variants?.length) axes.push({ prop: "variant", branches: branchesOf(def.variants) });
+  if (def.sizes?.length) axes.push({ prop: "size", branches: branchesOf(def.sizes) });
+  const branchNamed = (kind, name) =>
+    axes.find((a) => a.prop === (kind === "variants" ? "variant" : "size"))?.branches.find((b) => b.name === name);
 
   /* ---- where a scoped part's classes go, and why it is not always the root ----
      `[&_small]:` compiles to "a <small> anywhere inside the element wearing this
@@ -416,18 +465,29 @@ export function renderComponent(def, elements, keyOf) {
     if (part.within === def.root) return { sink: base, label: "base" };
     const host = classParts.find((p) => p.selector === part.within);
     if (host) return { sink: partEntries.get(host.name), label: `parts.${host.name}` };
+    /* A MODIFIER CAN BE THE HOST, and `.sec--tint .well` is why. The tint's
+       class is on the root, so the descendant's utilities go on the root too —
+       but only when the variant is chosen, which in cva means they belong to
+       that BRANCH rather than to the base list. Putting them in the base would
+       tint every section; putting them anywhere else would need a component
+       for an element skeleton owns. The branch is the honest sink, and it is
+       the same rule the other two follow: `within` names the host. */
+    for (const kind of ["variants", "sizes"]) {
+      const m = (def[kind] ?? []).find((x) => x.selector === part.within);
+      if (m) return { sink: branchNamed(kind, m.name).entries, label: `${kind}.${m.name}` };
+    }
     throw new Error(
-      `${where}: the scoped part \`${part.name}\` is \`within\` \`${part.within}\`, which is neither the root nor a ` +
-        `part with a class of its own. Pipeline 1 renders that as a descendant selector; this tier needs a class ` +
-        `list to put the descendant's utilities ON, and a rule with no host would be emitted against the root — ` +
-        `which is a WIDER selector than the stylesheet's, not a narrower one.`
+      `${where}: the scoped part \`${part.name}\` is \`within\` \`${part.within}\`, which is neither the root, a ` +
+        `part with a class of its own, nor a variant or size. Pipeline 1 renders that as a descendant selector; this ` +
+        `tier needs a class list to put the descendant's utilities ON, and a rule with no host would be emitted ` +
+        `against the root — which is a WIDER selector than the stylesheet's, not a narrower one.`
     );
   };
 
   const scopeByLabel = new Map([["base", ""]]);
   for (const part of scopedParts) {
     const scope = scopeOf(part);
-    const sel = `${part.within} ${part.element.join(" ")}${part.pseudo ?? ""}`;
+    const sel = partSelector(part);
     const { sink, label } = hostOf(part);
     scopeByLabel.set(`parts.${part.name}`, { scope, label });
     const entries = [
@@ -440,29 +500,14 @@ export function renderComponent(def, elements, keyOf) {
     sink.push(...entries);
   }
 
-  /* One cva axis per kind the definition actually has. Every axis carries a
-     `default` branch, so the unmodified component is a value of the type
-     rather than the absence of one — and, since the transform below, the
-     branch that holds the base's own value for anything the axis overrides. */
-  const axes = [];
-  const branchesOf = (items) =>
-    items.map((item) => ({
-      name: item.name,
-      $doc: item.$doc,
-      entries: [
-        ...entriesOf(item.declarations, keyOf, `${where} → ${item.selector}`, tally),
-        ...stateEntriesOf(item.states, keyOf, `${where} → ${item.selector}`, tally),
-      ],
-    }));
-  if (def.variants?.length) axes.push({ prop: "variant", branches: branchesOf(def.variants) });
-  if (def.sizes?.length) axes.push({ prop: "size", branches: branchesOf(def.sizes) });
-
-  /* The at-rules. An override names a rule, so its classes go wherever that
-     rule's classes went — the root's base, a class part's own list, or an axis
-     branch — wearing the condition as an arbitrary at-rule variant. */
+  /* The at-rules at the FOOT. An override names a rule, so its classes go
+     wherever that rule's classes went — the root's base, a class part's own
+     list, or an axis branch — wearing the condition as an arbitrary at-rule
+     variant. Every axis carries a `default` branch, so the unmodified component
+     is a value of the type rather than the absence of one — and, since the
+     transform below, the branch that holds the base's own value for anything
+     the axis overrides. */
   const conditions = conditionValues();
-  const branchNamed = (kind, name) =>
-    axes.find((a) => a.prop === (kind === "variants" ? "variant" : "size"))?.branches.find((b) => b.name === name);
   for (const block of def.at ?? []) {
     const at = conditionVariant(conditions.get(block.condition));
     for (const o of block.rules) {

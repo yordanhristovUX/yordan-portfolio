@@ -32,3 +32,5 @@ export { fact, Fact, factFact, FactFact, factNum, FactNum, factTitle, FactTitle,
 export type { FactProps, FactVariants, FactFactProps, FactNumProps, FactTitleProps, FactLabelProps } from "./fact";
 export { entry, Entry, entryRole, EntryRole, entryOrg, EntryOrg, entrySpan, EntrySpan, entryLede, EntryLede, entryList, EntryList } from "./entry";
 export type { EntryProps, EntryVariants, EntryRoleProps, EntryOrgProps, EntrySpanProps, EntryLedeProps, EntryListProps } from "./entry";
+export { sectionHead, SectionHead, sectionHeadHead, SectionHeadHead, sectionHeadTitle, SectionHeadTitle, sectionHeadNote, SectionHeadNote } from "./section-head";
+export type { SectionHeadProps, SectionHeadVariants, SectionHeadHeadProps, SectionHeadTitleProps, SectionHeadNoteProps } from "./section-head";

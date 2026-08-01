@@ -90,6 +90,7 @@
    design-system/README.md, "The Tailwind tier", is the consumer-facing copy of
    that list.
    ============================================================ */
+import { isExpr, exprCss } from "./emit-css.mjs";
 
 /* ============================================================
    1. THE DECISION TABLE
@@ -354,7 +355,10 @@ export function renderThemeCss(categories) {
 
 /** Structural keywords whose Tailwind utility is a fixed word. */
 const KEYWORD = {
-  display: { "inline-block": "inline-block", flex: "flex", block: "block", grid: "grid", "inline-flex": "inline-flex" },
+  /* `none` is `hidden` rather than `[display:none]` — Tailwind's own name for
+     the same declaration, and `section-head`'s note is the first rule here that
+     hides anything. */
+  display: { "inline-block": "inline-block", flex: "flex", block: "block", grid: "grid", "inline-flex": "inline-flex", none: "hidden" },
   "text-align": { center: "text-center", left: "text-left", right: "text-right" },
   "white-space": { nowrap: "whitespace-nowrap", normal: "whitespace-normal" },
   cursor: { pointer: "cursor-pointer", default: "cursor-default" },
@@ -418,6 +422,12 @@ const SHORTHAND = {
 const expand = (prop) => SHORTHAND[prop] ?? [prop];
 
 const isToken = (v) => v && typeof v === "object" && typeof v.token === "string";
+/* Computed geometry resolves through the SAME function pipeline 1 uses, imported
+   rather than re-derived: `calc({space-3} - 2px)` must become the identical
+   `calc(var(--space-3) - 2px)` on both surfaces, and the only way to guarantee
+   that is for one of them to own it. Tailwind then carries it as an arbitrary
+   value, underscores for spaces, which compiles back to exactly this string. */
+const literal = (v) => (isExpr(v) ? exprCss(v.expr) : String(v));
 
 /**
  * One declaration → the Tailwind classes that express it, each carrying the
@@ -479,8 +489,8 @@ export function utilitiesFor(prop, value, keyOf, where) {
           const head = `${BOX_PROP[prop]}${edges[i]}`;
           const sets = EDGE_SIDES[edges[i]].map((side) => `${prop}-${side}`);
           if (isToken(p)) return { cls: `${head}-${suffix(p.token)}`, sets };
-          if (String(p) === "0") return { cls: `${head}-0`, sets };
-          return { cls: `${head}-[${arbitrary(p)}]`, sets };
+          if (literal(p) === "0") return { cls: `${head}-0`, sets };
+          return { cls: `${head}-[${arbitrary(literal(p))}]`, sets };
         })
       );
     }
@@ -493,8 +503,8 @@ export function utilitiesFor(prop, value, keyOf, where) {
       if (parts.length === 1 && isToken(parts[0])) return same([`gap-${suffix(parts[0].token)}`], expand("gap"));
       if (parts.length === 2) {
         return one([
-          { cls: isToken(parts[0]) ? `gap-y-${suffix(parts[0].token)}` : `gap-y-[${arbitrary(parts[0])}]`, sets: ["row-gap"] },
-          { cls: isToken(parts[1]) ? `gap-x-${suffix(parts[1].token)}` : `gap-x-[${arbitrary(parts[1])}]`, sets: ["column-gap"] },
+          { cls: isToken(parts[0]) ? `gap-y-${suffix(parts[0].token)}` : `gap-y-[${arbitrary(literal(parts[0]))}]`, sets: ["row-gap"] },
+          { cls: isToken(parts[1]) ? `gap-x-${suffix(parts[1].token)}` : `gap-x-[${arbitrary(literal(parts[1]))}]`, sets: ["column-gap"] },
         ]);
       }
     }
@@ -510,7 +520,7 @@ export function utilitiesFor(prop, value, keyOf, where) {
       const out = [];
       for (const part of value) {
         if (isToken(part)) { out.push({ cls: `border-${suffix(part.token)}`, sets: ["border-color"] }); continue; }
-        const s = String(part);
+        const s = literal(part);
         if (/^(solid|dashed|dotted|double|none|hidden)$/.test(s)) { out.push({ cls: `border-${s}`, sets: ["border-style"] }); continue; }
         out.push({ cls: s === "1px" ? "border" : `border-[${arbitrary(s)}]`, sets: ["border-width"] });
       }
@@ -527,10 +537,10 @@ export function utilitiesFor(prop, value, keyOf, where) {
      default timing function, and the authored rule has none. A shorter class
      that changes a curve is not a translation. */
   const flat = Array.isArray(value)
-    ? value.map((v) => (isToken(v) ? `var(--${v.token})` : String(v))).join(" ")
+    ? value.map((v) => (isToken(v) ? `var(--${v.token})` : literal(v))).join(" ")
     : isToken(value)
       ? `var(--${value.token})`
-      : String(value);
+      : literal(value);
   return { classes: [{ cls: `[${prop}:${arbitrary(flat)}]`, sets: expand(prop) }], arbitrary: true };
 }
 

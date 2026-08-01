@@ -139,7 +139,23 @@ if (defErrors.length) {
   process.exit(1);
 }
 
-const termOf = (t) => (typeof t === "string" ? t : `{${t.token}}`);
+/* A term is a structural literal, a token binding or a computed expression, and
+   the snapshot keeps each in the form that names its BINDINGS rather than the
+   form that resolves them: `{space-3}` and `calc({space-3} - 2px)` both say
+   which token they depend on, which is what a diff of this file is for. An
+   unrecognised term THROWS rather than stringifying to "[object Object]" or
+   "{undefined}" — a value form this file has not been taught is a value form
+   whose changes it would silently report as identical. */
+const termOf = (t) => {
+  if (typeof t === "string") return t;
+  if (t && typeof t.token === "string") return `{${t.token}}`;
+  if (t && typeof t.expr === "string") return t.expr;
+  throw new Error(
+    `scripts/contract-diff.mjs does not know the value form ${JSON.stringify(t)}. A construct added to ` +
+      `components/definition.schema.json has to be taught to this file in the same commit, or the published ` +
+      `contract stops describing what a definition actually says.`
+  );
+};
 const valueOf = (v) => (Array.isArray(v) ? v.map(termOf).join(" ") : termOf(v));
 /** A rule's declarations as a sorted property map — order is presentation, not contract. */
 const declOf = (declarations) => {
@@ -160,6 +176,18 @@ for (const def of defs) {
        emits first — so it is as much a published rule as a state is. */
     for (const p of rule.positions ?? []) {
       definitionSurface[`${def.id} ${selector}${POSITION_SUFFIX[p.at]}`] = { kind: `${kind} position`, declarations: declOf(p.declarations) };
+    }
+    /* An IN-PLACE condition is as published as a foot one — it applies to a
+       consumer's markup at a viewport — and it is keyed the same way, with the
+       condition in the key because moving the same declarations to a different
+       breakpoint changes what ships without changing any selector. The KIND
+       records which of the two shapes of `at` it is, so a rule that migrates
+       between them reads as the API change it is rather than as nothing. */
+    for (const a of rule.at ?? []) {
+      definitionSurface[`${def.id} ${selector} @${a.condition}`] = {
+        kind: `${kind} at ${a.condition}`,
+        declarations: declOf(a.declarations),
+      };
     }
   };
   /* `base` is optional since case-body, whose root is a scope with no rule. */

@@ -5,6 +5,21 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.7.0 — 2026-08-01
+
+Minor — 8 change(s).
+
+### Added
+
+- definition `section-head .sec__head` added
+- definition `section-head .sec__note @below-640` added
+- definition `section-head .sec__note` added
+- definition `section-head .sec__title` added
+- definition `section-head .sec--tint .well` added
+- definition `section-head .sec--tint` added
+- definition `section-head .sec` added
+- export `./react/section-head` added
+
 ## 1.6.0 — 2026-08-01
 
 Minor — 24 change(s).
