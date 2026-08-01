@@ -33,6 +33,10 @@ dist/tokens.flat.json   generated machine-readable tokens, aliases RESOLVED — 
 dist/tokens.dtcg.json   generated W3C Design Tokens export, aliases KEPT — for a second consumer
 dist/tokens.d.ts        generated TypeScript union of the token names — types only, no runtime
 dist/components.json    generated component contract (classes, variants, tokens per component)
+dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to the vars above
+dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
+scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
+scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
 css/components.css      every component's styles (an ASSEMBLY: 20 blocks authored, 3 generated)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
@@ -128,12 +132,116 @@ Three consequences worth stating because they are easy to assume otherwise:
   The regions are guarded by something stricter anyway: an in-memory byte compare that runs
   before anything is written.
 
+## The Tailwind + React tier (pilot scope: the same three components)
+
+Phase R2a. The three definitions above are read by a **second** emitter and rendered for a
+Next.js consumer: a Tailwind v4 `@theme` file and one typed React component each. Neither
+pipeline is a translation of the other — both are renderings of the same data, which is the
+property two hand-written front ends cannot have.
+
+```
+dist/tokens.tailwind.css   Tailwind namespaces → the custom properties tokens.css defines
+dist/react/button.tsx      cva map + variant types + the element, per definition
+dist/react/chip.tsx        …and its `.chips` wrapper, because chip has a `part`
+dist/react/stat.tsx
+dist/react/index.ts        the barrel
+```
+
+### The mapping, and the one rule under it
+
+**Reference, never restate.** Every `@theme` entry is a `var()` pointing at the runtime
+token, so a Tailwind utility resolves through to whatever `dist/tokens.css` says that token
+is — light, dark, pinned, printed, or stepped at the grid break.
+
+```css
+@theme { --color-content-primary: var(--content-primary); }   /* → text-content-primary */
+```
+
+**That is how dark mode reaches a Tailwind utility, and it is why there is nothing here to
+fork:** the file contains no colour, no size and no spacing value at all. It cannot drift
+from the theme, because it holds no copy of it.
+
+| group | namespace | key |
+| --- | --- | --- |
+| `surface` `primary` `content` `chrome` `action` `accent` `effect` | `--color-*` | the token's own name → `bg-primary`, `text-content-muted` |
+| `space` (13) | `--spacing-*` | the token's own name → `px-space-5`, `p-pad` |
+| `text` (13 of 15) | `--text-step-*` | the step minus `text-` → `text-step-xs` |
+| `font` (3) | `--font-*` | the token name, **restated** → `font-mono` |
+| `color-stone` `color-slate` `color-ink` (25) | — | **raw ramps. Deliberately absent.** |
+| `scheme` `automata` `border`, and `accent-rgb` `text-code` `text-unit` | — | not values of their namespace |
+
+Four of those rows are decisions worth knowing:
+
+- **The raw ramps get no utility.** This system's first rule is that a component may use
+  only the semantic tier. Minting `bg-stone-500` would hand every consumer the raw ramp as
+  an autocompleted, first-class utility — the same leak `check-css.mjs` rule 3 refuses on
+  the vanilla side, wearing Tailwind's clothes and past a gate that only reads CSS.
+- **`p-space-3`, not `p-3`; `text-step-xs`, not `text-xs`.** Those keys keep a word the
+  namespace does not supply, on purpose. `--spacing-3` would *shadow* Tailwind's own numeric
+  scale and silently redefine a class the ecosystem already defines; `--text-xs` would shadow
+  Tailwind's *and* collide with this system's own `--text-xs`, which carries `print` and
+  `wide` values a restated copy could not follow. "step" is `tokens.json`'s own word for the
+  thirteen.
+- **The three font families are the one restatement**, because Tailwind takes the utility
+  name from the variable name, so `font-mono` requires `--font-mono` — already the token's
+  name, making a reference a self-cycle. It is admissible only because none of the three
+  carries a `dark`, `print` or `wide` value, and the build fails the day one does. It also
+  overrides Tailwind's own default `--font-mono`, which is the right outcome.
+- **`color-scheme` is held out of `--color-*`** although its name sits squarely inside it. It
+  is a CSS keyword, and `bg-scheme` would set a background to the word "light".
+
+### The three value forms, translated
+
+| definition | CSS (pipeline 1) | Tailwind (pipeline 2) |
+| --- | --- | --- |
+| `{ "token": "primary" }` on `background` | `background: var(--primary)` | `bg-primary` |
+| `"600"` on `font-weight` | `font-weight: 600` | `font-semibold` |
+| `["1px","solid",{"token":"content-primary"}]` | `border: 1px solid var(--content-primary)` | `border border-solid border-content-primary` |
+| `{ "token": "rule-strong" }` on `border` | `border: var(--rule-strong)` | `[border:var(--rule-strong)]` |
+| a state's `suffix: ":hover"` | `.btn:hover { … }` | `hover:` on each of its classes |
+
+Anything with no namespace falls through to Tailwind's **arbitrary property** form, which
+emits the declaration exactly as authored, and the build prints how many did so. That
+fallback is why `transition` is `[transition:background-color_0.2s,color_0.2s]` rather than
+`transition-[…] duration-200`: the shorter pair would also apply Tailwind's default timing
+function, and the authored rule has none. **A shorter class that changes a curve is not a
+translation.**
+
+### What is generated, and what never will be
+
+Generated: the cva map, the variant and size types (`VariantProps`), the element, the
+`className` merge, the HTML props passthrough. **Not generated, and not coming: behaviour.**
+No state, no effects, no event handlers, no ARIA. The consumer writes those on top.
+
+The element is **read from the canonical HTML in `spec.md`**, not restated in the definition —
+which is what makes `Button` polymorphic. Its spec's fence uses `<a>` twice and `<button>`
+once, so the generated component takes `href` and branches; `chip` and `stat` show one
+element each and get one. If a fence ever shows a pair the emitter has no discriminant for,
+the build fails rather than guessing.
+
+`className` is **appended, not merged**. `cx` is clsx; two conflicting utilities resolve by
+stylesheet order, and nothing in a class attribute can change that. A consumer who wants
+last-one-wins adds `tailwind-merge` themselves.
+
+### What a consumer must provide
+
+1. **Tailwind v4**, with the imports in this order: `tailwindcss`, then
+   `@yordan/design-system/tokens.css`, then `@yordan/design-system/tokens.tailwind.css`.
+   **`tokens.css` is not optional** — every `@theme` entry is a reference into it.
+2. **`@source`** naming `…/@yordan/design-system/dist/react`. Tailwind does not scan
+   `node_modules`, and without this the generated components' classes are never built.
+3. **`class-variance-authority`** and **`react`**, as its own dependencies. This package
+   declares none and installs nothing; both are bare specifiers in the generated files.
+4. **A build that transpiles TSX out of `node_modules`** — for Next,
+   `transpilePackages: ["@yordan/design-system"]`. `./react/*` resolves to source, not to
+   compiled JS, so the consumer's own compiler settings apply to it.
+
 ## The package surface, and the promise attached to it
 
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly six** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly eleven** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -145,7 +253,19 @@ published.
 "@yordan/design-system/tokens.flat.json"  // the same tokens, aliases resolved
 "@yordan/design-system/components.json"   // the derived component contract
 "@yordan/design-system/tokens.d.ts"       // `DesignTokenName` — 83 names, as a union
+// phase R2a — the Tailwind + React tier, generated from the three definitions
+"@yordan/design-system/tokens.tailwind.css"  // Tailwind v4 @theme, all references
+"@yordan/design-system/react"                // the barrel
+"@yordan/design-system/react/button"         // .tsx SOURCE — the consumer transpiles it
+"@yordan/design-system/react/chip"
+"@yordan/design-system/react/stat"
 ```
+
+**It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —
+they are outside this directory and not this system's to edit. The five new entries are
+enumerated rather than written as a `./react/*` wildcard, for exactly the reason the first
+six are enumerated: a subpath that is not listed must be *unreachable*, and a wildcard
+publishes whatever happens to land in the directory.
 
 `exports` is the same statement `check-boundaries.mjs` makes, in the vocabulary a package
 manager understands: a subpath that is not listed is **unreachable**, not merely
