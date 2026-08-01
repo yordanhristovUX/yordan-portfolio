@@ -16,11 +16,12 @@
    (Next: `transpilePackages: ["@yordan/design-system"]`). This package declares no
    dependencies of its own and installs nothing. */
 import { cva, cx, type VariantProps } from "class-variance-authority";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 
 /**
- * The class map for `.chip`, rendered from its definition. Base, then each state as a Tailwind
- * prefix.
+ * The class map for `.chip`, rendered from its definition. The base carries only what no
+ * variant or size overrides; anything one of them does override sits in that axis's `default`
+ * branch instead, so exactly one of the two classes is ever in the attribute.
  */
 export const chip = cva(
   [
@@ -34,13 +35,19 @@ export const chip = cva(
     "px-space-2",
     "border",
     "border-solid",
-    "border-chrome-border-strong",
-    "text-chrome-label-strong",
   ],
   {
     variants: {
       variant: {
-        default: "",
+        /**
+         * The base's own value for every property this axis overrides. It lives here rather
+         * than in the base list because a class attribute has no order — see the transform in
+         * scripts/emit-react.mjs.
+         */
+        default: [
+          "border-chrome-border-strong",
+          "text-chrome-label-strong",
+        ],
         /**
          * The ONE emphasised fact in a set. It repaints the border as well as the fill — a
          * solid chip keeping the default border would read as a chip with an outline round its
@@ -59,7 +66,7 @@ export const chip = cva(
 
 export type ChipVariants = VariantProps<typeof chip>;
 
-export type ChipProps = ChipVariants & { className?: string } & Omit<ComponentPropsWithoutRef<"span">, "className">;
+export type ChipProps = ChipVariants & { className?: string } & Omit<ComponentPropsWithRef<"span">, "className">;
 
 /**
  * Renders the canonical pattern of components/chip/spec.md: a <span>. Styling only — behaviour
@@ -80,7 +87,7 @@ export const chipGroup = cva([
   "gap-space-2",
 ]);
 
-export type ChipGroupProps = { className?: string } & Omit<ComponentPropsWithoutRef<"div">, "className">;
+export type ChipGroupProps = { className?: string } & Omit<ComponentPropsWithRef<"div">, "className">;
 
 /** The `.chips` half of the pattern in components/chip/spec.md: a <div>. */
 export function ChipGroup({ className, ...rest }: ChipGroupProps) {

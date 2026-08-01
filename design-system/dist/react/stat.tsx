@@ -16,11 +16,12 @@
    (Next: `transpilePackages: ["@yordan/design-system"]`). This package declares no
    dependencies of its own and installs nothing. */
 import { cva, cx, type VariantProps } from "class-variance-authority";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 
 /**
- * The class map for `.stat`, rendered from its definition. Base, then each state as a Tailwind
- * prefix.
+ * The class map for `.stat`, rendered from its definition. The base carries only what no
+ * variant or size overrides; anything one of them does override sits in that axis's `default`
+ * branch instead, so exactly one of the two classes is ever in the attribute.
  */
 export const stat = cva([
   "inline-block",
@@ -40,7 +41,7 @@ export const stat = cva([
 
 export type StatVariants = VariantProps<typeof stat>;
 
-export type StatProps = StatVariants & { className?: string } & Omit<ComponentPropsWithoutRef<"span">, "className">;
+export type StatProps = StatVariants & { className?: string } & Omit<ComponentPropsWithRef<"span">, "className">;
 
 /**
  * Renders the canonical pattern of components/stat/spec.md: a <span>. Styling only — behaviour

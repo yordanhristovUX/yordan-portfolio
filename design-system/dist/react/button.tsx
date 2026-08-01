@@ -16,36 +16,40 @@
    (Next: `transpilePackages: ["@yordan/design-system"]`). This package declares no
    dependencies of its own and installs nothing. */
 import { cva, cx, type VariantProps } from "class-variance-authority";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 
 /**
- * The class map for `.btn`, rendered from its definition. Base, then each state as a Tailwind
- * prefix.
+ * The class map for `.btn`, rendered from its definition. The base carries only what no
+ * variant or size overrides; anything one of them does override sits in that axis's `default`
+ * branch instead, so exactly one of the two classes is ever in the attribute.
  */
 export const button = cva(
   [
     "inline-block",
     "font-mono",
-    "text-step-xs",
     "font-semibold",
     "tracking-[0.05em]",
-    "py-space-3",
-    "px-space-5",
     "border",
     "border-solid",
     "border-content-primary",
-    "text-content-primary",
     "text-center",
     "[transition:background-color_0.2s,_color_0.2s]",
     "whitespace-nowrap",
     "cursor-pointer",
-    "hover:bg-primary",
-    "hover:text-content-inverse",
+    "[&:hover]:text-content-inverse",
   ],
   {
     variants: {
       variant: {
-        default: "",
+        /**
+         * The base's own value for every property this axis overrides. It lives here rather
+         * than in the base list because a class attribute has no order — see the transform in
+         * scripts/emit-react.mjs.
+         */
+        default: [
+          "text-content-primary",
+          "[&:hover]:bg-primary",
+        ],
         /**
          * THE primary action, at most one per view — asserted per shipped page by
          * scripts/check-css.mjs rule 5. It is the resting state of the outline button's hover,
@@ -55,11 +59,20 @@ export const button = cva(
         solid: [
           "bg-primary",
           "text-content-inverse",
-          "hover:bg-action-hover",
+          "[&:hover]:bg-action-hover",
         ],
       },
       size: {
-        default: "",
+        /**
+         * The base's own value for every property this axis overrides. It lives here rather
+         * than in the base list because a class attribute has no order — see the transform in
+         * scripts/emit-react.mjs.
+         */
+        default: [
+          "text-step-xs",
+          "py-space-3",
+          "px-space-5",
+        ],
         /**
          * Chrome contexts — a dialog bar, a dense row. One step down the padding ramp and one
          * step down the type ramp; it changes nothing else, which is why it is a size and not
@@ -84,8 +97,8 @@ export type ButtonVariants = VariantProps<typeof button>;
  * omit it and it is a button, and the element's own attributes follow the branch you chose.
  */
 export type ButtonProps =
-  | (ButtonVariants & { className?: string } & { href: string } & Omit<ComponentPropsWithoutRef<"a">, "className" | "href">)
-  | (ButtonVariants & { className?: string } & { href?: undefined } & Omit<ComponentPropsWithoutRef<"button">, "className">);
+  | (ButtonVariants & { className?: string } & { href: string } & Omit<ComponentPropsWithRef<"a">, "className" | "href">)
+  | (ButtonVariants & { className?: string } & { href?: undefined } & Omit<ComponentPropsWithRef<"button">, "className">);
 
 /**
  * Renders the canonical pattern of components/button/spec.md. Styling only — behaviour is the

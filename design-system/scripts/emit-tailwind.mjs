@@ -340,22 +340,69 @@ const KEYWORD = {
   "font-style": { italic: "italic", normal: "not-italic" },
 };
 
-/** Which Tailwind prefix a colour property wears. */
-const COLOUR_PROP = { color: "text", background: "bg", "background-color": "bg", "border-color": "border" };
+/** Which Tailwind prefix a colour property wears, and the longhand it sets. */
+const COLOUR_PROP = {
+  color: { prefix: "text", sets: ["color"] },
+  background: { prefix: "bg", sets: ["background-color"] },
+  "background-color": { prefix: "bg", sets: ["background-color"] },
+  "border-color": { prefix: "border", sets: ["border-color"] },
+};
 
 /** A box property, and its per-edge prefixes for 1/2/3/4-value shorthands. */
 const BOX_PROP = { padding: "p", margin: "m" };
 const EDGES = { 1: [""], 2: ["y", "x"], 3: ["t", "x", "b"], 4: ["t", "r", "b", "l"] };
+/** Which physical edges each of those prefixes actually writes. */
+const EDGE_SIDES = { "": ["top", "right", "bottom", "left"], y: ["top", "bottom"], x: ["left", "right"], t: ["top"], r: ["right"], b: ["bottom"], l: ["left"] };
+
+/* ============================================================
+   WHAT A CLASS SETS, and why every utility below reports it.
+
+   cva concatenates base and variant classes into ONE class attribute, and a
+   class attribute has no order — the STYLESHEET decides, and Tailwind sorts
+   its utilities. So a variant class does not beat a base class by being
+   "later"; it beats it, or loses to it, alphabetically. `px-space-3` sorts
+   before `px-space-5`, `text-content-inverse` before `text-content-primary`,
+   `hover:bg-action-hover` before `hover:bg-primary` — which meant every
+   override in the pilot LOST, and a solid button rendered dark ink on a dark
+   fill.
+
+   Pipeline 1 has no such problem: `.btn--solid` genuinely comes after `.btn`
+   in components.css, and the cascade means what it says.
+
+   The fix is not !important and not tailwind-merge — it is to make the two
+   classes never coexist, which scripts/emit-react.mjs does by moving a
+   collided base class into the `default` branch of the axis that overrides
+   it. That transform needs to know which CSS LONGHAND each emitted class
+   writes, because the collision is between properties, not between class
+   names: chip's `border: 1px solid var(--chrome-border-strong)` and its solid
+   variant's `border-color: var(--primary)` are different property names and
+   the same declaration.
+
+   Reporting a WIDER set than a class really writes is safe — the transform
+   duplicates a class rather than dropping one. Reporting a narrower set is
+   the bug this exists to prevent, so shorthands expand. */
+const SHORTHAND = {
+  border: ["border-width", "border-style", "border-color"],
+  transition: ["transition-property", "transition-duration", "transition-timing-function", "transition-delay", "transition-behavior"],
+  background: ["background-color", "background-image", "background-position", "background-size", "background-repeat", "background-attachment", "background-origin", "background-clip"],
+  font: ["font-style", "font-variant", "font-weight", "font-stretch", "font-size", "line-height", "font-family"],
+  flex: ["flex-grow", "flex-shrink", "flex-basis"],
+  gap: ["row-gap", "column-gap"],
+  inset: ["top", "right", "bottom", "left"],
+  overflow: ["overflow-x", "overflow-y"],
+};
+const expand = (prop) => SHORTHAND[prop] ?? [prop];
 
 const isToken = (v) => v && typeof v === "object" && typeof v.token === "string";
 
 /**
- * One declaration → the Tailwind classes that express it.
+ * One declaration → the Tailwind classes that express it, each carrying the
+ * CSS longhands it writes so the React emitter can detect collisions.
  * @param {string} prop
  * @param {string|object|Array} value  the three definition value forms
  * @param {(name: string) => string|null} keyOf  token name → its @theme key
  * @param {string} where  for error messages
- * @returns {{classes: string[], arbitrary: boolean}}
+ * @returns {{classes: {cls: string, sets: string[]}[], arbitrary: boolean}}
  */
 export function utilitiesFor(prop, value, keyOf, where) {
   const suffix = (name) => {
@@ -369,20 +416,26 @@ export function utilitiesFor(prop, value, keyOf, where) {
     return utilitySuffix(key);
   };
   const one = (classes) => ({ classes, arbitrary: false });
+  const same = (list, sets) => one(list.map((cls) => ({ cls, sets })));
 
   /* A keyword with a known utility. */
   if (KEYWORD[prop] && typeof value === "string" && KEYWORD[prop][value] !== undefined) {
-    return one([KEYWORD[prop][value]]);
+    return same([KEYWORD[prop][value]], expand(prop));
   }
 
   /* A colour. */
-  if (COLOUR_PROP[prop] && isToken(value)) return one([`${COLOUR_PROP[prop]}-${suffix(value.token)}`]);
+  if (COLOUR_PROP[prop] && isToken(value)) {
+    const { prefix, sets } = COLOUR_PROP[prop];
+    return same([`${prefix}-${suffix(value.token)}`], sets);
+  }
 
   /* A family and a size, each of which has its own namespace. */
-  if (prop === "font-family" && isToken(value)) return one([`font-${value.token.replace(/^font-/, "")}`]);
-  if (prop === "font-size" && isToken(value)) return one([`text-${suffix(value.token)}`]);
+  if (prop === "font-family" && isToken(value)) return same([`font-${value.token.replace(/^font-/, "")}`], ["font-family"]);
+  if (prop === "font-size" && isToken(value)) return same([`text-${suffix(value.token)}`], ["font-size"]);
 
-  /* Padding and margin, per edge. `0` is Tailwind's own zero rather than a token. */
+  /* Padding and margin, per edge. `0` is Tailwind's own zero rather than a
+     token. Each class reports only the edges it writes, so a base `py-` and a
+     variant `pt-` collide and a base `py-` and a variant `px-` do not. */
   if (BOX_PROP[prop]) {
     const parts = Array.isArray(value) ? value : [value];
     const edges = EDGES[parts.length];
@@ -390,32 +443,36 @@ export function utilitiesFor(prop, value, keyOf, where) {
     return one(
       parts.map((p, i) => {
         const head = `${BOX_PROP[prop]}${edges[i]}`;
-        if (isToken(p)) return `${head}-${suffix(p.token)}`;
-        if (String(p) === "0") return `${head}-0`;
-        return `${head}-[${arbitrary(p)}]`;
+        const sets = EDGE_SIDES[edges[i]].map((side) => `${prop}-${side}`);
+        if (isToken(p)) return { cls: `${head}-${suffix(p.token)}`, sets };
+        if (String(p) === "0") return { cls: `${head}-0`, sets };
+        return { cls: `${head}-[${arbitrary(p)}]`, sets };
       })
     );
   }
 
-  if (prop === "gap" && isToken(value)) return one([`gap-${suffix(value.token)}`]);
+  if (prop === "gap" && isToken(value)) return same([`gap-${suffix(value.token)}`], expand("gap"));
 
-  /* `border` in both of its forms: composed from parts, or a whole shorthand token. */
+  /* `border` in both of its forms: composed from parts, or a whole shorthand
+     token. The composed form reports one longhand per part, which is what lets
+     chip's base border-COLOUR collide with its solid variant's `border-color`
+     while its width and style stay in the base. */
   if (prop === "border") {
-    if (isToken(value)) return { classes: [`[border:var(--${value.token})]`], arbitrary: true };
+    if (isToken(value)) return { classes: [{ cls: `[border:var(--${value.token})]`, sets: expand("border") }], arbitrary: true };
     if (Array.isArray(value)) {
       const out = [];
       for (const part of value) {
-        if (isToken(part)) { out.push(`border-${suffix(part.token)}`); continue; }
+        if (isToken(part)) { out.push({ cls: `border-${suffix(part.token)}`, sets: ["border-color"] }); continue; }
         const s = String(part);
-        if (/^(solid|dashed|dotted|double|none|hidden)$/.test(s)) { out.push(`border-${s}`); continue; }
-        out.push(s === "1px" ? "border" : `border-[${arbitrary(s)}]`);
+        if (/^(solid|dashed|dotted|double|none|hidden)$/.test(s)) { out.push({ cls: `border-${s}`, sets: ["border-style"] }); continue; }
+        out.push({ cls: s === "1px" ? "border" : `border-[${arbitrary(s)}]`, sets: ["border-width"] });
       }
       return one(out);
     }
   }
 
   /* Tracking has a namespace of its own and takes the value verbatim. */
-  if (prop === "letter-spacing" && typeof value === "string") return one([`tracking-[${arbitrary(value)}]`]);
+  if (prop === "letter-spacing" && typeof value === "string") return same([`tracking-[${arbitrary(value)}]`], ["letter-spacing"]);
 
   /* Everything else, faithfully. Tailwind's arbitrary PROPERTY form emits the
      declaration exactly as authored — which is why `transition` uses it rather
@@ -427,12 +484,36 @@ export function utilitiesFor(prop, value, keyOf, where) {
     : isToken(value)
       ? `var(--${value.token})`
       : String(value);
-  return { classes: [`[${prop}:${arbitrary(flat)}]`], arbitrary: true };
+  return { classes: [{ cls: `[${prop}:${arbitrary(flat)}]`, sets: expand(prop) }], arbitrary: true };
 }
 
-/** `:hover` → `hover:`. Named rather than derived, so an unknown state is loud. */
+/* ============================================================
+   STATE PREFIXES — named rather than derived, so an unknown state is loud.
+
+   `:hover` IS NOT `hover:`, AND THAT IS THE POINT. Tailwind v4's `hover:`
+   variant compiles to `@media (hover: hover) { &:hover { … } }`; the `:hover`
+   in components.css has no media query. On a coarse pointer the two pipelines
+   would then disagree about every hover state in the system — the vanilla site
+   applying the style on a sticky tap, the React one not.
+
+   That difference may well be an IMPROVEMENT. It is still not this emitter's
+   to make. A definition says `:hover`; rendering it as something else is
+   invention, and the pilot's whole claim is that two front ends are two
+   renderings of one source rather than two implementations of one idea. So
+   this emits the arbitrary variant `[&:hover]:`, which compiles to a bare
+   `&:hover` and matches the vanilla stylesheet exactly.
+
+   THE IMPROVEMENT IS FILED, NOT DROPPED. If `@media (hover: hover)` is the
+   right behaviour it is right for BOTH pipelines, and the place to decide it
+   is the definition format — a state gaining a `media` key, emitted as a media
+   query by scripts/emit-css.mjs and as `hover:` here, in one commit that moves
+   both surfaces together. See design-system/README.md, "The Tailwind + React
+   tier".
+
+   The other five keep their idiomatic Tailwind variant because those compile
+   to a bare selector already: only `hover` is wrapped. */
 export const STATE_PREFIX = {
-  ":hover": "hover:",
+  ":hover": "[&:hover]:",
   ":focus": "focus:",
   ":focus-visible": "focus-visible:",
   ":active": "active:",
