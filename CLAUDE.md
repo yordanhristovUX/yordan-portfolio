@@ -13,6 +13,18 @@ project. It is a consumer at the bottom of the graph and owns nothing; read
 
 Run it locally with `npx serve .` — or the `site` config in `.claude/launch.json`.
 
+**Working rules for agents in this repo** (owner-decided, 2026-08-02, after a real incident):
+
+- **One writing agent in the main worktree at a time.** The git index is shared; two agents
+  committing concurrently swept each other's in-flight files into their commits. Read-only
+  work may run in parallel; anything that stages or commits waits its turn, or takes an
+  isolated `git worktree`.
+- **Stage with explicit pathspecs — never `git add -A` / `git add .`** The sweep above is
+  structurally impossible when every commit names its files.
+- The orchestrating session serializes agent launches; if you are an agent and the tree
+  holds uncommitted files you did not write, they belong to someone else — leave them out
+  of your commit and say so in your report.
+
 **Start at [`ARCHITECTURE.md`](ARCHITECTURE.md)** — one page: the dependency graph, the rule
 that every boundary crossing is a generated artefact rather than a code import, and a
 "for task X, open slice Y" table. It is the only file you need to read to find out which
