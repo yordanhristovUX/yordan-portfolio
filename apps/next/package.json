@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "typecheck": "tsc --noEmit",
+    "check:hooks": "node scripts/check-class-hooks.mjs",
     "serve": "npx --yes serve out -l 3100 --no-clipboard"
   },
   "dependencies": {

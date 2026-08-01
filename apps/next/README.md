@@ -35,39 +35,64 @@ tree can go stale.
 ## Two style pipelines, on purpose
 
 Since phase R2b the design system reaches this app by **two** routes at once, and which
-one a component uses is the design system's decision, not this app's:
+one a component uses is the design system's decision, not this app's. **R5 finished the
+cutover**, so the split is no longer *which components* — it is *what is being said about
+one*:
 
-| | pipeline 1 | pipeline 2 |
+| | pipeline 2 | pipeline 1 |
 | --- | --- | --- |
-| components | the other twenty | `button`, `chip`+`chips`, `stat` |
-| what arrives | `components.css` and a class contract | `@yordan/design-system/react/*` — a typed component, a cva class map |
-| what styles it | `.btn`, `.chip`, `.stat` in `components.css` | Tailwind utilities built from `tokens.tailwind.css` |
-| what this app writes | `className="chip chip--solid"` | `<Chip variant="solid">` |
+| what arrives | `@yordan/design-system/react/<id>` — a typed component, a cva class map | `components.css` and a class contract |
+| what styles it | Tailwind utilities built from `tokens.tailwind.css` | the design system's own class names |
+| what it covers | every **app-authored** element that has a React form — twenty components, root and every class part | the six blocks with **no React form and never will**, the **authored halves** of the four split blocks, and the two artefact renderers below |
+| what this app writes | `<Chip variant="solid">` | `className="card card--reveal"` |
+
+**Dropping `components.css` was never the end state, and `src/app/layout.tsx` still imports
+it.** Six blocks cannot be definitions at all — the two `@component none` blocks, `skeleton`,
+`terminator`, `project-row` — and four more are *split*: a generated core interleaved with
+authored gaps that a class attribute cannot hold. A page rendering `<CardGrid>`/`<Card>` gets
+its grid hairlines from that stylesheet, because `:nth-child(3n)` and the orphan-row pair are
+not class attributes in any pipeline.
 
 Both read the same custom properties out of `tokens.css`, so dark, print and the wide
 viewport reach a utility and a hand-written rule through the same cascade. There is no
 second set of values anywhere and there is no colour literal in either.
 
 `src/app/globals.css` is the whole of pipeline 2 and its header is the file to read
-before touching the cascade: Tailwind is imported in parts rather than as one line
-(Preflight would overwrite the Foundation block of `components.css`), and its utilities
-are deliberately **unlayered** (a layered utility loses outright to that block's `a {}`
-and `button {}` rules, whatever the specificity says).
+before touching the cascade. Three things there are load-bearing: Tailwind is imported in
+parts rather than as one line (Preflight would overwrite the Foundation block of
+`components.css`); its utilities are deliberately **unlayered** (a layered utility loses
+outright to that block's `a {}` and `button {}` rules, whatever the specificity says); and
+since R5 they are imported **before** `components.css` rather than after, because an
+authored gap is an *override* and an override at 0-1-0 loses to a generated base utility
+emitted later. With the old order the card grid's two-column step at 960px, every
+`prefers-reduced-motion` cancellation and every `@media print { display: none }` in a split
+block stopped applying — measured, then fixed by one line.
 
-**Three surfaces still render `.chip`/`.stat` through `components.css` and are not
-swapped:** `src/components/evals-regions.tsx`, whose markup must stay byte-identical to
-the regions `evals/run.mjs` writes into `evals.html`; `src/components/chat/blocks.tsx`,
-which is the port of `js/answer-render.js` and reproduces its markup; and the chip that
-`evals-regions.tsx` embeds inside an artefact HTML string, which is not JSX at all. Those
-are generated-region renderers, so their markup is the artefact's, not this app's.
+### Which design-system class names survive, and why
+
+The generated components emit utilities, not `.card` / `.menu__sheet` / `.fact__label`. A
+class stays on a swapped element **exactly when something that is not the React tier
+addresses it by that name**, and `scripts/check-class-hooks.mjs` computes that set from its
+sources rather than trusting a list: the four synced page stylesheets, the authored
+fragments of `components.css`, this app's ports of `js/` (a copy's selectors are not this
+app's to re-point), the tier's own scoped rules — whose *sink* is named by class even when
+its host is a utility — and two upstream defects the cutover measured, both written up in
+that file's header. It asserts both directions: no class kept without a reason, and no
+required class dropped from a page it used to reach. `npm run check:hooks`.
+
+**Two surfaces are deliberately not swapped:** `src/components/evals-regions.tsx`, whose
+markup must stay byte-identical to the regions `evals/run.mjs` writes into `evals.html`, and
+`src/components/chat/blocks.tsx`, the port of `js/answer-render.js`. Neither authors markup —
+each renders an artefact — so the class names in them belong to the generator upstream and
+change there first. Both are styled by `components.css`, which is loaded.
 
 ## What crosses the boundary, and how
 
 | Input | Route in | Where |
 | --- | --- | --- |
 | tokens.css, components.css | the `@yordan/design-system` package's `exports` | `src/app/layout.tsx` |
-| tokens.tailwind.css | the same `exports` map | `src/app/globals.css` |
-| `react/{button,chip,stat}` | the same `exports` map — generated TSX, transpiled here | the use sites below |
+| tokens.tailwind.css, keyframes.css | the same `exports` map | `src/app/globals.css` |
+| `react/<id>` × 19 | the same `exports` map — generated TSX, transpiled here | the use sites below |
 | `surface-page`'s two values | `@yordan/design-system/tokens.flat.json` | `src/lib/theme-script.ts` |
 | the corpus | a build-time import of `content/dist/content.json` | `src/lib/content.ts` |
 | the corpus, again | copied to `public/corpus/` for the browser | `scripts/sync-artifacts.mjs` |
@@ -176,20 +201,39 @@ Every page and every behaviour the vanilla site has is here: `/`, `/cv`, `/work/
 and none of them is a half-finished feature — plus one that is a defect and is written down
 so that nobody fixes it in the wrong place.
 
-**`Button`'s `variant="solid"` and `size="small"` do not take effect, and the bug is in the
-artefact rather than here.** cva puts a component's base classes and its variant's classes
-in the same `class` attribute, but a class attribute has no order — the STYLESHEET decides,
-and Tailwind sorts utilities by name. `text-content-inverse` (solid) is emitted before
-`text-content-primary` (base) and therefore loses; so are `px-space-3`, `py-space-2`,
-`text-step-2xs` (small) against `px-space-5`, `py-space-3`, `text-step-xs` (base), and
-`hover:bg-action-hover` against `hover:bg-primary`. Measured against the vanilla site: a
-solid button renders dark ink on its dark fill, and a small button renders at the default
-size. `Chip`'s solid variant is unaffected only by the accident that its names sort the
-other way. **The fix belongs in the definition the components are generated from** — a base
-declaration that a variant overrides has to move into the `default` variant, so that exactly
-one of the two ever applies — and it needs no `!important`, no `tailwind-merge` and no
-change in this app. Nothing here works around it: a styling gap is a design-system question,
-and papering over this one would hide it from the cross-surface comparison that found it.
+**`Button`'s `variant="solid"` and `size="small"` used to have no effect and now do.** The
+bug was in the artefact rather than here — cva puts a base and its variant in one `class`
+attribute, which has no order — and the design system fixed it where it belonged, by making
+each axis disjoint from the base. Recorded because the shape recurs: the two defects below
+are the same sentence about a different pair of declarations.
+
+**Three components carry a design-system class they should not need, and each one is an
+upstream defect this app measured rather than worked around.** All three are detected and
+counted by `scripts/check-class-hooks.mjs`, which prints them on every run so the day they
+are fixed is visible rather than guessed at.
+
+1. **Eighteen scoped rules in the React tier compile to the wrong selector.** Tailwind reads
+   `_` in an arbitrary variant as a space — that is how `[&_.card__title]` gets its
+   descendant combinator — and `emit-tailwind.mjs` does not escape the underscores *inside*
+   a BEM class name, so it compiles to `.card title`, a descendant `<title>` element. Every
+   scoped rule whose target is a BEM part is affected: `.card__media`, `.menu__sheet`,
+   `.drawer__sheet`, `.ph__label`, `.chat__role`, `.ask-fab__label`, `.theme__lamp` and the
+   rest. Found by measuring a swapped `.card--ruled` against the vanilla page — 15px short,
+   exactly the ink bar's 12px padding plus 3px rule. `components.css` delivers all eighteen,
+   so **both ends keep their class** until the escape lands.
+2. **A shorthand and its own longhand in one base list.** `.chat__input` writes
+   `font: inherit` then `font-size: var(--text-md)`, which is an ordinary stylesheet
+   sentence; in one class attribute Tailwind's sort puts `[font:inherit]` last and the size
+   resets to the inherited 16px. Measured: 16px against 14.72px, and a composer 4.09px
+   taller. The emitter's disjointness pass covers a base against a *variant axis*, not a
+   shorthand against its own longhand inside the base list.
+3. **`@yordan/design-system/react/theme-toggle` does not parse at 2.6.0.** Three class
+   strings carry an unescaped double quote inside a double-quoted string literal
+   (`"[&[data-state="dark"]_.theme__lamp]:…"`), which is `tsc` TS1005 six times over. The
+   same construct on a rule's own root comes out correctly single-quoted in `nav.tsx`, so it
+   is one of the emitter's two paths. `ThemeToggle` therefore stays on pipeline 1, and every
+   import in this app names `./react/<id>` rather than the barrel — which re-exports the
+   broken file — so one bad artefact costs one component instead of the whole tier.
 
 **Motion, deliberately.** No GSAP here. On the vanilla site `[data-rise]`/`[data-reveal]` are
 hidden only under the `js` class that a *confirmed* GSAP load adds, so a load failure shows
