@@ -22,7 +22,8 @@
    ============================================================ */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { globSync, readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { testFiles } from "./run.mjs";
 
@@ -197,6 +198,73 @@ const NODE_DEFAULT_PATTERNS = [
   "**/test/**/*.?(c|m)js",
 ];
 
+/* The six patterns above are expanded by hand rather than handed to fs.glob,
+   and that is a scar rather than a preference.
+   `import { globSync } from "node:fs"` is a Node 22 API. ci.yml pins 20 —
+   which this file's own "the three workflows pin the same Node" test is
+   about — so on the version that actually gates a merge the module did not
+   load at all:
+
+     SyntaxError: The requested module 'node:fs' does not provide an export
+     named 'globSync'
+
+   Every assertion in this file was green on the developer's Node 24 and the
+   whole file was a load error in CI. `npm test` reported 147 passing locally
+   and 122 passing, 1 failed, 3 cancelled on ubuntu, and the difference was
+   never a platform.
+
+   The expansion below understands exactly the tokens these six patterns use
+   and THROWS on anything else — a pattern it cannot read must be a loud
+   failure, never a smaller match set that passes. */
+function patternToRegExp(pattern) {
+  let re = "^";
+  for (let i = 0; i < pattern.length; ) {
+    if (pattern.startsWith("**/", i)) {
+      re += "(?:[^/]+/)*"; /* zero or more directories, so `**​/x` also matches `x` */
+      i += 3;
+    } else if (pattern[i] === "*") {
+      re += "[^/]*";
+      i += 1;
+    } else if (pattern[i] === ".") {
+      re += "\\.";
+      i += 1;
+    } else {
+      /* `?(a|b)` — extglob "zero or one of these", which is how Node spells
+         the optional `c`/`m` in `.cjs`/`.mjs`/`.js`. */
+      const ext = /^\?\(([a-z](?:\|[a-z])*)\)/.exec(pattern.slice(i));
+      if (ext) {
+        re += `(?:${ext[1]})?`;
+        i += ext[0].length;
+      } else if (/[\w\-/]/.test(pattern[i])) {
+        /* A `/` that reaches here is a literal separator — `**​/` is consumed
+           above, so this is the one in `**​/test/**​/…`. */
+        re += pattern[i];
+        i += 1;
+      } else {
+        throw new Error(`patternToRegExp does not understand \`${pattern[i]}\` in \`${pattern}\``);
+      }
+    }
+  }
+  return new RegExp(`${re}$`);
+}
+
+/** Every file under `dir`, repo-relative and POSIX.
+ *
+ * node_modules and dot-directories are skipped, which is what glob itself
+ * does: `*` does not match a leading dot and `**` does not descend into one.
+ * That is not a detail — it is the reason
+ * design-system/.storybook/test-runner.cjs is not in the set below despite
+ * matching `**​/test-*.?(c|m)js` by name. */
+function walk(dir, prefix = "", out = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith(".") || e.name === "node_modules") continue;
+    const rel = prefix ? `${prefix}/${e.name}` : e.name;
+    if (e.isDirectory()) walk(join(dir, e.name), rel, out);
+    else if (e.isFile()) out.push(rel);
+  }
+  return out;
+}
+
 /* Files outside test/ that match a default pattern by name but are NOT tests.
    Each one is a live trip-hazard: `npm test` is safe because the runner passes
    explicit paths, but a bare `node --test` — the documented Node idiom, and
@@ -226,14 +294,31 @@ test("nothing outside test/ can rejoin the suite by being named like one", () =>
      `.mjs` under a directory called `test/` in another slice, is one bare
      `node --test` away from running inside a gate that promises to be offline.
      Known cases are listed above with an owner; a new one fails here. */
-  const root = fileURLToPath(new URL("../", import.meta.url));
+  const repo = fileURLToPath(new URL("../", import.meta.url));
+  const files = walk(repo);
+  assert.ok(
+    files.length >= 200,
+    `the walk found only ${files.length} files in the repo — it stopped descending, which would make every ` +
+      `assertion below vacuously true`
+  );
+
   const found = new Set();
   for (const pattern of NODE_DEFAULT_PATTERNS) {
-    for (const hit of globSync(pattern, { cwd: root, exclude: (n) => n === "node_modules" })) {
-      const rel = hit.split("\\").join("/");
-      if (!rel.startsWith("test/") && !rel.includes("node_modules/")) found.add(rel);
-    }
+    const re = patternToRegExp(pattern);
+    for (const rel of files) if (re.test(rel) && !rel.startsWith("test/")) found.add(rel);
   }
+
+  /* The expansion, checked against a name it must match and one it must not.
+     A regex builder is exactly the sort of thing that silently matches
+     nothing, and both directions of this file's real assertion rest on it. */
+  assert.ok(
+    patternToRegExp("**/test-*.?(c|m)js").test("design-system/test-runner-jest.config.cjs"),
+    "sanity: the pattern expansion no longer matches a name Node's discovery would sweep up"
+  );
+  assert.ok(
+    !patternToRegExp("**/*.test.?(c|m)js").test("test/ci.test.json"),
+    "sanity: the pattern expansion is not anchored at the end"
+  );
 
   const unexplained = [...found].filter((f) => !NOT_A_TEST_DESPITE_THE_NAME[f]).sort();
   assert.deepEqual(
@@ -527,6 +612,87 @@ test("the three workflows pin the same Node", () => {
     new Set(versions.map(([, v]) => v)).size,
     1,
     `the workflows disagree about Node: ${versions.map(([n, v]) => `${n}=${v}`).join(", ")}`
+  );
+});
+
+/* Builtin exports that DO NOT EXIST on the Node the workflows pin, keyed
+   `specifier#export` and valued with the major they arrived in.
+
+   This table is a scar. `import { globSync } from "node:fs"` sat at the top of
+   THIS file and was perfectly fine on the Node 24 every developer here runs;
+   globSync landed in 22 and ci.yml pins 20, so in CI the module raised a
+   SyntaxError before a single assertion in it ran. Nothing was wrong with any
+   gate — the file that checks the gates simply did not load, and `npm test`
+   was 147 green locally against 122 passing / 1 failed / 3 cancelled on the
+   runner. A named import is not a thing review notices.
+
+   Deliberately NOT exhaustive, and the header says so rather than implying a
+   coverage it does not have: the real mechanism is that CI runs the pin. This
+   catches the three that bit, and — because the comparison is against the pin
+   rather than a hard-coded 20 — raising node-version RETIRES an entry instead
+   of leaving a rule nobody can explain. */
+const ARRIVED_IN = {
+  "node:fs#glob": 22,
+  "node:fs#globSync": 22,
+  "node:fs/promises#glob": 22,
+};
+
+test("no gate imports a builtin that is newer than the Node the workflows pin", () => {
+  const pinned = Number(yml.match(/node-version:\s*"(\d+)/)?.[1]);
+  assert.ok(pinned, "ci.yml no longer pins a node-version this test can read");
+
+  /* Named imports from `node:` specifiers — the only form this repo uses, and
+     the form the failure took. A namespace import would slip past; that is a
+     limit of the check, not a licence.
+
+     Comments come off first, for the reason `uncommented` gives above: the
+     paragraph over ARRIVED_IN has to be able to quote the import that caused
+     all this, and a rule that forbids the explanation of itself is a rule
+     people route around. Block comments and whole-line `//` only — a `//`
+     inside a string literal is a URL, not a comment. */
+  const executable = (src) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
+  const NAMED = /import\s*\{([^}]*)\}\s*from\s*["'](node:[^"']+)["']/g;
+  const offences = [];
+  const seen = new Set();
+  const files = sources(fileURLToPath(root));
+  assert.ok(files.length >= 40, `scanned only ${files.length} source files — the walk changed shape`);
+
+  for (const file of files) {
+    const src = executable(readFileSync(file, "utf8"));
+    for (const [, names, spec] of src.matchAll(NAMED)) {
+      for (const binding of names.split(",")) {
+        const name = binding.trim().split(/\s+as\s+/)[0].trim();
+        seen.add(`${spec}#${name}`);
+        const since = ARRIVED_IN[`${spec}#${name}`];
+        if (since && since > pinned) {
+          offences.push(
+            `${file.slice(fileURLToPath(root).length).replace(/^[\\/]+/, "")}: \`${name}\` from ${spec} ` +
+              `arrived in Node ${since}, ` +
+              `and the workflows pin ${pinned} — the module will not load in CI`
+          );
+        }
+      }
+    }
+  }
+  /* Proof it is reading imports at all. Stripping comments is the step most
+     likely to quietly eat the thing being measured, and a scanner that sees
+     nothing passes this test for the same reason a scanner that sees
+     everything does. */
+  assert.ok(
+    seen.has("node:fs#readFileSync"),
+    `the scan read ${seen.size} named builtin imports and none of them was readFileSync from node:fs — ` +
+      `it is no longer looking at real import statements`
+  );
+
+  assert.deepEqual(offences, [], `\n  - ${offences.join("\n  - ")}\n`);
+
+  /* The other direction, so an entry cannot outlive the pin it is about. */
+  const stale = Object.entries(ARRIVED_IN).filter(([, since]) => since <= pinned).map(([k]) => k);
+  assert.deepEqual(
+    stale,
+    [],
+    `ARRIVED_IN still lists ${stale.join(", ")}, which the pinned Node ${pinned} now has — delete the entries.`
   );
 });
 

@@ -135,8 +135,31 @@ test("[03 M2 · regression lock] the budget check carries an abort signal and ca
   });
   t.after(restore);
 
+  /* THE ONLY THING HOLDING THE EVENT LOOP OPEN, and it has to be here.
+     The stubbed fetch never settles on its own — only the abort ends it — and
+     AbortSignal.timeout()'s timer is UNREF'D by design, so it cannot keep the
+     loop alive on its own account. In production that is invisible: an
+     in-flight request holds the loop open, so the 1s abort always fires. Under
+     `node --test` nothing does, and on Node 20 — the version ci.yml pins — the
+     loop drained before the timer could fire and the runner reported
+
+       Promise resolution is still pending but the event loop has already resolved
+
+     cancelling this test and the two after it. Node 22+ happens to hold the
+     loop open for the duration of a test, which is why this passed on a
+     developer's 24 and failed on ubuntu.
+
+     5000ms deliberately: it is the same bound the assertion below uses, so a
+     regression that really does let checkBudget hang still FAILS at five
+     seconds rather than hanging a CI job forever. */
+  const keepAlive = setTimeout(() => {}, 5000);
   const started = Date.now();
-  const verdict = await mod.checkBudget();
+  let verdict;
+  try {
+    verdict = await mod.checkBudget();
+  } finally {
+    clearTimeout(keepAlive);
+  }
   const elapsed = Date.now() - started;
 
   assert.ok(sawSignal, "redis() passed no AbortSignal — a blackholed Upstash would hang forever");
