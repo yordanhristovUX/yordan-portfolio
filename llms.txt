@@ -21,9 +21,9 @@ I build AI-ready design systems: component libraries with 1:1 parity between Fig
 
 ### 01 · This site — Portfolio as a Product
 
-An AI-ready design system that ships itself: repo-first tokens, Storybook, one-way Figma push, auto-deploys — all open source.
+A portfolio built as a product: repo-first design system, compiled copy, an MCP server and a chat assistant answering from one corpus, and a published retrieval evaluation. Open source, no build step in the site.
 
-Tags: Designer & Builder, Design system, AI-first, Storybook, Figma push, Open source
+Tags: Designer & Builder, Design system, AI-first, MCP server, Storybook, Figma push, Open source
 Metrics: 0 accessibility violations
 
 ### 02 · Green Street — AI-ready design systems and Agentic workflows
