@@ -404,6 +404,14 @@ if (definitionErrors.length) {
   );
   process.exit(1);
 }
+if (CHECK) {
+  const modifiers = definitions.flatMap((d) => [...(d.variants ?? []), ...(d.sizes ?? [])]);
+  console.log(
+    `✓ definition check       (${definitions.length} definitions valid against components/definition.schema.json; ` +
+      `${definitions.filter((d) => d.axes).length} declaring an orthogonal matrix, ` +
+      `${modifiers.filter((m) => m.aliases).length} of ${modifiers.length} modifiers aliasing another rule)`
+  );
+}
 
 /** A token name → the Tailwind @theme variable it becomes, or null if it stays plain. */
 const themeKey = (name) => themeKeyOf(name, groupOf.get(name));
@@ -778,7 +786,41 @@ const specs = Object.fromEntries(components.map((id) => [id, readSpec(id)]));
 /* ---------- dist/components.json ----------
    The derived contract dist/tokens.flat.json has had all along and the
    component tier has not: what an agent may branch on instead of parsing
-   19 markdown files of inconsistent shape. */
+   19 markdown files of inconsistent shape.
+
+   R3 DECISION — THIS STAYS PARSED FROM THE SHIPPED CSS, and the reason is not
+   inertia. Three of twenty-three components now have a definition, which is a
+   richer source, and deriving their entries from it was the obvious move. It
+   is the wrong one, twice over.
+
+   FIRST, IT WOULD DESTROY THE PROOF. This file is currently byte-identical to
+   what it was when all twenty-three blocks were hand-authored — which is the
+   entire evidence that the definition pipeline is faithful. It is an
+   INDEPENDENT reading of the stylesheet the site actually loads. Derive it
+   from the definitions instead and the two sides of the comparison become the
+   same side: the artefact would agree with the definitions by construction,
+   including on the day the emitter is wrong.
+
+   SECOND, IT ANSWERS A DIFFERENT QUESTION. Its consumers — `get_component`
+   and `get_design_system` through content.json, the content fold, and
+   evals/generation.mjs — ask "what classes and tokens does this component
+   SHIP?". Parsing the shipped file answers that. Reading the definitions
+   answers "what did we intend?", and those two diverge precisely when
+   something is broken. The parse is the half that notices.
+
+   And a mixed derivation — definitions for three, CSS for twenty — would make
+   the file's meaning depend on which component you looked up, which is worse
+   than either.
+
+   THE R4 CONSEQUENCE, so this is a decision rather than a deferral. When every
+   generatable block is a definition, the parse stops being the source and
+   becomes a CROSS-CHECK: emit components.json from the CSS exactly as now, and
+   additionally assert it agrees with a projection built from the definitions.
+   Two independent readings of one fact, which is worth more than either alone
+   and is the shape `contract-diff.mjs` already uses. The definitions are also
+   not published today (`components/` is private and in no `exports` subpath);
+   if a consumer ever needs the richer data, that is a new `dist/` artefact and
+   a new subpath, not a change to this one. See PATTERNS.md. */
 const owned = (id) => blocks.filter((b) => b.owner === id);
 const suffixes = (classes, sep) =>
   uniq(

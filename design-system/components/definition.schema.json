@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yordanhristov.dev/design-system/definition.schema.json",
+  "title": "Component definition",
+  "$doc": "EXTRACTED, NOT IMPOSED. Every construct below exists because one of the three pilot definitions needed it, and nothing below exists because a schema felt incomplete without it. Button forced variants, sizes, states-hanging-off-their-owner and the note-on-a-declaration-group; chip forced `parts`, because `.chips` is the wrapper a set of chips sits in and calling it a variant would have cost the word its meaning; stat forced the sections to be OPTIONAL rather than empty, and is the case where a token binds a whole compound value. The two constructs that are not a shape but a CLAIM — `aliases` and `axes.orthogonal` — come from findings the pilot reported rather than from the CSS: two rules that are deliberately identical, and two axes that are deliberately a matrix. Both are checked, because an unchecked claim is a comment. WHAT IS NOT HERE: behaviour. No focus management, no keyboard, no ARIA, no state. A definition answers what this looks like and nothing else; the rest lives in spec.md and in code, and this schema refuses the keys that would let it drift. WHAT IS ALSO NOT HERE, and is the harder omission: anything relational. There is no combinator, no at-rule, no locally-defined custom property and no computed geometry, so a block that needs one of those is not expressible here and is not meant to be — see design-system/PATTERNS.md, which measures how many blocks that is (19 of 24) and says what happens to them instead.",
+  "type": "object",
+  "required": ["id", "block", "root", "base"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string", "$doc": "Optional pointer back to this file, for an editor." },
+    "$doc": { "type": "string", "$doc": "Prose about this component's appearance. Deliberately not published: contract-diff.mjs snapshots the resolved declarations and no prose, because rewording a sentence is not a release." },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "$doc": "Must equal the directory name and the spec.md frontmatter id. Checked by the build, not by this schema, which cannot see the path."
+    },
+    "block": { "$ref": "#/$defs/block" },
+    "root": { "$ref": "#/$defs/selector", "$doc": "The component's own class. Its element is NOT here — it is read from the canonical HTML in spec.md, which design-system/README.md calls THE pattern rather than an example." },
+    "axes": { "$ref": "#/$defs/axes" },
+    "base": { "$ref": "#/$defs/rule" },
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/modifier" },
+      "$doc": "Appearance modifiers. An ARRAY, not an object: source order is the cascade in pipeline 1, and JSON object key order is a convention rather than a guarantee. Omitted when there are none — never an empty array."
+    },
+    "sizes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/modifier" },
+      "$doc": "Dimension modifiers. Separate from `variants` because they are a separate cva axis and a separate React prop, and because the two are usually property-disjoint — which is the claim `axes.orthogonal` makes checkable."
+    },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/part" },
+      "$doc": "A companion selector that is NOT a modifier of the root. Chip's `.chips` is the whole reason this exists: it is the flex wrapper a group of chips sits in, and no chip knows how many siblings it has."
+    }
+  },
+  "$defs": {
+    "block": {
+      "$doc": "The CSS banner pipeline 1 emits. `note` is the banner's prose, one array element per emitted line, so the emitter never has to re-wrap somebody's paragraph.",
+      "type": "object",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "pattern": "^[^\\n]+$" },
+        "note": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[^\\n]*$" } }
+      }
+    },
+    "selector": {
+      "type": "string",
+      "pattern": "^\\.[a-z][a-z0-9_-]*$",
+      "$doc": "A single class selector and nothing else. No combinator, no pseudo-class, no element — a definition describes one element's appearance, and the moment it can say `.band > .rail--l` it has become CSS with more punctuation."
+    },
+    "binding": {
+      "$doc": "A reference to a design token: rendered as var(--token) by pipeline 1 and as the utility bound to that token by pipeline 2. The build checks the token exists.",
+      "type": "object",
+      "required": ["token"],
+      "additionalProperties": false,
+      "properties": { "token": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } }
+    },
+    "term": {
+      "$doc": "One term of a value: a structural literal, or a token binding.",
+      "oneOf": [
+        { "type": "string" },
+        { "$ref": "#/$defs/binding" }
+      ]
+    },
+    "value": {
+      "$doc": "THE THREE FORMS, and telling them apart is the point of the whole file. A plain string is a STRUCTURAL literal and is emitted verbatim (`inline-block`, `600`, `0.05em`); an object is a TOKEN BINDING; an array is a sequence of both, space-joined. So `[\"1px\", \"solid\", {\"token\": \"content-primary\"}]` records that a border's width and style are structure while its colour is a token — which is a fact no CSS parser can recover, and which is what lets pipeline 2 emit `border border-solid border-content-primary`. A structural literal is NOT an escape hatch for a value that should be a token: the build refuses a colour, a font-size or a non-zero spacing step written as one, because scripts/check-css.mjs reads CSS and would never see it here.",
+      "oneOf": [
+        { "type": "string" },
+        { "$ref": "#/$defs/binding" },
+        { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/term" } }
+      ]
+    },
+    "group": {
+      "$doc": "A GROUP of declarations, not one declaration, because the authored CSS groups them and the grouping is a decision — `font-size / font-weight / letter-spacing` on one line is one thought. Pipeline 1 renders one group per line; the key order inside `set` is the emission order.",
+      "type": "object",
+      "required": ["set"],
+      "additionalProperties": false,
+      "properties": {
+        "note": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[^\\n]*$" },
+          "$doc": "A comment emitted above this group in pipeline 1, one array element per line. It belongs to the declaration it justifies rather than to the component, which is why it is here and not in spec.md."
+        },
+        "set": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^-{0,2}[a-z][a-z0-9-]*$" },
+          "additionalProperties": { "$ref": "#/$defs/value" }
+        }
+      }
+    },
+    "declarations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/group" } },
+    "state": {
+      "$doc": "A state hangs off its OWNER, not off the component: `suffix` is appended to whichever selector declares it, so `:hover` on `.btn--solid` is a state of the variant and is emitted directly after it. That is what makes the emission order the cascade.",
+      "type": "object",
+      "required": ["name", "suffix", "declarations"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "suffix": {
+          "type": "string",
+          "pattern": "^(:[a-z][a-z-]*(\\([^)]*\\))?|\\[[a-z-]+\\])$",
+          "$doc": "The pseudo-class or attribute appended to the owner's selector. scripts/emit-tailwind.mjs must have a variant prefix for it or the build fails — a state pipeline 2 cannot name is a state it would silently drop."
+        },
+        "$doc": { "type": "string" },
+        "declarations": { "$ref": "#/$defs/declarations" }
+      }
+    },
+    "rule": {
+      "$doc": "The root's own rule: its declarations, and any states of it.",
+      "type": "object",
+      "required": ["declarations"],
+      "additionalProperties": false,
+      "properties": {
+        "$doc": { "type": "string" },
+        "declarations": { "$ref": "#/$defs/declarations" },
+        "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } }
+      }
+    },
+    "alias": {
+      "$doc": "TWO RULES THAT ARE DELIBERATELY IDENTICAL, SAID ONCE. `.btn--solid` and `.btn:hover` carry the same declarations because the outline button's hover IS the solid button at rest — a real relationship that, written twice, reads as duplication somebody should tidy. Declaring the alias makes the relationship the source and the duplication its consequence: both emitters resolve it before rendering, so the bytes are identical either way, and a reader who reaches for the tidy-up finds a statement instead of an accident. It is checked — the referenced state must exist — because an unchecked claim is a comment.",
+      "type": "object",
+      "required": ["of"],
+      "additionalProperties": false,
+      "properties": {
+        "of": { "const": "base", "$doc": "The only referent the pilot needed. Widen it when a second real case appears, not before." },
+        "state": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "$doc": "Which state of the referent. Omitted means its resting declarations." },
+        "$doc": { "type": "string" }
+      }
+    },
+    "modifier": {
+      "$doc": "One variant or one size. It declares EITHER its own declarations OR an alias to another rule's, never both and never neither.",
+      "type": "object",
+      "required": ["name", "selector"],
+      "additionalProperties": false,
+      "oneOf": [{ "required": ["declarations"] }, { "required": ["aliases"] }],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "$doc": "The value of the React prop: `variant=\"solid\"`. Renaming it is BREAKING and contract-diff.mjs says so." },
+        "selector": { "$ref": "#/$defs/selector" },
+        "$doc": { "type": "string" },
+        "declarations": { "$ref": "#/$defs/declarations" },
+        "aliases": { "$ref": "#/$defs/alias" },
+        "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } }
+      }
+    },
+    "part": {
+      "$doc": "A companion selector with no modifiers and no states — if it needed either it would be a component.",
+      "type": "object",
+      "required": ["name", "selector", "declarations"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "selector": { "$ref": "#/$defs/selector" },
+        "$doc": { "type": "string" },
+        "declarations": { "$ref": "#/$defs/declarations" }
+      }
+    },
+    "axes": {
+      "$doc": "A CLAIM ABOUT THE MATRIX, and the reason it is required rather than optional the moment a component has two axes. `variant` and `size` both apply at once, and in pipeline 2 they land in one class attribute — which has no order. So either every combination is deliberate and the two touch disjoint properties, or somebody has to say which wins, and an emitter must not be the one to decide. Listing them here asserts the first; scripts/emit-react.mjs checks the assertion against its own collision analysis and fails naming both branches and the property if it does not hold. A component with fewer than two axes must omit this: there is no matrix to have an opinion about.",
+      "type": "object",
+      "required": ["orthogonal"],
+      "additionalProperties": false,
+      "properties": {
+        "$doc": { "type": "string" },
+        "orthogonal": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "enum": ["variant", "size"] }
+        }
+      }
+    }
+  }
+}

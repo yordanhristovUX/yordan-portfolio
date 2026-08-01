@@ -184,7 +184,7 @@ const hits = (entry, keys) => [...entry.keys].some((k) => keys.has(k));
    that overlap the build FAILS and names both branches and the property —
    guessing which should win is exactly the decision an emitter must not make.
    ============================================================ */
-function disjoin(base, axes, where) {
+function disjoin(base, axes, where, declared) {
   for (const axis of axes) {
     const axisKeys = new Set();
     for (const branch of axis.branches) for (const k of keySetOf(branch.entries)) axisKeys.add(k);
@@ -220,11 +220,12 @@ function disjoin(base, axes, where) {
   }
   if (clashes.length) {
     throw new Error(
-      `two axes override the same property, and both apply at once:\n  - ${clashes.join("\n  - ")}\n` +
+      `\`axes.orthogonal\` claims ${JSON.stringify(declared ?? axes.map((a) => a.prop))} is a deliberate matrix, and two of ` +
+        `those axes override the same property while both apply at once:\n  - ${clashes.join("\n  - ")}\n` +
         `  cva concatenates them into one class attribute, which has no order, so which one wins would be decided ` +
         `by Tailwind's alphabetical sort rather than by ${where}. Moving the base class into a \`default\` branch ` +
         `cannot help — neither axis is the base. Split the property onto one axis, or express the combination as a ` +
-        `single variant. This emitter will not guess.`
+        `single variant. The claim is the thing to fix or the shape is; this emitter will not guess which.`
     );
   }
   return base;
@@ -300,7 +301,7 @@ export function renderComponent(def, elements, keyOf) {
   if (def.variants?.length) axes.push({ prop: "variant", branches: branchesOf(def.variants) });
   if (def.sizes?.length) axes.push({ prop: "size", branches: branchesOf(def.sizes) });
 
-  base = disjoin(base, axes, where);
+  base = disjoin(base, axes, where, def.axes?.orthogonal);
 
   let out = header(def, `dist/react/${def.id}.tsx`);
   out += `import { cva, cx, type VariantProps } from "class-variance-authority";\n`;

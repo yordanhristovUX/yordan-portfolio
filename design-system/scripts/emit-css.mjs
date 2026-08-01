@@ -76,6 +76,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { validate, formatErrors } from "./validate-json.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -87,33 +88,190 @@ export const PILOT = ["button", "chip", "stat"];
  *  the marker in components.css — a backslash there would differ per platform. */
 export const definitionPath = (id) => `components/${id}/definition.json`;
 
-/* ---------- load ---------- */
+/* ============================================================
+   LOAD — schema, then the things a schema cannot see.
 
-/** @returns {{def: object|null, error: string|null}} — never throws, so the
- *  caller can report every broken definition at once rather than the first. */
+   Phase R3. `components/definition.schema.json` is the SHAPE, extracted from
+   these three real files rather than designed in front of them, and
+   scripts/validate-json.mjs checks it with no dependency. Everything below
+   the schema call is a check the schema structurally cannot make: it does not
+   know the file's path, it has never read tokens.json, and it cannot resolve
+   a reference from one part of the document to another.
+
+   The order matters. Schema first, because a shape failure makes every
+   semantic check downstream report noise about a document that was never
+   valid; semantics second, in the order a reader can act on them.
+   ============================================================ */
+
+const SCHEMA_PATH = "components/definition.schema.json";
+let schemaCache = null;
+const schema = () => (schemaCache ??= JSON.parse(readFileSync(join(root, SCHEMA_PATH), "utf8")));
+
+/** Every token name tokens.json defines. A binding to anything else is a typo
+ *  that would emit `var(--typo)` and render nothing — silently, in both pipelines. */
+let tokenCache = null;
+function tokenNames() {
+  if (tokenCache) return tokenCache;
+  const tokens = JSON.parse(readFileSync(join(root, "tokens", "tokens.json"), "utf8"));
+  tokenCache = new Set();
+  for (const [group, body] of Object.entries(tokens)) {
+    if (group.startsWith("$")) continue;
+    for (const name of Object.keys(body)) if (!name.startsWith("$")) tokenCache.add(name);
+  }
+  return tokenCache;
+}
+
+/* A structural literal is not an escape hatch. These three families have a
+   token tier, and scripts/check-css.mjs refuses a literal for each of them —
+   in CSS. It has never read a definition.json, so without this a colour could
+   walk into the system through the one door the stylesheet gate does not
+   watch. `font-weight` and `letter-spacing` are deliberately absent: they have
+   no token tier, so a literal is the honest answer there and not a leak. */
+const AS_COLOUR = /^(#[0-9a-f]{3,8}|(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\()/i;
+const SIZED = new Set(["font-size"]);
+const SPACED = new Set(["padding", "margin", "gap", "row-gap", "column-gap", "inset", "top", "right", "bottom", "left"]);
+
+/** Walk every declaration in a definition: `fn(prop, value, where)`. */
+function eachDeclaration(def, fn) {
+  const rules = [["base", def.base]];
+  for (const kind of ["variants", "sizes"]) for (const m of def[kind] ?? []) rules.push([`${kind}.${m.name}`, m]);
+  for (const p of def.parts ?? []) rules.push([`parts.${p.name}`, p]);
+  for (const [label, rule] of rules) {
+    for (const g of rule.declarations ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, label);
+    for (const s of rule.states ?? []) {
+      for (const g of s.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}:${s.name}`);
+    }
+  }
+}
+
+const terms = (value) => (Array.isArray(value) ? value : [value]);
+
+/**
+ * @returns {{def: object|null, errors: string[]}} — never throws, so the caller
+ *   can report every broken definition at once rather than only the first.
+ */
 export function loadDefinition(id) {
   const rel = definitionPath(id);
   const abs = join(root, "components", id, "definition.json");
   if (!existsSync(abs)) {
     return {
       def: null,
-      error:
+      errors: [
         `${rel} is missing — \`${id}\` is a pilot component, and its CSS block in css/components.css is ` +
-        `GENERATED from that file. Restore it, or take \`${id}\` out of PILOT in scripts/emit-css.mjs and ` +
-        `hand-author the block again.`,
+          `GENERATED from that file. Restore it, or take \`${id}\` out of PILOT in scripts/emit-css.mjs and ` +
+          `hand-author the block again.`,
+      ],
     };
   }
   let def;
   try {
     def = JSON.parse(readFileSync(abs, "utf8"));
   } catch (e) {
-    return { def: null, error: `${rel} is not valid JSON — ${e.message}` };
+    return { def: null, errors: [`${rel} is not valid JSON — ${e.message}`] };
   }
-  if (def.id !== id) return { def: null, error: `${rel}: its \`id\` is ${JSON.stringify(def.id)}, and it sits in components/${id}/` };
-  if (!def.block?.title) return { def: null, error: `${rel}: \`block.title\` is missing — it is the banner text` };
-  if (typeof def.root !== "string") return { def: null, error: `${rel}: \`root\` must be the component's own selector, e.g. ".btn"` };
-  if (!Array.isArray(def.base?.declarations)) return { def: null, error: `${rel}: \`base.declarations\` must be an array of groups` };
-  return { def, error: null };
+
+  /* ---- 1. the shape ----
+     A throw here is the SCHEMA being wrong, not the definition: validate-json
+     refuses a keyword it does not implement rather than ignoring it. Reported
+     as such, because "components/chip/definition.json is invalid" would send
+     the reader to the wrong file. */
+  let shape;
+  try {
+    shape = validate(schema(), def);
+  } catch (e) {
+    return {
+      def: null,
+      errors: [
+        `${SCHEMA_PATH} cannot be used to validate ${rel} — ${e.message}\n` +
+          `      The schema is what is wrong here, not the definition.`,
+      ],
+    };
+  }
+  if (shape.length) return { def: null, errors: formatErrors(shape, rel) };
+
+  /* ---- 2. what the schema cannot see ---- */
+  const errors = [];
+  const bad = (msg) => errors.push(`${rel}: ${msg}`);
+
+  if (def.id !== id) bad(`its \`id\` is ${JSON.stringify(def.id)}, and it sits in components/${id}/`);
+
+  /* Bindings resolve. */
+  const known = tokenNames();
+  eachDeclaration(def, (prop, value, where) => {
+    for (const t of terms(value)) {
+      if (t && typeof t === "object" && !known.has(t.token)) {
+        bad(`\`${where}\` binds \`{"token": "${t.token}"}\` on \`${prop}\`, and tokens.json defines no such token — it would emit \`var(--${t.token})\` and render nothing`);
+      }
+    }
+  });
+
+  /* Structural literals stay structural. */
+  eachDeclaration(def, (prop, value, where) => {
+    for (const t of terms(value)) {
+      if (typeof t !== "string") continue;
+      if (AS_COLOUR.test(t.trim())) {
+        bad(`\`${where}\` writes the colour literal \`${t}\` on \`${prop}\`. Colours are born in tokens.json and reach a definition as {"token": "…"} — scripts/check-css.mjs refuses this in CSS and cannot see it here`);
+      } else if (SIZED.has(prop)) {
+        bad(`\`${where}\` writes \`${prop}: ${t}\` as a structural literal. Every size is a --text-* step; bind one, or add a step to tokens.json if none fits`);
+      } else if (SPACED.has(prop) && t.trim() !== "0") {
+        bad(`\`${where}\` writes \`${t}\` on \`${prop}\` as a structural literal. Every spacing step is a --space-* token; \`0\` is the one literal this allows, because zero is not a step`);
+      }
+    }
+  });
+
+  /* A modifier's selector is its root plus its name — stated in the file so the
+     CSS is transcribed rather than assembled, and checked so the two agree. */
+  const seen = new Map([[def.root, "root"]]);
+  for (const kind of ["variants", "sizes"]) {
+    for (const m of def[kind] ?? []) {
+      const want = `${def.root}--${m.name}`;
+      if (m.selector !== want) bad(`\`${kind}.${m.name}\` has the selector \`${m.selector}\`, and a modifier of \`${def.root}\` named \`${m.name}\` is \`${want}\``);
+      if (seen.has(m.selector)) bad(`\`${m.selector}\` is declared twice — by \`${seen.get(m.selector)}\` and by \`${kind}.${m.name}\``);
+      seen.set(m.selector, `${kind}.${m.name}`);
+    }
+  }
+  for (const p of def.parts ?? []) {
+    if (seen.has(p.selector)) bad(`\`${p.selector}\` is declared twice — by \`${seen.get(p.selector)}\` and by \`parts.${p.name}\``);
+    seen.set(p.selector, `parts.${p.name}`);
+  }
+
+  /* The matrix claim: required exactly when there is a matrix to claim. */
+  const axes = ["variants", "sizes"].filter((k) => def[k]?.length).map((k) => (k === "variants" ? "variant" : "size"));
+  if (axes.length >= 2 && !def.axes) {
+    bad(
+      `it has ${axes.length} axes (${axes.join(", ")}) and no \`axes\` block. Two axes apply at once, and in the React ` +
+        `tier they land in one class attribute, which has no order — so either every combination is deliberate and the ` +
+        `two touch disjoint properties, or somebody has to say which wins. Declare \`"axes": {"orthogonal": ${JSON.stringify(axes)}}\` ` +
+        `and the emitter will check it, or restructure. An emitter must not be the one to decide.`
+    );
+  }
+  if (axes.length < 2 && def.axes) {
+    bad(`it declares \`axes\` and has ${axes.length === 1 ? "one axis" : "no axes"} — there is no matrix to have an opinion about`);
+  }
+  if (def.axes && axes.length >= 2) {
+    const declared = [...def.axes.orthogonal].sort().join(",");
+    if (declared !== [...axes].sort().join(",")) {
+      bad(`\`axes.orthogonal\` names ${JSON.stringify(def.axes.orthogonal)} and its axes are ${JSON.stringify(axes)} — every axis that applies has to be in the claim`);
+    }
+  }
+
+  /* ---- 3. resolve aliases, so neither emitter has to know about them ---- */
+  for (const kind of ["variants", "sizes"]) {
+    for (const m of def[kind] ?? []) {
+      if (!m.aliases) continue;
+      const state = m.aliases.state;
+      const source = state ? (def.base.states ?? []).find((s) => s.name === state) : def.base;
+      if (!source) {
+        bad(`\`${kind}.${m.name}\` aliases the base's \`${state}\` state, and the base declares no such state`);
+        continue;
+      }
+      /* A deep copy, because the two rules are now one statement and an emitter
+         must not be able to mutate one of them into disagreeing with the other. */
+      m.declarations = JSON.parse(JSON.stringify(source.declarations));
+    }
+  }
+
+  return errors.length ? { def: null, errors } : { def, errors: [] };
 }
 
 /* ---------- render ---------- */
@@ -220,8 +378,8 @@ export function loadAll() {
   const defs = [];
   const errors = [];
   for (const id of PILOT) {
-    const { def, error } = loadDefinition(id);
-    if (error) errors.push(error);
+    const { def, errors: bad } = loadDefinition(id);
+    if (bad.length) errors.push(...bad);
     else defs.push(def);
   }
   return { defs, errors };

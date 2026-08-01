@@ -1,5 +1,6 @@
 {
   "$doc": "Chip's appearance, as data — the source of the `@component chip` block in css/components.css. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. Chip is the case that made `parts` necessary: `.chips` is not a modifier of `.chip`, it is the flex wrapper a group of them sits in, so it cannot be a variant without the word losing its meaning. Everything here was transcribed from the authored block; that a chip is display-only and never interactive is in spec.md, because it is a rule about markup rather than a fact about appearance.",
+  "$schema": "../definition.schema.json",
   "id": "chip",
   "block": {
     "title": "Chip"

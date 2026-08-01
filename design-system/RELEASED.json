@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
-  "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. See scripts/contract-diff.mjs.",
-  "version": "1.0.0",
+  "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
+  "version": "1.1.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -679,6 +679,131 @@
         ".t-statement",
         ".t-title"
       ]
+    }
+  },
+  "definitions": {
+    "button .btn": {
+      "kind": "base",
+      "declarations": {
+        "border": "1px solid {content-primary}",
+        "color": "{content-primary}",
+        "cursor": "pointer",
+        "display": "inline-block",
+        "font-family": "{font-mono}",
+        "font-size": "{text-xs}",
+        "font-weight": "600",
+        "letter-spacing": "0.05em",
+        "padding": "{space-3} {space-5}",
+        "text-align": "center",
+        "transition": "background-color 0.2s, color 0.2s",
+        "white-space": "nowrap"
+      }
+    },
+    "button .btn:hover": {
+      "kind": "base state",
+      "declarations": {
+        "background": "{primary}",
+        "color": "{content-inverse}"
+      }
+    },
+    "button .btn--solid": {
+      "kind": "variant",
+      "declarations": {
+        "background": "{primary}",
+        "color": "{content-inverse}"
+      }
+    },
+    "button .btn--solid:hover": {
+      "kind": "variant state",
+      "declarations": {
+        "background": "{action-hover}"
+      }
+    },
+    "button .btn--small": {
+      "kind": "size",
+      "declarations": {
+        "font-size": "{text-2xs}",
+        "padding": "{space-2} {space-3}"
+      }
+    },
+    "chip .chip": {
+      "kind": "base",
+      "declarations": {
+        "border": "1px solid {chrome-border-strong}",
+        "color": "{chrome-label-strong}",
+        "display": "inline-block",
+        "font-family": "{font-mono}",
+        "font-size": "{text-2xs}",
+        "font-weight": "500",
+        "letter-spacing": "0.06em",
+        "padding": "{space-1} {space-2}",
+        "text-transform": "uppercase"
+      }
+    },
+    "chip .chip--solid": {
+      "kind": "variant",
+      "declarations": {
+        "background": "{primary}",
+        "border-color": "{primary}",
+        "color": "{content-inverse}"
+      }
+    },
+    "chip .chips": {
+      "kind": "part",
+      "declarations": {
+        "display": "flex",
+        "flex-wrap": "wrap",
+        "gap": "{space-2}"
+      }
+    },
+    "stat .stat": {
+      "kind": "base",
+      "declarations": {
+        "border": "{rule-strong}",
+        "color": "{content-primary}",
+        "display": "inline-block",
+        "font-family": "{font-display}",
+        "font-size": "{text-display}",
+        "font-variation-settings": "\"wdth\" 115",
+        "font-weight": "900",
+        "margin": "{space-2} {space-6} {space-4} 0",
+        "padding": "{space-1} {space-4}"
+      }
+    }
+  },
+  "exports": {
+    "./tokens.css": {
+      "target": "./dist/tokens.css"
+    },
+    "./components.css": {
+      "target": "./css/components.css"
+    },
+    "./components.json": {
+      "target": "./dist/components.json"
+    },
+    "./tokens.flat.json": {
+      "target": "./dist/tokens.flat.json"
+    },
+    "./tokens.dtcg.json": {
+      "target": "./dist/tokens.dtcg.json"
+    },
+    "./tokens.d.ts": {
+      "target": "./dist/tokens.d.ts"
+    },
+    "./tokens.tailwind.css": {
+      "target": "./dist/tokens.tailwind.css"
+    },
+    "./react": {
+      "target": "./dist/react/index.ts"
+    },
+    "./react/button": {
+      "target": "./dist/react/button.tsx"
+    },
+    "./react/chip": {
+      "target": "./dist/react/chip.tsx"
+    },
+    "./react/stat": {
+      "target": "./dist/react/stat.tsx"
     }
   }
 }

@@ -41,10 +41,35 @@
 
    · Not the prose. A `description` is judgement and rewording it is not a
      release. `build.mjs`'s doc-arithmetic gate is what keeps prose honest.
+
+   · Definitions (phase R3): the RESOLVED projection, keyed by selector —
+     `{ kind, declarations }` per rule, with token bindings kept as `{token}`
+     references and the property map SORTED. Three deliberate choices there.
+     Resolved, so introducing an `aliases` construct is not a contract change:
+     the two rules were always identical and now say so once. Keyed by
+     selector with the `kind` in the signature, because moving `small` from
+     `sizes` to `variants` leaves the CSS identical and changes the React API
+     from `size="small"` to `variant="small"` — that is breaking, and only the
+     kind records it. Sorted, because regrouping declarations changes no
+     computed value and should not read as a change. NOT the raw file: a `$doc`
+     is prose, and a definition is now where most of this system's prose lives.
+
+   · The EXPORTS map (phase R3). Five subpaths were added in R2a and nothing
+     noticed — the gate watched tokens and components and had no opinion about
+     the surface a consumer actually imports through. A subpath is a name
+     somebody can depend on, so it gets the same three classes as any other.
+
+   A SURFACE ABSENT FROM THE SNAPSHOT IS "NOT YET TRACKED", NOT "EMPTY", and
+   the difference is the whole reason this file can grow a surface without
+   lying about history. Diffing eleven exports against `{}` would classify all
+   eleven as added at the next version, recording `tokens.css` — published
+   since 1.0.0 — as new. So an absent surface is skipped, reported by name,
+   and recorded by `--release`; from the release after, it classifies normally.
    ============================================================ */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadAll, definitionPath } from "./emit-css.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -102,6 +127,48 @@ const tokenSig = (e) => ({
   ...(e.wide !== undefined ? { wide: e.wide } : {}),
 });
 
+/* ---------- the definitions surface ----------
+   Read through the same loader both emitters use, so what is snapshotted is
+   what is rendered — aliases resolved, schema already enforced. */
+const { defs, errors: defErrors } = loadAll();
+if (defErrors.length) {
+  console.error(
+    `✗ a component definition is invalid, so the contract cannot be read:\n  - ${defErrors.join("\n  - ")}\n` +
+      `  Run \`node design-system/scripts/build.mjs --check\`, which is the gate that owns this.`
+  );
+  process.exit(1);
+}
+
+const termOf = (t) => (typeof t === "string" ? t : `{${t.token}}`);
+const valueOf = (v) => (Array.isArray(v) ? v.map(termOf).join(" ") : termOf(v));
+/** A rule's declarations as a sorted property map — order is presentation, not contract. */
+const declOf = (declarations) => {
+  const flatMap = {};
+  for (const g of declarations ?? []) for (const [prop, v] of Object.entries(g.set)) flatMap[prop] = valueOf(v);
+  return Object.fromEntries(Object.keys(flatMap).sort().map((k) => [k, flatMap[k]]));
+};
+
+const definitionSurface = {};
+for (const def of defs) {
+  const put = (kind, selector, rule) => {
+    definitionSurface[`${def.id} ${selector}`] = { kind, declarations: declOf(rule.declarations) };
+    for (const s of rule.states ?? []) {
+      definitionSurface[`${def.id} ${selector}${s.suffix}`] = { kind: `${kind} state`, declarations: declOf(s.declarations) };
+    }
+  };
+  put("base", def.root, def.base);
+  for (const m of def.variants ?? []) put("variant", m.selector, m);
+  for (const m of def.sizes ?? []) put("size", m.selector, m);
+  for (const p of def.parts ?? []) put("part", p.selector, p);
+}
+
+/* ---------- the package surface ----------
+   Only the subpath and what it resolves to. `files`, `version` and the rest of
+   package.json are not a contract a consumer imports through. */
+const exportsSurface = Object.fromEntries(
+  Object.entries(pkg.exports ?? {}).map(([subpath, target]) => [subpath, { target }])
+);
+
 const current = {
   version: pkg.version,
   tokens: Object.fromEntries(
@@ -112,6 +179,8 @@ const current = {
   components: Object.fromEntries(
     (comps.components ?? []).map((c) => [c.id, { status: c.status, classes: c.classes }])
   ),
+  definitions: definitionSurface,
+  exports: exportsSurface,
 };
 
 /* ---------- the released contract ---------- */
@@ -132,7 +201,7 @@ if (BOOTSTRAP && !RELEASE) {
   process.exit(1);
 }
 const released = BOOTSTRAP
-  ? { version: pkg.version, tokens: current.tokens, components: current.components }
+  ? { version: pkg.version, ...current }
   : JSON.parse(readFileSync(releasedPath, "utf8"));
 
 /* ---------- classification ---------- */
@@ -176,7 +245,21 @@ function diffMap(kind, was, now, describe) {
 
 const q = (v) => (v === undefined ? "(none)" : JSON.stringify(v));
 
-diffMap("token", released.tokens ?? {}, current.tokens, {
+/* A surface the snapshot has never held is NOT an empty one. Skipping it here
+   and recording it at --release is what lets this file grow a surface without
+   reporting everything already published as newly added. It is reported by
+   name in every mode, because a gate that quietly checks nothing is the
+   failure this whole directory is organised against. */
+const newlyTracked = [];
+const track = (key, kind, describe) => {
+  if (released[key] === undefined) {
+    newlyTracked.push(`${key} (${Object.keys(current[key]).length} entries)`);
+    return;
+  }
+  diffMap(kind, released[key], current[key], describe);
+};
+
+track("tokens", "token", {
   removal: (sig) => `a consumer's \`var(${sig.cssVar})\` resolves to nothing`,
   changed: (was, now) => {
     const out = [];
@@ -191,7 +274,7 @@ diffMap("token", released.tokens ?? {}, current.tokens, {
   },
 });
 
-diffMap("component", released.components ?? {}, current.components, {
+track("components", "component", {
   removal: () => `the markup pattern and its classes are gone`,
   changed: (was, now) => {
     const out = [];
@@ -204,6 +287,44 @@ diffMap("component", released.components ?? {}, current.components, {
     if (was.status !== now.status) out.push({ rank: "patch", text: `status ${q(was.status)} → ${q(now.status)}` });
     return out;
   },
+});
+
+/* A definition rule is a name in TWO APIs at once: the class a page writes and
+   the prop a React consumer passes. So a removal is breaking on both surfaces,
+   and a change of KIND — `sizes` to `variants` — is breaking on the second
+   while leaving the first byte-identical, which is exactly the change nobody
+   would look for. */
+track("definitions", "definition", {
+  removal: (sig) => `the ${sig.kind} is gone — its class and, for a modifier, its React prop value with it`,
+  changed: (was, now) => {
+    const out = [];
+    if (was.kind !== now.kind) {
+      out.push({
+        rank: "major",
+        text:
+          `is a ${now.kind} and was a ${was.kind} — the CSS is unchanged and the React API is not: ` +
+          `a modifier that moves between \`variants\` and \`sizes\` moves between props`,
+      });
+    }
+    const wasDecl = was.declarations ?? {};
+    const nowDecl = now.declarations ?? {};
+    for (const prop of Object.keys(wasDecl)) {
+      if (!(prop in nowDecl)) out.push({ rank: "patch", text: `no longer sets \`${prop}\` (was ${q(wasDecl[prop])})` });
+      else if (wasDecl[prop] !== nowDecl[prop]) out.push({ rank: "patch", text: `\`${prop}\` ${q(wasDecl[prop])} → ${q(nowDecl[prop])}` });
+    }
+    for (const prop of Object.keys(nowDecl)) {
+      if (!(prop in wasDecl)) out.push({ rank: "patch", text: `now sets \`${prop}\`: ${q(nowDecl[prop])}` });
+    }
+    return out;
+  },
+});
+
+/* The subpath map is the contract in the vocabulary a package manager
+   understands, and until R3 nothing compared it. Removing one is not a
+   deprecation a consumer can work around — the import stops resolving. */
+track("exports", "export", {
+  removal: (sig) => `a consumer importing that subpath stops resolving — it pointed at ${q(sig.target)}`,
+  changed: (was, now) => [{ rank: "patch", text: `resolves to ${q(now.target)}, was ${q(was.target)}` }],
 });
 
 const requiredRank = changes.reduce((r, c) => Math.max(r, RANK[c.rank]), 0);
@@ -245,12 +366,22 @@ const sorted = [...changes].sort((a, b) => ORDER[a.rank] - ORDER[b.rank] || a.su
 const LABEL = { major: "BREAKING", minor: "additive", patch: "value   " };
 const bullet = (c) => `  · ${LABEL[c.rank]}  ${c.subject} ${c.text}`;
 
+const SIZES = () =>
+  `${Object.keys(current.tokens).length} tokens, ${Object.keys(current.components).length} components, ` +
+  `${Object.keys(current.definitions).length} definition rules, ${Object.keys(current.exports).length} exports`;
+
+if (newlyTracked.length) {
+  console.log(
+    `  ! newly tracked, recorded but NOT classified: ${newlyTracked.join(", ")}.\n` +
+      `    RELEASED.json has no baseline for ${newlyTracked.length === 1 ? "it" : "them"}, and diffing against an empty\n` +
+      `    map would report everything already published as newly added. \`--release\` records the baseline;\n` +
+      `    from the next release ${newlyTracked.length === 1 ? "it classifies" : "they classify"} like every other surface.`
+  );
+}
+
 if (!RELEASE) {
   if (!changes.length) {
-    console.log(
-      `✓ semver check           (${Object.keys(current.tokens).length} tokens, ` +
-        `${Object.keys(current.components).length} components — identical to RELEASED.json at ${fmt(from)})`
-    );
+    console.log(`✓ semver check           (${SIZES()} — identical to RELEASED.json at ${fmt(from)})`);
   } else if (!CHECK) {
     console.log(
       `  contract diff vs RELEASED.json ${fmt(from)} — ${changes.length} change(s), requires a ${required.toUpperCase()} bump:\n` +
@@ -303,7 +434,10 @@ if (RELEASE) {
     console.error(`✗ package.json ${fmt(to)} is behind RELEASED.json ${fmt(from)} — fix that by hand first.`);
     process.exit(1);
   }
-  if (!BOOTSTRAP && !changes.length && delta === "none") {
+  /* "No classified change" is not "nothing to do" when a surface is newly
+     tracked: the snapshot has to gain its baseline or the next release will
+     skip it again, forever. */
+  if (!BOOTSTRAP && !changes.length && delta === "none" && !newlyTracked.length) {
     console.log(`  nothing to release — the contract is identical to RELEASED.json at ${fmt(from)}.`);
     process.exit(0);
   }
@@ -331,13 +465,20 @@ if (RELEASE) {
         $doc:
           "The published contract of @yordan/design-system as of `version`. Every later change is " +
           "classified against this file: an added name is MINOR, a changed value is PATCH, a removed " +
-          "or renamed one is MAJOR. Tokens carry their AUTHORED value and mode variants, not the " +
-          "resolved ones, and components carry classes and status — in both cases the omitted fields " +
-          "are pure functions of the kept ones, so recording them would report one chosen edit as " +
-          "fifteen consequential ones. See scripts/contract-diff.mjs.",
+          "or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, " +
+          "not the resolved ones, and components carry classes and status — in both cases the omitted " +
+          "fields are pure functions of the kept ones, so recording them would report one chosen edit as " +
+          "fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with " +
+          "`kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS " +
+          "identical and changes the React prop) and the property map sorted (regrouping is presentation). " +
+          "Exports carry the subpath map, because that is the contract a consumer actually imports " +
+          "through and until R3 nothing compared it. No prose on any of the four. See " +
+          "scripts/contract-diff.mjs.",
         version: fmt(target),
         tokens: current.tokens,
         components: current.components,
+        definitions: current.definitions,
+        exports: current.exports,
       },
       null,
       2
@@ -354,12 +495,15 @@ if (RELEASE) {
     `     which is the one place prose cannot go stale against a generated file. -->\n`;
   const HEADS = { major: "Removed or renamed (breaking)", minor: "Added", patch: "Changed" };
   const stamp = new Date().toISOString().slice(0, 10);
-  const headline = BOOTSTRAP
-    ? `Initial snapshot — ${Object.keys(current.tokens).length} tokens, ${Object.keys(current.components).length} components. ` +
-      `Everything below this line is measured against it.`
-    : required === "none"
-      ? `No contract change; version bumped for another reason.`
-      : `${required[0].toUpperCase()}${required.slice(1)} — ${changes.length} change(s).`;
+  const tracked = newlyTracked.length
+    ? ` Newly tracked from this version: ${newlyTracked.join(", ")} — recorded as the baseline, not classified as additions.`
+    : "";
+  const headline =
+    (BOOTSTRAP
+      ? `Initial snapshot — ${SIZES()}. Everything below this line is measured against it.`
+      : required === "none"
+        ? `No classified contract change.`
+        : `${required[0].toUpperCase()}${required.slice(1)} — ${changes.length} change(s).`) + tracked;
   const entry =
     `\n## ${fmt(target)} — ${stamp}\n\n` +
     `${headline}\n` +
@@ -389,8 +533,9 @@ if (RELEASE) {
   console.log(
     (BOOTSTRAP
       ? `✓ snapshotted ${fmt(target)} — the baseline every later change is measured against\n`
-      : `✓ released ${fmt(from)} → ${fmt(target)} (${required.toUpperCase()}, ${changes.length} change(s))\n` +
-        sorted.map(bullet).join("\n") + "\n") +
+      : `✓ released ${fmt(from)} → ${fmt(target)} — ` +
+        (changes.length ? `${required.toUpperCase()}, ${changes.length} change(s)\n${sorted.map(bullet).join("\n")}\n` : `no classified change\n`)) +
+      (newlyTracked.length ? `  · baseline recorded for ${newlyTracked.join(", ")}\n` : "") +
       `  · package.json version, RELEASED.json snapshot and CHANGELOG.md entry written.`
   );
 }

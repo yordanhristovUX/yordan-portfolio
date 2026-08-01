@@ -5,6 +5,10 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.1.0 — 2026-08-01
+
+No classified contract change. Newly tracked from this version: definitions (9 entries), exports (11 entries) — recorded as the baseline, not classified as additions.
+
 ## 1.0.0 — 2026-07-30
 
 Initial snapshot — 83 tokens, 23 components. Everything below this line is measured against it.

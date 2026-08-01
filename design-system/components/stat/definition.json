@@ -1,5 +1,6 @@
 {
   "$doc": "Stat's appearance, as data — the source of the `@component stat` block in css/components.css. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. Stat is the third shape the pilot needed: no variants, no sizes, no states, no parts — one selector and one rule. It is the case that proves those sections are OPTIONAL rather than empty, and it is also the one where a token binds a whole compound value (`border` is `--rule-strong`, a width, a style and a colour in one token, which is why the light-to-dark judgement about that rule lives in tokens.json and not here).",
+  "$schema": "../definition.schema.json",
   "id": "stat",
   "block": {
     "title": "Stat",

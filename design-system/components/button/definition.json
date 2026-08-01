@@ -1,10 +1,15 @@
 {
   "$doc": "Button's appearance, as data. This file is the SOURCE of the `@component button` block in css/components.css — scripts/emit-css.mjs renders it and scripts/build.mjs --check byte-compares the result, so editing the CSS by hand fails the build. Appearance only: what a button LOOKS like in each variant, size and state, and which token each property binds to. Behaviour is not here and is not coming here — `<a>` to navigate and `<button>` to act, the untouchable :focus-visible ring, and the one-solid-per-view rule are judgement, and they live in spec.md where a human wrote them. Values come in three forms and the difference is the whole point of the file: a plain string is a structural literal, {\"token\": \"x\"} is a binding to --x, and an array is a sequence of both — so `border: 1px solid var(--content-primary)` records that its width and style are structure while its colour is a token, which is a fact nobody could recover from the CSS. Every value below was transcribed from the authored block, not chosen.",
+  "$schema": "../definition.schema.json",
   "id": "button",
   "block": {
     "title": "Button"
   },
   "root": ".btn",
+  "axes": {
+    "$doc": "A deliberate matrix: all four combinations are meant, and they resolve by the cascade because the two axes touch disjoint properties — variant sets colour and background, size sets padding and font size. scripts/emit-react.mjs checks that against its own collision analysis and fails naming both branches if it ever stops being true, because in a class attribute there is no order to fall back on.",
+    "orthogonal": ["variant", "size"]
+  },
   "base": {
     "declarations": [
       { "set": { "display": "inline-block" } },
@@ -40,9 +45,11 @@
       "name": "solid",
       "selector": ".btn--solid",
       "$doc": "THE primary action, at most one per view — asserted per shipped page by scripts/check-css.mjs rule 5. It is the resting state of the outline button's hover, which is why the two share `primary` and `content-inverse` rather than each naming a colour.",
-      "declarations": [
-        { "set": { "background": { "token": "primary" }, "color": { "token": "content-inverse" } } }
-      ],
+      "aliases": {
+        "of": "base",
+        "state": "hover",
+        "$doc": "The solid button at rest IS the outline button on hover — that is the relationship, not a coincidence, and writing the same two declarations twice made it read as duplication somebody should tidy away. Said once here: both emitters resolve this before rendering, so the CSS block and the cva map are byte-for-byte what they were when it was written out longhand, and the build fails if the state it names ever stops existing."
+      },
       "states": [
         {
           "name": "hover",

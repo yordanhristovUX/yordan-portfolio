@@ -42,6 +42,9 @@ scripts/emit-css.mjs    components/<id>/definition.json → the generated region
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
 components/*/definition.json  appearance as data — THREE components so far, see "Definitions"
+components/definition.schema.json  the schema, EXTRACTED from those three (build.mjs validates)
+scripts/validate-json.mjs  the ~150-line JSON Schema subset validator, zero-dep
+PATTERNS.md             the R4 design note: which blocks can be definitions, measured (5 of 24)
 stories/*.stories.js    Storybook (CSF3, vanilla HTML strings)  (npm run storybook → :6006)
 figma/push-guide.md     the repeatable Figma Variables push (Figma MCP)
 scripts/contract-diff.mjs  dist/ vs RELEASED.json → the semver class the change needs
@@ -131,6 +134,63 @@ Three consequences worth stating because they are easy to assume otherwise:
   regions, not a `dist/` artefact. `scripts/emit-css.mjs`'s header has the full reasoning.
   The regions are guarded by something stricter anyway: an in-memory byte compare that runs
   before anything is written.
+
+### The schema (R3) — extracted, then enforced
+
+`components/definition.schema.json` is a committed JSON Schema, and every construct in it is
+there because one of the three real definitions needed it. Nothing is there because a schema
+felt incomplete. `scripts/validate-json.mjs` checks it in about 150 lines and **no
+dependency**: a closed list of keywords, and a keyword it does not implement is a thrown
+error rather than a silent pass — which is the difference between a small validator and a
+broken one.
+
+Beyond the shape, the build checks four things a schema structurally cannot:
+
+- **A binding resolves.** `{"token": "typoo"}` would emit `var(--typoo)` and render nothing,
+  silently, in both pipelines.
+- **A structural literal stays structural.** A colour, a `font-size`, or a non-zero spacing
+  value written as a plain string is refused. `check-css.mjs` enforces exactly this in CSS and
+  has never read a `.json` — without this the definitions would be the one door into the
+  system that the stylesheet gate does not watch. `font-weight` and `letter-spacing` are
+  deliberately *not* on that list: they have no token tier, so a literal is the honest answer.
+- **A modifier's selector is its root plus its name.** `.btn--solid` is stated in the file, so
+  the CSS stays transcribed rather than assembled, and checked, so the two cannot disagree.
+- **The two claims below hold.**
+
+### Two constructs that are claims, not shapes
+
+Both came out of findings the pilot *reported* rather than out of the CSS, and both are
+checked — because an unchecked claim is a comment.
+
+**`aliases` — two rules that are deliberately identical, said once.** `.btn--solid` and
+`.btn:hover` carry the same declarations because the solid button at rest *is* the outline
+button on hover. Written twice, that reads as duplication somebody should tidy away.
+
+```jsonc
+{ "name": "solid", "selector": ".btn--solid",
+  "aliases": { "of": "base", "state": "hover" } }
+```
+
+Both emitters resolve it before rendering, so the CSS block and the cva map are byte-for-byte
+what they were when it was written out longhand — and the build fails if the state it names
+stops existing. `contract-diff.mjs` snapshots the *resolved* projection, so adopting the
+construct was not a contract change.
+
+**`axes.orthogonal` — a deliberate matrix, distinguished from an unconsidered one.** Required
+the moment a component has two axes, refused when it has fewer. `variant` and `size` both
+apply at once and in the React tier they land in one class attribute, which has no order — so
+either every combination is meant and the two touch disjoint properties, or somebody has to
+say which wins. `emit-react.mjs` checks the claim against its own collision analysis and fails
+naming both branches and the property. **An emitter must not be the one to decide.**
+
+### `dist/components.json` stays parsed from the shipped CSS
+
+Decided in R3, documented in full where the derivation lives (`build.mjs`). The short version:
+it is currently byte-identical to what it was when all 23 blocks were hand-authored, and that
+is the *entire evidence* that the definition pipeline is faithful — an independent reading of
+the stylesheet the site actually loads. Deriving it from definitions would make both sides of
+that comparison the same side, including on the day the emitter is wrong. R4 turns the parse
+into a cross-check rather than replacing it.
 
 ## The Tailwind + React tier (pilot scope: the same three components)
 
@@ -377,9 +437,21 @@ every difference:
 
 | Change | Needs |
 | --- | --- |
-| new token, new component, new class | **minor** |
-| same name, different value (including a `dark` / `print` / `wide` variant) | **patch** |
-| a name removed or renamed | **major** |
+| new token, new component, new class, new **definition rule**, new **export subpath** | **minor** |
+| same name, different value (including a `dark` / `print` / `wide` variant, or a definition's binding) | **patch** |
+| a name removed or renamed — including an export subpath, or a modifier moving between `variants` and `sizes` | **major** |
+
+**Four surfaces since R3, and two of them are new.** *Definitions* are snapshotted as the
+resolved projection keyed by selector, with the `kind` in the signature: a modifier that moves
+from `sizes` to `variants` leaves the CSS byte-identical and changes the React API from
+`size="small"` to `variant="small"`, and only the kind records that. *Exports* are snapshotted
+because R2a added five subpaths and nothing noticed — the gate watched tokens and components
+and had no opinion about the surface a consumer actually imports through.
+
+A surface **absent** from the snapshot is "not yet tracked", not "empty", and it is reported
+by name rather than skipped quietly. Diffing eleven exports against `{}` would have recorded
+`tokens.css` — published since 1.0.0 — as newly added at 1.1.0. `--release` records the
+baseline; from the next release it classifies like everything else.
 
 `node scripts/contract-diff.mjs --check` fails when the version delta does not cover the
 class, and names the token or component and the class — not "the contract changed" but
