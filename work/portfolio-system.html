@@ -92,13 +92,12 @@
         <div class="chips"><span class="chip">Designer &amp; Builder</span><span class="chip">Design system</span><span class="chip">AI-first</span><span class="chip">MCP server</span><span class="chip">Storybook</span><span class="chip">Figma push</span><span class="chip chip--solid">Open source</span></div>
         <div class="case-body">
           <h3>The idea</h3>
-          <p>A designer's portfolio usually <strong>describes</strong> process. This one <strong>demonstrates</strong> it: every button, chip, and square on this page comes from a design system that lives in the same public repository, documents itself for AI agents, and ships automatically. If I claim to build AI-ready systems, the claim should be inspectable. And it goes past styling: every word here is compiled from one authored source, so anything an AI assistant says about me on this site is traceable to a sentence I actually wrote.</p>
+          <p>A designer's portfolio usually <strong>describes</strong> process. This one <strong>demonstrates</strong> it: every button and chip on this page comes from a design system that lives in the same public repository, documents itself for AI agents, and ships automatically. If I claim to build AI-ready systems, the claim should be inspectable. And it goes past styling: every word here is compiled from one authored source, so anything an AI assistant says about me on this site is traceable to a sentence I actually wrote.</p>
 
           <h3>The system</h3>
           <ul>
             <li><strong>Repo-first tokens.</strong> One JSON file is the only place a colour is born. Zero-dependency scripts generate everything downstream: the CSS custom properties the vanilla pages load, the theme the Next.js app builds on, a machine-readable flat file for AI agents, and the Figma push.</li>
             <li><strong>Every component is defined once.</strong> Its variants, states and token bindings live as data beside the tokens; one pipeline renders them to CSS for the vanilla site, a second generates the typed React components the Next.js site imports. Spec and Storybook story still gate every component: governance as scripts, not a platform.</li>
-            <li><strong>The skeleton is the concept.</strong> A 24-square sheet whose rails are real square divs sized by the layout's own fr-tracks, and Conway's Game of Life lives on them. Click a square: the life you seed is born blueprint-blue and its lineage fades to stone.</li>
           </ul>
 
           <h3>The pipeline</h3>
@@ -159,7 +158,7 @@
           <p>Every sentence on the site and the CV is authored in one content directory and compiled outward: the page regions, the five case-study pages, a JSON corpus for retrieval, schema.org data, and <code>llms.txt</code>. Copy is moved verbatim, never rewritten by tooling, and a gate byte-compares all ten generated files, so a word of drift fails the build.</p>
 
           <h3>Ask the site itself</h3>
-          <p>The corpus feeds a retrieval layer: BM25 and embeddings over the shipped chunks, six tools, and an answer schema whose validation gates reject a claim the corpus cannot support. Two surfaces consume it. An MCP server lets agents install this portfolio as a tool, and the on-page assistant answers with structured blocks resolved against the same corpus. Both draw from what I actually wrote, because nothing else is in the corpus.</p>
+          <p>The corpus feeds a retrieval layer: BM25 and embeddings over the shipped chunks, eight tools, and an answer schema whose validation gates reject a claim the corpus cannot support. Two surfaces consume it. An MCP server lets agents install this portfolio as a tool, and the on-page assistant answers with structured blocks resolved against the same corpus. Both draw from what I actually wrote, because nothing else is in the corpus.</p>
 
           <h3>Measured, not claimed</h3>
           <p>Retrieval quality is a published number, not a promise. A fixed question set runs against several retrieval arms, the results table and the method live on the evals page, and a committed baseline turns a regression into a failing gate. The eval page's own prose is compiled by the same content pipeline with its figures left as placeholders for the runner to fill, so the page cannot advertise a number the run did not produce.</p>
@@ -168,7 +167,7 @@
           <p><span class="stat">0</span></p>
           <ul>
             <li><strong>0 accessibility violations</strong> across the component library: axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
-            <li><strong>83 tokens, 147 values, 23 components.</strong> One token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
+            <li><strong>83 tokens, 147 values, 23 components.</strong> One token carries its light, dark and print values together; each component is enforced as definition + spec + story by the build.</li>
             <li><strong>Dark mode is 23 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS: the sharpest test a semantic token layer can be put to.</li>
             <li><strong>Every boundary crossing is a generated artefact with a schema, never a code import.</strong> A gate asserts the dependency direction and pins each legal crossing, and the whole check runs offline, with no API key and no network.</li>
             <li><strong>A second front end proves it.</strong> A Next.js + React + TypeScript app renders the same nine pages from the published package and corpus alone. It exists to make the boundaries falsifiable: the moment it needs another slice's source, the architecture has failed.</li>

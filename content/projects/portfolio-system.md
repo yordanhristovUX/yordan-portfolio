@@ -59,7 +59,7 @@ system were not real, this page could not exist in the shape it does.
 ## The idea {#context}
 
 A designer's portfolio usually **describes** process. This one **demonstrates** it: every
-button, chip, and square on this page comes from a design system that lives in the same public
+button and chip on this page comes from a design system that lives in the same public
 repository, documents itself for AI agents, and ships automatically. If I claim to build
 AI-ready systems, the claim should be inspectable. And it goes past styling: every word here
 is compiled from one authored source, so anything an AI assistant says about me on this site
@@ -75,9 +75,6 @@ is traceable to a sentence I actually wrote.
   beside the tokens; one pipeline renders them to CSS for the vanilla site, a second
   generates the typed React components the Next.js site imports. Spec and Storybook story
   still gate every component: governance as scripts, not a platform.
-- **The skeleton is the concept.** A 24-square sheet whose rails are real square divs sized by
-  the layout's own fr-tracks, and Conway's Game of Life lives on them. Click a square: the
-  life you seed is born blueprint-blue and its lineage fades to stone.
 
 ## The pipeline {#system}
 
@@ -107,7 +104,7 @@ byte-compares all ten generated files, so a word of drift fails the build.
 
 ## Ask the site itself {#system}
 
-The corpus feeds a retrieval layer: BM25 and embeddings over the shipped chunks, six tools,
+The corpus feeds a retrieval layer: BM25 and embeddings over the shipped chunks, eight tools,
 and an answer schema whose validation gates reject a claim the corpus cannot support. Two
 surfaces consume it. An MCP server lets agents install this portfolio as a tool, and the
 on-page assistant answers with structured blocks resolved against the same corpus. Both draw
@@ -129,8 +126,8 @@ fill, so the page cannot advertise a number the run did not produce.
   2.1 AA contrast decisions documented inside the tokens themselves, and verified in *both*
   themes.
 - **{{tokens}} tokens, {{values}} values, {{components}} components.** One token carries its
-  light, dark and print values together; each component is enforced as CSS + AI spec + story
-  by the build.
+  light, dark and print values together; each component is enforced as definition + spec +
+  story by the build.
 - **Dark mode is {{dark}} tokens and zero component rules.** A themed colour carries its dark
   value beside its light one; the build emits the media query and the pinned-theme override.
   There is no `prefers-color-scheme` anywhere in the component CSS: the sharpest test a
