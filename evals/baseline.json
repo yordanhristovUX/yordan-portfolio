@@ -2,9 +2,9 @@
   "$schema": "evals/baseline.schema — see evals/CLAUDE.md",
   "generatedBy": "evals/run.mjs --update-baseline",
   "note": "Committed floor. run.mjs exits non-zero when a tracked metric falls below these by MORE THAN the 95% sampling margin for that metric at this n — not by more than 0.001, which was finer than the sampling error by three orders of magnitude and fired on one question. Raise it deliberately; never lower it to make a build pass, and record the reason in `reason` below.",
-  "reason": "BM25 gained a stopword list (NLTK English, external and fixed before measurement). With N=70 a term in one chunk earns the maximum idf, so where/moment/say/does scored as the rarest terms and the owner's Background statement won 9 of 26 top-1 misses. bm25 hit@3 67.3 -> 83.7, hit@1 49.0 -> 57.1, MRR 0.627 -> 0.706; abstain 0.0 -> 43.8 because function-word-only queries now yield no scoring term. Embeddings unchanged (does not use BM25). Floor re-cut so the gain is protected against a later regression.",
+  "reason": "owner content pass",
   "contentVersion": 1,
-  "corpusHash": "9530564fdc07971c",
+  "corpusHash": "926314512d1eaf76",
   "questionsHash": "001a02d3a171c99c",
   "questions": 65,
   "n": {
@@ -13,57 +13,57 @@
   },
   "arms": {
     "tools-only": {
-      "hit1": 0.4082,
-      "hit3": 0.4898,
-      "hit5": 0.6122,
-      "ent1": 0.5306,
+      "hit1": 0.4286,
+      "hit3": 0.4694,
+      "hit5": 0.551,
+      "ent1": 0.551,
       "ent3": 0.5714,
-      "mrr": 0.4846,
+      "mrr": 0.4836,
       "abstain": 0.8125
     },
     "bm25": {
-      "hit1": 0.5714,
-      "hit3": 0.8367,
-      "hit5": 0.8776,
-      "ent1": 0.5714,
-      "ent3": 0.7959,
-      "mrr": 0.7056,
-      "abstain": 0.4375
+      "hit1": 0.4082,
+      "hit3": 0.6327,
+      "hit5": 0.7959,
+      "ent1": 0.5306,
+      "ent3": 0.7347,
+      "mrr": 0.5456,
+      "abstain": 0.375
     },
     "hybrid": {
       "hit1": 0.4694,
-      "hit3": 0.5714,
-      "hit5": 0.7143,
+      "hit3": 0.5102,
+      "hit5": 0.6327,
       "ent1": 0.5918,
-      "ent3": 0.6531,
-      "mrr": 0.5663,
-      "abstain": 0.4375
+      "ent3": 0.6327,
+      "mrr": 0.5369,
+      "abstain": 0.375
     },
     "tools-gated": {
-      "hit1": 0.2041,
-      "hit3": 0.3469,
-      "hit5": 0.3469,
+      "hit1": 0.1429,
+      "hit3": 0.2041,
+      "hit5": 0.2857,
       "ent1": 0.2449,
-      "ent3": 0.3469,
-      "mrr": 0.2653,
+      "ent3": 0.2857,
+      "mrr": 0.1905,
       "abstain": 0.9375
     },
     "embeddings": {
-      "hit1": 0.8163,
-      "hit3": 0.9184,
-      "hit5": 0.9592,
-      "ent1": 0.6531,
+      "hit1": 0.6122,
+      "hit3": 0.7959,
+      "hit5": 0.8571,
+      "ent1": 0.7347,
       "ent3": 0.8571,
-      "mrr": 0.8731,
+      "mrr": 0.717,
       "abstain": 0
     },
     "gated-embeddings": {
-      "hit1": 0.3469,
-      "hit3": 0.3469,
-      "hit5": 0.3878,
+      "hit1": 0.2041,
+      "hit3": 0.2653,
+      "hit5": 0.3061,
       "ent1": 0.2857,
-      "ent3": 0.3469,
-      "mrr": 0.3595,
+      "ent3": 0.3265,
+      "mrr": 0.2509,
       "abstain": 0.875
     }
   }

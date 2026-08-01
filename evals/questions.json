@@ -9,6 +9,8 @@
 
   "_corpusRewrite": "GROUND TRUTH REPOINTED after the owner's corpus rewrite took the index from 76 chunks to 70. Spetema was demoted from a case study to a notable project and now keeps ONE section: `project:spetema#summary`. Six ids died (#subtitle, #problem, #approach, #approach-2, #system, #status) and five questions referenced them. No question was added, removed or REWORDED — question text is what the eval's vector cache is keyed on, and leaving it untouched is what keeps this pass free of any wording chosen after seeing a score.\n\nONE RULE was applied to all five, and to the two questions whose targets survived but lost their answer, so that no question was decided on its own merits: a dead expected id is REPLACED by the surviving chunk of the same entity when that chunk's text still answers the question, and DROPPED when it does not; an expected id that survives but no longer contains the answer is dropped too. A question is recategorised as abstention only when the corpus no longer answers it at all.\n\nUnder that rule NOTHING became a corpus-gap, and the reason is in the surviving text. `project:spetema#summary` reads: \"A 200+ product coffee catalogue serving households and businesses from one site. Split navigation, a preparation-method finder, eight sub-brands on a shared attribute model. Bilingual, live.\" That sentence still answers the layout question (split navigation, preparation-method finder), the B2B/B2C question (households and businesses from one site) and the catalogue-size question (200+). Scoring any of them as abstention would mark a retriever WRONG for returning the one passage that answers it, and would also break this category's own published definition — `corpus-gap` is \"an entity that exists yet produced no chunk\", and Spetema produced one. The corpus-gap bucket therefore stays at n=3, still too small to read, and still needs questions about an entity that genuinely has no chunk rather than relabelled answerable ones.",
 
+  "_skillsCollapse": "GROUND TRUTH REPOINTED AGAIN after the owner's 2026-08 copy pass, which took the index from 70 chunks to 99 and collapsed the site/CV skills taxonomy into ONE six-row list (the decision is recorded in content/skills.json's `_note`). Exactly two ids stopped resolving, both `skills:design:site`, and each moved to the surviving group that carries its subject: `skills:design-systems:site` for the design-systems question, `skills:product-design:site` for the motion question. `skills:process:site` also died and no question referenced it. All 65 questions were re-verified against the new corpus, not just the two the runner named.\n\nNO QUESTION WAS ADDED, REMOVED OR REWORDED, and no question's premise died. The abstention set was the real risk and it came through intact: the three `corpus-gap` questions still point at `experience:cncsys`, which still has no bullets and so still produces no chunk; all three `structured-only` premises still hold, one of them more strongly than before, since no chunk contains an email address at all; and the two fabricated-employer probes got HARDER rather than weaker, because the copy pass added more Google and Hotjar mentions as tools. Several `why` notes carried counts and distractor names that the merge falsified; each has a dated correction appended in place rather than a rewrite, so the earlier reasoning stays legible.\n\nWHAT WAS DELIBERATELY NOT DONE. The copy pass RESTORED all six Spetema sections the previous rewrite killed — `#subtitle`, `#problem`, `#approach`, `#system`, `#approach-2`, `#status`. Four questions were repointed away from those ids last time and are now scored against a strictly smaller target set than the corpus supports; `skill-motion` is the sharpest case, since the restored `project:spetema#system` is the best motion passage in the corpus. None was re-widened here. Restoring a resurrected id raises hit@k, and choosing ground truth that raises the number inside the same commit that freezes a new floor is the exact pattern the charter's tuning rule exists to prevent — the argument for doing it is sound on its own, which is precisely why it has to be made deliberately by the owner rather than folded into a re-cut.",
+
   "_version2": "Version 2, written AFTER the entity gate was rebuilt (name/label split, IDF floor, proper-noun test). The eleven new questions are therefore the first in this set that the gate was not built against — a small held-out probe, not a held-out SET: they were written by an agent that had read gate.js, so they are out-of-sample for the gate's tuning and not for its author's knowledge. Two of the two queries quoted in gate.js's own header as design examples were deliberately NOT copied in. Two version-1 questions were reworded to remove wording that echoed their target heading (proj-spetema-ia, metric-deadlift); both still have the same expected chunks. No question was added, removed or reworded after seeing a result.",
 
   "questions": [
@@ -226,7 +228,8 @@
       "shape": "lookup",
       "question": "How deep is his design systems and token architecture knowledge?",
       "expectedEntity": "skills:design-systems",
-      "expectedChunkIds": ["skills:design-systems:cv", "skills:design:site"]
+      "expectedChunkIds": ["skills:design-systems:cv", "skills:design-systems:site"],
+      "why": "REPOINTED after the 2026-08 skills collapse. The site surface used to carry one broad `design` row; the owner replaced both taxonomies with a single six-row list, so `skills:design:site` died and `skills:design-systems:site` is the same subject under the surviving group key. The `:cv` id was already correct and is untouched. The premise is if anything stronger than before: the new group is called \"Design systems\" and its text opens \"design tokens, repo-first token architecture\", where the old `design` row buried tokens among Figma and prototyping. Question text unchanged."
     },
     {
       "id": "skill-motion",
@@ -234,8 +237,8 @@
       "shape": "lookup",
       "question": "Does he do motion design?",
       "expectedEntity": "skills:product-design",
-      "expectedChunkIds": ["skills:product-design:cv", "skills:design:site"],
-      "why": "REPOINTED after the corpus rewrite. `project:spetema#system` no longer exists and NOTHING replaces it: the surviving Spetema summary says nothing about motion, so the id is dropped with no substitute. The two skills chunks that carry \"motion design\" verbatim still do, and `expectedEntity` was already `skills:product-design`, so both hit@k and ent@k stay coherent. The question is strictly harder than it was — one fewer acceptable target."
+      "expectedChunkIds": ["skills:product-design:cv", "skills:product-design:site"],
+      "why": "REPOINTED after the corpus rewrite. `project:spetema#system` no longer exists and NOTHING replaces it: the surviving Spetema summary says nothing about motion, so the id is dropped with no substitute. The two skills chunks that carry \"motion design\" verbatim still do, and `expectedEntity` was already `skills:product-design`, so both hit@k and ent@k stay coherent. The question is strictly harder than it was — one fewer acceptable target.\n\nREPOINTED AGAIN, 2026-08 skills collapse: `skills:design:site` died with the old site taxonomy and `skills:product-design:site` is where \"motion design\" now lives on that surface, so the id moves rather than being dropped. TWO CLAIMS IN THE PARAGRAPH ABOVE ARE NOW FALSE and are kept rather than rewritten, because they record the reasoning the id list still reflects. `project:spetema#system` is BACK — the owner's copy pass restored all six Spetema sections — and it is the strongest motion passage in the corpus (\"Purposeful motion. Every animation reviewed…\"). It was deliberately NOT re-added: re-widening a target set raises hit@k, and doing that inside the same commit that re-cuts the baseline is the shape this suite's charter is most careful about, whatever the intent. That is a decision for the owner, recorded here so it reads as declined rather than missed."
     },
     {
       "id": "skill-languages",
@@ -303,7 +306,7 @@
         "project:malko-tarnovo#problem",
         "project:domestina#problem"
       ],
-      "why": "REPOINTED after the corpus rewrite. `project:spetema#problem` no longer exists; `project:spetema#summary` states the same conflict at lower resolution — \"serving households and businesses from one site. Split navigation\" — so the Spetema target moves rather than disappearing. Dropping it outright would have stranded `expectedEntity: project:spetema`, leaving ent@k scoring one entity while hit@k scored two others."
+      "why": "REPOINTED after the corpus rewrite. `project:spetema#problem` no longer exists; `project:spetema#summary` states the same conflict at lower resolution — \"serving households and businesses from one site. Split navigation\" — so the Spetema target moves rather than disappearing. Dropping it outright would have stranded `expectedEntity: project:spetema`, leaving ent@k scoring one entity while hit@k scored two others.\n\n2026-08: `project:spetema#problem` EXISTS AGAIN, and its text is the sharpest statement of the conflict in the corpus — consumers browse discovery-led, business and horeca buyers move task-led. Not re-added; see `_skillsCollapse`."
     },
     {
       "id": "cross-production-code",
@@ -324,7 +327,7 @@
       "question": "Any experience reconciling B2B and B2C on one site?",
       "expectedEntity": "project:spetema",
       "expectedChunkIds": ["project:spetema#summary"],
-      "why": "REPOINTED after the corpus rewrite. All three targets died with Spetema's case study. The question is still answered by the one surviving chunk — \"serving households and businesses from one site\" is the B2B/B2C reconciliation, and \"Split navigation\" is how it was done — so this stays a retrieval question. It is now a three-targets-to-one lookup and correspondingly harder."
+      "why": "REPOINTED after the corpus rewrite. All three targets died with Spetema's case study. The question is still answered by the one surviving chunk — \"serving households and businesses from one site\" is the B2B/B2C reconciliation, and \"Split navigation\" is how it was done — so this stays a retrieval question. It is now a three-targets-to-one lookup and correspondingly harder.\n\n2026-08: all three are back. Not re-added; see `_skillsCollapse`."
     },
     {
       "id": "cross-white-label",
@@ -448,7 +451,7 @@
       "question": "How many products are in the Spetema catalogue?",
       "expectedEntity": "project:spetema",
       "expectedChunkIds": ["project:spetema#summary"],
-      "why": "REPOINTED after the corpus rewrite. `#subtitle` and `#approach` died; `#summary` was already the first target and still carries the answer verbatim — \"A 200+ product coffee catalogue\". Two acceptable targets removed, the one that answers the question kept."
+      "why": "REPOINTED after the corpus rewrite. `#subtitle` and `#approach` died; `#summary` was already the first target and still carries the answer verbatim — \"A 200+ product coffee catalogue\". Two acceptable targets removed, the one that answers the question kept.\n\n2026-08: `#subtitle` and `#approach` are back. Not re-added; see `_skillsCollapse`."
     },
     {
       "id": "metric-marathon",
@@ -498,7 +501,7 @@
       "expectedEntity": "profile",
       "expectedTool": "get_profile",
       "expectedChunkIds": [],
-      "why": "profile.identity.location is a structured field. The only chunk containing the word 'Sofia' is profile:education (Sofia University), so lexical search answers this confidently and wrongly."
+      "why": "profile.identity.location is a structured field. The only chunk containing the word 'Sofia' is profile:education (Sofia University), so lexical search answers this confidently and wrongly.\n\n2026-08 CORRECTION: the sentence above is stale in its detail and unchanged in its premise. `profile:education` no longer mentions Sofia at all — it now reads Telerik Academy and Software University (SoftUni). The one chunk containing 'Sofia' is `project:go-guide-app#subtitle`, about venues across Sofia, Plovdiv and the Black Sea coast. Still a distractor, still not where he lives, still structured-only."
     },
     {
       "id": "struct-availability",
@@ -595,7 +598,7 @@
       "question": "Did he ever work at Google?",
       "expectedEntity": null,
       "expectedChunkIds": [],
-      "why": "'Google' appears ten times across nine chunks — Google Analytics ×4, Google Play ×4, Google AI Studio ×2 — none of them an employer. It was eight before the corpus rewrite; the count was re-derived rather than carried over, because a stale figure in a `why` note is how a question set starts describing a corpus it no longer measures."
+      "why": "'Google' appears ten times across nine chunks — Google Analytics ×4, Google Play ×4, Google AI Studio ×2 — none of them an employer. It was eight before the corpus rewrite; the count was re-derived rather than carried over, because a stale figure in a `why` note is how a question set starts describing a corpus it no longer measures.\n\n2026-08 RE-DERIVED again over 99 chunks: 11 occurrences across 10 chunks — Google Play ×6, Google Analytics ×3, Google AI ×2. Not one of them an employer, so the copy pass made this probe harder rather than weaker."
     },
     {
       "id": "oob-japanese",
@@ -637,7 +640,7 @@
       "question": "Was he a product designer at Hotjar?",
       "expectedEntity": null,
       "expectedChunkIds": [],
-      "why": "NEW in version 2 — the fabricated-employer shape from audit 03's C2, which the version-1 set tested exactly once (oob-google). 'Hotjar' appears in four chunks as a research TOOL and never as an employer, while 'product' and 'designer' are labels five roles share. gate.js's header quotes two queries that were used to DESIGN the name/label split; neither was copied here, because measuring a gate against the examples it was built from is the §2.3 error repeated."
+      "why": "NEW in version 2 — the fabricated-employer shape from audit 03's C2, which the version-1 set tested exactly once (oob-google). 'Hotjar' appears in four chunks as a research TOOL and never as an employer, while 'product' and 'designer' are labels five roles share. gate.js's header quotes two queries that were used to DESIGN the name/label split; neither was copied here, because measuring a gate against the examples it was built from is the §2.3 error repeated.\n\n2026-08 RE-DERIVED over 99 chunks: five chunks now, every one of them still the analytics tool."
     }
   ]
 }
