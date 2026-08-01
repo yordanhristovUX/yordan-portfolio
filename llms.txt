@@ -15,7 +15,7 @@ Structured index for agents: https://yordan-portfolio.vercel.app/content/dist/co
 - LinkedIn: https://www.linkedin.com/in/yordan-hristov/
 - Source repo: https://github.com/yordanhristovUX/yordan-portfolio
 
-I build AI-ready design systems: component libraries with 1:1 parity between Figma and code, plus custom Claude skills and MCP setups that let agents assemble UI from the real system without drift. I write and ship the frontend myself, reviewed and merged by engineering. Under the tooling sits seven years of research practice: user interviews, usability testing, and WCAG 2.1 AA auditing.
+I build AI-ready design systems: tokens and components at 1:1 Figma-to-code parity, plus the Claude skills and MCP servers that let agents build real interfaces without drift. I ship production frontend myself, reviewed and merged by engineering. Underneath, seven years of research practice: user interviews, usability testing, WCAG 2.1 AA audits.
 
 ## Case studies
 

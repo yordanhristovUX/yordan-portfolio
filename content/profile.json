@@ -120,7 +120,7 @@
 
     "contactKicker": "Have a system to build, a surface to audit, or a handoff gap to close?",
 
-    "cvSummary": "I build **AI-ready design systems**: component libraries with 1:1 parity between Figma and code, plus custom Claude skills and MCP setups that let agents assemble UI from the real system without drift. I write and ship the frontend myself, reviewed and merged by engineering. Under the tooling sits seven years of research practice: user interviews, usability testing, and WCAG 2.1 AA auditing.",
+    "cvSummary": "I build **AI-ready design systems**: tokens and components at 1:1 Figma-to-code parity, plus the Claude skills and MCP servers that let agents build real interfaces without drift. I ship production frontend myself, reviewed and merged by engineering. Underneath, seven years of research practice: user interviews, usability testing, WCAG 2.1 AA audits.",
 
     "background": {
       "prose": "Before tech, I spent eleven years helping build and grow a strength and nutrition coaching practice. As the owner's close business partner, I took ownership of many of the systems that defined the business. I led a team of coaches, designed the recruitment and onboarding programme, created the assessment framework used across the practice, conducted hundreds of client interviews, and built a data-driven approach to measuring progress and outcomes.",
@@ -130,7 +130,7 @@
     },
 
     "cvOpenSource": [
-      "Tokens are born in the repo, not in Figma. One `tokens.json` builds the site's CSS variables and a flat JSON that both AI agents and a one-way repo-to-Figma push read — which makes Figma an output of the system rather than its source. Every component ships as a CSS block, a machine-readable spec for agents, and a Storybook story, and **the build fails if any of the three is missing**, so parity is enforced rather than maintained by hand.",
+      "Tokens are born in the repo, not in Figma. One `tokens.json` builds the CSS variables both front ends load, plus a flat JSON read by AI agents and a one-way repo-to-Figma push: Figma is an output, never the source. Components are defined once, as data; pipelines render them to CSS and to typed React, and **the build fails if a definition, spec, or story is missing**.",
       "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is {{dark}} re-aliased tokens with zero per-component rules."
     ],
 
