@@ -2,7 +2,7 @@
 /* ============================================================
    Automata engine — the skeleton and the life are one system.
 
-   COPIED FROM js/automata.js @ 2e84323; fix upstream first. A bug found here is
+   COPIED FROM js/automata.js @ ebc9900; fix upstream first. A bug found here is
    reported against js/automata.js, fixed there by its owner, and re-copied —
    never fixed only in this copy.
 
@@ -201,7 +201,15 @@ export function initAutomata(): AutomataHandle {
        plain `short > 0` leaves bands 0.02px out, which reads back as a bottom
        phase of 23.98 rather than 0.
      · IT CANNOT PING-PONG, and the reset is why: each pass is a pure function of
-       the un-slacked layout rather than an adjustment to the last one. */
+       the un-slacked layout rather than an adjustment to the last one.
+     · THE WRITES MUST LAND SYNCHRONOUSLY, and a stylesheet can silently break
+       that: a CSS transition on the terminator's height has progress 0 for the
+       rest of the task that wrote it, so every rect below reads the PREVIOUS
+       pass's layout and the pass becomes S(n+1) = f(S(n)) with no fixpoint —
+       css/style.css's reduced-motion block once did exactly this with a
+       boilerplate `transition-duration: 0.01ms` on `*`. So the pass pins
+       `transition: none` on each terminator — the one element this file
+       writes — and hands the property back after one flush. */
   const TERM_EPS = 0.05;
 
   /* "This phase is a real remainder, not a rounding artefact." Both ends of the
@@ -215,6 +223,7 @@ export function initAutomata(): AutomataHandle {
       const term = band.querySelector<HTMLElement>(":scope > .term");
       const rail = band.querySelector(":scope > .rail--l");
       if (!term || !rail) continue; // no terminator, or a band with no well
+      term.style.transition = "none"; // a measurement, not a movement — see above
       term.style.setProperty("--term-slack", "0px");
       plates.push({ band, term, rail });
     }
@@ -230,6 +239,13 @@ export function initAutomata(): AutomataHandle {
       const drop = box.bottom - root.getBoundingClientRect().top;
       const short = (cell - (((drop % cell) + cell) % cell)) % cell;
       if (offLattice(short, cell)) term.style.setProperty("--term-slack", short + "px");
+    }
+    /* One flush so the LAST plate's write commits while its transitions are
+       still off — every earlier write was flushed by the next plate's own
+       measurement — then the property goes back to the stylesheet. */
+    if (plates.length) {
+      void plates[plates.length - 1].term.offsetHeight;
+      for (const { term } of plates) term.style.transition = "";
     }
   }
 
