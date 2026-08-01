@@ -38,7 +38,8 @@ dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to t
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 12 blocks authored, 11 generated)
+css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 11 generated,
+                        15 authored, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -95,6 +96,16 @@ The file is therefore an **assembly**. A generated block sits between two marker
 .btn { … }
 /* ---- /generated:button ---- */
 ```
+
+**And every block that is *not* generated says why it is not.** R4 landed the census
+`PATTERNS.md` specified: an authored block carries
+`/* ---- authored:<id> — <reason> ---- */` above its banner, `<reason>` comes from a closed
+vocabulary — `relational-selectors`, `local-custom-property`, `unnamed-condition`,
+`foreign-selector` — and `build.mjs` asserts three things: every block is exactly one of the
+two kinds, the reason is in the vocabulary, and the scan actually finds that feature in the
+block. A reason that has stopped being true is a block that should now be a definition, and
+the build says so by name. The count is reported on every `--check`, which is how "the file
+stopped being authored" becomes a number that moves rather than a claim.
 
 Same idiom as the `<!-- content:… -->` regions of `index.html`, and the same rule: **never
 edit inside one.** `scripts/build.mjs --check` re-renders every region *in memory* and

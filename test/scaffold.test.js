@@ -50,25 +50,59 @@ const PHASES = listFrom(buildMjs, "PHASES", "design-system/scripts/build.mjs");
 const COMPONENT_ID = "zz-scaffold-probe";
 const component = scaffold("new-component.mjs", [COMPONENT_ID]);
 
-test("new:component emits the three artefacts the coverage gate demands", () => {
+/** The definition the scaffold writes — the source of everything below it. */
+const definitionOf = (plan) => JSON.parse(fileIn(plan, "definition.json").contents);
+
+test("new:component emits the four artefacts the coverage gate demands", () => {
+  /* THE TRINITY IS A QUARTET, and the census is why. R4 gave components.css a
+     census: a block is generated, or it is authored for a reason the build can
+     find in it. A one-declaration scaffold has no combinator, no local custom
+     property, no unnamed condition and no foreign selector — so there is no
+     honest authored reason available to it, and generated is the only truthful
+     thing to emit. definition.json is therefore not an extra: it is the source
+     the CSS region is rendered from. */
   assert.equal(component.status, 0, component.stderr);
   const paths = component.plan.files.map((f) => f.path).sort();
   assert.deepEqual(paths, [
+    `design-system/components/${COMPONENT_ID}/definition.json`,
     `design-system/components/${COMPONENT_ID}/spec.md`,
     "design-system/css/components.css",
     `design-system/stories/${COMPONENT_ID}.stories.js`,
   ]);
 });
 
-test("the CSS block carries an @component marker the build can parse", () => {
+test("the scaffold registers the id in all three lists that must name it", () => {
+  /* A component that is generated has to be in PILOT (or no emitter renders it),
+     in build.mjs's `packaged` array (or nothing writes or byte-compares its
+     .tsx) and in the package's `exports` (or the subpath is unreachable). A
+     scaffold that half-registers is worse than one that refuses, so the tool
+     dies on a missing anchor — and this asserts the set it claims to edit. */
+  assert.deepEqual(
+    component.plan.registers.map((r) => r.path).sort(),
+    ["design-system/package.json", "design-system/scripts/build.mjs", "design-system/scripts/emit-css.mjs"]
+  );
+  for (const r of component.plan.registers) assert.equal(r.names, COMPONENT_ID);
+});
+
+test("the CSS the scaffold writes is an empty GENERATED region, not a block", () => {
+  /* The banner now comes out of the definition's `block.title`, rendered by
+     design-system/scripts/emit-css.mjs — which this tool runs as a process
+     rather than imports, because scripts/check-boundaries.mjs refuses a root
+     script reaching into the design system's internals. So what lands in
+     components.css is the two markers and nothing between them; the body is the
+     emitter's, and build.mjs --check byte-compares it against a fresh render. */
   const block = fileIn(component.plan, "components.css").contents;
-  /* build.mjs's own BANNER regex, not a lookalike: the marker has to be on the
-     banner's FIRST line and the owner has to be the component id, or the block
-     is reported as unowned and the component as unclaimed. */
-  const BANNER = /^\/\* =+ (.+?) =+ @component (\S+)/m;
-  const m = block.match(BANNER);
-  assert.ok(m, `no parseable @component banner:\n${block}`);
-  assert.equal(m[2], COMPONENT_ID);
+  assert.match(block, new RegExp(`^/\\* ---- generated:${COMPONENT_ID} — do not edit, source: components/${COMPONENT_ID}/definition\\.json ---- \\*/$`, "m"));
+  assert.match(block, new RegExp(`^/\\* ---- /generated:${COMPONENT_ID} ---- \\*/$`, "m"));
+  assert.doesNotMatch(block, /@component/, "the banner belongs to the definition now, not to this file");
+
+  /* And the definition carries what the banner will say. build.mjs's own BANNER
+     regex reads `@component <id>` off the first line of the rendered banner, so
+     the title has to be a single line and the id has to be the directory name. */
+  const def = definitionOf(component.plan);
+  assert.equal(def.id, COMPONENT_ID, "the definition's id must equal the directory name");
+  assert.equal(def.root, `.${COMPONENT_ID}`, "the root is the component's own class");
+  assert.match(def.block.title, /^[^\n]+$/);
 });
 
 test("the spec's frontmatter is valid and every value is one the build allows", () => {
@@ -94,10 +128,17 @@ test("the spec's ## Tokens list is exactly the token set its CSS consumes", () =
      costs; declared-but-unconsumed is only a warning there, but for a scaffold
      it is simply a bug, so both are hard here. */
   const spec = fileIn(component.plan, "spec.md").contents;
-  const block = fileIn(component.plan, "components.css").contents;
+  /* Read out of the DEFINITION rather than the CSS, because the CSS is now a
+     region the emitter fills: a `{"token": "x"}` binding is what becomes
+     `var(--x)`, and it is the form the build's own binding check reads. */
+  const bindings = [];
+  JSON.stringify(definitionOf(component.plan), (k, v) => {
+    if (v && typeof v === "object" && typeof v.token === "string") bindings.push(`--${v.token}`);
+    return v;
+  });
 
   const uniq = (a) => [...new Set(a)].sort();
-  const consumed = uniq([...block.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/var\(\s*(--[a-z0-9-]+)/gi)].map((m) => m[1]));
+  const consumed = uniq(bindings);
   const section = (spec.split(/^## +Tokens *$/m)[1] ?? "").split(/^## /m)[0];
   const declared = uniq(
     [...section.matchAll(/`([^`\n]+)`/g)].map((m) => m[1]).filter((s) => /^--[a-z0-9-]+$/.test(s))
@@ -112,7 +153,14 @@ test("every class the spec claims has a rule in the block it ships with", () => 
      — it is THE pattern. Copy it." A class named there with no rule anywhere is
      the defect the contract gate was added for; a scaffold must not create one. */
   const spec = fileIn(component.plan, "spec.md").contents;
-  const block = fileIn(component.plan, "components.css").contents;
+  /* Every selector the definition declares — the root, and any modifier or part
+     it grows later. The scaffold ships one, and this is the set the emitter will
+     put a rule under, so it is the honest thing to check a claim against. */
+  const def = definitionOf(component.plan);
+  const declared = [
+    def.root,
+    ...[...(def.variants ?? []), ...(def.sizes ?? []), ...(def.parts ?? [])].map((m) => m.selector).filter(Boolean),
+  ];
 
   const claimed = new Set();
   for (const fence of spec.matchAll(/```html\r?\n([\s\S]*?)```/g)) {
@@ -125,7 +173,7 @@ test("every class the spec claims has a rule in the block it ships with", () => 
   }
 
   assert.ok(claimed.size > 0, "the spec claims no class at all");
-  const undefined_ = [...claimed].filter((c) => !new RegExp(`\\${c}(?![\\w-])`).test(block));
+  const undefined_ = [...claimed].filter((c) => !declared.includes(c));
   assert.deepEqual(undefined_, [], `claimed but not defined: ${undefined_.join(" ")}`);
 });
 

@@ -82,8 +82,29 @@ matters:
    `/* ---- generated:<id> … ---- */` — and byte-compared against a fresh render.
 2. Every authored block gains a marker of its own,
    `/* ---- authored:<id> — <reason> ---- */`, where `<reason>` comes from a **closed
-   vocabulary**: `relational-selectors`, `at-rule`, `local-custom-property`,
-   `computed-geometry`. A reason outside the list fails the build.
+   vocabulary**. A reason outside the list fails the build.
+
+   **Landed, and the vocabulary is not the one proposed here** — two of the four names were
+   the same misreading of the scan this note has now made three times:
+
+   | proposed | landed | why |
+   | --- | --- | --- |
+   | `relational-selectors` | `relational-selectors` | unchanged |
+   | `local-custom-property` | `local-custom-property` | unchanged, and it is the only one of the four that has not moved at all |
+   | `at-rule` | **`unnamed-condition`** | an `@media` whose query is a *name* in `$conditions` generates — `fact`, `entry` and `section-head` prove it. What disqualifies is a condition this system cannot name: `@keyframes`, `@supports`, `(hover: hover) and (pointer: fine)`, or a breakpoint nobody has named yet. |
+   | `computed-geometry` | **gone** | `expr` closed it. `calc({space-3} - 2px)` keeps every binding visible to the census, so the arithmetic was never the problem — an unreadable `var()` inside a string was. |
+   | — | **`foreign-selector`** | added by `menu`'s `body:has(.menu[data-open])`: a rule whose subject the component does not own. No closure of the scoped-part vocabulary reaches it, because `within` names a rule the definition declares and `body` never will be. |
+
+   The check asserts the feature is **present**, not that it is disqualifying. Proving the
+   second would mean re-implementing the schema inside the census, and then the census would
+   agree with the emitter by construction — the trap `dist/components.json` is deliberately
+   kept out of. Presence is enough for the property that matters: a reason cannot quietly
+   become false.
+
+   **A consequence worth stating, because it changed a tool.** A freshly scaffolded block has
+   one class and one declaration, so it has *no* reason available to it — which makes
+   `generated` the only honest default for a new component. `scripts/new-component.mjs` now
+   writes the quartet, and the census is why it had to.
 3. `build.mjs` asserts that **every block in the file is exactly one of the two**, and that
    an authored block's declared reason is one the scan actually finds in it. An authored
    block whose reason has stopped being true is a block that should now be generated, and the

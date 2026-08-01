@@ -61,7 +61,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 /* PIPELINE 1 — the component-CSS emitter. Its header documents the definition
    format and why the WRITE side of it lives there rather than here. */
-import { PILOT, definitionPath, loadAll, renderAll, checkRegions } from "./emit-css.mjs";
+import { PILOT, definitionPath, loadAll, renderAll, checkRegions, openMarker } from "./emit-css.mjs";
 /* PIPELINE 2 — the same definitions, rendered for a Tailwind + React consumer.
    Both artefact sets are written through `packaged` below, so both are
    byte-compared by --check rather than regenerated in place. */
@@ -758,6 +758,144 @@ for (const b of blocks) {
   b.selectors = selectorsIn(b.body);
   b.classes = uniq(b.selectors.flatMap((s) => [...s.matchAll(CLASS_IN_SELECTOR)].map((m) => "." + m[1])));
   b.tokens = uniq([...stripComments(b.body).matchAll(VAR_USE)].map((m) => m[1]));
+}
+
+/* ============================================================
+   THE CENSUS — every block is GENERATED or AUTHORED, and an authored
+   block says why.
+
+   PATTERNS.md specified this and nothing implemented it, so until now the
+   file could only prove the generated half: eleven regions byte-compared, and
+   fifteen blocks that were simply whatever was in the file. That is the wrong
+   way round while the authored set is the one that is shrinking — the invariant
+   the owner asked for is *nothing drifts silently*, and a block nobody has
+   accounted for is exactly the drift.
+
+   So every block that is not inside a `generated:<id>` region carries
+
+       /* ---- authored:<id> — <reason> ---- (with its terminator)
+
+   immediately above its banner, and `<reason>` comes from a CLOSED vocabulary.
+   A reason outside the list fails the build; a reason the scan cannot find in
+   the block fails the build, because a reason that has stopped being true is a
+   block that should now be generated.
+
+   THE VOCABULARY IS NOT THE ONE PATTERNS.md PROPOSED, and the difference is
+   R4's whole finding rather than a detail:
+
+     at-rule           → `unnamed-condition`. An @media whose query is a NAME in
+                         tokens.json's $conditions is generatable — `fact`,
+                         `entry` and `section-head` all prove it. What is not is
+                         a condition this system cannot name: @keyframes,
+                         @supports, `(hover: hover) and (pointer: fine)`, or a
+                         query nobody has put in $conditions yet.
+     computed-geometry → GONE. `expr` closed it: `calc({space-3} - 2px)` keeps
+                         every binding visible to the census, so the arithmetic
+                         was never the problem — an unreadable `var()` inside a
+                         string was.
+     relational-selectors, local-custom-property → unchanged. The second is the
+                         one feature that has not moved at all, and PATTERNS.md
+                         predicted it would be the one that does not.
+     foreign-selector  → ADDED. `menu`'s `body:has(.menu[data-open])` styles a
+                         selector the component does not own, and no closure of
+                         the scoped-part vocabulary reaches it: `within` names a
+                         rule THIS definition declares, and `body` never will be.
+
+   WHAT THE CHECK IS, PRECISELY, so its silence is not read as more than it is:
+   it asserts the feature is PRESENT, not that it is disqualifying. Proving the
+   second would mean re-implementing the schema here, and then the census would
+   agree with the emitter by construction — the same trap dist/components.json
+   is deliberately kept out of. Presence is enough for the property that
+   matters: a reason cannot quietly become false.
+   ============================================================ */
+const AUTHORED_MARKER = /^\/\* ---- authored:(\S+) — ([a-z-]+) ---- \*\/$/;
+
+const namedConditions = new Set(
+  Object.entries(conditions).filter(([k]) => !k.startsWith("$")).map(([, v]) => (typeof v === "string" ? v : v.value))
+);
+
+/** The closed vocabulary, and how the scan finds each one in a block. */
+const AUTHORED_REASONS = {
+  "relational-selectors": {
+    what: "a combinator, or a positional or relational pseudo-class, that the definition vocabulary cannot say",
+    found: (b) => b.selectors.some((s) => /[>+~]/.test(s) || /:(has|nth-|not|first-|last-)/.test(s)),
+  },
+  "local-custom-property": {
+    what: "a custom property the block defines for itself — a name only this block can check, count or explain",
+    found: (b) => /^\s*--[a-z0-9-]+\s*:/m.test(stripComments(b.body)),
+  },
+  "unnamed-condition": {
+    what: "an at-rule whose condition is not a name in tokens.json's `$conditions` — @keyframes, @supports, a compound query, or a breakpoint nobody has named yet",
+    found: (b) =>
+      [...stripComments(b.body).matchAll(/@[a-z-]+[^{]*/g)]
+        .map((m) => m[0].trim())
+        .some((at) => !(at.startsWith("@media ") && namedConditions.has(at.slice(7).trim()))),
+  },
+  "foreign-selector": {
+    what: "a rule whose subject is an element or a document this component does not own — `body:has(…)`, the foundation reset",
+    found: (b) => b.selectors.some((s) => /^[a-z*]/.test(s)),
+  },
+};
+
+/** The last non-blank line before an offset — where a region or census marker sits. */
+const markerAbove = (text, at) => text.slice(0, at).trimEnd().split("\n").pop() ?? "";
+
+{
+  const problems = [];
+  let generatedBlocks = 0;
+  const byReason = {};
+  for (const b of blocks) {
+    const above = markerAbove(componentsCss, b.start);
+    if (above === openMarker(b.owner)) {
+      generatedBlocks++;
+      b.kind = "generated";
+      continue;
+    }
+    const m = AUTHORED_MARKER.exec(above);
+    if (!m) {
+      problems.push(
+        `block "${b.title}" (\`@component ${b.owner}\`) is neither generated nor declared authored. Every block in this\n` +
+          `      file is exactly one of the two: put it in a \`generated:${b.owner}\` region, or write\n` +
+          `      \`/* ---- authored:${b.owner} — <reason> ---- */\` above its banner, with a reason from\n` +
+          `      ${Object.keys(AUTHORED_REASONS).join(" | ")}`
+      );
+      continue;
+    }
+    const [, id, reason] = m;
+    b.kind = "authored";
+    b.reason = reason;
+    if (id !== b.owner) {
+      problems.push(`block "${b.title}" is marked \`authored:${id}\` and its banner says \`@component ${b.owner}\``);
+      continue;
+    }
+    const entry = AUTHORED_REASONS[reason];
+    if (!entry) {
+      problems.push(
+        `block "${b.title}" is authored for the reason \`${reason}\`, which is not in the closed vocabulary\n` +
+          `      (${Object.keys(AUTHORED_REASONS).join(" | ")}). A reason nobody has to justify is a reason nobody checks.`
+      );
+      continue;
+    }
+    if (!entry.found(b)) {
+      problems.push(
+        `block "${b.title}" declares \`${reason}\` — ${entry.what} — and the scan finds none in it.\n` +
+          `      A reason that has stopped being true is a block that should now be a definition. Migrate it, or\n` +
+          `      change the marker to the reason that is actually load-bearing.`
+      );
+      continue;
+    }
+    byReason[reason] = (byReason[reason] ?? 0) + 1;
+  }
+  if (problems.length) {
+    console.error(`✗ census check failed — css/components.css is an assembly, and every block must say which half it is in:\n  - ${problems.join("\n  - ")}`);
+    process.exit(1);
+  }
+  if (CHECK) {
+    console.log(
+      `✓ census check           (${blocks.length} blocks: ${generatedBlocks} generated, ${blocks.length - generatedBlocks} authored — ` +
+        `${Object.entries(byReason).sort((a, b2) => b2[1] - a[1]).map(([r, n]) => `${n} ${r}`).join(", ")})`
+    );
+  }
 }
 
 /** Every class with at least one rule anywhere in components.css. */

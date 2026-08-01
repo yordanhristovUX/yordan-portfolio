@@ -30,6 +30,7 @@
    that belong to no single component say `@component none`.
    ============================================================ */
 
+/* ---- authored:none — foreign-selector ---- */
 /* ============ Foundation ============ @component none */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -156,6 +157,7 @@ body.is-locked { overflow: hidden; }
 }
 /* ---- /generated:typography ---- */
 
+/* ---- authored:skeleton — local-custom-property ---- */
 /* ============ Skeleton ============ @component skeleton
    The page is a 24-column sheet (12 on small screens): 2-column
    rails / 20-column solid-paper well. Borders are still forbidden
@@ -428,6 +430,7 @@ body.is-locked { overflow: hidden; }
   height: 100%;
 }
 
+/* ---- authored:terminator — local-custom-property ---- */
 /* ============ Terminator ============ @component terminator
    The last row of a plate, and the only element in a band whose height is
    nobody's content — which is exactly why it is the one that can absorb the
@@ -494,6 +497,7 @@ body.is-locked { overflow: hidden; }
 .band:has(> .term) > .rail--l,
 .band:has(> .term) > .rail--r { grid-row: auto / span 2; }
 
+/* ---- authored:nav — unnamed-condition ---- */
 /* ============ Nav (floating bar) ============ @component nav */
 .bar {
   /* Centred by opposing insets + auto margins, NOT by translateX(-50%). The
@@ -829,6 +833,7 @@ body.is-locked { overflow: hidden; }
   .bar__id { padding: var(--space-3) var(--space-2); }
 }
 
+/* ---- authored:theme-toggle — unnamed-condition ---- */
 /* ============ Theme toggle ============ @component theme-toggle
    A satellite of the nav bar: in the DOM as its last child, positioned just
    off its right edge, falling back to the viewport's bottom corner where the
@@ -1056,6 +1061,7 @@ body.is-locked { overflow: hidden; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 /* ---- /generated:chip ---- */
 
+/* ---- authored:card — relational-selectors ---- */
 /* ============ Card ============ @component card */
 .card-grid {
   display: grid;
@@ -1332,6 +1338,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .card:last-child { border-bottom: 0 !important; }
 }
 
+/* ---- authored:row — relational-selectors ---- */
 /* ============ Row — project (work index) ============ @component row */
 .idx { list-style: none; }
 /* THE NUMBER SITS ABOVE THE CONTENT, at every width — the owner's call,
@@ -1467,6 +1474,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:entry ---- */
 
+/* ---- authored:row — relational-selectors ---- */
 /* ============ Row — definition (skills) ============ @component row */
 /* The block root. A `<dl>` stacks its rows in normal flow anyway, so the
    visual result is identical — but grid makes the wrapper the thing that
@@ -1491,6 +1499,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 .tools__row dd { font-size: var(--text-md); }
 @media (max-width: 620px) { .tools__row { grid-template-columns: 1fr; gap: var(--space-1); } }
 
+/* ---- authored:profile — relational-selectors ---- */
 /* ============ Profile (definition list) ============ @component profile */
 .profile {
   display: grid;
@@ -1553,6 +1562,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:fact ---- */
 
+/* ---- authored:media — relational-selectors ---- */
 /* ============ Media slot ============ @component media
    Drop an <img> inside a .ph and the frame styling steps aside. */
 .ph {
@@ -1670,6 +1680,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 
 
 
+/* ---- authored:chat — relational-selectors ---- */
 /* ============ Chat ============ @component chat
    The assistant surface: turn list, composer, streaming state and a
    collapsible tool trace. Lives inside a `.band`/`.well` like any other
@@ -1843,6 +1854,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .chat__trace-ms { margin-left: 0; }
 }
 
+/* ---- authored:menu — foreign-selector ---- */
 /* ============ Menu (full-screen nav) ============ @component menu
    The bar's navigation, unfolded. Below 700px the row of anchors becomes one
    `.bar__menu` segment (owned by the nav block), and THIS is what that segment
@@ -1971,6 +1983,7 @@ body:has(.menu[data-open]) { overflow: hidden; }
 }
 @media print { .menu { display: none; } }
 
+/* ---- authored:ask-fab — unnamed-condition ---- */
 /* ============ Ask FAB (floating chat pill) ============ @component ask-fab
    The chat action's mobile form. Below 700px Ask leaves the docked bar for
    the bottom-right corner — where messages are expected — as a floating
@@ -2050,6 +2063,7 @@ body:has(.menu[data-open]) { overflow: hidden; }
 }
 @media print { .ask-fab { display: none; } }
 
+/* ---- authored:drawer — relational-selectors ---- */
 /* ============ Drawer (slide-in panel) ============ @component drawer
    A right-hand panel that slides over the page, with a scrim behind it. It
    HOSTS a surface; it is not one. Everything about a conversation still
@@ -2299,6 +2313,7 @@ body:has(.menu[data-open]) { overflow: hidden; }
 }
 /* ---- /generated:source ---- */
 
+/* ---- authored:none — unnamed-condition ---- */
 /* ============ Reduced motion ============ @component none */
 @media (prefers-reduced-motion: reduce) {
   /* `.sq { transition: none }` used to lead this block: every square carried a
