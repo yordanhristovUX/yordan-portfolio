@@ -18,13 +18,27 @@
         caller does not count it — which is also why the "no answer survived
         validation" verdict in useChat is computed from what actually rendered.
 
-   THIS FILE KEPT `.chip`, `.chips` AND `.stat` THROUGH THE R2b SWAP, and that
-   is the same rule as the paragraph above rather than an omission. Pipeline 2
-   — <Chip>, <Stat> from @yordan/design-system/react — replaced the class names
-   at every JSX USE SITE in this app; a renderer whose job is to reproduce
-   js/answer-render.js's markup is not a use site, it is a copy, and a copy that
-   emits different classes from its source has drifted. The elements below stay
-   styled by components.css until the vanilla renderer moves too.
+   THIS FILE KEPT `.chip`, `.chips` AND `.stat` THROUGH THE R2b SWAP, and it
+   KEPT EVERY DESIGN-SYSTEM CLASS THROUGH R5's FULL CUTOVER, which is the same
+   rule as the paragraph above rather than an omission. Pipeline 2 — the
+   generated components in @yordan/design-system/react — replaced the class
+   names at every JSX USE SITE in this app; a renderer whose job is to
+   reproduce js/answer-render.js's markup is not a use site, it is a copy, and
+   a copy that emits different classes from its source has drifted. The
+   elements below stay styled by components.css, which src/app/layout.tsx still
+   imports and always will: six design-system blocks have no React form and
+   never will, so the stylesheet is part of the end state rather than a
+   leftover from before it.
+
+   TWO CONSEQUENCES WORTH BEING EXPLICIT ABOUT, because they are what makes
+   this file's exemption safe rather than convenient. `.idx__row` and
+   `.idx__tags` below belong to `project-row`, which is one of the five blocks
+   AUTHORED WHOLE — `.idx li:last-child .idx__row` puts a positional in the
+   middle of a descendant path — so there is no React component to swap to even
+   in principle. And `.chat__prose`, `.source`, `.fact__num` and the rest are
+   rendered INSIDE `.chat__answer`, whose surrounding chrome in
+   src/components/chat/ChatClient.tsx did swap: the boundary is the answer, and
+   it is drawn in the same place js/chat.js draws it.
 
    THE ONE PORT DIFFERENCE, and it is routing rather than content: hrefs that
    the corpus writes for the vanilla site (`evals.html`, `mcp.html`) are put

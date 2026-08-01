@@ -38,12 +38,69 @@
    absent — which is this app's permanent state, since motion is out of scope
    here and GSAP is not vendored. So this is the vanilla's own no-GSAP path,
    not a new behaviour.
+
+   THE COMPOSER CHROME IS THE REACT TIER; THE ANSWER IS NOT. Everything below
+   is `@yordan/design-system/react/chat` — `chat` is the block with the most
+   rules in the file and it needed the fewest constructs, so it is generated
+   whole and there is no authored remainder to work around. What blocks.tsx
+   renders INSIDE `.chat__answer` stays vanilla-classed, and its own header
+   says why: it is a port of js/answer-render.js, so its markup is the
+   artefact's rather than this app's.
+
+   FIVE CLASSES SURVIVE HERE, each named by something that is not the tier:
+
+     .chat                   the drawer HOSTS a chat and re-lays it out by
+     .chat__thread           name — four rules on `.chat`, two on the thread
+                             and one on `.chat__thread:empty`. Nine of
+                             drawer's rules are about components it hosts.
+     .chat__role             `.chat__turn--assistant` declares nothing at all;
+                             its whole effect is turning this label accent.
+     .chat__turn--assistant  the scroll anchor below queries it directly —
+                             `:last-of-type` is how the newest answer is found.
+     .chat__cell             the reduced-motion block of components.css
+                             (`@component none`) stops all four squares.
+     .chat__trace-toggle     `.chat__trace[open] .chat__trace-toggle::before`
+                             flips the disclosure caret; the sink is named.
+
+   `.chat__send` LEAVES, and it is the clearest small case for the tier: it was
+   a QUERY-ONLY rule, one declaration under `max-width: 560px` and nothing
+   unconditional, so `chatSend()` is a single arbitrary variant and the class
+   was carrying nothing else.
    ============================================================ */
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { Ref } from "react";
 
-import { Button } from "@yordan/design-system/react";
-import type { ButtonProps } from "@yordan/design-system/react";
+import { Button } from "@yordan/design-system/react/button";
+import type { ButtonProps } from "@yordan/design-system/react/button";
+import {
+  Chat,
+  ChatAnswer,
+  ChatBody,
+  ChatCell,
+  ChatError,
+  ChatForm,
+  ChatInput,
+  ChatNote,
+  ChatProse,
+  ChatRole,
+  ChatState,
+  ChatStateLabel,
+  ChatStatus,
+  ChatSuggest,
+  ChatThread,
+  ChatTrace,
+  ChatTraceArgs,
+  ChatTraceList,
+  ChatTraceMs,
+  ChatTraceName,
+  ChatTraceResult,
+  ChatTraceRow,
+  ChatTraceToggle,
+  ChatTurn,
+  chatSend,
+  chatTurnAssistant,
+  chatTurnUser,
+} from "@yordan/design-system/react/chat";
 
 import { AnswerBlocks } from "@/components/chat/blocks";
 import { MAX_CHARS, useChat } from "@/lib/chat/useChat";
@@ -80,21 +137,30 @@ function Trace({ turn }: { turn: AssistantTurn }) {
 
   if (!turn.trace.length) return null;
   return (
-    <details className="chat__trace" ref={ref}>
-      <summary className="chat__trace-toggle mono">
+    <ChatTrace className="chat__trace" ref={ref}>
+      {/* BOTH ENDS OF `.chat__trace[open] .chat__trace-toggle::before` stay —
+          the rule that swaps the disclosure caret. The sink because a scoped
+          rule names its sink by class even when its host is a utility; the
+          HOST because pipeline 2's version of this rule does not compile:
+          `[&[open]_.chat__trace-toggle::before]` becomes
+          `.chat trace-toggle:before`, since `_` is a space in an arbitrary
+          variant. Upstream defect, written up in scripts/check-class-hooks.mjs
+          — until it is fixed, components.css is the only surface that draws
+          this caret, and it needs both names. */}
+      <ChatTraceToggle className="chat__trace-toggle mono">
         {count === 0 ? "Trace" : count + (count === 1 ? " tool call" : " tool calls")}
-      </summary>
-      <ol className="chat__trace-list">
+      </ChatTraceToggle>
+      <ChatTraceList>
         {turn.trace.map((row, i) => (
-          <li className="chat__trace-row" key={i}>
-            <code className="chat__trace-name">{row.tool}</code>
-            {row.args ? <span className="chat__trace-args">{row.args}</span> : null}
-            {row.summary ? <span className="chat__trace-result">{"→ " + row.summary}</span> : null}
-            {row.ms != null ? <span className="chat__trace-ms mono">{row.ms + "ms"}</span> : null}
-          </li>
+          <ChatTraceRow key={i}>
+            <ChatTraceName>{row.tool}</ChatTraceName>
+            {row.args ? <ChatTraceArgs>{row.args}</ChatTraceArgs> : null}
+            {row.summary ? <ChatTraceResult>{"→ " + row.summary}</ChatTraceResult> : null}
+            {row.ms != null ? <ChatTraceMs className="mono">{row.ms + "ms"}</ChatTraceMs> : null}
+          </ChatTraceRow>
         ))}
-      </ol>
-    </details>
+      </ChatTraceList>
+    </ChatTrace>
   );
 }
 
@@ -103,13 +169,16 @@ function Trace({ turn }: { turn: AssistantTurn }) {
    are not lost, they go through the one live region outside the log. */
 function Thinking({ label }: { label: string }) {
   return (
-    <p className="chat__state mono" aria-hidden="true">
-      <span className="chat__cell" />
-      <span className="chat__cell" />
-      <span className="chat__cell" />
-      <span className="chat__cell" />
-      <span className="chat__state-label">{label}</span>
-    </p>
+    <ChatState className="mono" aria-hidden="true">
+      {/* `.chat__cell` stays: the reduced-motion block of components.css is
+          `@component none` — no component, so no definition and no React form
+          ever — and it is what stops the four squares breathing. */}
+      <ChatCell className="chat__cell" />
+      <ChatCell className="chat__cell" />
+      <ChatCell className="chat__cell" />
+      <ChatCell className="chat__cell" />
+      <ChatStateLabel>{label}</ChatStateLabel>
+    </ChatState>
   );
 }
 
@@ -168,13 +237,13 @@ export function ChatClient({ endpoint }: { endpoint: string }) {
   };
 
   return (
-    <div className="chat" data-chat="" data-chat-endpoint={endpoint}>
+    <Chat className="chat" data-chat="" data-chat-endpoint={endpoint}>
       {/* tabindex="0" is the WCAG 2.1.1 fix: this is a bounded scroller holding
           content taller than itself, and <body> is overflow:hidden while the
           drawer is open, so a keyboard reader has nowhere to send a PageDown.
           Chrome's focusable-scroller heuristic never rescues it, because the
           tool trace always renders at least one focusable child. */}
-      <div
+      <ChatThread
         className="chat__thread"
         ref={threadRef}
         tabIndex={0}
@@ -187,42 +256,69 @@ export function ChatClient({ endpoint }: { endpoint: string }) {
         onPointerDown={hold}
         onKeyDown={hold}
       >
+        {/* TWO PARTS ON ONE ELEMENT, NOT A VARIANT WITH TWO BRANCHES, and
+            that is the definition's shape rather than this file's choice: a
+            modifier's selector is its ROOT plus its name, and chat's root is
+            `.chat` — so `.chat__turn--user` modifies a PART, a part has no
+            axis, and the stylesheet's two classes are two parts. `ChatTurn`
+            renders the article and the second class map rides in on
+            `className`, exactly as the stylesheet writes the pair. */}
         {turns.map((turn) =>
           turn.kind === "user" ? (
-            <article className="chat__turn chat__turn--user" key={turn.id}>
-              <p className="chat__role t-label">You</p>
-              <div className="chat__body">
-                <p className="chat__prose">{turn.text}</p>
-              </div>
-            </article>
+            <ChatTurn className={chatTurnUser()} key={turn.id}>
+              <ChatRole className="chat__role t-label">You</ChatRole>
+              <ChatBody>
+                <ChatProse>{turn.text}</ChatProse>
+              </ChatBody>
+            </ChatTurn>
           ) : (
-            <article
-              className="chat__turn chat__turn--assistant"
+            <ChatTurn
+              /* `.chat__turn--assistant` is the ONE class here the scroll
+                 anchor above needs by name — it is what `:last-of-type` finds
+                 — and it is also the host of the accent-role rule, whose sink
+                 `.chat__role` is named for the same reason. */
+              className={chatTurnAssistant({ className: "chat__turn--assistant" })}
               key={turn.id}
               {...(turn.degraded ? { "data-degraded": "true" } : {})}
             >
-              <p className="chat__role t-label">Assistant</p>
-              <div className="chat__body">
+              <ChatRole className="chat__role t-label">Assistant</ChatRole>
+              <ChatBody>
                 {turn.state ? <Thinking label={turn.state} /> : null}
                 {/* The answer sits ABOVE the trace: the vanilla appends the
                     answer container when the turn opens and the trace only
                     when its first row arrives, which is after the stream has
                     started. Same order here, on purpose. */}
-                <div className="chat__answer">
+                <ChatAnswer>
                   <AnswerBlocks nodes={turn.answer} />
-                </div>
+                </ChatAnswer>
                 <Trace turn={turn} />
-                {turn.error ? <p className="chat__error">{turn.error}</p> : null}
+                {turn.error ? <ChatError>{turn.error}</ChatError> : null}
                 {/* A cancel is not an error, and must not be dressed as one. */}
-                {turn.note ? <p className="chat__note mono">{turn.note}</p> : null}
-              </div>
-            </article>
+                {turn.note ? <ChatNote className="mono">{turn.note}</ChatNote> : null}
+              </ChatBody>
+            </ChatTurn>
           )
         )}
-      </div>
+      </ChatThread>
 
-      <form className="chat__form" onSubmit={onSubmit}>
-        <textarea
+      <ChatForm onSubmit={onSubmit}>
+        {/* `.chat__input` STAYS, and this is the second upstream defect the
+            cutover measured. components.css writes
+
+                .chat__input { font: inherit; font-size: var(--text-md); … }
+
+            — a SHORTHAND followed by a longhand that overrides it, which is
+            an ordinary and correct thing for a stylesheet to say. cva puts
+            both in one class attribute, a class attribute has no order, and
+            Tailwind sorts `[font:inherit]` AFTER `text-step-md`: the shorthand
+            wins and resets the size to the inherited 16px. Measured against
+            the vanilla composer: 16px against 14.72px, and a form 4.09px
+            taller. The emitter's disjointness pass (design-system/README.md,
+            "A class attribute has no order") makes a BASE and a VARIANT AXIS
+            disjoint; a shorthand and its own longhand inside ONE base list are
+            not analysed. Reported; until it is fixed the class is what puts
+            the two declarations back in the order the stylesheet wrote them. */}
+        <ChatInput
           className="chat__input"
           ref={inputRef}
           rows={2}
@@ -245,12 +341,15 @@ export function ChatClient({ endpoint }: { endpoint: string }) {
             }
           }}
         />
-        {/* `.chat__send` stays as `className` — it is the chat component's
-            own layout hook (full width below 640px) and outlives the swap;
-            what left is `.btn.btn--solid`, which is now `variant="solid"`. */}
+        {/* THE SEND BUTTON IS TWO COMPONENTS' WORTH OF STYLING ON ONE
+            ELEMENT, which is what the stylesheet says it is:
+            `.btn.btn--solid.chat__send`. `variant="solid"` is the first two,
+            and `chatSend()` is the third — a single query-only declaration
+            with no unconditional rule behind it, so the class itself carried
+            nothing and does not survive the swap. */}
         <SendButton
           variant="solid"
-          className="chat__send"
+          className={chatSend()}
           ref={sendRef}
           type="submit"
           aria-disabled="false"
@@ -258,9 +357,9 @@ export function ChatClient({ endpoint }: { endpoint: string }) {
         >
           {busy ? "Stop" : CHAT.send}
         </SendButton>
-      </form>
+      </ChatForm>
 
-      <div className="chat__suggest">
+      <ChatSuggest>
         {CHAT.suggestions.map((s) => (
           <Button
             size="small"
@@ -275,15 +374,15 @@ export function ChatClient({ endpoint }: { endpoint: string }) {
             {s.label}
           </Button>
         ))}
-      </div>
+      </ChatSuggest>
 
       {/* The one announcer, outside the log. It holds the authored provenance
           sentence until the first question replaces it — which is exactly what
           the vanilla does, and what that sentence's own note in js/chat.js
           says it deserves better than. */}
-      <p className="chat__status mono" role="status" aria-live="polite" aria-atomic="true">
+      <ChatStatus className="mono" role="status" aria-live="polite" aria-atomic="true">
         {announcement ?? CHAT.status}
-      </p>
-    </div>
+      </ChatStatus>
+    </Chat>
   );
 }
