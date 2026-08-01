@@ -1,47 +1,24 @@
 {
-  "_note": "ONE list of groups. The site shows 6 rows, the CV shows 5 with different terms and a different taxonomy. Both wordings are the author's. Two groups do share a `text` across the surfaces, and the difference between them matters: `ai-workflows` shares one BY THE OWNER'S DECISION (see that group's `_note`), while `engineering` has always shared one and diverges only in `term` (Frontend on the site, Engineering on the CV). Every other row is worded per surface and neither side is derived from the other. `order` fixes the row order per surface; a group without a key for a surface is not rendered there.",
+  "_note": "ONE list of groups, and since the 2026-08 copy pass ONE wording: the owner collapsed the site/CV divergence by decision in the copy workshop, replacing both taxonomies with a single six-row list rendered identically on both surfaces. The old state (6 site rows, 5 differently-worded CV rows) is in git history; the divergence table in content/CLAUDE.md describes that old state and needs the docs steward. `order` still fixes row order per surface; a group without a key for a surface is not rendered there.",
 
   "order": {
-    "site": ["design", "research", "accessibility", "ai-workflows", "engineering", "process"],
-    "cv": ["ai-workflows", "design-systems", "research", "product-design", "engineering"]
+    "site": ["design-systems", "ai-workflows", "product-design", "research", "accessibility", "engineering"],
+    "cv": ["design-systems", "ai-workflows", "product-design", "research", "accessibility", "engineering"]
   },
 
   "groups": {
-    "design": {
-      "site": {
-        "term": "Design",
-        "text": "Figma, design systems, component architecture, token systems, prototyping, motion design"
-      }
-    },
-
     "design-systems": {
-      "cv": {
-        "term": "Design systems",
-        "text": "design tokens, repo-first token architecture, Figma variables and components, component libraries, Storybook, style guides, design-to-code parity, theming, multi-brand and white-label systems"
-      }
-    },
-
-    "research": {
       "site": {
-        "term": "Research",
-        "text": "user interviews, usability testing, competitor analysis, card sorting, Google Analytics, Hotjar"
+        "term": "Design systems",
+        "text": "design tokens, repo-first token architecture, component libraries, Figma variables and components, design-to-code parity, theming, multi-brand and white-label systems, Storybook, style guides"
       },
       "cv": {
-        "term": "Research",
-        "text": "user interviews, usability testing, heuristic evaluation, card sorting, competitor analysis, surveys, WCAG 2.1 AA auditing, screen reader testing, Hotjar and Google Analytics"
-      }
-    },
-
-    "accessibility": {
-      "site": {
-        "term": "Accessibility",
-        "text": "WCAG 2.1 AA, screen reader testing, semantic HTML review, accessibility auditing"
+        "term": "Design systems",
+        "text": "design tokens, repo-first token architecture, component libraries, Figma variables and components, design-to-code parity, theming, multi-brand and white-label systems, Storybook, style guides"
       }
     },
 
     "ai-workflows": {
-      "_note": "The site row and the CV row are now the SAME string, by the owner's decision — not by an agent tidying them together. Two changes, in order. (1) The site row used to read `custom MCP skills`, which conflates two different things: a Claude skill is not an MCP server. The CV row already had it right, so the site row was corrected to the CV's own two terms — a correction, not a shortening choice. (2) The owner then chose to promote the CV row's full wording to the site as well, so the site no longer carries a short form of it. This is the only group whose two surfaces share a `text` BY DECISION — `engineering` also shares one, but that is longstanding and its `term` still differs. The taxonomy itself is untouched: 6 site rows, 5 CV rows, different groupings. If these two ever need to diverge again, both are here, adjacent, and must be edited together.",
-
       "site": {
         "term": "AI workflows",
         "text": "Claude Code, custom skills, MCP servers, agent orchestration, agentic engineering, design-to-code pipelines, AI-assisted prototyping, prompt engineering, Google AI Studio"
@@ -53,27 +30,46 @@
     },
 
     "product-design": {
+      "site": {
+        "term": "Product design",
+        "text": "Figma, information architecture, interaction design, visual design, motion design, prototyping, 0-to-1 product work"
+      },
       "cv": {
         "term": "Product design",
-        "text": "information architecture, prototyping, interaction design, visual design, motion design, 0-to-1 product work"
+        "text": "Figma, information architecture, interaction design, visual design, motion design, prototyping, 0-to-1 product work"
+      }
+    },
+
+    "research": {
+      "site": {
+        "term": "Research",
+        "text": "user interviews, usability testing, heuristic evaluation, surveys, card sorting, competitor analysis, Google Analytics, Hotjar"
+      },
+      "cv": {
+        "term": "Research",
+        "text": "user interviews, usability testing, heuristic evaluation, surveys, card sorting, competitor analysis, Google Analytics, Hotjar"
+      }
+    },
+
+    "accessibility": {
+      "site": {
+        "term": "Accessibility",
+        "text": "WCAG 2.1 AA auditing, screen reader testing, semantic HTML review"
+      },
+      "cv": {
+        "term": "Accessibility",
+        "text": "WCAG 2.1 AA auditing, screen reader testing, semantic HTML review"
       }
     },
 
     "engineering": {
       "site": {
-        "term": "Frontend",
-        "text": "HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship"
+        "term": "Design engineering",
+        "text": "HTML, CSS, JavaScript, Git; production PRs shipped in Vue, React and Next.js codebases; SCSS and Tailwind token implementation; p5.js and Three.js creative coding"
       },
       "cv": {
-        "term": "Engineering",
-        "text": "HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship"
-      }
-    },
-
-    "process": {
-      "site": {
-        "term": "Process",
-        "text": "design thinking, agile, cross-functional collaboration, stakeholder management"
+        "term": "Design engineering",
+        "text": "HTML, CSS, JavaScript, Git; production PRs shipped in Vue, React and Next.js codebases; SCSS and Tailwind token implementation; p5.js and Three.js creative coding"
       }
     }
   }

@@ -101,55 +101,37 @@
     }
   ],
   "skills": {
-    "_note": "ONE list of groups. The site shows 6 rows, the CV shows 5 with different terms and a different taxonomy. Both wordings are the author's. Two groups do share a `text` across the surfaces, and the difference between them matters: `ai-workflows` shares one BY THE OWNER'S DECISION (see that group's `_note`), while `engineering` has always shared one and diverges only in `term` (Frontend on the site, Engineering on the CV). Every other row is worded per surface and neither side is derived from the other. `order` fixes the row order per surface; a group without a key for a surface is not rendered there.",
+    "_note": "ONE list of groups, and since the 2026-08 copy pass ONE wording: the owner collapsed the site/CV divergence by decision in the copy workshop, replacing both taxonomies with a single six-row list rendered identically on both surfaces. The old state (6 site rows, 5 differently-worded CV rows) is in git history; the divergence table in content/CLAUDE.md describes that old state and needs the docs steward. `order` still fixes row order per surface; a group without a key for a surface is not rendered there.",
     "order": {
       "site": [
-        "design",
+        "design-systems",
+        "ai-workflows",
+        "product-design",
         "research",
         "accessibility",
-        "ai-workflows",
-        "engineering",
-        "process"
+        "engineering"
       ],
       "cv": [
-        "ai-workflows",
         "design-systems",
-        "research",
+        "ai-workflows",
         "product-design",
+        "research",
+        "accessibility",
         "engineering"
       ]
     },
     "groups": {
-      "design": {
-        "site": {
-          "term": "Design",
-          "text": "Figma, design systems, component architecture, token systems, prototyping, motion design"
-        }
-      },
       "design-systems": {
-        "cv": {
-          "term": "Design systems",
-          "text": "design tokens, repo-first token architecture, Figma variables and components, component libraries, Storybook, style guides, design-to-code parity, theming, multi-brand and white-label systems"
-        }
-      },
-      "research": {
         "site": {
-          "term": "Research",
-          "text": "user interviews, usability testing, competitor analysis, card sorting, Google Analytics, Hotjar"
+          "term": "Design systems",
+          "text": "design tokens, repo-first token architecture, component libraries, Figma variables and components, design-to-code parity, theming, multi-brand and white-label systems, Storybook, style guides"
         },
         "cv": {
-          "term": "Research",
-          "text": "user interviews, usability testing, heuristic evaluation, card sorting, competitor analysis, surveys, WCAG 2.1 AA auditing, screen reader testing, Hotjar and Google Analytics"
-        }
-      },
-      "accessibility": {
-        "site": {
-          "term": "Accessibility",
-          "text": "WCAG 2.1 AA, screen reader testing, semantic HTML review, accessibility auditing"
+          "term": "Design systems",
+          "text": "design tokens, repo-first token architecture, component libraries, Figma variables and components, design-to-code parity, theming, multi-brand and white-label systems, Storybook, style guides"
         }
       },
       "ai-workflows": {
-        "_note": "The site row and the CV row are now the SAME string, by the owner's decision — not by an agent tidying them together. Two changes, in order. (1) The site row used to read `custom MCP skills`, which conflates two different things: a Claude skill is not an MCP server. The CV row already had it right, so the site row was corrected to the CV's own two terms — a correction, not a shortening choice. (2) The owner then chose to promote the CV row's full wording to the site as well, so the site no longer carries a short form of it. This is the only group whose two surfaces share a `text` BY DECISION — `engineering` also shares one, but that is longstanding and its `term` still differs. The taxonomy itself is untouched: 6 site rows, 5 CV rows, different groupings. If these two ever need to diverge again, both are here, adjacent, and must be edited together.",
         "site": {
           "term": "AI workflows",
           "text": "Claude Code, custom skills, MCP servers, agent orchestration, agentic engineering, design-to-code pipelines, AI-assisted prototyping, prompt engineering, Google AI Studio"
@@ -160,25 +142,43 @@
         }
       },
       "product-design": {
+        "site": {
+          "term": "Product design",
+          "text": "Figma, information architecture, interaction design, visual design, motion design, prototyping, 0-to-1 product work"
+        },
         "cv": {
           "term": "Product design",
-          "text": "information architecture, prototyping, interaction design, visual design, motion design, 0-to-1 product work"
+          "text": "Figma, information architecture, interaction design, visual design, motion design, prototyping, 0-to-1 product work"
+        }
+      },
+      "research": {
+        "site": {
+          "term": "Research",
+          "text": "user interviews, usability testing, heuristic evaluation, surveys, card sorting, competitor analysis, Google Analytics, Hotjar"
+        },
+        "cv": {
+          "term": "Research",
+          "text": "user interviews, usability testing, heuristic evaluation, surveys, card sorting, competitor analysis, Google Analytics, Hotjar"
+        }
+      },
+      "accessibility": {
+        "site": {
+          "term": "Accessibility",
+          "text": "WCAG 2.1 AA auditing, screen reader testing, semantic HTML review"
+        },
+        "cv": {
+          "term": "Accessibility",
+          "text": "WCAG 2.1 AA auditing, screen reader testing, semantic HTML review"
         }
       },
       "engineering": {
         "site": {
-          "term": "Frontend",
-          "text": "HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship"
+          "term": "Design engineering",
+          "text": "HTML, CSS, JavaScript, Git; production PRs shipped in Vue, React and Next.js codebases; SCSS and Tailwind token implementation; p5.js and Three.js creative coding"
         },
         "cv": {
-          "term": "Engineering",
-          "text": "HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship"
-        }
-      },
-      "process": {
-        "site": {
-          "term": "Process",
-          "text": "design thinking, agile, cross-functional collaboration, stakeholder management"
+          "term": "Design engineering",
+          "text": "HTML, CSS, JavaScript, Git; production PRs shipped in Vue, React and Next.js codebases; SCSS and Tailwind token implementation; p5.js and Three.js creative coding"
         }
       }
     }
@@ -6760,36 +6760,13 @@
       }
     },
     {
-      "id": "skills:design:site",
-      "entity": "skills:design",
-      "kind": "summary",
-      "heading": "Design",
-      "text": "Figma, design systems, component architecture, token systems, prototyping, motion design",
-      "cite": {
-        "page": "/",
-        "anchor": "#skills",
-        "label": "Design"
-      },
-      "len": 11,
-      "tf": {
-        "architecture": 1,
-        "component": 1,
-        "design": 3,
-        "figma": 1,
-        "motion": 1,
-        "prototyping": 1,
-        "systems": 2,
-        "token": 1
-      }
-    },
-    {
-      "id": "skills:design-systems:cv",
+      "id": "skills:design-systems:site",
       "entity": "skills:design-systems",
       "kind": "summary",
       "heading": "Design systems",
-      "text": "design tokens, repo-first token architecture, Figma variables and components, component libraries, Storybook, style guides, design-to-code parity, theming, multi-brand and white-label systems",
+      "text": "design tokens, repo-first token architecture, component libraries, Figma variables and components, design-to-code parity, theming, multi-brand and white-label systems, Storybook, style guides",
       "cite": {
-        "page": "/cv",
+        "page": "/",
         "anchor": "#skills",
         "label": "Design systems"
       },
@@ -6820,92 +6797,40 @@
       }
     },
     {
-      "id": "skills:research:site",
-      "entity": "skills:research",
+      "id": "skills:design-systems:cv",
+      "entity": "skills:design-systems",
       "kind": "summary",
-      "heading": "Research",
-      "text": "user interviews, usability testing, competitor analysis, card sorting, Google Analytics, Hotjar",
-      "cite": {
-        "page": "/",
-        "anchor": "#skills",
-        "label": "Research"
-      },
-      "len": 12,
-      "tf": {
-        "analysis": 1,
-        "analytics": 1,
-        "card": 1,
-        "competitor": 1,
-        "google": 1,
-        "hotjar": 1,
-        "interviews": 1,
-        "research": 1,
-        "sorting": 1,
-        "testing": 1,
-        "usability": 1,
-        "user": 1
-      }
-    },
-    {
-      "id": "skills:research:cv",
-      "entity": "skills:research",
-      "kind": "summary",
-      "heading": "Research",
-      "text": "user interviews, usability testing, heuristic evaluation, card sorting, competitor analysis, surveys, WCAG 2.1 AA auditing, screen reader testing, Hotjar and Google Analytics",
+      "heading": "Design systems",
+      "text": "design tokens, repo-first token architecture, component libraries, Figma variables and components, design-to-code parity, theming, multi-brand and white-label systems, Storybook, style guides",
       "cite": {
         "page": "/cv",
         "anchor": "#skills",
-        "label": "Research"
+        "label": "Design systems"
       },
-      "len": 22,
+      "len": 25,
       "tf": {
-        "2.1": 1,
-        "aa": 1,
-        "analysis": 1,
-        "analytics": 1,
-        "auditing": 1,
-        "card": 1,
-        "competitor": 1,
-        "evaluation": 1,
-        "google": 1,
-        "heuristic": 1,
-        "hotjar": 1,
-        "interviews": 1,
-        "reader": 1,
-        "research": 1,
-        "screen": 1,
-        "sorting": 1,
-        "surveys": 1,
-        "testing": 2,
-        "usability": 1,
-        "user": 1,
-        "wcag": 1
-      }
-    },
-    {
-      "id": "skills:accessibility:site",
-      "entity": "skills:accessibility",
-      "kind": "summary",
-      "heading": "Accessibility",
-      "text": "WCAG 2.1 AA, screen reader testing, semantic HTML review, accessibility auditing",
-      "cite": {
-        "page": "/",
-        "anchor": "#skills",
-        "label": "Accessibility"
-      },
-      "len": 12,
-      "tf": {
-        "2.1": 1,
-        "aa": 1,
-        "accessibility": 2,
-        "auditing": 1,
-        "html": 1,
-        "reader": 1,
-        "review": 1,
-        "screen": 1,
-        "semantic": 1,
-        "testing": 1,
-        "wcag": 1
+        "architecture": 1,
+        "brand": 1,
+        "code": 1,
+        "component": 1,
+        "components": 1,
+        "design": 3,
+        "figma": 1,
+        "first": 1,
+        "guides": 1,
+        "label": 1,
+        "libraries": 1,
+        "multi": 1,
+        "parity": 1,
+        "repo": 1,
+        "storybook": 1,
+        "style": 1,
+        "systems": 2,
+        "theming": 1,
+        "token": 1,
+        "tokens": 1,
+        "variables": 1,
+        "white": 1
       }
     },
     {
@@ -6977,21 +6902,22 @@
       }
     },
     {
-      "id": "skills:product-design:cv",
+      "id": "skills:product-design:site",
       "entity": "skills:product-design",
       "kind": "summary",
       "heading": "Product design",
-      "text": "information architecture, prototyping, interaction design, visual design, motion design, 0-to-1 product work",
+      "text": "Figma, information architecture, interaction design, visual design, motion design, prototyping, 0-to-1 product work",
       "cite": {
-        "page": "/cv",
+        "page": "/",
         "anchor": "#skills",
         "label": "Product design"
       },
-      "len": 14,
+      "len": 15,
       "tf": {
         "0-to-1": 1,
         "architecture": 1,
         "design": 4,
+        "figma": 1,
         "information": 1,
         "interaction": 1,
         "motion": 1,
@@ -7002,30 +6928,176 @@
       }
     },
     {
-      "id": "skills:engineering:site",
-      "entity": "skills:engineering",
+      "id": "skills:product-design:cv",
+      "entity": "skills:product-design",
       "kind": "summary",
-      "heading": "Frontend",
-      "text": "HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship",
+      "heading": "Product design",
+      "text": "Figma, information architecture, interaction design, visual design, motion design, prototyping, 0-to-1 product work",
+      "cite": {
+        "page": "/cv",
+        "anchor": "#skills",
+        "label": "Product design"
+      },
+      "len": 15,
+      "tf": {
+        "0-to-1": 1,
+        "architecture": 1,
+        "design": 4,
+        "figma": 1,
+        "information": 1,
+        "interaction": 1,
+        "motion": 1,
+        "product": 2,
+        "prototyping": 1,
+        "visual": 1,
+        "work": 1
+      }
+    },
+    {
+      "id": "skills:research:site",
+      "entity": "skills:research",
+      "kind": "summary",
+      "heading": "Research",
+      "text": "user interviews, usability testing, heuristic evaluation, surveys, card sorting, competitor analysis, Google Analytics, Hotjar",
       "cite": {
         "page": "/",
         "anchor": "#skills",
-        "label": "Frontend"
+        "label": "Research"
       },
-      "len": 13,
+      "len": 15,
       "tf": {
-        "authorship": 1,
-        "basics": 1,
+        "analysis": 1,
+        "analytics": 1,
+        "card": 1,
+        "competitor": 1,
+        "evaluation": 1,
+        "google": 1,
+        "heuristic": 1,
+        "hotjar": 1,
+        "interviews": 1,
+        "research": 1,
+        "sorting": 1,
+        "surveys": 1,
+        "testing": 1,
+        "usability": 1,
+        "user": 1
+      }
+    },
+    {
+      "id": "skills:research:cv",
+      "entity": "skills:research",
+      "kind": "summary",
+      "heading": "Research",
+      "text": "user interviews, usability testing, heuristic evaluation, surveys, card sorting, competitor analysis, Google Analytics, Hotjar",
+      "cite": {
+        "page": "/cv",
+        "anchor": "#skills",
+        "label": "Research"
+      },
+      "len": 15,
+      "tf": {
+        "analysis": 1,
+        "analytics": 1,
+        "card": 1,
+        "competitor": 1,
+        "evaluation": 1,
+        "google": 1,
+        "heuristic": 1,
+        "hotjar": 1,
+        "interviews": 1,
+        "research": 1,
+        "sorting": 1,
+        "surveys": 1,
+        "testing": 1,
+        "usability": 1,
+        "user": 1
+      }
+    },
+    {
+      "id": "skills:accessibility:site",
+      "entity": "skills:accessibility",
+      "kind": "summary",
+      "heading": "Accessibility",
+      "text": "WCAG 2.1 AA auditing, screen reader testing, semantic HTML review",
+      "cite": {
+        "page": "/",
+        "anchor": "#skills",
+        "label": "Accessibility"
+      },
+      "len": 11,
+      "tf": {
+        "2.1": 1,
+        "aa": 1,
+        "accessibility": 1,
+        "auditing": 1,
+        "html": 1,
+        "reader": 1,
+        "review": 1,
+        "screen": 1,
+        "semantic": 1,
+        "testing": 1,
+        "wcag": 1
+      }
+    },
+    {
+      "id": "skills:accessibility:cv",
+      "entity": "skills:accessibility",
+      "kind": "summary",
+      "heading": "Accessibility",
+      "text": "WCAG 2.1 AA auditing, screen reader testing, semantic HTML review",
+      "cite": {
+        "page": "/cv",
+        "anchor": "#skills",
+        "label": "Accessibility"
+      },
+      "len": 11,
+      "tf": {
+        "2.1": 1,
+        "aa": 1,
+        "accessibility": 1,
+        "auditing": 1,
+        "html": 1,
+        "reader": 1,
+        "review": 1,
+        "screen": 1,
+        "semantic": 1,
+        "testing": 1,
+        "wcag": 1
+      }
+    },
+    {
+      "id": "skills:engineering:site",
+      "entity": "skills:engineering",
+      "kind": "summary",
+      "heading": "Design engineering",
+      "text": "HTML, CSS, JavaScript, Git; production PRs shipped in Vue, React and Next.js codebases; SCSS and Tailwind token implementation; p5.js and Three.js creative coding",
+      "cite": {
+        "page": "/",
+        "anchor": "#skills",
+        "label": "Design engineering"
+      },
+      "len": 21,
+      "tf": {
+        "codebases": 1,
+        "coding": 1,
+        "creative": 1,
         "css": 1,
-        "frontend": 1,
+        "design": 1,
+        "engineering": 1,
         "git": 1,
         "html": 1,
+        "implementation": 1,
         "javascript": 1,
+        "next.js": 1,
         "p5.js": 1,
-        "pr": 1,
         "production": 1,
+        "prs": 1,
         "react": 1,
+        "scss": 1,
+        "shipped": 1,
+        "tailwind": 1,
         "three.js": 1,
+        "token": 1,
         "vue": 1
       }
     },
@@ -7033,52 +7105,36 @@
       "id": "skills:engineering:cv",
       "entity": "skills:engineering",
       "kind": "summary",
-      "heading": "Engineering",
-      "text": "HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship",
+      "heading": "Design engineering",
+      "text": "HTML, CSS, JavaScript, Git; production PRs shipped in Vue, React and Next.js codebases; SCSS and Tailwind token implementation; p5.js and Three.js creative coding",
       "cite": {
         "page": "/cv",
         "anchor": "#skills",
-        "label": "Engineering"
+        "label": "Design engineering"
       },
-      "len": 13,
+      "len": 21,
       "tf": {
-        "authorship": 1,
-        "basics": 1,
+        "codebases": 1,
+        "coding": 1,
+        "creative": 1,
         "css": 1,
+        "design": 1,
         "engineering": 1,
         "git": 1,
         "html": 1,
+        "implementation": 1,
         "javascript": 1,
+        "next.js": 1,
         "p5.js": 1,
-        "pr": 1,
         "production": 1,
+        "prs": 1,
         "react": 1,
+        "scss": 1,
+        "shipped": 1,
+        "tailwind": 1,
         "three.js": 1,
+        "token": 1,
         "vue": 1
-      }
-    },
-    {
-      "id": "skills:process:site",
-      "entity": "skills:process",
-      "kind": "summary",
-      "heading": "Process",
-      "text": "design thinking, agile, cross-functional collaboration, stakeholder management",
-      "cite": {
-        "page": "/",
-        "anchor": "#skills",
-        "label": "Process"
-      },
-      "len": 9,
-      "tf": {
-        "agile": 1,
-        "collaboration": 1,
-        "cross": 1,
-        "design": 1,
-        "functional": 1,
-        "management": 1,
-        "process": 1,
-        "stakeholder": 1,
-        "thinking": 1
       }
     },
     {
@@ -7470,14 +7526,14 @@
     }
   ],
   "bm25": {
-    "N": 98,
-    "avgdl": 39.0306,
+    "N": 99,
+    "avgdl": 39.0707,
     "df": {
       "16": 2,
       "35": 3,
       "50": 1,
       "250": 2,
-      "0-to-1": 1,
+      "0-to-1": 2,
       "100%": 4,
       "1:1": 7,
       "2.1": 10,
@@ -7493,7 +7549,7 @@
       "acceptance": 1,
       "accepted": 1,
       "access": 2,
-      "accessibility": 10,
+      "accessibility": 11,
       "accessible": 1,
       "accommodate": 1,
       "account": 3,
@@ -7513,7 +7569,6 @@
       "agent": 6,
       "agentic": 2,
       "agents": 10,
-      "agile": 1,
       "agreed": 1,
       "ai": 17,
       "aliased": 1,
@@ -7559,7 +7614,7 @@
       "arc": 1,
       "architect": 1,
       "architected": 1,
-      "architecture": 16,
+      "architecture": 17,
       "arguing": 1,
       "aria": 1,
       "arms": 1,
@@ -7592,7 +7647,6 @@
       "auditing": 4,
       "audits": 2,
       "authored": 3,
-      "authorship": 2,
       "auto": 3,
       "automated": 2,
       "automatically": 2,
@@ -7611,7 +7665,6 @@
       "base": 3,
       "based": 6,
       "baseline": 1,
-      "basics": 2,
       "basis": 1,
       "bear": 1,
       "became": 5,
@@ -7647,7 +7700,7 @@
       "bounce": 3,
       "boundaries": 1,
       "boundary": 1,
-      "brand": 6,
+      "brand": 7,
       "brands": 3,
       "bridges": 1,
       "bridging": 1,
@@ -7730,14 +7783,14 @@
       "coaches": 5,
       "coaching": 1,
       "coast": 1,
-      "code": 10,
+      "code": 11,
       "codebase": 3,
+      "codebases": 2,
       "coded": 2,
-      "coding": 1,
+      "coding": 3,
       "coffee": 4,
       "cognitive": 2,
       "coherent": 2,
-      "collaboration": 1,
       "collaborative": 1,
       "collating": 1,
       "collections": 1,
@@ -7769,7 +7822,7 @@
       "complex": 4,
       "compliance": 2,
       "component": 20,
-      "components": 16,
+      "components": 17,
       "compose": 1,
       "compositions": 1,
       "comprehensive": 1,
@@ -7814,12 +7867,12 @@
       "covering": 3,
       "covers": 1,
       "created": 1,
-      "creative": 1,
+      "creative": 3,
       "credibility": 1,
       "criteria": 2,
       "criterion": 2,
       "critical": 3,
-      "cross": 5,
+      "cross": 4,
       "crossing": 1,
       "crypto": 6,
       "css": 6,
@@ -7857,7 +7910,7 @@
       "derives": 1,
       "describes": 1,
       "description": 1,
-      "design": 44,
+      "design": 46,
       "designed": 11,
       "designer": 1,
       "designers": 2,
@@ -7923,7 +7976,7 @@
       "endurance": 1,
       "enforced": 3,
       "engagement": 1,
-      "engineering": 8,
+      "engineering": 9,
       "english": 1,
       "enough": 1,
       "enter": 1,
@@ -7938,7 +7991,7 @@
       "eval": 1,
       "evals": 1,
       "evaluated": 1,
-      "evaluation": 3,
+      "evaluation": 4,
       "even": 1,
       "ever": 1,
       "every": 21,
@@ -7982,7 +8035,7 @@
       "field": 1,
       "fields": 1,
       "fighting": 1,
-      "figma": 22,
+      "figma": 24,
       "figures": 1,
       "file": 2,
       "files": 2,
@@ -7996,7 +8049,7 @@
       "finding": 2,
       "findings": 1,
       "fintech": 1,
-      "first": 22,
+      "first": 23,
       "five": 1,
       "fix": 1,
       "fixed": 1,
@@ -8019,11 +8072,10 @@
       "friction": 2,
       "friendly": 1,
       "front": 8,
-      "frontend": 4,
+      "frontend": 3,
       "frustrate": 1,
       "full": 10,
       "fully": 5,
-      "functional": 1,
       "functionality": 2,
       "gamification": 1,
       "gap": 3,
@@ -8059,7 +8111,7 @@
       "grows": 1,
       "guarantee": 1,
       "guide": 2,
-      "guides": 1,
+      "guides": 2,
       "hand": 3,
       "handle": 2,
       "handoff": 3,
@@ -8073,7 +8125,7 @@
       "helping": 3,
       "hero": 2,
       "hesitated": 1,
-      "heuristic": 2,
+      "heuristic": 3,
       "heuristics": 1,
       "hierarchy": 8,
       "high": 2,
@@ -8090,7 +8142,7 @@
       "households": 2,
       "housemaid": 2,
       "housemaids": 1,
-      "html": 3,
+      "html": 4,
       "hub": 2,
       "hundreds": 2,
       "i'm": 1,
@@ -8103,7 +8155,7 @@
       "images": 1,
       "immediately": 1,
       "implement": 1,
-      "implementation": 1,
+      "implementation": 3,
       "import": 1,
       "imports": 1,
       "improved": 2,
@@ -8114,7 +8166,7 @@
       "independent": 1,
       "indicators": 1,
       "industries": 1,
-      "information": 6,
+      "information": 7,
       "initiated": 2,
       "initiatives": 1,
       "inside": 2,
@@ -8127,7 +8179,7 @@
       "institutional": 2,
       "integrator": 1,
       "integrators": 1,
-      "interaction": 1,
+      "interaction": 2,
       "interactive": 4,
       "interfaces": 1,
       "internal": 2,
@@ -8156,7 +8208,7 @@
       "kit": 1,
       "known": 1,
       "knows": 1,
-      "label": 5,
+      "label": 6,
       "labelling": 1,
       "lands": 1,
       "language": 2,
@@ -8186,7 +8238,7 @@
       "let": 2,
       "lets": 2,
       "level": 5,
-      "libraries": 2,
+      "libraries": 3,
       "library": 9,
       "licensed": 4,
       "life": 1,
@@ -8227,7 +8279,7 @@
       "malko": 2,
       "manageable": 1,
       "managed": 1,
-      "management": 5,
+      "management": 4,
       "manager": 1,
       "managers": 1,
       "mandate": 1,
@@ -8284,7 +8336,7 @@
       "moved": 2,
       "moving": 1,
       "much": 2,
-      "multi": 3,
+      "multi": 4,
       "multiple": 2,
       "municipal": 6,
       "municipality": 5,
@@ -8304,7 +8356,7 @@
       "new": 5,
       "news": 1,
       "next": 1,
-      "next.js": 3,
+      "next.js": 5,
       "nft": 3,
       "nights": 1,
       "nine": 1,
@@ -8356,7 +8408,7 @@
       "palette": 1,
       "panels": 1,
       "paraflow": 1,
-      "parity": 9,
+      "parity": 10,
       "partner": 1,
       "partnership": 3,
       "parts": 4,
@@ -8400,7 +8452,7 @@
       "portfolio": 6,
       "power": 2,
       "powered": 1,
-      "pr": 5,
+      "pr": 3,
       "practice": 4,
       "prds": 2,
       "predefined": 1,
@@ -8417,12 +8469,12 @@
       "prioritised": 2,
       "problem": 2,
       "procedure": 1,
-      "process": 2,
+      "process": 1,
       "processes": 1,
       "procurement": 1,
       "produce": 1,
       "produced": 2,
-      "product": 19,
+      "product": 20,
       "production": 10,
       "products": 4,
       "professional": 2,
@@ -8453,6 +8505,7 @@
       "proves": 1,
       "provider": 3,
       "providers": 2,
+      "prs": 2,
       "public": 4,
       "publicly": 1,
       "published": 3,
@@ -8530,7 +8583,7 @@
       "renders": 5,
       "repeatable": 1,
       "replacement": 1,
-      "repo": 6,
+      "repo": 7,
       "repository": 5,
       "reputation": 1,
       "request": 1,
@@ -8555,7 +8608,7 @@
       "reused": 1,
       "revealed": 1,
       "revenue": 1,
-      "review": 4,
+      "review": 5,
       "reviewed": 4,
       "reviewing": 1,
       "reviews": 3,
@@ -8588,7 +8641,7 @@
       "screenshot": 1,
       "scripts": 1,
       "scrolling": 2,
-      "scss": 2,
+      "scss": 4,
       "sea": 1,
       "search": 1,
       "second": 5,
@@ -8598,7 +8651,7 @@
       "seeing": 1,
       "select": 1,
       "self": 4,
-      "semantic": 7,
+      "semantic": 8,
       "senior": 1,
       "sentence": 2,
       "sepa": 1,
@@ -8629,7 +8682,7 @@
       "sharpest": 1,
       "shift": 1,
       "ship": 3,
-      "shipped": 5,
+      "shipped": 7,
       "ships": 2,
       "shop": 1,
       "shortcut": 1,
@@ -8675,7 +8728,7 @@
       "spread": 1,
       "stack": 1,
       "stages": 1,
-      "stakeholder": 4,
+      "stakeholder": 3,
       "stakeholders": 2,
       "stakes": 1,
       "standardised": 2,
@@ -8698,7 +8751,7 @@
       "stores": 1,
       "stories": 1,
       "story": 4,
-      "storybook": 5,
+      "storybook": 6,
       "strandzha": 1,
       "stranger": 1,
       "strategic": 1,
@@ -8714,7 +8767,7 @@
       "studies": 1,
       "studio": 4,
       "study": 2,
-      "style": 3,
+      "style": 4,
       "styleguide": 3,
       "styles": 3,
       "styling": 1,
@@ -8730,7 +8783,7 @@
       "surface": 5,
       "surfaced": 2,
       "surfaces": 4,
-      "surveys": 2,
+      "surveys": 3,
       "swap": 1,
       "sweep": 1,
       "swiping": 1,
@@ -8742,7 +8795,7 @@
       "tables": 2,
       "tablet": 1,
       "tags": 2,
-      "tailwind": 2,
+      "tailwind": 4,
       "taken": 2,
       "talked": 1,
       "target": 1,
@@ -8761,17 +8814,16 @@
       "telerik": 1,
       "ten": 1,
       "test": 2,
-      "testing": 8,
+      "testing": 9,
       "tests": 2,
       "text": 3,
       "theme": 4,
       "themed": 2,
       "themes": 1,
-      "theming": 1,
+      "theming": 2,
       "therapists": 3,
       "thing": 1,
       "think": 1,
-      "thinking": 1,
       "three": 4,
       "three.js": 3,
       "thresholds": 1,
@@ -8781,9 +8833,9 @@
       "timestamps": 1,
       "today": 1,
       "together": 1,
-      "token": 14,
+      "token": 16,
       "tokenised": 1,
-      "tokens": 14,
+      "tokens": 15,
       "tokens.json": 1,
       "took": 3,
       "tool": 2,
@@ -8854,7 +8906,7 @@
       "values": 5,
       "vanilla": 3,
       "variable": 1,
-      "variables": 8,
+      "variables": 9,
       "variant": 1,
       "variants": 5,
       "variations": 2,
@@ -8872,7 +8924,7 @@
       "virtual": 1,
       "visible": 2,
       "visitors": 1,
-      "visual": 8,
+      "visual": 9,
       "visualisations": 1,
       "vouchers": 3,
       "vue": 4,
@@ -8890,7 +8942,7 @@
       "website": 1,
       "weight": 1,
       "whether": 1,
-      "white": 5,
+      "white": 6,
       "whole": 4,
       "whose": 1,
       "winners": 1,
@@ -8901,7 +8953,7 @@
       "word": 4,
       "wording": 1,
       "words": 1,
-      "work": 7,
+      "work": 8,
       "worked": 1,
       "workflow": 2,
       "workflows": 4,

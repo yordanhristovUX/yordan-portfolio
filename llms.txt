@@ -118,11 +118,12 @@ Jan 2026 – Present · Sofia · Hybrid
 
 ## Skills
 
+- **Design systems** — design tokens, repo-first token architecture, component libraries, Figma variables and components, design-to-code parity, theming, multi-brand and white-label systems, Storybook, style guides
 - **AI workflows** — Claude Code, custom skills, MCP servers, agent orchestration, agentic engineering, design-to-code pipelines, AI-assisted prototyping, prompt engineering, Google AI Studio
-- **Design systems** — design tokens, repo-first token architecture, Figma variables and components, component libraries, Storybook, style guides, design-to-code parity, theming, multi-brand and white-label systems
-- **Research** — user interviews, usability testing, heuristic evaluation, card sorting, competitor analysis, surveys, WCAG 2.1 AA auditing, screen reader testing, Hotjar and Google Analytics
-- **Product design** — information architecture, prototyping, interaction design, visual design, motion design, 0-to-1 product work
-- **Engineering** — HTML, CSS, JavaScript, Vue, React basics, Git, p5.js, Three.js, production PR authorship
+- **Product design** — Figma, information architecture, interaction design, visual design, motion design, prototyping, 0-to-1 product work
+- **Research** — user interviews, usability testing, heuristic evaluation, surveys, card sorting, competitor analysis, Google Analytics, Hotjar
+- **Accessibility** — WCAG 2.1 AA auditing, screen reader testing, semantic HTML review
+- **Design engineering** — HTML, CSS, JavaScript, Git; production PRs shipped in Vue, React and Next.js codebases; SCSS and Tailwind token implementation; p5.js and Three.js creative coding
 
 ## Education & languages
 
