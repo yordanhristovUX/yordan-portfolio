@@ -525,6 +525,7 @@ const packaged = [
   ["dist/react/ask-fab.tsx", reactSource("ask-fab")],
   ["dist/react/definition-row.tsx", reactSource("definition-row")],
   ["dist/react/nav.tsx", reactSource("nav")],
+  ["dist/react/drawer.tsx", reactSource("drawer")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by

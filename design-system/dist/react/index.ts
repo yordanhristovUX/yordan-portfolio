@@ -44,3 +44,5 @@ export { definitionRow, DefinitionRow, definitionRowRow, DefinitionRowRow } from
 export type { DefinitionRowProps, DefinitionRowVariants, DefinitionRowRowProps } from "./definition-row";
 export { nav, Nav, navId, NavId, navNav, NavNav, navMenu, NavMenu, navStatus, NavStatus, navClock, NavClock, navAction, NavAction, navFace, NavFace, navDot, NavDot, navActionLabel, NavActionLabel } from "./nav";
 export type { NavProps, NavVariants, NavIdProps, NavNavProps, NavMenuProps, NavStatusProps, NavClockProps, NavActionProps, NavFaceProps, NavDotProps, NavActionLabelProps } from "./nav";
+export { drawer, Drawer, drawerScrim, DrawerScrim, drawerSheet, DrawerSheet, drawerHead, DrawerHead, drawerPortrait, DrawerPortrait, drawerHeading, DrawerHeading, drawerTitle, DrawerTitle, drawerSubtitle, DrawerSubtitle, drawerBody, DrawerBody } from "./drawer";
+export type { DrawerProps, DrawerVariants, DrawerScrimProps, DrawerSheetProps, DrawerHeadProps, DrawerPortraitProps, DrawerHeadingProps, DrawerTitleProps, DrawerSubtitleProps, DrawerBodyProps } from "./drawer";

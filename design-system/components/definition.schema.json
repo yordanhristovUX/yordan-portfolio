@@ -183,7 +183,7 @@
     "rule-part": {
       "$doc": "A companion selector that is not a modifier of the root. R4 MADE A PART A FULL RULE. It used to be declarations and nothing else — no states, one element, no say in the file's shape — and `source` is the block that showed why that was an arbitrary limit rather than a distinction: `.source__link` has a hover-and-focus state, and its canonical HTML puts it on a <button> and an <a>, exactly as Button's does. What a part still does not have is variants and sizes: a companion selector that needs an axis is a component with its own definition, and that line has held through ten blocks. A PART IS ONE OF THREE SHAPES: it has a `selector` of its own, or it is SCOPED to a tag path, or scoped to a class. `link-grid` and `case-body` forced the tag form — their children carry no classes at all, and deliberately: case-body's prose is compiled from markdown under content/, so a class per element would put styling inside the content pipeline. `section-head` forced the class form. The rule that keeps the scoped form from being `.band > .rail--l` in disguise is that BOTH halves are closed — `within` names a rule this definition declares above it, and the target is bare tag names joined by descendant combinators or one class, with no child, sibling or attribute anywhere in it.",
       "type": "object",
-      "required": ["kind", "name", "declarations"],
+      "required": ["kind", "name"],
       "additionalProperties": false,
       "oneOf": [{ "required": ["selector"] }, { "required": ["within", "element"] }, { "required": ["within", "class"] }, { "required": ["within", "child"] }],
       "properties": {
@@ -219,7 +219,10 @@
           "const": true,
           "$doc": "Emit a blank line before this rule. A stylesheet block has paragraphs — `source` separates the list's chrome from the item that repeats inside it — and a paragraph is a statement about which rules belong together. Without this the emitter would have to either lose the break or invent one, and both are worse than recording it."
         },
-        "declarations": { "$ref": "#/$defs/declarations" }
+        "declarations": {
+          "$ref": "#/$defs/declarations",
+          "$doc": "OPTIONAL SINCE `drawer`, and for the reason `base` is optional and an effect-only variant declares nothing: a part may be a SCOPE rather than an appearance. `.drawer .profile > div:nth-child(odd)` is the rule the stylesheet writes and `.drawer .profile > div` is not — the wrapper exists so the odd ones can be reached, and emitting `.drawer .profile > div { }` would claim a rule the file has not got. A part with no declarations emits nothing, exactly as `.sec--tint` does, and the build refuses one that nothing later names: a scope with no occupant is a rule that says nothing at all."
+        }
       }
     },
     "rule-state": {
@@ -257,13 +260,18 @@
       "type": "object",
       "required": ["kind", "name", "of", "declarations"],
       "additionalProperties": false,
-      "oneOf": [{ "required": ["element"] }, { "required": ["class"] }],
+      "oneOf": [{ "required": ["element"] }, { "required": ["class"] }, { "required": ["nothing"] }],
       "properties": {
         "kind": { "const": "contains" },
         "name": { "$ref": "#/$defs/name" },
+        "note": { "$ref": "#/$defs/note", "$doc": "A comment above this rule, the same key a part, a base and a state carry. `drawer`'s `:empty` thread is the one that forced it here: two lines saying why an empty thread collapses on the page and must not in the panel, which is an argument about this rule and about no other." },
         "of": { "$ref": "#/$defs/reference" },
         "element": { "type": "string", "pattern": "^[a-z][a-z0-9]*$", "$doc": "One bare tag name. A STRING and not an array, because `:has(p strong)` is a path and nothing has asked for one — `element` on a part is an array because `.case-body p strong` exists, and this key grows the same way if a block ever needs it." },
         "class": { "$ref": "#/$defs/selector", "$doc": "One class. The other half of the same closure the scoped part's `class` records: the thing being looked for may belong to somebody else, and the relation is still finite." },
+        "nothing": {
+          "const": true,
+          "$doc": "NOTHING AT ALL — `:empty`, and `drawer` is the block that asked. It is the same question `element` and `class` ask, answered with none, which is why it is a third argument of `contains` rather than a fourth `position`: a position is where a rule sits AMONG ITS SIBLINGS, and an empty element has no siblings in view — what is being said is about its contents. `.drawer .chat__thread:empty` is the case: on the page an empty thread collapses so the composer is not preceded by an empty box, and in the drawer that row is the flexible one, so collapsing it would let the composer stretch. Emitted as `:empty` rather than `:has()`, which is the one place a `contains` does not render a `:has(…)` — because `:has(*)` is not the same selector and this format does not translate."
+        },
         "$doc": { "type": "string" },
         "declarations": { "$ref": "#/$defs/declarations" }
       }

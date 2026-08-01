@@ -69,7 +69,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadAll, definitionPath, partSelector, selectorOf, POSITION_SUFFIX } from "./emit-css.mjs";
+import { loadAll, definitionPath, partSelector, selectorOf, POSITION_SUFFIX, containsSuffix } from "./emit-css.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -167,7 +167,14 @@ const declOf = (declarations) => {
 const definitionSurface = {};
 for (const def of defs) {
   const put = (kind, selector, rule) => {
-    definitionSurface[`${def.id} ${selector}`] = { kind, declarations: declOf(rule.declarations) };
+    /* A PART with no declarations emits no rule and publishes nothing of its
+       own — it is a SCOPE, and what it scopes is published below under its own
+       selector. Recording it would put a rule in the contract that ships as no
+       bytes at all, which is the opposite of what this snapshot is for.
+       A MODIFIER with none is the opposite case and stays: `.sec--tint`
+       declares nothing and is still `variant="tint"` in the React API, so its
+       entry is the only thing that would notice it disappearing. */
+    if (rule.declarations || !kind.endsWith("part")) definitionSurface[`${def.id} ${selector}`] = { kind, declarations: declOf(rule.declarations) };
     for (const s of rule.states ?? []) {
       definitionSurface[`${def.id} ${selector}${s.suffix}`] = { kind: `${kind} state`, declarations: declOf(s.declarations) };
     }
@@ -177,7 +184,7 @@ for (const def of defs) {
        for it. The argument is in the key because `:has(img)` and `:has(.x)`
        are two rules and only the argument says which. */
     for (const c of rule.contains ?? []) {
-      definitionSurface[`${def.id} ${selector}:has(${c.element ?? c.class})`] = {
+      definitionSurface[`${def.id} ${selector}${containsSuffix(c)}`] = {
         kind: `${kind} contains`,
         declarations: declOf(c.declarations),
       };

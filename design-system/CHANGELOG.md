@@ -5,6 +5,39 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.2.0 — 2026-08-01
+
+Minor — 26 change(s).
+
+### Added
+
+- definition `drawer .drawer .chat__thread:empty` added
+- definition `drawer .drawer .chat__thread` added
+- definition `drawer .drawer .chat` added
+- definition `drawer .drawer .entry__span` added
+- definition `drawer .drawer .entry` added
+- definition `drawer .drawer .idx__row @below-560` added
+- definition `drawer .drawer .idx__row` added
+- definition `drawer .drawer .idx__tags` added
+- definition `drawer .drawer .profile > div:nth-child(odd)` added
+- definition `drawer .drawer .profile` added
+- definition `drawer .drawer__body` added
+- definition `drawer .drawer__head` added
+- definition `drawer .drawer__heading` added
+- definition `drawer .drawer__note @below-560` added
+- definition `drawer .drawer__note` added
+- definition `drawer .drawer__portrait img` added
+- definition `drawer .drawer__portrait` added
+- definition `drawer .drawer__scrim` added
+- definition `drawer .drawer__sheet @below-1024` added
+- definition `drawer .drawer__sheet` added
+- definition `drawer .drawer__title` added
+- definition `drawer .drawer[data-open] .drawer__scrim` added
+- definition `drawer .drawer[data-open] .drawer__sheet` added
+- definition `drawer .drawer[data-open]` added
+- definition `drawer .drawer` added
+- export `./react/drawer` added
+
 ## 2.1.0 — 2026-08-01
 
 Minor — 30 change(s).

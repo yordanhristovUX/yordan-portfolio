@@ -1,0 +1,84 @@
+/* ============================================================
+   ARRIVAL, for the one signal a client navigation throws away.
+
+   THE DEFECT, in the owner's words: clicking a case study from halfway down
+   the index "feels as I am on the same page, but I am not". He is right, and
+   the cause is structural rather than aesthetic. The vanilla site cannot
+   navigate without a document load, so arrival is signalled by the browser
+   itself — the old page goes, there is a beat of nothing, the new one paints
+   and its GSAP reveals settle in. This app replaces `{children}` in place: the
+   bar does not move, the paper does not blink, the scroll jumps to the top,
+   and the reader is left to infer from the words that anything happened.
+
+   WHAT THIS IS NOT. It is not a loading indicator, and there is deliberately no
+   spinner and no progress bar anywhere near this file: on a statically exported
+   site with the payload already fetched, nothing IS loading, and drawing a
+   progress bar over an instant swap would be an animation that lies about the
+   work it represents. This says "new content", which is the only true thing
+   there is to say.
+
+   IT SPEAKS A PHRASE THE SITE ALREADY HAS. The design system uses two motion
+   registers and they mean different things:
+
+     0.2s, no curve named          a state change — hover, focus, colour
+     0.28s cubic-bezier(0.22,1,0.36,1)  a SURFACE ARRIVING
+
+   The second is the menu sheet, the peek panel and the drawer — every element
+   in components.css that enters the page rather than merely restyling. A page
+   arriving is that, so it is said in those words. `.menu__sheet` is the exact
+   model: `opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)`
+   over a 0.75rem offset. The DIRECTION is the page content's rather than the
+   menu's — css/style.css settles `[data-reveal]` upward, so this rises too.
+
+   THE DURATION AND CURVE ARE LITERALS, AND THAT IS A REPORTED GAP RATHER THAN
+   a preference. tokens.json has no motion tier at all — no duration, no
+   easing — so every one of the values above is a literal in components.css
+   today, and there is nothing to reference. Introducing `--motion-*` is a
+   design-system decision with 20 components' worth of existing literals behind
+   it; inventing the token here would put its source of truth in the consumer,
+   which is exactly backwards. So these mirror the design system's own numbers
+   and the ask goes upstream. THE DISTANCE IS NOT A LITERAL: `--space-3` IS
+   0.75rem, so the one value that has a token uses it.
+
+   REDUCED MOTION GETS NOTHING, WHICH IS THE VANILLA CONTRACT. Motion is an
+   enhancement on this site — under reduce, GSAP never runs, `[data-reveal]`
+   is simply visible, and the automata freezes rather than crawling. So this is
+   scoped to `no-preference` rather than neutralised inside the reduce block:
+   the animation is never declared, not declared and then cancelled. Arrival is
+   still signalled for that reader, by the scroll reset and the changed
+   document — the same two cues a reader with JS off gets.
+
+   IT DEGRADES TO NOTHING. No script paints anything here; `data-routed` only
+   OPENS the rule. An engine that does not know `@keyframes` runs no animation
+   and shows the page, and the `both` fill mode never gets the chance to hold
+   content at `opacity: 0`, because a browser that cannot run the animation
+   never applies its fill either.
+   ============================================================ */
+
+/* `data-routed` is set once, on the first client navigation of a visit, and
+   never cleared — see src/components/RouteSettle.tsx for why that is one
+   attribute rather than one per navigation. A first load is a real document
+   load and already has the browser's own arrival signal, so it must not
+   animate: this rule simply does not exist yet at that point. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-routed] main.sheet {
+    animation: route-settle 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* Opacity carries the meaning and the offset carries the direction, so the
+   offset is small: 0.75rem is the menu sheet's, and it is deliberately far
+   less than `[data-reveal]`'s 1.5rem, which moves ONE card rather than a whole
+   sheet of them. Both properties are composited, and both are on the lattice
+   root, so the graph paper, the terminators and the canvases arrive as one
+   plate instead of parting company on the way in. */
+@keyframes route-settle {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

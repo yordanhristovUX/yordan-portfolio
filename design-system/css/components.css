@@ -2076,7 +2076,7 @@ body:has(.menu[data-open]) { overflow: hidden; }
 }
 @media print { .ask-fab { display: none; } }
 
-/* ---- authored:drawer — relational-selectors ---- */
+/* ---- generated:drawer — do not edit, source: components/drawer/definition.json ---- */
 /* ============ Drawer (slide-in panel) ============ @component drawer
    A right-hand panel that slides over the page, with a scrim behind it. It
    HOSTS a surface; it is not one. Everything about a conversation still
@@ -2279,6 +2279,7 @@ body:has(.menu[data-open]) { overflow: hidden; }
      phone it wraps to two lines and pushes the title off its own baseline. */
   .drawer__note { display: none; }
 }
+/* ---- /generated:drawer ---- */
 
 /* ---- generated:source — do not edit, source: components/source/definition.json ---- */
 /* ============ Source (citations) ============ @component source

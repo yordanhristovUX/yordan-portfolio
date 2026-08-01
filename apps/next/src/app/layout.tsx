@@ -11,6 +11,13 @@
    page imports its own stylesheet, so Next emits them in layout-then-page
    order, which is the same order.
 
+   THE FIFTH IMPORT IS THIS APP'S ONLY CSS OF ITS OWN: ./route-settle.css, the
+   arrival cue for a client navigation. It is a handful of lines and it styles
+   nothing the design system owns — no component, no class of theirs, no colour
+   — which is what keeps "a styling gap is a design-system question" intact
+   while this remains an app-layer question. It sits after globals.css and
+   before the page stylesheets, which stay last.
+
    THE FOURTH IMPORT IS NEW AND SITS THIRD: ./globals.css, which is the whole
    of the Tailwind pipeline — the design system's tokens.tailwind.css plus the
    utilities the generated components in @yordan/design-system/react name. It
@@ -34,6 +41,7 @@
 import type { Metadata } from "next";
 
 import { AutomataLayer } from "@/components/AutomataLayer";
+import { RouteSettle } from "@/components/RouteSettle";
 import { SiteChrome } from "@/components/SiteChrome";
 import { siteUrl } from "@/lib/content";
 import { NO_FLASH_THEME, THEME_COLORS } from "@/lib/theme-script";
@@ -41,6 +49,7 @@ import { NO_FLASH_THEME, THEME_COLORS } from "@/lib/theme-script";
 import "@yordan/design-system/tokens.css";
 import "@yordan/design-system/components.css";
 import "./globals.css";
+import "./route-settle.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -80,10 +89,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         {/* The behaviours, last in the body for the same reason the vanilla
             pages put their scripts there: everything they bind to is already
-            parsed. Neither renders any DOM — the chrome's markup is the pages'
-            own, and the automata's rails are the engine's to inject. */}
+            parsed. None of the three renders any DOM — the chrome's markup is
+            the pages' own, the automata's rails are the engine's to inject, and
+            the third only flips one attribute that opens a CSS rule. */}
         <SiteChrome />
         <AutomataLayer />
+        <RouteSettle />
       </body>
     </html>
   );

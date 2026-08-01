@@ -79,7 +79,7 @@ import { utilitiesFor, STATE_PREFIX } from "./emit-tailwind.mjs";
 /* The selector arithmetic, imported rather than re-derived: pipeline 1 and
    pipeline 2 must agree about what `within` + `element` + `pseudo` names, and
    the only way to guarantee that is for one of them to own it. */
-import { POSITION_SUFFIX, conditionValues, selectorsByName, containsArg, isDeclared } from "./emit-css.mjs";
+import { POSITION_SUFFIX, conditionValues, selectorsByName, containsSuffix, isDeclared } from "./emit-css.mjs";
 
 /* ---------- names ---------- */
 const pascal = (s) => s.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join("");
@@ -540,7 +540,7 @@ export function renderComponent(def, elements, keyOf) {
     const owner = r.kind === "contains" ? r.of : r.kind === "part" && r.within ? r.within : null;
     if (owner === null) continue;
     const parent = anchor(r, owner);
-    const scope = parent.scope + (r.kind === "contains" ? `:has(${containsArg(r)})` : scopeOf(r));
+    const scope = parent.scope + (r.kind === "contains" ? containsSuffix(r) : scopeOf(r));
     scopeByName.set(r.name, { scope, host: parent.host });
     const sel = selectors.get(r.name);
     const entries = [
@@ -584,7 +584,7 @@ export function renderComponent(def, elements, keyOf) {
         const parent = anchor(o, o.kind === "part" ? o.within : o.of);
         const scope =
           o.kind === "part" ? parent.scope + scopeOf(o)
-          : o.kind === "contains" ? parent.scope + `:has(${containsArg(o)})`
+          : o.kind === "contains" ? parent.scope + containsSuffix(o)
           : o.kind === "position" ? parent.scope + POSITION_SUFFIX[o.at]
           : parent.scope;
         scopeByName.set(o.name, { scope, host: parent.host });

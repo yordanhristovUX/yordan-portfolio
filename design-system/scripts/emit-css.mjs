@@ -183,7 +183,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -433,8 +433,14 @@ export const POSITION_SUFFIX = { first: ":first-child", last: ":last-child", odd
 
 /** What a `contains` rule looks for, as a selector: one bare tag or one class.
  *  Both halves are closed, which is why `:has()` is a member of this vocabulary
- *  and not a door into arbitrary relational CSS. */
-export const containsArg = (r) => r.element ?? r.class;
+ *  and not a door into arbitrary relational CSS. `null` for the third argument,
+ *  `nothing`, which is `:empty` and not a `:has()` at all. */
+export const containsArg = (r) => (r.nothing ? null : r.element ?? r.class);
+
+/** The suffix a `contains` appends. `:empty` is what an element holding nothing
+ *  is called, and `:has(*)` is a different selector — this format does not
+ *  translate, so the one case that is not a `:has()` renders as what it is. */
+export const containsSuffix = (r) => (r.nothing ? ":empty" : `:has(${containsArg(r)})`);
 
 /** A part's selector. The loader resolves a scoped part's once, so both
  *  emitters read one string rather than each joining the pieces — the
@@ -466,7 +472,7 @@ export function selectorsByName(def) {
       const step = r.child ? `> ${r.child}` : `${r.element ? r.element.join(" ") : r.class}${r.pseudo ?? ""}`;
       out.set(r.name, r.selector ?? `${out.get(r.within)} ${step}`);
     } else if (r.kind === "state") out.set(r.name, stateSelector(out.get(r.of), r.suffix, r.wrap === true));
-    else if (r.kind === "contains") out.set(r.name, `${out.get(r.of)}:has(${containsArg(r)})`);
+    else if (r.kind === "contains") out.set(r.name, `${out.get(r.of)}${containsSuffix(r)}`);
     else if (r.kind === "position") out.set(r.name, `${out.get(r.of)}${POSITION_SUFFIX[r.at]}`);
   };
   /* TWO PASSES, AND THE SECOND IS WHY A QUERY-ONLY RULE MAY POINT FORWARDS.
@@ -870,6 +876,23 @@ export function checkDefinition(def, id, rel) {
     }
   }
 
+  /* ---- a part with no declarations is a SCOPE, and a scope needs an occupant ----
+     It emits nothing, so the only thing that makes it real is a later rule
+     naming it. One that nothing names is a rule that says nothing at all, which
+     is the same test the effect-only variant passes by having its scoped part
+     further down the list. */
+  {
+    const named = new Set(references.map(([, , name]) => name));
+    for (const r of everyRule) {
+      if (r.kind !== "part" || r.declarations || named.has(r.name)) continue;
+      bad(
+        `\`${r.name}\` is a part with no \`declarations\` and nothing later names it. A part may omit its ` +
+          `declarations when it is a SCOPE rather than an appearance — \`.drawer .profile > div\` exists so its odd ` +
+          `children can be reached — but then something has to be scoped to it, or it emits nothing and means nothing`
+      );
+    }
+  }
+
   /* ---- a wrapped declaration is a fact about the text, and it is checked ----
      `wrap` records that the stylesheet breaks a value at its commas. A group
      with no comma to break at would be the key CHOOSING a rendering instead of
@@ -1155,7 +1178,14 @@ export function renderBlock(def, conditions = {}) {
       case "size":
         if (r.declarations) out += rule(r.selector, r.declarations, where);
         break;
+      /* A part with no `declarations` is a SCOPE and emits nothing, the same
+         refusal `base` being optional and `.sec--tint` both record: the rule
+         exists so something further down can be scoped to it, and writing
+         `.drawer .profile > div { }` would claim an appearance the file has not
+         got. Its `break` and `note` go with it — a comment above a rule that is
+         not emitted has nothing to introduce. */
       case "part":
+        if (!r.declarations) break;
         if (r.break) out += "\n";
         out += lead(r, "");
         out += rule(sel(r.name), r.declarations, where);

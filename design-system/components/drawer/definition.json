@@ -1,0 +1,324 @@
+{
+  "$doc": "The slide-in panel's appearance, as data — the source of the `@component drawer` block in css/components.css and of dist/react/drawer.tsx. THE INTERESTING HALF IS THE LAST THIRD, and it is the reason this block reads as a candidate for the census's `foreign-selector` and is not one: nine of its rules are about components the drawer HOSTS rather than owns — `.drawer .chat`, `.drawer .idx__row`, `.drawer .entry`, `.drawer .profile` — and every one of them is the scoped part `section-head` already forced, `within` naming a rule this definition declares and the target being one class that belongs to somebody else. The coupling is recorded rather than hidden: it lands in dist/components.json's class list for `drawer`, because that file parses the shipped CSS. Two constructs are new here. A `contains` may hold NOTHING (`:empty`), which is what an element's contents are called when there are none. And a part may be a SCOPE with no declarations of its own — `.drawer .profile > div` is not a rule the stylesheet writes, it is the wrapper whose odd children carry the gutter, and emitting it empty would claim a rule the file has not got.",
+  "$schema": "../definition.schema.json",
+  "id": "drawer",
+  "block": {
+    "title": "Drawer (slide-in panel)",
+    "note": [
+      "A right-hand panel that slides over the page, with a scrim behind it. It",
+      "HOSTS a surface; it is not one. Everything about a conversation still",
+      "belongs to Chat — the drawer contributes a frame, a portrait, a title and a",
+      "way out, and knows nothing else about what is inside it.",
+      "",
+      "WHY THIS IS NOT A CHAT VARIANT, since that was the cheaper option. The",
+      "first sentence of components/chat/spec.md is that chat \"is a section of the",
+      "page, not a widget floating over it — it lives inside a `.band`/`.well` and",
+      "obeys the skeleton's rules like everything else.\" A `position: fixed` rule",
+      "inside the chat block would make that sentence false, and `@component`",
+      "ownership is per BLOCK, so dist/components.json would then report `chat` as",
+      "owning a scrim and a z-index. The drawer is also not chat-shaped: it is the",
+      "generic answer to \"summon a surface from anywhere\", and the moment a second",
+      "thing wants that (a filter panel, a source inspector) a chat variant would",
+      "have to be renamed anyway.",
+      "",
+      "THE DRAWER IS PRESENTATION ONLY. JS toggles exactly one attribute —",
+      "`data-open` on `.drawer` — and never writes a style. Everything below reads",
+      "off that attribute, which is why the open/close animation, the a11y-tree",
+      "removal and the tab-order removal cannot disagree with each other."
+    ]
+  },
+  "root": ".drawer",
+  "rules": [
+    {
+      "kind": "base",
+      "declarations": [
+        { "set": { "position": "fixed", "inset": "0" } },
+        {
+          "note": [
+            "Over the bar (100), under the case dialog (500): an answer in the drawer",
+            "renders real `.idx__row`s that call `window.openCase`, and the case study",
+            "must land on top of the drawer that opened it, not behind it."
+          ],
+          "set": { "z-index": "400" }
+        },
+        {
+          "break": true,
+          "note": [
+            "`visibility`, not `display`, is what closes this. It removes the panel",
+            "from the tab order and the accessibility tree exactly as `display: none`",
+            "does, but it is animatable — so the delay below lets the sheet finish",
+            "sliding out before the layer stops existing. A JS-set `hidden` attribute",
+            "would cut the close animation off at frame one."
+          ],
+          "set": { "visibility": "hidden" }
+        },
+        { "set": { "transition": "visibility 0s linear 0.28s" } }
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "open",
+      "of": "base",
+      "suffix": "[data-open]",
+      "$doc": "The one attribute js/drawer.js writes. Everything visible about an open drawer is scoped to it — the scrim's opacity and the sheet's transform are both parts declared `within` this state, which is the shape only a NAMED reference can reach: `.drawer[data-open]` owns no selector of its own for an author to quote.",
+      "declarations": [{ "set": { "visibility": "visible", "transition-delay": "0s" } }]
+    },
+    {
+      "kind": "part",
+      "name": "scrim",
+      "selector": ".drawer__scrim",
+      "break": true,
+      "declarations": [
+        { "set": { "position": "absolute", "inset": "0" } },
+        { "set": { "background": { "token": "scrim" } } },
+        { "set": { "opacity": "0" } },
+        { "set": { "transition": "opacity 0.28s ease" } }
+      ]
+    },
+    { "kind": "part", "name": "open-scrim", "within": "open", "class": ".drawer__scrim", "declarations": [{ "set": { "opacity": "1" } }] },
+    {
+      "kind": "part",
+      "name": "sheet",
+      "selector": ".drawer__sheet",
+      "break": true,
+      "note": [
+        "THE WIDTH IS A READING MEASURE, not a proportion of the window. The",
+        "assistant's answers were arriving in a 431px column and were called",
+        "unreadable; 46rem (736px) less the body's inset leaves a 696px reading",
+        "column, and `.chat__prose`'s own 44rem cap then does the rest — measured at",
+        "1280px, the prose sets 619px wide, which is NARROWER than the same paragraph",
+        "on the page. It is also close to the page's own content column (887px at a",
+        "1080px viewport), which is what lets an answer render as the site's real",
+        "components instead of a narrow imitation of them.",
+        "",
+        "Below 1024px the drawer becomes the whole screen. That is not a fallback:",
+        "at 1024 a 736px panel leaves a 288px sliver of page, which reads as a",
+        "mistake rather than as context, and every component the answer renders",
+        "already has its own narrow layout at that width. `100%` rather than `100vw`",
+        "on purpose — `100vw` counts the scrollbar and would overhang by its width in",
+        "the moment before the body scroll lock takes effect."
+      ],
+      "declarations": [
+        { "set": { "position": "absolute", "top": "0", "right": "0", "bottom": "0" } },
+        { "set": { "width": "min(46rem, 100%)" } },
+        { "set": { "display": "grid" } },
+        {
+          "note": [
+            "Both tracks are `minmax(0, …)` and that is load-bearing, not defensive.",
+            "A grid track's automatic minimum is min-content, so ONE unbreakable",
+            "display-cased project name inside an answer sizes the column, the column",
+            "sizes the sheet, and the sheet overflows a panel with an explicit width.",
+            "Measured at 375px before this: the head's Close button was pushed off the",
+            "screen and every turn ran past the right edge. Same failure, and same",
+            "fix, as `.sec__title { min-width: 0 }`."
+          ],
+          "set": { "grid-template-rows": "auto minmax(0, 1fr)" }
+        },
+        { "set": { "grid-template-columns": "minmax(0, 1fr)" } },
+        { "set": { "background": { "token": "surface-page" } } },
+        { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border-strong" }] } },
+        { "set": { "transform": "translateX(100%)" } },
+        { "set": { "transition": "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" } },
+        { "set": { "will-change": "transform" } }
+      ]
+    },
+    { "kind": "part", "name": "open-sheet", "within": "open", "class": ".drawer__sheet", "declarations": [{ "set": { "transform": "none" } }] },
+    { "kind": "at", "condition": "below-1024", "inline": true, "rules": [{ "of": "sheet", "declarations": [{ "set": { "width": "100%" } }] }] },
+    {
+      "kind": "part",
+      "name": "head",
+      "selector": ".drawer__head",
+      "break": true,
+      "declarations": [
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "auto minmax(0, 1fr) auto" } },
+        { "set": { "align-items": "center" } },
+        { "set": { "gap": { "token": "space-4" } } },
+        { "set": { "padding": [{ "token": "space-3" }, { "token": "space-5" }] } },
+        { "set": { "background": { "token": "chrome-bg" } } },
+        { "set": { "border-bottom": { "token": "rule-strong" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "portrait",
+      "selector": ".drawer__portrait",
+      "break": true,
+      "note": [
+        "THE PORTRAIT CARRIES ITS OWN GROUND, and that is the owner's decision",
+        "rather than a derivation from contrast arithmetic.",
+        "",
+        "The illustration is dark line-art over light fills drawn on a near-black",
+        "tile. A previous pass removed that tile from the SVG and replaced it with a",
+        "CSS plate that stayed light in both themes — the reasoning was sound (on a",
+        "dark page the ink collapses and a face is left floating) but the result was",
+        "not the drawing the owner made. The tile is back, byte-identical to",
+        "`content/assets/avatar.svg`, and the plate token it justified is gone.",
+        "",
+        "So on the light theme this is a black square on pale chrome. That contrast",
+        "is intended: it is a printed object on the sheet, not a tint of it.",
+        "",
+        "On dark the tile is near-black on near-black, so the EDGE is the only thing",
+        "left to say where the object stops — hence the stroke, which is a token with",
+        "a `dark` value rather than a theme query. `chrome-border-strong` measures",
+        "2.48:1 against the light head and 7.11:1 against the dark one, which is the",
+        "right way round: the theme that needs the edge gets the stronger one.",
+        "",
+        "3.5rem because the drawing is 408 paths in an 80-unit box: at 40px its",
+        "features fall under a pixel and it reads as a smudge, at 56px it reads as a",
+        "face. The nav bar uses it far smaller and deliberately — see `.bar__face`,",
+        "where it is a mark rather than a portrait."
+      ],
+      "declarations": [
+        { "set": { "display": "block" } },
+        { "set": { "width": "3.5rem", "height": "3.5rem" } },
+        {
+          "note": [
+            "Round, like the one in the bar — see `.bar__face`. The drawing's own tile",
+            "is a rounded square and the circle crops its corners."
+          ],
+          "set": { "border-radius": "50%" }
+        },
+        { "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "chrome-border-strong" }] } }
+      ]
+    },
+    { "kind": "part", "name": "portrait-img", "within": "portrait", "element": ["img"], "declarations": [{ "set": { "display": "block", "width": "100%", "height": "100%" } }] },
+    { "kind": "part", "name": "heading", "selector": ".drawer__heading", "break": true, "declarations": [{ "set": { "min-width": "0" } }] },
+    {
+      "kind": "part",
+      "name": "title",
+      "selector": ".drawer__title",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-display" }, "font-weight": { "token": "weight-extrabold" } } },
+        { "set": { "font-variation-settings": { "token": "width-title" } } },
+        { "set": { "font-size": { "token": "text-sub" } } },
+        { "set": { "line-height": "1" } },
+        { "set": { "text-transform": "uppercase" } },
+        { "set": { "letter-spacing": { "token": "tracking-tight" } } },
+        { "set": { "color": { "token": "content-primary" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "subtitle",
+      "selector": ".drawer__note",
+      "declarations": [
+        { "set": { "margin-top": { "token": "space-1" } } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-2xs" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide" } } },
+        { "set": { "color": { "token": "chrome-label" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "body",
+      "selector": ".drawer__body",
+      "break": true,
+      "note": [
+        "The body is a FRAME, not a scroller. The surface inside it owns its own",
+        "scrolling, which is what keeps chat's defining property intact: its thread",
+        "is the bounded scroller and the composer stays pinned where a reader left",
+        "it. A scrolling body would take the composer with it.",
+        "",
+        "The inset is `--space-5`, not `--pad`. `--pad` is the PAGE's inset and is",
+        "`clamp(1.25rem, 3vw, 3rem)` — it grows with the window because the well",
+        "grows with the window. The drawer's width stops at 46rem, so a viewport-fed",
+        "inset there is a tax that rises exactly when it buys nothing: at a 1440px",
+        "viewport it was taking 43px a side off a 736px panel, and the answer's own",
+        "components carry a second `--pad` inside that, so 21% of the panel was",
+        "margin. At `--space-5` the reading column is 696px."
+      ],
+      "declarations": [
+        { "set": { "min-height": "0", "min-width": "0" } },
+        { "set": { "display": "grid" } },
+        { "set": { "grid-template-columns": "minmax(0, 1fr)" } },
+        { "set": { "overflow": "hidden" } },
+        { "set": { "padding": { "token": "space-5" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "hosted-chat",
+      "within": "base",
+      "class": ".chat",
+      "break": true,
+      "note": [
+        "---- Hosting chat ----",
+        "Three rules, and each one only relaxes a bound that the PAGE needed and the",
+        "drawer supplies for free. `.chat__thread`'s `max-height: min(46rem, 75vh)`",
+        "exists so a growing conversation cannot stretch the band it sits in",
+        "(components/chat/spec.md). Here the sheet is `top: 0; bottom: 0` on a fixed",
+        "layer, so its height is the viewport and the thread cannot move it whatever",
+        "it contains — the bound is already structural, and keeping the max-height as",
+        "well would leave the composer floating in the middle of a tall panel."
+      ],
+      "declarations": [{ "set": { "min-height": "0", "min-width": "0", "grid-template-rows": "minmax(0, 1fr)", "grid-auto-rows": "auto" } }]
+    },
+    { "kind": "part", "name": "hosted-thread", "within": "base", "class": ".chat__thread", "declarations": [{ "set": { "max-height": "none", "min-height": "0" } }] },
+    {
+      "kind": "contains",
+      "name": "hosted-thread-empty",
+      "of": "hosted-thread",
+      "nothing": true,
+      "note": [
+        "On the page an empty thread collapses so the composer is not preceded by an",
+        "empty box. In the drawer that row is the flexible one, so collapsing it",
+        "would let the composer stretch to the full height on first open."
+      ],
+      "declarations": [{ "set": { "display": "grid", "border-top": "0" } }]
+    },
+    {
+      "kind": "part",
+      "name": "hosted-row",
+      "within": "base",
+      "class": ".idx__row",
+      "break": true,
+      "note": [
+        [
+          "---- Hosting the page's own components ----",
+          "`js/answer-render.js` renders answers as real `.idx__row`s, `.entry`s and",
+          "`.profile`s, and every one of those switches to a narrow layout at a",
+          "VIEWPORT breakpoint — which says nothing about the 736px column they are",
+          "actually in when a 1440px window has a drawer open. These restate the narrow",
+          "layout unconditionally inside the drawer. They are the rules a container",
+          "query would replace, and they are deliberately confined to the three",
+          "components whose wide layout actually breaks at this width."
+        ],
+        [
+          "The row's number stacks above the content at every width now (see the row",
+          "block), so the drawer's narrow restatement no longer carries a gutter —",
+          "just the main column and the chip, tags dropped as before."
+        ]
+      ],
+      "declarations": [{ "set": { "grid-template-columns": "minmax(0, 1fr) auto" } }]
+    },
+    { "kind": "part", "name": "hosted-tags", "within": "base", "class": ".idx__tags", "declarations": [{ "set": { "display": "none" } }] },
+    { "kind": "part", "name": "hosted-entry", "within": "base", "class": ".entry", "declarations": [{ "set": { "grid-template-columns": "1fr", "gap": { "token": "space-1" } } }] },
+    { "kind": "part", "name": "hosted-span", "within": "base", "class": ".entry__span", "declarations": [{ "set": { "grid-column": "1", "grid-row": "auto", "text-align": "left" } }] },
+    { "kind": "part", "name": "hosted-profile", "within": "base", "class": ".profile", "declarations": [{ "set": { "grid-template-columns": "1fr" } }] },
+    {
+      "kind": "part",
+      "name": "hosted-profile-pair",
+      "within": "hosted-profile",
+      "child": "div",
+      "$doc": "A SCOPE, NOT AN APPEARANCE — the part that has no declarations and is the block that made them optional. The stylesheet writes `.drawer .profile > div:nth-child(odd)` and never `.drawer .profile > div`, because the only thing the drawer says about a hosted pair is what it says about the LEFT-hand ones: the gutter between two columns has nothing to be between once the grid is one column. Emitting an empty rule for the wrapper would claim a decision that was never made."
+    },
+    { "kind": "position", "name": "hosted-profile-gutter", "of": "hosted-profile-pair", "at": "odd", "declarations": [{ "set": { "padding-right": "0" } }] },
+    {
+      "kind": "at",
+      "condition": "below-560",
+      "rules": [
+        { "of": "hosted-row", "declarations": [{ "set": { "grid-template-columns": "1fr" } }] },
+        {
+          "of": "subtitle",
+          "note": [
+            "Same call `.sec__note` makes at 640px: the subtitle is chrome, and on a",
+            "phone it wraps to two lines and pushes the title off its own baseline."
+          ],
+          "declarations": [{ "set": { "display": "none" } }]
+        }
+      ]
+    }
+  ]
+}
