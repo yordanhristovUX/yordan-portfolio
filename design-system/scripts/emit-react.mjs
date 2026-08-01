@@ -501,6 +501,28 @@ export function renderComponent(def, elements, keyOf) {
   };
 
   for (const r of def.rules) {
+    /* A STATE IS AN ANCHOR TOO, and it emits nothing here. Its own classes are
+       already gathered under the rule it hangs off — `stateEntriesOf` above —
+       so all this records is the SUFFIX a descendant of it would have to wear.
+       `ask-fab` is the block that needed it: `.ask-fab[data-collapsed]
+       .ask-fab__label` is a part scoped to a state, which the format has
+       described since the ordered list landed (a state owns no selector for an
+       author to quote, so a NAME is the only way to reach one) and which no
+       definition had yet written. The scope composes exactly as a `contains`
+       does — `[&[data-collapsed]_.ask-fab__label]:` compiles to the selector
+       components.css writes, and nothing here decides anything else.
+
+       A LIST SUFFIX REGISTERS NOTHING, and it does not have to: the loader
+       already refuses a part scoped within a state whose `suffix` is a selector
+       list, because a list has no single selector to descend from. If that ever
+       gains an answer, this is the second place that has to learn it. */
+    if (r.kind === "state") {
+      if (!Array.isArray(r.suffix)) {
+        const parent = anchor(r, r.of);
+        scopeByName.set(r.name, { scope: parent.scope + r.suffix, host: parent.host });
+      }
+      continue;
+    }
     const owner = r.kind === "contains" ? r.of : r.kind === "part" && r.within ? r.within : null;
     if (owner === null) continue;
     const parent = anchor(r, owner);

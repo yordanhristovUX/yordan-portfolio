@@ -1985,7 +1985,7 @@ body:has(.menu[data-open]) { overflow: hidden; }
 }
 @media print { .menu { display: none; } }
 
-/* ---- authored:ask-fab — unnamed-condition ---- */
+/* ---- generated:ask-fab — do not edit, source: components/ask-fab/definition.json ---- */
 /* ============ Ask FAB (floating chat pill) ============ @component ask-fab
    The chat action's mobile form. Below 700px Ask leaves the docked bar for
    the bottom-right corner — where messages are expected — as a floating
@@ -2059,7 +2059,16 @@ body:has(.menu[data-open]) { overflow: hidden; }
 }
 .ask-fab[data-collapsed] { gap: 0; padding: 2px; }
 .ask-fab[data-collapsed] .ask-fab__label { max-width: 0; opacity: 0; }
+/* ---- /generated:ask-fab ---- */
 
+/* ---- authored:ask-fab — unnamed-condition ---- */
+/* THE TWO CONDITIONS THIS SYSTEM CANNOT NAME, and the rest of the block is
+   generated from components/ask-fab/definition.json above. `$conditions` in
+   tokens.json holds VIEWPORTS, each named for the number it carries; a motion
+   preference and a sheet of paper carry no number, so a name there would put
+   two different questions in one list and `@media {name}` would stop meaning
+   `at this width`. Both rules are one line each and neither has a second
+   reader, which is why they are transcribed nowhere and stay here. */
 @media (prefers-reduced-motion: reduce) {
   .ask-fab, .ask-fab__label { transition: none; }
 }

@@ -1,0 +1,138 @@
+{
+  "$doc": "The floating chat pill's appearance, as data — the source of the `@component ask-fab` block's GENERATED CORE in css/components.css and of dist/react/ask-fab.tsx. ASK-FAB IS THE FIRST SPLIT BLOCK, and that is the fact worth knowing before reading it: everything here renders into a generated region, and two rules of the same block stay authored below it under their own `authored:ask-fab — unnamed-condition` marker. They are `@media (prefers-reduced-motion: reduce)` and `@media print`, and the reason they stay is the reason the census names — a condition this system cannot name. `$conditions` holds VIEWPORTS, each named for the number it carries; a reduced-motion preference and a print surface are not viewports and have no number, so naming them there would put two things into one list that answer different questions, and `@media {name}` would stop meaning `a width`. The block is therefore accounted for twice over: the core is byte-compared against a fresh render, the remainder declares a reason the scan finds in it, and nothing between the two is unaccounted. See design-system/PATTERNS.md for the third shape and scripts/build.mjs's census for the form.",
+  "$schema": "../definition.schema.json",
+  "id": "ask-fab",
+  "block": {
+    "title": "Ask FAB (floating chat pill)",
+    "note": [
+      "The chat action's mobile form. Below 700px Ask leaves the docked bar for",
+      "the bottom-right corner — where messages are expected — as a floating",
+      "pill: the assistant's face at 2rem (a portrait's first step up from the",
+      "bar's 1.25rem mark) plus the full label. Past the top of the page the",
+      "label folds away and a circle with the face is what remains; js/fab.js",
+      "toggles `data-collapsed` and nothing else, so CSS owns the fold the same",
+      "way it owns every other state here.",
+      "",
+      "THE BLUE IS THE GROUND, exactly as it is in the bar — the owner's call,",
+      "reversing an earlier version that dressed the pill in chrome with the",
+      "accent as a ring around the face. That version optimised for quietness,",
+      "and quiet was the wrong brief: this is the page's ONE primary action and",
+      "the only route to the assistant on a phone, and a solid brand-coloured",
+      "bubble is what a decade of chat widgets has taught readers to look for.",
+      "The system's own rule says it plainly — the primary action wears the",
+      "accent — and it should not stop being true at 699px.",
+      "",
+      "No hairline, matching `.bar__action` (the bar's accent segment draws no",
+      "border either); the 2px offset shadow STAYS, because that shadow is what",
+      "makes a floating object one of this site's printed things rather than a",
+      "generic material FAB. Hover commits to the ink, same as the bar: blue at",
+      "rest is an invitation, ink is what it looks like once you are in it.",
+      "",
+      "It replaces the theme puck at this corner; the puck's mobile home is the",
+      "menu sheet. Same z tier as the puck had: under the menu (300) and the",
+      "drawer (400), so an open sheet covers it."
+    ]
+  },
+  "root": ".ask-fab",
+  "rules": [
+    {
+      "kind": "base",
+      "$doc": "The pill at rest: a fixed object in the bottom-right corner, hidden until the viewport is narrow enough for the rule under it to show it. `display: none` in the base and `flex` under the condition is the honest order — the desktop case is the default and the phone is the exception, which is the same way round as the bar it replaces.",
+      "declarations": [
+        { "set": { "position": "fixed" } },
+        { "set": { "bottom": "1rem", "right": "1rem" } },
+        { "set": { "z-index": "90" } },
+        { "set": { "display": "none" } },
+        { "set": { "align-items": "center", "gap": { "token": "space-2" } } },
+        {
+          "note": [
+            "2px, not a space token: it is a rim, not a padding step — the face fills",
+            "the pill to within a hairline of blue, the owner's call. The right side",
+            "keeps a real step so the label can breathe."
+          ],
+          "set": { "padding": ["2px", { "token": "space-4" }, "2px", "2px"] }
+        },
+        { "set": { "border-radius": "999px" } },
+        { "set": { "background": { "token": "accent" } } },
+        { "set": { "color": { "token": "content-inverse" } } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-xs" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide-sm" } } },
+        { "set": { "white-space": "nowrap" } },
+        { "set": { "box-shadow": ["2px", "2px", "0", { "token": "shadow-drop" }] } },
+        { "set": { "transition": "gap 0.28s, padding 0.28s, transform 0.2s, background-color 0.2s" } }
+      ]
+    },
+    {
+      "kind": "at",
+      "condition": "below-699",
+      "inline": true,
+      "$doc": "MOBILE ONLY, and the number is the one the bar gives up at. 699 rather than 700 because the bar's own query claims 700 and above; the two are one decision written from both sides, which is exactly the drift a named condition closes — `below-699` is consumed here and by nav, and neither block can move it alone.",
+      "rules": [{ "of": "base", "declarations": [{ "set": { "display": "flex" } }] }]
+    },
+    {
+      "kind": "state",
+      "name": "hover",
+      "of": "base",
+      "suffix": ":hover",
+      "$doc": "Hover commits to the ink, same as the bar: blue at rest is an invitation, ink is what it looks like once you are in it. The 1px lift is the shadow's, not the pill's — the offset shadow stays put and the object rises off it.",
+      "declarations": [{ "set": { "background": { "token": "primary" }, "transform": "translateY(-1px)" } }]
+    },
+    {
+      "kind": "part",
+      "name": "face",
+      "selector": ".ask-fab__face",
+      "break": true,
+      "$doc": "The assistant's portrait, filling the pill. A part rather than a variant because it is a second element inside the button, and it is the only thing left once the label folds.",
+      "declarations": [
+        { "set": { "display": "block" } },
+        {
+          "note": [
+            "2.75rem: the 48px pill minus the 2px rim on each side. The face IS the",
+            "pill now — at 44px the drawing reads as a portrait outright, and the",
+            "blue survives as the rim, the label's ground and the collapsed ring."
+          ],
+          "set": { "width": "2.75rem", "height": "2.75rem" }
+        },
+        { "set": { "flex": "none" } },
+        { "set": { "border-radius": "50%" } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "label",
+      "selector": ".ask-fab__label",
+      "break": true,
+      "note": [
+        "The fold: max-width, not display — a label that vanishes in one frame",
+        "reads as a glitch, one that folds reads as the pill closing. 12rem is a",
+        "ceiling comfortably past the label's real width; the transition's visible",
+        "speed is set by the distance, so keep the ceiling honest if the label",
+        "changes."
+      ],
+      "$doc": "The words. Its note is a RULE note rather than a group note because it explains the whole rule — the choice of max-width, the ceiling, and what sets the speed — and the stylesheet writes it above the selector, which is the distinction the two note keys record.",
+      "declarations": [
+        { "set": { "max-width": "12rem" } },
+        { "set": { "overflow": "hidden" } },
+        { "set": { "opacity": "1" } },
+        { "set": { "transition": "max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s" } }
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "collapsed",
+      "of": "base",
+      "suffix": "[data-collapsed]",
+      "$doc": "The folded pill: the rim on all four sides and no gap, so what is left is a circle the width of the face. An ATTRIBUTE state — js/fab.js toggles `data-collapsed` and writes nothing else, so the fold is CSS's the same way `:hover` is. It is the first suffix in the vocabulary that is a data attribute rather than a pseudo-class, and pipeline 2 renders it as the arbitrary variant `[&[data-collapsed]]:` for the reason `:hover` is rendered arbitrarily: a shorter class that compiles to a different selector is not a transcription.",
+      "declarations": [{ "set": { "gap": "0", "padding": "2px" } }]
+    },
+    {
+      "kind": "part",
+      "name": "label-folded",
+      "within": "collapsed",
+      "class": ".ask-fab__label",
+      "$doc": "The label, folded away. Scoped to the STATE rather than given a modifier, which is the shape only a named reference can reach — `.ask-fab[data-collapsed]` owns no selector an author could quote, and this is the third block to need that (media's `.ph:has(img) .ph__label` and drawer's sheet are the others). The accessible name does not fold with it: it is an `aria-label` on the button and spec.md is where that rule lives.",
+      "declarations": [{ "set": { "max-width": "0", "opacity": "0" } }]
+    }
+  ]
+}

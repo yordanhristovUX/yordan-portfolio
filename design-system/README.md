@@ -39,7 +39,7 @@ dist/react/*.tsx        generated typed React components, one per definition (+ 
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
 css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 13 generated,
-                        13 authored, each with a marker naming its reason)
+                        12 authored, 1 SPLIT, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -106,6 +106,19 @@ two kinds, the reason is in the vocabulary, and the scan actually finds that fea
 block. A reason that has stopped being true is a block that should now be a definition, and
 the build says so by name. The count is reported on every `--check`, which is how "the file
 stopped being authored" becomes a number that moves rather than a claim.
+
+**A block may also be BOTH, and `ask-fab` is the first.** `PATTERNS.md` predicted the third
+shape in one sentence and nothing had needed it: a generated core plus a small authored
+remainder. ask-fab is a definition with a two-rule tail — `@media (prefers-reduced-motion:
+reduce)` and `@media print`, conditions this system deliberately does not name, because
+`$conditions` holds *viewports* and each is named for the number it carries. So the region
+closes inside the block and the remainder carries its own
+`/* ---- authored:ask-fab — unnamed-condition ---- */`, from the same closed vocabulary. Two
+things make that a census entry rather than a loophole: the remainder's reason is scanned
+**for the remainder alone** — a reason satisfied by the generated half would be saying
+nothing, since that half is expressible by construction — and a region that opens above one
+banner and fails to close before the next is a failure by name. The `--check` line counts
+the three kinds separately.
 
 Same idiom as the `<!-- content:… -->` regions of `index.html`, and the same rule: **never
 edit inside one.** `scripts/build.mjs --check` re-renders every region *in memory* and
@@ -268,11 +281,17 @@ Beyond the shape, the build checks four things a schema structurally cannot:
 
 - **A binding resolves.** `{"token": "typoo"}` would emit `var(--typoo)` and render nothing,
   silently, in both pipelines.
-- **A structural literal stays structural.** A colour, a `font-size`, or a non-zero spacing
-  value written as a plain string is refused. `check-css.mjs` enforces exactly this in CSS and
-  has never read a `.json` — without this the definitions would be the one door into the
-  system that the stylesheet gate does not watch. `font-weight` and `letter-spacing` are
-  deliberately *not* on that list: they have no token tier, so a literal is the honest answer.
+- **A structural literal stays structural.** A colour, a `font-size`, or a rhythm value
+  written as a plain string is refused. `check-css.mjs` enforces the first two in CSS and has
+  never read a `.json` — without this the definitions would be the one door into the system
+  that the stylesheet gate does not watch. **The rhythm half is the one rule here that the CSS
+  gate does not also make**, which is why `ask-fab` re-derived it rather than routing round
+  it: a guard that only keeps blocks *out* of the format is defending nothing. Placement
+  (`top`/`right`/`bottom`/`left`/`inset`) left the set — `--space-*` is space inside and
+  between things, and where a fixed pill sits against the viewport is neither — and a px below
+  the ramp's first step is structure, because the ramp is rem and starts at `space-1`: 2px is
+  a rim, the same argument `0` has always had. `font-weight` and `letter-spacing` used to be
+  exempt for want of a tier; R4 minted the tiers, so the exemption expired with its reason.
 - **A modifier's selector is its root plus its name.** `.btn--solid` is stated in the file, so
   the CSS stays transcribed rather than assembled, and checked, so the two cannot disagree.
 - **The two claims below hold.**
@@ -560,7 +579,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly twenty** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly twenty-one** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -587,6 +606,7 @@ published.
 "@yordan/design-system/react/section-head"
 "@yordan/design-system/react/media"          // R4 batch 2, with `contains` and `child`
 "@yordan/design-system/react/profile"
+"@yordan/design-system/react/ask-fab"        // the first SPLIT block — core here, tail authored
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —

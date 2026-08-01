@@ -5,6 +5,21 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.9.0 — 2026-08-01
+
+Minor — 8 change(s).
+
+### Added
+
+- definition `ask-fab .ask-fab @below-699` added
+- definition `ask-fab .ask-fab__face` added
+- definition `ask-fab .ask-fab__label` added
+- definition `ask-fab .ask-fab:hover` added
+- definition `ask-fab .ask-fab[data-collapsed] .ask-fab__label` added
+- definition `ask-fab .ask-fab[data-collapsed]` added
+- definition `ask-fab .ask-fab` added
+- export `./react/ask-fab` added
+
 ## 1.8.0 — 2026-08-01
 
 Minor — 19 change(s).

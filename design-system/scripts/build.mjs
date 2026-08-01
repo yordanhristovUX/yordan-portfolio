@@ -61,7 +61,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 /* PIPELINE 1 — the component-CSS emitter. Its header documents the definition
    format and why the WRITE side of it lives there rather than here. */
-import { PILOT, definitionPath, loadAll, renderAll, checkRegions, openMarker } from "./emit-css.mjs";
+import { PILOT, definitionPath, loadAll, renderAll, checkRegions, openMarker, closeMarker } from "./emit-css.mjs";
 /* PIPELINE 2 — the same definitions, rendered for a Tailwind + React consumer.
    Both artefact sets are written through `packaged` below, so both are
    byte-compared by --check rather than regenerated in place. */
@@ -501,6 +501,7 @@ const packaged = [
   ["dist/react/section-head.tsx", reactSource("section-head")],
   ["dist/react/media.tsx", reactSource("media")],
   ["dist/react/profile.tsx", reactSource("profile")],
+  ["dist/react/ask-fab.tsx", reactSource("ask-fab")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by
@@ -719,7 +720,15 @@ const blocks = [];
   }
   marks.forEach((mk, i) => {
     const end = i + 1 < marks.length ? marks[i + 1].start : componentsCss.length;
-    blocks.push({ ...mk, body: componentsCss.slice(mk.start, end) });
+    /* A BLOCK'S BODY IS ITS OWN BYTES. Every banner but the first has a census
+       marker on the line above it, so slicing banner-to-banner ends each block
+       with the first line of the next one. That was invisible while the body was
+       only ever comment-stripped and scanned — and it stopped being invisible
+       the moment the census started reading what follows a region's CLOSE
+       marker as this block's authored remainder, because then every generated
+       block appeared to have a one-line remainder that was somebody else's
+       marker. */
+    blocks.push({ ...mk, body: componentsCss.slice(mk.start, end).replace(/\/\* ---- [^\n]*\n?$/, "") });
   });
 }
 
@@ -842,15 +851,107 @@ const AUTHORED_REASONS = {
 /** The last non-blank line before an offset — where a region or census marker sits. */
 const markerAbove = (text, at) => text.slice(0, at).trimEnd().split("\n").pop() ?? "";
 
+/* THE THIRD SHAPE, AND `ask-fab` IS THE BLOCK THAT ASKED FOR IT.
+
+   PATTERNS.md predicted it in one sentence — "splitting a block into a
+   generated core and a small authored region is a legitimate third shape, and
+   the marker scheme above already supports it" — and then two blocks that
+   looked like candidates generated whole, so nothing had to build it. ask-fab
+   is the first that cannot: every rule in it transcribes except the last two,
+   `@media (prefers-reduced-motion: reduce)` and `@media print`. Both are
+   conditions this system deliberately does not name — `$conditions` holds
+   viewports, each named for the number it carries, and neither of those has a
+   number — so the block is a definition with a two-rule tail.
+
+   The two ways of avoiding the shape were both worse. Leaving the whole block
+   authored keeps sixty lines out of the format over two, which is the census
+   measuring the wrong thing; naming `prefers-reduced-motion` in `$conditions`
+   puts two different questions in one list and makes `@media {name}` stop
+   meaning "at this width".
+
+   WHAT A SPLIT BLOCK IS, PRECISELY: one banner, one generated region that
+   OPENS above that banner and closes inside the block, and a remainder that is
+   everything after the close marker. The remainder carries the same
+   `/* ---- authored:<id> — <reason> ---- ` marker an authored block does, from
+   the same closed vocabulary, and its reason is scanned FOR THE REMAINDER
+   ALONE rather than for the block — which is the whole point of separating
+   them. A reason satisfied by the generated half would be a reason that says
+   nothing: the generated half is, by construction, expressible.
+
+   So a block is now exactly one of THREE things, and the count says which. */
 {
   const problems = [];
   let generatedBlocks = 0;
+  let splitBlocks = 0;
   const byReason = {};
+
+  /** Hold one marker to the vocabulary and to the scan. `scan` is what the
+   *  reason must be found in — the block for an authored block, the remainder
+   *  alone for the authored half of a split one. */
+  const checkReason = (what, owner, id, reason, scan) => {
+    if (id !== owner) {
+      problems.push(`${what} is marked \`authored:${id}\` and its banner says \`@component ${owner}\``);
+      return false;
+    }
+    const entry = AUTHORED_REASONS[reason];
+    if (!entry) {
+      problems.push(
+        `${what} is authored for the reason \`${reason}\`, which is not in the closed vocabulary\n` +
+          `      (${Object.keys(AUTHORED_REASONS).join(" | ")}). A reason nobody has to justify is a reason nobody checks.`
+      );
+      return false;
+    }
+    if (!entry.found(scan)) {
+      problems.push(
+        `${what} declares \`${reason}\` — ${entry.what} — and the scan finds none in it.\n` +
+          `      A reason that has stopped being true is a block that should now be a definition. Migrate it, or\n` +
+          `      change the marker to the reason that is actually load-bearing.`
+      );
+      return false;
+    }
+    byReason[reason] = (byReason[reason] ?? 0) + 1;
+    return true;
+  };
+
   for (const b of blocks) {
     const above = markerAbove(componentsCss, b.start);
     if (above === openMarker(b.owner)) {
-      generatedBlocks++;
-      b.kind = "generated";
+      const close = closeMarker(b.owner);
+      const at = b.body.indexOf(close);
+      /* A region that opens above this banner and closes after the NEXT one is
+         not a split block, it is a region swallowing a block — and the block it
+         swallowed would never be counted. */
+      if (at === -1) {
+        problems.push(
+          `block "${b.title}" opens the \`generated:${b.owner}\` region above its banner and does not close it before the\n` +
+            `      next block. A region belongs to one block.`
+        );
+        continue;
+      }
+      const tail = b.body.slice(at + close.length);
+      if (!tail.trim()) {
+        generatedBlocks++;
+        b.kind = "generated";
+        continue;
+      }
+      /* A SPLIT BLOCK. The remainder is scanned on its own, so it is given the
+         same shape a block has — the selector and body reads the vocabulary's
+         `found` functions do. */
+      b.kind = "split";
+      const first = tail.trim().split("\n")[0];
+      const m2 = AUTHORED_MARKER.exec(first);
+      if (!m2) {
+        problems.push(
+          `block "${b.title}" has ${tail.trim().split("\n").length} line(s) after its \`generated:${b.owner}\` region closes, and the\n` +
+            `      first of them is not a census marker. A block may be a generated CORE plus an authored REMAINDER —\n` +
+            `      ask-fab's two unnameable at-rules are why the shape exists — but the remainder accounts for itself:\n` +
+            `      write \`/* ---- authored:${b.owner} — <reason> ---- */\` on the line the region's close marker is followed by.`
+        );
+        continue;
+      }
+      const remainder = { body: tail, selectors: selectorsIn(tail) };
+      b.reason = m2[2];
+      if (checkReason(`the authored remainder of block "${b.title}"`, b.owner, m2[1], m2[2], remainder)) splitBlocks++;
       continue;
     }
     const m = AUTHORED_MARKER.exec(above);
@@ -863,39 +964,19 @@ const markerAbove = (text, at) => text.slice(0, at).trimEnd().split("\n").pop() 
       );
       continue;
     }
-    const [, id, reason] = m;
     b.kind = "authored";
-    b.reason = reason;
-    if (id !== b.owner) {
-      problems.push(`block "${b.title}" is marked \`authored:${id}\` and its banner says \`@component ${b.owner}\``);
-      continue;
-    }
-    const entry = AUTHORED_REASONS[reason];
-    if (!entry) {
-      problems.push(
-        `block "${b.title}" is authored for the reason \`${reason}\`, which is not in the closed vocabulary\n` +
-          `      (${Object.keys(AUTHORED_REASONS).join(" | ")}). A reason nobody has to justify is a reason nobody checks.`
-      );
-      continue;
-    }
-    if (!entry.found(b)) {
-      problems.push(
-        `block "${b.title}" declares \`${reason}\` — ${entry.what} — and the scan finds none in it.\n` +
-          `      A reason that has stopped being true is a block that should now be a definition. Migrate it, or\n` +
-          `      change the marker to the reason that is actually load-bearing.`
-      );
-      continue;
-    }
-    byReason[reason] = (byReason[reason] ?? 0) + 1;
+    b.reason = m[2];
+    checkReason(`block "${b.title}"`, b.owner, m[1], m[2], b);
   }
   if (problems.length) {
     console.error(`✗ census check failed — css/components.css is an assembly, and every block must say which half it is in:\n  - ${problems.join("\n  - ")}`);
     process.exit(1);
   }
   if (CHECK) {
+    const authoredBlocks = blocks.length - generatedBlocks - splitBlocks;
     console.log(
-      `✓ census check           (${blocks.length} blocks: ${generatedBlocks} generated, ${blocks.length - generatedBlocks} authored — ` +
-        `${Object.entries(byReason).sort((a, b2) => b2[1] - a[1]).map(([r, n]) => `${n} ${r}`).join(", ")})`
+      `✓ census check           (${blocks.length} blocks: ${generatedBlocks} generated, ${authoredBlocks} authored, ` +
+        `${splitBlocks} split — ${Object.entries(byReason).sort((a, b2) => b2[1] - a[1]).map(([r, n]) => `${n} ${r}`).join(", ")})`
     );
   }
 }

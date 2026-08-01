@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -1423,6 +1423,74 @@
       "declarations": {
         "padding-right": "0"
       }
+    },
+    "ask-fab .ask-fab": {
+      "kind": "base",
+      "declarations": {
+        "align-items": "center",
+        "background": "{accent}",
+        "border-radius": "999px",
+        "bottom": "1rem",
+        "box-shadow": "2px 2px 0 {shadow-drop}",
+        "color": "{content-inverse}",
+        "display": "none",
+        "font-family": "{font-mono}",
+        "font-size": "{text-xs}",
+        "gap": "{space-2}",
+        "letter-spacing": "{tracking-wide-sm}",
+        "padding": "2px {space-4} 2px 2px",
+        "position": "fixed",
+        "right": "1rem",
+        "transition": "gap 0.28s, padding 0.28s, transform 0.2s, background-color 0.2s",
+        "white-space": "nowrap",
+        "z-index": "90"
+      }
+    },
+    "ask-fab .ask-fab:hover": {
+      "kind": "base state",
+      "declarations": {
+        "background": "{primary}",
+        "transform": "translateY(-1px)"
+      }
+    },
+    "ask-fab .ask-fab[data-collapsed]": {
+      "kind": "base state",
+      "declarations": {
+        "gap": "0",
+        "padding": "2px"
+      }
+    },
+    "ask-fab .ask-fab @below-699": {
+      "kind": "base at below-699",
+      "declarations": {
+        "display": "flex"
+      }
+    },
+    "ask-fab .ask-fab__face": {
+      "kind": "part",
+      "declarations": {
+        "border-radius": "50%",
+        "display": "block",
+        "flex": "none",
+        "height": "2.75rem",
+        "width": "2.75rem"
+      }
+    },
+    "ask-fab .ask-fab__label": {
+      "kind": "part",
+      "declarations": {
+        "max-width": "12rem",
+        "opacity": "1",
+        "overflow": "hidden",
+        "transition": "max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s"
+      }
+    },
+    "ask-fab .ask-fab[data-collapsed] .ask-fab__label": {
+      "kind": "scoped part",
+      "declarations": {
+        "max-width": "0",
+        "opacity": "0"
+      }
     }
   },
   "exports": {
@@ -1485,6 +1553,9 @@
     },
     "./react/profile": {
       "target": "./dist/react/profile.tsx"
+    },
+    "./react/ask-fab": {
+      "target": "./dist/react/ask-fab.tsx"
     }
   }
 }

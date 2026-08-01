@@ -177,7 +177,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -256,7 +256,69 @@ const conditionNames = () => new Set(conditionValues().keys());
    than a type property. */
 const AS_COLOUR = /^(#[0-9a-f]{3,8}|(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\()/i;
 const SIZED = new Set(["font-size"]);
-const SPACED = new Set(["padding", "margin", "gap", "row-gap", "column-gap", "inset", "top", "right", "bottom", "left"]);
+/* SPACED IS RHYTHM, AND IT WAS RE-DERIVED WHEN THE FIRST BLOCK WITH A FIXED
+   POSITION ASKED. `ask-fab` is that block, and it failed this guard three
+   times over — which was worth taking seriously rather than routing round,
+   because the guard is the one rule here that check-css.mjs does NOT also
+   enforce in CSS. Colour, font-size, weight, tracking and width are refused on
+   both sides, so this list only closes a door the stylesheet gate already
+   watches. Spacing is refused HERE and nowhere else, which means an authored
+   block may write a literal its transcription may not — and the block that
+   trips over that does not become cleaner, it stays authored. A rule whose only
+   effect is to keep blocks out of the format it is defending is the wrong rule.
+
+   So the question was the one PATTERNS.md keeps arriving at: not whether the
+   feature is present, but whether the vocabulary is finite. Two answers, each
+   forced by a real declaration:
+
+   PLACEMENT IS NOT RHYTHM, so `top` / `right` / `bottom` / `left` / `inset`
+   left the set. `--space-*`'s own $doc scopes the ramp to space INSIDE a
+   component and space BETWEEN things; where a positioned element sits is
+   neither. The file agrees and always has — the eight placement declarations in
+   components.css are `inset: 0` (×4), `.peek`'s `top: 0; left: 0`, `.bar`'s
+   `top: 1rem; left: 0; right: 0`, `.theme`'s `top: 50%` and
+   `left: calc(100% + 0.75rem)`, and `.ask-fab`'s `bottom: 1rem; right: 1rem`.
+   ONE of them binds a token: `.card__more`'s `right: var(--pad); bottom:
+   var(--space-3)`, and it is the one that is inside a card rather than against
+   the viewport. A guard demanding a rhythm step for `top: 50%` was not
+   enforcing a decision this system had made.
+
+   A PX BELOW THE RAMP'S FIRST STEP IS STRUCTURE, not a step, and cannot become
+   one. The ramp is rem and starts at `space-1`; 1px, 2px and 3px are hairlines
+   and rims, which is the same argument the `0` exemption already makes out loud
+   ("zero is not a step") and the same one PATTERNS.md makes for the 2px inside
+   section-head's `expr` — a border width is structure and has no tier to come
+   from. ask-fab's `padding: 2px var(--space-4) 2px 2px` is the pill's rim, its
+   own spec.md says so in as many words, and the right-hand side keeps a real
+   step in the same declaration. THE BOUND IS READ FROM tokens.json rather than
+   written here, so it moves with the ramp instead of pinning a number this file
+   would have no way to justify. */
+const SPACED = new Set(["padding", "margin", "gap", "row-gap", "column-gap"]);
+/** The ramp's first step in px — the line under which a literal is a rim.
+ *  `space-1` and nothing else: the fixed ramp's floor is the smallest thing the
+ *  ramp can say, so a value below it is one the ramp could not have said. */
+let rampFloorCache = null;
+function rampFloorPx() {
+  if (rampFloorCache !== null) return rampFloorCache;
+  const tokens = JSON.parse(readFileSync(join(root, "tokens", "tokens.json"), "utf8"));
+  const first = tokens.space?.["space-1"];
+  const m = typeof first === "string" ? /^([\d.]+)rem$/.exec(first) : null;
+  if (!m) {
+    throw new Error(
+      `scripts/emit-css.mjs cannot read \`space.space-1\` from tokens/tokens.json as a rem value (got ${JSON.stringify(first)}). ` +
+        `The spacing guard's floor is derived from the ramp's first step; if the ramp changed units, re-derive it there rather ` +
+        `than pinning a number here.`
+    );
+  }
+  rampFloorCache = Number(m[1]) * 16;
+  return rampFloorCache;
+}
+/** `2px` under a 4px floor → a rim. Anything in rem is speaking the ramp's own
+ *  unit and gets no exemption, whatever its size. */
+const isRim = (t) => {
+  const m = /^(-?[\d.]+)px$/.exec(t.trim());
+  return m !== null && Math.abs(Number(m[1])) < rampFloorPx();
+};
 /** prop → the tier a literal should have come from. */
 const TIERED = {
   "font-weight": ["--weight-*", "the six steps of the weight tier"],
@@ -555,8 +617,12 @@ export function checkDefinition(def, id, rel) {
         bad(`\`${where}\` writes \`${prop}: ${t}\` as a structural literal. R4 minted ${tier} — ${what} — so bind one; this was legal until the tier existed and stopped being legal the day it did`);
       } else if (SIZED.has(prop)) {
         bad(`\`${where}\` writes \`${prop}: ${t}\` as a structural literal. Every size is a --text-* step; bind one, or add a step to tokens.json if none fits`);
-      } else if (SPACED.has(prop) && t.trim() !== "0") {
-        bad(`\`${where}\` writes \`${t}\` on \`${prop}\` as a structural literal. Every spacing step is a --space-* token; \`0\` is the one literal this allows, because zero is not a step`);
+      } else if (SPACED.has(prop) && t.trim() !== "0" && !isRim(t)) {
+        bad(
+          `\`${where}\` writes \`${t}\` on \`${prop}\` as a structural literal. Every rhythm step is a --space-* token; the two ` +
+            `literals this allows are \`0\`, because zero is not a step, and a px under ${rampFloorPx()}px, because the ramp starts ` +
+            `at \`space-1\` and a rim below its first step is structure the ramp could not have said`
+        );
       }
     }
   });

@@ -38,3 +38,5 @@ export { media, Media, mediaLabel, MediaLabel, mediaGrid, MediaGrid } from "./me
 export type { MediaProps, MediaVariants, MediaLabelProps, MediaGridProps } from "./media";
 export { profile, Profile } from "./profile";
 export type { ProfileProps, ProfileVariants } from "./profile";
+export { askFab, AskFab, askFabFace, AskFabFace, askFabLabel, AskFabLabel } from "./ask-fab";
+export type { AskFabProps, AskFabVariants, AskFabFaceProps, AskFabLabelProps } from "./ask-fab";

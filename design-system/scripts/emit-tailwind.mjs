@@ -568,7 +568,17 @@ export function utilitiesFor(prop, value, keyOf, where) {
    tier".
 
    The other five keep their idiomatic Tailwind variant because those compile
-   to a bare selector already: only `hover` is wrapped. */
+   to a bare selector already: only `hover` is wrapped.
+
+   `[data-collapsed]` IS THE SECOND ONE WRAPPED, and for the same reason rather
+   than a new one. `ask-fab` is the block that added it — js/fab.js toggles one
+   attribute and CSS owns the fold — and Tailwind v4 does have a data-attribute
+   variant to reach for. Two of them, in fact: `data-collapsed:` as a boolean
+   shorthand and `data-[collapsed]:` as the explicit form, and which of those a
+   consumer's version compiles, and to what, is a fact about their Tailwind
+   rather than about this definition. The arbitrary variant compiles to exactly
+   the attribute selector components.css writes, at every version, which is the
+   only property this emitter is allowed to care about. */
 export const STATE_PREFIX = {
   ":hover": "[&:hover]:",
   ":focus": "focus:",
@@ -576,4 +586,5 @@ export const STATE_PREFIX = {
   ":active": "active:",
   ":disabled": "disabled:",
   "[disabled]": "disabled:",
+  "[data-collapsed]": "[&[data-collapsed]]:",
 };

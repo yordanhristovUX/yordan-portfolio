@@ -139,6 +139,18 @@ than a schema that can express everything and therefore constrains nothing.
   string never is. Whether that holds for the remaining seventeen is decided one block at a
   time, with the block in front of you — which is the method this note argued for.
 
+  **The third shape landed, and `ask-fab` is what needed it.** Every rule in that block
+  transcribes except its last two — `@media (prefers-reduced-motion: reduce)` and
+  `@media print` — and both are conditions this system will not name, because `$conditions`
+  holds *viewports* named for the number each carries and neither of those has a number. So
+  the block is a definition with a two-rule tail. One sentence of this note needed correcting
+  to build it: *"the marker scheme above already supports it"* is true of the **marker** and
+  was not true of the **census**, which read one marker per banner and would have counted a
+  remainder as nothing at all. A split block is now: one banner, a region that opens above it
+  and closes inside it, and a remainder carrying its own `authored:` marker whose reason is
+  scanned **for the remainder alone**. That last clause is the whole of why it is not a
+  loophole — a reason satisfied by the generated half would be a reason that says nothing.
+
 ### `at-rule` was the wrong half of the mechanical test, and `entry` and `fact` are why
 
 The test above puts a block in the authored column if it needs an at-rule. Both of those
