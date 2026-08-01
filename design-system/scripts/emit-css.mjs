@@ -7,6 +7,12 @@
                                         css/components.css and write it
    `node scripts/emit-css.mjs --check`  render and compare, write nothing
                                         (the same comparison build.mjs runs)
+   `node scripts/emit-css.mjs --validate <path>`
+                                        run the loader over ONE definition
+                                        document, wherever it sits. For a
+                                        caller outside this directory that has
+                                        a definition but no component yet — see
+                                        the flag's own note at the foot.
 
    PILOT SCOPE, GROWING. Every id in `PILOT` below has its appearance authored
    as data in components/<id>/definition.json and its CSS block GENERATED from
@@ -163,7 +169,7 @@
    fully generated artefact, and that is the commit that moves the pathspec.
    ============================================================ */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { validate, formatErrors } from "./validate-json.mjs";
 
@@ -418,15 +424,32 @@ export function loadDefinition(id) {
   } catch (e) {
     return { def: null, errors: [`${rel} is not valid JSON — ${e.message}`] };
   }
+  return checkDefinition(def, id, rel);
+}
 
+/**
+ * Everything `loadDefinition` does once the bytes are a document: the schema,
+ * then the checks a schema structurally cannot make. Split out from the read so
+ * that a definition which is not (yet) a file in components/<id>/ can be held to
+ * exactly the same standard — `--validate` below is the one caller that needs
+ * that, and it exists because test/scaffold.test.js has to prove the scaffold
+ * emits a definition this loader accepts. Sharing the function is the point: a
+ * second implementation of "is this valid" would agree with the wrong one.
+ *
+ * @param {object} def parsed definition document
+ * @param {string} id the directory name it must claim
+ * @param {string} rel what to call it in messages
+ * @returns {{def: object|null, errors: string[]}}
+ */
+export function checkDefinition(def, id, rel) {
   /* THE PRE-MIGRATION SHAPE IS NAMED RATHER THAN MERELY REJECTED. `base` and
      `parts` were top-level sections until the rules became one ordered list,
      and the schema's verdict on a file still written that way — "missing
      `rules`, unknown property `base`" — is true and tells a reader nothing
-     about what happened. It also has a live source: ../../scripts/new-component.mjs
-     scaffolds the old shape, and that file is outside this directory's
-     ownership, so this message is what a scaffolded component gets until it is
-     updated. A gate that knows why it failed should say so. */
+     about what happened. ../../scripts/new-component.mjs scaffolded exactly that
+     shape for one release, and no gate caught it, which is why the message names
+     the migration rather than the keys: a gate that knows why it failed should
+     say so, and this one is now also asserted from the scaffold's own test. */
   if (!def.rules && ["base", "variants", "sizes", "parts", "at"].some((k) => k in def)) {
     return {
       def: null,
@@ -1153,6 +1176,45 @@ export function spliceRegions(css, rendered) {
 
 /* ---------- run directly: write ---------- */
 const isMain = process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url;
+if (isMain && process.argv.includes("--validate")) {
+  /* `node scripts/emit-css.mjs --validate <path/to/<id>/definition.json>`
+     — the loader, over one document that does not have to live in components/.
+
+     IT EXISTS FOR A CALLER OUTSIDE THIS DIRECTORY, and that is the whole reason
+     it is a flag rather than an import. ../../scripts/new-component.mjs scaffolds
+     a definition, and for one release it scaffolded the shape this format left
+     behind: `base: {…}` instead of `rules: [{kind: "base", …}]`. Every gate that
+     could have caught it was on the far side of the scaffold actually being run
+     — the block only becomes real when somebody writes the files — so
+     test/scaffold.test.js checks the emitted BYTES, and it can only do that
+     against this loader. scripts/check-boundaries.mjs refuses a root script
+     importing design-system/scripts/, and it is right to; spawning a slice's
+     entry point is how every other consumer of this one already works.
+
+     The id comes from the parent DIRECTORY name, exactly as it does in
+     components/<id>/, so `id` disagreeing with its folder still fails here. */
+  const at = process.argv[process.argv.indexOf("--validate") + 1];
+  if (!at) {
+    console.error(`✗ --validate needs a path to a definition.json`);
+    process.exit(1);
+  }
+  const abs = resolve(at);
+  const id = basename(dirname(abs));
+  let doc;
+  try {
+    doc = JSON.parse(readFileSync(abs, "utf8"));
+  } catch (e) {
+    console.error(`✗ ${at} is not readable as JSON — ${e.message}`);
+    process.exit(1);
+  }
+  const { errors } = checkDefinition(doc, id, at);
+  if (errors.length) {
+    console.error(`✗ ${at} is not a definition this system accepts:\n  - ${errors.join("\n  - ")}`);
+    process.exit(1);
+  }
+  console.log(`✓ definition valid       (${at}, as component \`${id}\`)`);
+  process.exit(0);
+}
 if (isMain) {
   const CHECK = process.argv.includes("--check");
   const path = join(root, "css", "components.css");

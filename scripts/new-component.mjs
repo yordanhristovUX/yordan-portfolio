@@ -180,11 +180,20 @@ export const Default = {
 `;
 
 /* The fourth artefact. Appearance as data, in the smallest shape the schema
-   accepts: an id, a banner, a root and one bound declaration. Everything else —
-   variants, sizes, parts, states, positions, conditions — is OPTIONAL and is
-   added by the block that needs it, which is the discipline the whole format is
-   built on. components/definition.schema.json documents every construct and
-   names the block that forced it. */
+   accepts: an id, a banner, a root and ONE ENTRY IN `rules` — the base rule,
+   tagged by kind like every other entry. `rules` is one ordered list in
+   stylesheet order, and a variant, a size, a part, a state, a contains, a
+   position or an `at` is another entry in it rather than a section of its own;
+   which entry sits where IS the cascade. Everything past the first is added by
+   the block that needs it, which is the discipline the whole format is built
+   on. components/definition.schema.json documents every construct and names the
+   block that forced it.
+
+   THIS SHAPE IS CHECKED, NOT ASSUMED. test/scaffold.test.js runs the design
+   system's own loader over what is below, so the day the format moves again
+   this scaffold fails with the loader's message rather than emitting a file
+   that only the next `npm run build` will reject. It emitted the pre-list
+   `base: {…}` section for one release because nothing did that. */
 const definition = {
   $doc: `TODO(scaffold) — this component's appearance as prose: the decisions the declarations record. Not published; contract-diff.mjs snapshots the resolved declarations and no prose.`,
   $schema: "../definition.schema.json",
@@ -197,7 +206,7 @@ const definition = {
     ],
   },
   root: `.${id}`,
-  base: { declarations: [{ set: { color: { token: TOKEN.replace(/^--/, "") } } }] },
+  rules: [{ kind: "base", declarations: [{ set: { color: { token: TOKEN.replace(/^--/, "") } } }] }],
 };
 const definitionText = JSON.stringify(definition, null, 2) + "\n";
 

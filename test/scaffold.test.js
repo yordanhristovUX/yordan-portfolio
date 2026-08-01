@@ -17,7 +17,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
@@ -105,6 +107,42 @@ test("the CSS the scaffold writes is an empty GENERATED region, not a block", ()
   assert.match(def.block.title, /^[^\n]+$/);
 });
 
+test("the definition the scaffold writes is one the design system's own loader accepts", () => {
+  /* THE GATE GAP THIS CLOSES, because it cost a release. Every assertion above
+     reads the emitted bytes with a regex or a key lookup, and the emitted bytes
+     were `base: { declarations: […] }` for a whole phase after the format made
+     `rules` one ordered list. Nothing failed: the schema, the loader and the
+     emitter all live on the far side of the scaffold actually being RUN, and a
+     dry run never gets there. So the shape was only wrong for whoever ran the
+     tool next.
+
+     The fix is to hold the dry-run output to the real thing rather than to a
+     description of it — design-system/scripts/emit-css.mjs --validate is the
+     loader, and it checks the schema AND everything a schema cannot see (the
+     bindings resolve, no structural literal is smuggling a colour or a size, the
+     references point backwards, the pre-migration sections are named). SPAWNED,
+     never imported: scripts/check-boundaries.mjs makes design-system/scripts
+     private to the design system, and scaffolds and gates alike reach a slice by
+     running its entry point.
+
+     The document is written under a directory named for the component, because
+     the loader takes the id from the parent folder exactly as components/<id>/
+     supplies it — so `id` disagreeing with its directory fails here too. */
+  const dir = join(mkdtempSync(join(tmpdir(), "scaffold-definition-")), COMPONENT_ID);
+  mkdirSync(dir, { recursive: true });
+  const path = join(dir, "definition.json");
+  writeFileSync(path, fileIn(component.plan, "definition.json").contents);
+
+  const res = spawnSync(process.execPath, [at("design-system/scripts/emit-css.mjs"), "--validate", path], {
+    encoding: "utf8",
+  });
+  assert.equal(
+    res.status,
+    0,
+    `the scaffolded definition is not one the loader accepts:\n${res.stderr || res.stdout}`
+  );
+});
+
 test("the spec's frontmatter is valid and every value is one the build allows", () => {
   const spec = fileIn(component.plan, "spec.md").contents;
   const fm = spec.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
@@ -155,12 +193,22 @@ test("every class the spec claims has a rule in the block it ships with", () => 
   const spec = fileIn(component.plan, "spec.md").contents;
   /* Every selector the definition declares — the root, and any modifier or part
      it grows later. The scaffold ships one, and this is the set the emitter will
-     put a rule under, so it is the honest thing to check a claim against. */
+     put a rule under, so it is the honest thing to check a claim against.
+
+     READ OUT OF `rules`, WHICH IS WHERE THEY LIVE. This read was
+     `def.variants ?? []` — three top-level sections that stopped existing when
+     the rules became one ordered list, so it was three empty arrays and the
+     assertion below was `claimed ⊆ {root}` dressed up as something more. A
+     vacuous read is worse than a missing one: it reports coverage. `variants`,
+     `sizes` and `parts` are still derived by the loader as a QUERY over the
+     list, but that view exists in memory after loading and never on disk, and
+     what this test has is the bytes. */
   const def = definitionOf(component.plan);
-  const declared = [
-    def.root,
-    ...[...(def.variants ?? []), ...(def.sizes ?? []), ...(def.parts ?? [])].map((m) => m.selector).filter(Boolean),
-  ];
+  const declared = [def.root, ...(def.rules ?? []).map((r) => r.selector).filter(Boolean)];
+  assert.ok(
+    Array.isArray(def.rules) && def.rules.length > 0,
+    "the definition has no `rules` list — the selectors below would be the root and nothing else, and this test would pass by being empty"
+  );
 
   const claimed = new Set();
   for (const fence of spec.matchAll(/```html\r?\n([\s\S]*?)```/g)) {
