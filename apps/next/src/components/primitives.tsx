@@ -11,8 +11,17 @@
    declarations as Tailwind utilities. Nothing about what these two are for has
    changed — they are still this app's local names for a repeated shape, and
    the design system still owns the appearance. What changed is which of the
-   two pipelines delivers it. See src/app/globals.css. */
-import { Button, button, Chip, ChipGroup } from "@yordan/design-system/react";
+   two pipelines delivers it. See src/app/globals.css.
+
+   THE IMPORTS NAME `./react/<id>` RATHER THAN THE BARREL, here and in every
+   other file in this app, and the reason is an upstream defect written up in
+   full in src/components/ThemeToggle.tsx: `dist/react/theme-toggle.tsx` at
+   2.6.0 does not parse, and the barrel re-exports it. Both routes are on the
+   package's `exports` map, so nothing about the boundary changes — but a
+   per-component import means one broken artefact costs one component instead
+   of the whole tier. */
+import { Button, button } from "@yordan/design-system/react/button";
+import { Chip, ChipGroup } from "@yordan/design-system/react/chip";
 
 import { AppLink } from "@/components/AppLink";
 import { href, isRoute } from "@/lib/routes";

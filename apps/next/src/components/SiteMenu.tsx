@@ -1,5 +1,5 @@
 /* The full-screen menu the bar's mobile segment summons — markup reproduced
-   from index.html @ 2e84323.
+   from index.html @ 2e84323, rendered through @yordan/design-system/react/menu.
 
    It covers the bar (the drawer's precedent), which makes menu and drawer
    mutually exclusive by construction. The links are the bar's own, verbatim,
@@ -11,10 +11,34 @@
    renderings cannot disagree: apply() in src/lib/theme-client.ts rewrites
    every [data-theme-toggle] in the document.
 
-   MOUNT POINT. Closed by CSS (`visibility: hidden` until `data-open`), and
-   nothing here opens it yet — that is the port of js/menu.js, which toggles
-   `data-open` on [data-menu] and nothing else visual. The markup, the id and
-   the aria wiring are already what it expects. */
+   FOUR OF THIS BLOCK'S SEVEN CLASSES SURVIVE THE SWAP, and each one is named
+   by something that is not the React tier — the cutover's rule, stated in full
+   in README.md. `menu` is a SPLIT block: three generated regions with three
+   authored gaps between them, and the gaps are the reason.
+
+     .menu         the `body:has(.menu[data-open])` scroll lock (a foreign
+                   selector — it styles the document, not the component), the
+                   reduced-motion gap, and `@media print { display: none }`.
+                   Also what src/lib/vanilla/menu.ts opens, via [data-menu].
+     .menu__sheet  the same reduced-motion gap, and the port's focus target.
+     .menu__nav    `.menu__nav a + a`, the hairline between two links, which is
+                   an adjacent sibling and therefore one of the three holes.
+                   Also the port's close-on-navigate delegate.
+     .menu__body   `theme-toggle`'s own authored gap, `.menu__body .theme` —
+                   the rule that minted the census reason `foreign-scope`.
+
+   `.menu__head`, `.menu__title` and `.menu__close` are named by nothing else
+   and leave.
+
+   THE PORT'S SELECTORS ARE NOT RE-POINTED, and that is deliberate rather than
+   lazy. src/lib/vanilla/menu.ts is a COPY of js/menu.js; its header says a bug
+   found in it is fixed upstream and re-copied. Rewriting `.menu__sheet` to a
+   data attribute here would fork the copy from its source for a reason the
+   source does not have, and the next re-copy would silently undo it. The class
+   is what the port queries, so the class stays — which the four classes above
+   were going to require anyway. */
+import { Menu, MenuBody, MenuClose, MenuHead, MenuNav, MenuSheet, MenuTitle } from "@yordan/design-system/react/menu";
+
 import { AppLink } from "@/components/AppLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Link } from "@/lib/vanilla-copy";
@@ -22,15 +46,21 @@ import { MENU } from "@/lib/vanilla-copy";
 
 export function SiteMenu({ nav }: { nav: Link[] }) {
   return (
-    <div className="menu" id="site-menu" data-menu="">
-      <div className="menu__sheet" role="dialog" aria-modal="true" aria-label={MENU.title} tabIndex={-1}>
-        <div className="menu__head">
-          <span className="menu__title">{MENU.title}</span>
-          <button className="menu__close" type="button" data-menu-close="">
+    <Menu className="menu" id="site-menu" data-menu="">
+      <MenuSheet
+        className="menu__sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={MENU.title}
+        tabIndex={-1}
+      >
+        <MenuHead>
+          <MenuTitle>{MENU.title}</MenuTitle>
+          <MenuClose type="button" data-menu-close="">
             {MENU.close}
-          </button>
-        </div>
-        <div className="menu__body">
+          </MenuClose>
+        </MenuHead>
+        <MenuBody className="menu__body">
           <ThemeToggle />
           {/* The port closes the sheet on a click on `.menu__nav a`, and a
               <Link> IS an `a` — the delegated listener on `.menu` runs on the
@@ -38,15 +68,15 @@ export function SiteMenu({ nav }: { nav: Link[] }) {
               route changes without a reload. Verified in a browser rather than
               reasoned about: a menu left open over its own destination is the
               exact failure this rule exists to prevent. */}
-          <nav className="menu__nav" aria-label={MENU.title}>
+          <MenuNav className="menu__nav" aria-label={MENU.title}>
             {nav.map((l) => (
               <AppLink key={l.href + l.label} href={l.href}>
                 {l.label}
               </AppLink>
             ))}
-          </nav>
-        </div>
-      </div>
-    </div>
+          </MenuNav>
+        </MenuBody>
+      </MenuSheet>
+    </Menu>
   );
 }
