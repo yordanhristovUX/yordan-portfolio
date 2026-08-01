@@ -28,3 +28,7 @@ export { linkGrid, LinkGrid } from "./link-grid";
 export type { LinkGridProps, LinkGridVariants } from "./link-grid";
 export { caseBody, CaseBody } from "./case-body";
 export type { CaseBodyProps, CaseBodyVariants } from "./case-body";
+export { fact, Fact, factFact, FactFact, factNum, FactNum, factTitle, FactTitle, factLabel, FactLabel } from "./fact";
+export type { FactProps, FactVariants, FactFactProps, FactNumProps, FactTitleProps, FactLabelProps } from "./fact";
+export { entry, Entry, entryRole, EntryRole, entryOrg, EntryOrg, entrySpan, EntrySpan, entryLede, EntryLede, entryList, EntryList } from "./entry";
+export type { EntryProps, EntryVariants, EntryRoleProps, EntryOrgProps, EntrySpanProps, EntryLedeProps, EntryListProps } from "./entry";

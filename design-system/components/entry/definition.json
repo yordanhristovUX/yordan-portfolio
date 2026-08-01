@@ -1,0 +1,207 @@
+{
+  "$doc": "Entry's appearance, as data — the source of the `@component entry` block in css/components.css and of dist/react/entry.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. ENTRY IS THE BLOCK THAT PUT `positions` ON THE ROOT and `note` ON A RULE. An entry is a row in a run of entries and the last one drops its divider — a fact about the root, not about anything inside it — and `.entry__span` carries a one-line comment that explains the whole rule and sits above it, which is a different thing from a group note that explains one declaration and sits with it. Moving either to the other's place changes the bytes, which is how you know they are two constructs. Its `at` block names the same condition `fact` does, from tokens.json, which is the first time two blocks in this stylesheet have agreed about a breakpoint on purpose.",
+  "$schema": "../definition.schema.json",
+  "id": "entry",
+  "block": {
+    "title": "Entry — a dated record",
+    "note": [
+      "Experience, education, anything with a role / org / span and a list of",
+      "what happened. The span sits in its own column on wide screens so the",
+      "dates form a readable edge you can scan without reading the roles."
+    ]
+  },
+  "root": ".entry",
+  "base": {
+    "declarations": [
+      { "set": { "display": "grid" } },
+      { "set": { "grid-template-columns": "1fr minmax(9rem, 14rem)" } },
+      { "set": { "gap": [{ "token": "space-2" }, { "token": "space-7" }] } },
+      { "set": { "padding": [{ "token": "space-flow" }, { "token": "pad" }] } },
+      { "set": { "border-bottom": { "token": "rule" } } }
+    ],
+    "positions": [
+      {
+        "name": "closing",
+        "at": "last",
+        "$doc": "The last entry in a run drops its divider, so a list of records ends on the section's own rule rather than on a line of its own. No entry knows how many siblings it has, which is exactly why this is a position and not a modifier the markup has to remember.",
+        "declarations": [{ "set": { "border-bottom": "0" } }]
+      }
+    ]
+  },
+  "parts": [
+    {
+      "name": "role",
+      "selector": ".entry__role",
+      "break": true,
+      "$doc": "What the person was. Display family at the sub step, uppercase — the same voice a case study's section heading uses, one level down from a section title.",
+      "declarations": [
+        {
+          "set": {
+            "font-family": { "token": "font-display" },
+            "font-weight": { "token": "weight-extrabold" }
+          }
+        },
+        { "set": { "font-variation-settings": { "token": "width-sub" } } },
+        { "set": { "font-size": { "token": "text-sub" } } },
+        { "set": { "line-height": "1.1" } },
+        { "set": { "text-transform": "uppercase" } },
+        { "set": { "color": { "token": "content-primary" } } }
+      ]
+    },
+    {
+      "name": "org",
+      "selector": ".entry__org",
+      "$doc": "Where. Body weight lifted to the primary ink, so the role and the organisation read as one line of two weights rather than as a heading and a caption.",
+      "declarations": [
+        {
+          "set": {
+            "font-weight": { "token": "weight-semibold" },
+            "color": { "token": "content-primary" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "org-aside",
+      "within": ".entry__org",
+      "element": ["em"],
+      "$doc": "The qualifier inside the organisation — a contract, a division, a former name. It steps back to muted body weight, which is the only place in this block where emphasis markup means de-emphasis: <em> is the semantics the content pipeline has for \"this is an aside\", and the styling follows the meaning rather than the tag's default.",
+      "declarations": [
+        {
+          "set": {
+            "color": { "token": "content-muted" },
+            "font-weight": { "token": "weight-regular" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "span",
+      "selector": ".entry__span",
+      "break": true,
+      "note": ["Column 2, both rows — the dates line up with the role, not the body."],
+      "$doc": "The dates. Mono, uppercase and right-aligned so that a column of them forms the readable edge the banner describes: you can scan the years without reading the roles.",
+      "declarations": [
+        { "set": { "grid-column": "2", "grid-row": "1 / span 2" } },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        {
+          "set": {
+            "font-size": { "token": "text-xs" },
+            "letter-spacing": { "token": "tracking-wide" }
+          }
+        },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "text-align": "right" } },
+        { "set": { "text-transform": "uppercase" } }
+      ]
+    },
+    {
+      "name": "lede",
+      "selector": ".entry__lede",
+      "$doc": "One sentence of context under the org, in column 1 so it does not run under the dates.",
+      "declarations": [
+        {
+          "set": {
+            "grid-column": "1",
+            "color": { "token": "content-muted" },
+            "font-size": { "token": "text-md" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "list",
+      "selector": ".entry__list",
+      "break": true,
+      "$doc": "What happened, across both columns — the list is the widest thing in the record and has no reason to stop at the date edge.",
+      "declarations": [
+        {
+          "set": {
+            "grid-column": "1 / -1",
+            "list-style": "none",
+            "margin-top": { "token": "space-3" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "item",
+      "within": ".entry__list",
+      "element": ["li"],
+      "$doc": "One thing that happened. `position: relative` is here for the marker below it; the left padding is the space that marker sits in. The measure is wider than a case study's because these are single lines rather than paragraphs.",
+      "declarations": [
+        { "set": { "position": "relative" } },
+        {
+          "set": {
+            "padding": [{ "token": "space-2" }, "0", { "token": "space-2" }, { "token": "space-6" }]
+          }
+        },
+        {
+          "set": {
+            "font-size": { "token": "text-md" },
+            "line-height": "1.55"
+          }
+        },
+        { "set": { "max-width": "52rem" } }
+      ]
+    },
+    {
+      "name": "marker",
+      "within": ".entry__list",
+      "element": ["li"],
+      "pseudo": "::before",
+      "$doc": "The same list mark case-body draws, for the same reason: ::before rather than a character in the text, so it is decoration and is not read out. The two blocks state it twice because they are two blocks — a shared rule would be a third selector belonging to neither.",
+      "declarations": [
+        {
+          "set": {
+            "content": "\"▪\"",
+            "position": "absolute",
+            "left": "0",
+            "top": { "token": "space-2" }
+          }
+        },
+        {
+          "set": {
+            "color": { "token": "primary" },
+            "font-size": { "token": "text-2xs" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "item-emphasis",
+      "within": ".entry__list",
+      "element": ["strong"],
+      "$doc": "Lifts to the primary ink inside a list item. Scoped to the list rather than to the item, which is what the stylesheet says — a <strong> anywhere in the list gets it, not only one directly inside an <li>.",
+      "declarations": [
+        {
+          "set": {
+            "color": { "token": "content-primary" },
+            "font-weight": { "token": "weight-semibold" }
+          }
+        }
+      ]
+    }
+  ],
+  "at": [
+    {
+      "condition": "below-720",
+      "break": true,
+      "$doc": "One column. The dates stop being an edge to scan and become a line of the record like any other, so the span leaves its own column, gives up its row span and aligns left with everything else. The gap collapses to the smallest step because a stacked record is a paragraph rather than a table.",
+      "rules": [
+        {
+          "of": "base",
+          "declarations": [
+            { "set": { "grid-template-columns": "1fr", "gap": { "token": "space-1" } } }
+          ]
+        },
+        {
+          "of": "parts.span",
+          "declarations": [
+            { "set": { "grid-column": "1", "grid-row": "auto", "text-align": "left" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

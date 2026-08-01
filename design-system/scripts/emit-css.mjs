@@ -8,14 +8,13 @@
    `node scripts/emit-css.mjs --check`  render and compare, write nothing
                                         (the same comparison build.mjs runs)
 
-   PILOT SCOPE, GROWING. Seven components (button, chip, stat, footer, source,
-   link-grid, case-body) have their appearance authored as data in
-   components/<id>/definition.json and their CSS block GENERATED from it, and the
-   typography layer is generated from tokens/typography.json beside them. The
-   other fifteen blocks in css/components.css are hand-authored; PATTERNS.md
-   measures which of them can follow and which are page scaffolding that stays.
-   css/components.css is therefore an ASSEMBLY: authored source with eight
-   generated regions bracketed by markers, in the
+   PILOT SCOPE, GROWING. Every id in `PILOT` below has its appearance authored
+   as data in components/<id>/definition.json and its CSS block GENERATED from
+   it, and the typography layer is generated from tokens/typography.json beside
+   them. The rest of css/components.css is hand-authored; PATTERNS.md measures
+   which of those can follow and which are page scaffolding that stays. The file
+   is therefore an ASSEMBLY: authored source with generated regions bracketed by
+   markers, in the
    same idiom as the `<!-- content:… -->` regions of index.html. A region opens
    with a marker naming its source and closes with a slashed one — written here
    without their comment terminators, which would end this comment:
@@ -31,14 +30,17 @@
    the census would have to learn an exception — a gate weakened by a comment
    style. A different rule glyph costs nothing and keeps the census exact.
 
-   THE DEFINITION FORMAT, extracted from what these three blocks genuinely
-   need rather than designed up front (R3 extracts the schema from them):
+   THE DEFINITION FORMAT, extracted from what the real blocks genuinely need
+   rather than designed up front (R3 extracted the schema; R4 grows it one block
+   at a time, and components/definition.schema.json says which block asked for
+   which construct):
 
      block          the CSS banner: { title, note?: [lines] }
      root           the component's own selector, e.g. ".btn"
-     base           { declarations, states? } — the rule for `root`. OPTIONAL
-                    since case-body, whose root is a scope with no appearance:
-                    emitting `.case-body { }` would claim a rule it has not got.
+     base           { declarations, states?, positions?, note? } — the rule for
+                    `root`. OPTIONAL since case-body, whose root is a scope with
+                    no appearance: emitting `.case-body { }` would claim a rule
+                    it has not got.
      variants[]     { name, selector, declarations, states? } — appearance
      sizes[]        { name, selector, declarations, states? } — dimension
      parts[]        a companion selector that is not a modifier of root. Since
@@ -49,20 +51,35 @@
                       { name, selector, … }              chip's `.chips`
                       { name, within, element[], pseudo?, … }   scoped
                     The scoped form is `.link-grid a`, `.case-body p strong`,
-                    `.case-body li::before` — a component styling markup that
+                    `.entry__list li::before` — a component styling markup that
                     carries no classes, which for case-body is deliberate: its
                     prose is compiled from markdown, and a class per element
                     would put styling inside the content pipeline. Both halves
-                    are closed (`within` must be the root, `element` is bare tag
-                    names) so a descendant is the only relation it can say.
+                    are closed — `within` is the root or an earlier part of the
+                    same definition, `element` is bare tag names — so a
+                    descendant is the only relation it can say.
      states[]       { name, suffix, declarations } — suffix is appended to the
                     owner's selector, so `:hover` on `.btn--solid` is a state
                     OF the variant and is emitted straight after it. An ARRAY
                     suffix is a selector list: `[":hover", ":focus-visible"]` is
                     one rule under two selectors.
      positions[]    { name, at, declarations } — where a rule sits among its
-                    siblings, from a CLOSED enum (`first`). A position is what
-                    the document is; a state is what the user does.
+                    siblings, from a CLOSED enum (`first`, `last`). A position is
+                    what the document is; a state is what the user does.
+     at[]           { condition, rules: [{ of, declarations?, positions? }] } —
+                    the @media blocks at the foot of the block. `condition` is a
+                    NAME resolved in tokens.json's `$conditions`, and `of` names
+                    the rule being overridden (`base`, `parts.span`) rather than
+                    repeating its selector. Both are cross-references, and both
+                    are the point: `(max-width: 720px)` appeared in two blocks
+                    meaning the same thing with nothing saying so, and a media
+                    rule can no longer outlive the rule it overrides.
+
+   A RULE'S `note` AND A GROUP'S `note` ARE TWO THINGS. A rule's is emitted above
+   it at column 0 and explains the whole rule (`.entry__span`'s "Column 2, both
+   rows"); a group's is emitted inside the braces and explains one declaration.
+   The stylesheet draws that line — moving one to the other's place changes the
+   bytes — and this only records it.
 
    DECLARATIONS ARE GROUPED, because the authored CSS groups them and the
    grouping carries meaning — `font-size / font-weight / letter-spacing` on one
@@ -106,7 +123,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -144,6 +161,25 @@ function tokenNames() {
   }
   return tokenCache;
 }
+
+/** The media conditions tokens.json names, and what each one resolves to.
+ *  They live in `$conditions` and are emitted into no artefact: CSS cannot use a
+ *  custom property in a media query, so `--below-720: (max-width: 720px)` in
+ *  dist/tokens.css would be a value that looks usable and silently is not. They
+ *  are still in tokens.json because that is the only file in this system where a
+ *  literal may be written, and a breakpoint is a literal. */
+let conditionCache = null;
+export function conditionValues() {
+  if (conditionCache) return conditionCache;
+  const tokens = JSON.parse(readFileSync(join(root, "tokens", "tokens.json"), "utf8"));
+  conditionCache = new Map();
+  for (const [name, raw] of Object.entries(tokens.$conditions ?? {})) {
+    if (name.startsWith("$")) continue;
+    conditionCache.set(name, typeof raw === "string" ? raw : raw.value);
+  }
+  return conditionCache;
+}
+const conditionNames = () => new Set(conditionValues().keys());
 
 /* A structural literal is not an escape hatch. Every family below has a token
    tier, and scripts/check-css.mjs refuses a literal for each of them — in CSS.
@@ -189,6 +225,18 @@ function eachDeclaration(def, fn) {
       for (const g of p.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}@${p.name}`);
     }
   }
+  /* A declaration under a media query is a declaration: the literal guard and
+     the binding check have to reach it, or `at` becomes the one door into the
+     system neither of them watches. */
+  for (const block of def.at ?? []) {
+    for (const o of block.rules) {
+      const label = `at.${block.condition} ${o.of}`;
+      for (const g of o.declarations ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, label);
+      for (const p of o.positions ?? []) {
+        for (const g of p.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label}@${p.name}`);
+      }
+    }
+  }
 }
 
 const terms = (value) => (Array.isArray(value) ? value : [value]);
@@ -218,12 +266,33 @@ const terms = (value) => (Array.isArray(value) ? value : [value]);
    on a root — `.link-grid a:hover` is the state of a scoped part.
    ============================================================ */
 
-/** `first` → `:first-child`. The whole vocabulary; see the schema's `position`. */
-export const POSITION_SUFFIX = { first: ":first-child" };
+/** The whole positional vocabulary; see the schema's `position`. A member is
+ *  minted by the block that needs it — `first` by case-body, `last` by entry
+ *  and fact — and the enum in the schema is kept in step with this object. */
+export const POSITION_SUFFIX = { first: ":first-child", last: ":last-child" };
 
 /** A part's own selector: its class, or `within` + the element path + a pseudo. */
 export const partSelector = (part) =>
   part.selector ?? `${part.within} ${part.element.join(" ")}${part.pseudo ?? ""}`;
+
+/** Every selector a definition declares, by the label the build names it with —
+ *  `base`, `variants.solid`, `parts.span`. One vocabulary for naming a rule
+ *  inside a definition, shared by the error messages and by an `at` override. */
+export function rulesByLabel(def) {
+  const out = new Map();
+  if (def.base) out.set("base", def.root);
+  for (const kind of ["variants", "sizes"]) for (const m of def[kind] ?? []) out.set(`${kind}.${m.name}`, m.selector);
+  for (const p of def.parts ?? []) out.set(`parts.${p.name}`, partSelector(p));
+  return out;
+}
+
+/** The selector an `at` override names. Throws only where the loader has
+ *  already refused the document, so a caller never sees an undefined selector. */
+export const selectorOf = (def, label) => {
+  const sel = rulesByLabel(def).get(label);
+  if (!sel) throw new Error(`${definitionPath(def.id)}: an \`at\` override names \`${label}\`, which this definition does not declare`);
+  return sel;
+};
 
 /** A state's selector: one suffix, or a selector LIST when it carries several. */
 export const stateSelector = (owner, suffix) =>
@@ -319,17 +388,41 @@ export function loadDefinition(id) {
   for (const p of def.parts ?? []) {
     /* A scoped part states its ancestor and it is checked, for the reason a
        modifier states its own selector: the CSS stays transcribed, and the two
-       halves cannot disagree. The root is the only referent there is. */
-    if (p.within !== undefined && p.within !== def.root) {
+       halves cannot disagree. The referent is the root or a part THIS definition
+       already declares — a finite set, written down in the same file — and a
+       part declared later cannot be it, because a stylesheet reads downwards. */
+    if (p.within !== undefined && !seen.has(p.within)) {
       bad(
-        `\`parts.${p.name}\` is scoped \`within\` \`${p.within}\`, and this definition's root is \`${def.root}\`. A part ` +
-          `is scoped to the root or it is not scoped — a chain through another part is a second combinator, which is ` +
-          `the door this schema closes`
+        `\`parts.${p.name}\` is scoped \`within\` \`${p.within}\`, which this definition does not declare above it. ` +
+          `The ancestor is the root or an EARLIER part — ${[...seen.keys()].map((s) => `\`${s}\``).join(", ")} — so that ` +
+          `the set of possible ancestors is finite, in this file, and checkable. A path is not a value this key takes`
       );
     }
     const sel = partSelector(p);
     if (seen.has(sel)) bad(`\`${sel}\` is declared twice — by \`${seen.get(sel)}\` and by \`parts.${p.name}\``);
     seen.set(sel, `parts.${p.name}`);
+  }
+
+  /* An `at` block names a condition tokens.json declares, and overrides a rule
+     this definition declares. Both are cross-references a schema cannot follow,
+     and both are the whole reason the construct is a name rather than a string. */
+  const labels = rulesByLabel(def);
+  for (const block of def.at ?? []) {
+    if (!conditionNames().has(block.condition)) {
+      bad(
+        `its \`at\` block names the condition \`${block.condition}\`, and tokens.json's \`$conditions\` has no such ` +
+          `entry. A breakpoint is a literal, and this system has exactly one file where a literal may be written — ` +
+          `add it there, with a description, beside the ones that already exist`
+      );
+    }
+    for (const o of block.rules) {
+      if (!labels.has(o.of)) {
+        bad(
+          `an \`at\` override names \`${o.of}\`, and this definition declares no such rule. It is a NAME rather than a ` +
+            `selector so that a renamed part cannot leave an orphaned media rule pointing at an element that is gone`
+        );
+      }
+    }
   }
 
   /* A definition renders a banner and whatever is under it. With `base` optional
@@ -406,8 +499,11 @@ function value(v, where) {
   );
 }
 
-/** One rule. One declaration group → one line; more than one → a block. */
-function rule(selector, declarations, where) {
+/** One rule. One declaration group → one line; more than one → a block.
+ *  `pad` is the rule's own indent — everything inside an `@media` block is one
+ *  level in, and a rule that did not know that would have to be re-indented by
+ *  the caller, which is a string edit over generated CSS. */
+function rule(selector, declarations, where, pad = "") {
   const groups = (declarations ?? []).map((g, i) => {
     if (!g?.set || typeof g.set !== "object") throw new Error(`${where}: group ${i} of \`${selector}\` has no \`set\``);
     return {
@@ -417,13 +513,13 @@ function rule(selector, declarations, where) {
     };
   });
   if (!groups.length) throw new Error(`${where}: \`${selector}\` declares nothing`);
-  if (groups.length === 1 && !groups[0].note && !groups[0].aside) return `${selector} { ${groups[0].text} }\n`;
-  let out = `${selector} {\n`;
+  if (groups.length === 1 && !groups[0].note && !groups[0].aside) return `${pad}${selector} { ${groups[0].text} }\n`;
+  let out = `${pad}${selector} {\n`;
   for (const g of groups) {
-    if (g.note) out += comment(g.note, "  ");
-    out += `  ${g.text}${g.aside ? ` /* ${g.aside} */` : ""}\n`;
+    if (g.note) out += comment(g.note, `${pad}  `);
+    out += `${pad}  ${g.text}${g.aside ? ` /* ${g.aside} */` : ""}\n`;
   }
-  return `${out}}\n`;
+  return `${out}${pad}}\n`;
 }
 
 /** The banner, whose first line carries the `@component <id>` marker build.mjs reads. */
@@ -439,34 +535,54 @@ function banner(def) {
  *  state of a variant must be able to beat the variant. A part's positions come
  *  after its own rule for the same reason: `.case-body h3:first-child` exists to
  *  undo three of `.case-body h3`'s declarations. */
-export function renderBlock(def) {
+export function renderBlock(def, conditions = {}) {
   const where = definitionPath(def.id);
-  const states = (owner, list) =>
-    (list ?? []).map((s) => rule(stateSelector(owner, s.suffix), s.declarations, where)).join("");
-  const positions = (owner, list) =>
-    (list ?? []).map((p) => rule(`${owner}${POSITION_SUFFIX[p.at]}`, p.declarations, where)).join("");
+  const states = (owner, list, pad) =>
+    (list ?? []).map((s) => rule(stateSelector(owner, s.suffix), s.declarations, where, pad)).join("");
+  const positions = (owner, list, pad) =>
+    (list ?? []).map((p) => rule(`${owner}${POSITION_SUFFIX[p.at]}`, p.declarations, where, pad)).join("");
+  /* A rule's own note sits above it at column 0; a group's note sits inside the
+     braces. The stylesheet draws that line and this only records it. */
+  const lead = (r, pad) => (r.note?.length ? comment(r.note, pad) : "");
 
   let out = banner(def);
   /* `base` is optional: case-body's root is a scope with no appearance of its
      own, and emitting `.case-body { }` would claim a rule the file has not got. */
   if (def.base) {
+    out += lead(def.base, "");
     out += rule(def.root, def.base.declarations, where);
-    out += states(def.root, def.base.states);
+    out += states(def.root, def.base.states, "");
+    out += positions(def.root, def.base.positions, "");
   }
   for (const v of def.variants ?? []) {
     out += rule(v.selector, v.declarations, where);
-    out += states(v.selector, v.states);
+    out += states(v.selector, v.states, "");
   }
   for (const z of def.sizes ?? []) {
     out += rule(z.selector, z.declarations, where);
-    out += states(z.selector, z.states);
+    out += states(z.selector, z.states, "");
   }
   for (const p of def.parts ?? []) {
     if (p.break) out += "\n";
+    out += lead(p, "");
     const sel = partSelector(p);
-    out += rule(sel, p.declarations, where);
-    out += states(sel, p.states);
-    out += positions(sel, p.positions);
+    out += rule(sel, p.declarations, where, "");
+    out += states(sel, p.states, "");
+    out += positions(sel, p.positions, "");
+  }
+  /* The at-rules last, in array order. Their selectors are RESOLVED from the
+     rule each override names rather than restated, so a media rule cannot end up
+     pointing at an element its unconditional half does not. */
+  for (const block of def.at ?? []) {
+    if (block.break) out += "\n";
+    out += lead(block, "");
+    out += `@media ${conditions[block.condition]} {\n`;
+    for (const o of block.rules) {
+      const sel = selectorOf(def, o.of);
+      if (o.declarations) out += rule(sel, o.declarations, where, "  ");
+      out += positions(sel, o.positions, "  ");
+    }
+    out += `}\n`;
   }
   return out;
 }
@@ -656,9 +772,10 @@ export function loadAll() {
 export function renderAll(defs) {
   const rendered = new Map();
   const errors = [];
+  const conditions = Object.fromEntries(conditionValues());
   for (const def of defs ?? loadAll().defs) {
     try {
-      rendered.set(def.id, renderBlock(def));
+      rendered.set(def.id, renderBlock(def, conditions));
     } catch (e) {
       errors.push(e.message);
     }

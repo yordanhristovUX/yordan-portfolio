@@ -5,6 +5,37 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 1.6.0 — 2026-08-01
+
+Minor — 24 change(s).
+
+### Added
+
+- definition `entry .entry @below-720` added
+- definition `entry .entry__lede` added
+- definition `entry .entry__list li::before` added
+- definition `entry .entry__list li` added
+- definition `entry .entry__list strong` added
+- definition `entry .entry__list` added
+- definition `entry .entry__org em` added
+- definition `entry .entry__org` added
+- definition `entry .entry__role` added
+- definition `entry .entry__span @below-720` added
+- definition `entry .entry__span` added
+- definition `entry .entry:last-child` added
+- definition `entry .entry` added
+- definition `fact .fact @below-720:last-child` added
+- definition `fact .fact @below-720` added
+- definition `fact .fact__label` added
+- definition `fact .fact__num small` added
+- definition `fact .fact__num` added
+- definition `fact .fact__title` added
+- definition `fact .fact:last-child` added
+- definition `fact .fact` added
+- definition `fact .facts` added
+- export `./react/entry` added
+- export `./react/fact` added
+
 ## 1.5.0 — 2026-08-01
 
 Minor — 13 change(s).

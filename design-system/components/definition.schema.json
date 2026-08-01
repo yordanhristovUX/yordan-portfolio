@@ -38,6 +38,12 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/part" },
       "$doc": "A companion selector that is NOT a modifier of the root. Chip's `.chips` is the whole reason this exists: it is the flex wrapper a group of chips sits in, and no chip knows how many siblings it has."
+    },
+    "at": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/conditional" },
+      "$doc": "The `@media` blocks at the foot of the stylesheet block, each naming a condition from tokens.json's `$conditions`. An ARRAY for the reason `variants` is one: source order is the cascade, and JSON key order is a convention rather than a guarantee."
     }
   },
   "$defs": {
@@ -127,15 +133,49 @@
         "declarations": { "$ref": "#/$defs/declarations" }
       }
     },
+    "note": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^[^\\n]*$" },
+      "$doc": "A comment emitted ABOVE this rule, at column 0, one array element per line. Distinct from a group's `note`, which is emitted inside the braces above the declaration it justifies — and the distinction is the stylesheet's, not this schema's: `.entry__span`'s \"Column 2, both rows — the dates line up with the role, not the body\" explains the whole rule and sits above it, while a group note explains one line and sits with it. Moving one to the other's place changes the bytes, which is how you know they are two things."
+    },
     "rule": {
-      "$doc": "The root's own rule: its declarations, and any states of it.",
+      "$doc": "The root's own rule: its declarations, any states of it, and any positions it takes among its siblings. `.entry:last-child` is the case that put `positions` here as well as on a part — an entry is a row in a run of entries, and the last one drops its divider, which is a fact about the root and not about anything inside it.",
       "type": "object",
       "required": ["declarations"],
       "additionalProperties": false,
       "properties": {
         "$doc": { "type": "string" },
+        "note": { "$ref": "#/$defs/note" },
         "declarations": { "$ref": "#/$defs/declarations" },
-        "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } }
+        "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } },
+        "positions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/position" } }
+      }
+    },
+    "conditional": {
+      "$doc": "A SET OF OVERRIDES UNDER ONE NAMED CONDITION — the `@media` blocks at the foot of a stylesheet block, as data. The condition is a NAME, resolved in tokens.json's `$conditions`, and that is the whole point of the construct: `@media (max-width: 720px)` appears in two blocks of css/components.css and meant the same thing in both, with nothing saying so. Writing the string here would have moved the drift rather than closed it. What this deliberately does NOT do is let a definition invent a condition: an unknown name fails the build, so a new breakpoint is a decision recorded in tokens.json, in a diff, beside the seventeen that already exist. Emitted after every unconditional rule, in array order — a condition that has to interleave with the rules it overrides is a real case and will be the block that adds the key for it, rather than a key added now against no evidence.",
+      "type": "object",
+      "required": ["condition", "rules"],
+      "additionalProperties": false,
+      "properties": {
+        "condition": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "$doc": "An entry of `$conditions` in tokens.json. Checked by the build, which is the only thing that can see that file." },
+        "$doc": { "type": "string" },
+        "note": { "$ref": "#/$defs/note" },
+        "break": { "const": true, "$doc": "Emit a blank line before the at-rule. `entry` separates its overrides from the rules they override; `fact` does not. A paragraph is a statement, and the emitter must not invent one." },
+        "rules": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/override" } }
+      }
+    },
+    "override": {
+      "$doc": "ONE RULE, RESTATED UNDER A CONDITION. `of` NAMES the rule being overridden — `base`, `parts.span` — rather than repeating its selector, so the two can never point at different elements and a renamed part cannot leave an orphaned media rule behind. The labels are the ones the build already uses when it reports which rule a bad declaration is in, so there is one vocabulary for naming a rule inside a definition rather than two.",
+      "type": "object",
+      "required": ["of"],
+      "additionalProperties": false,
+      "anyOf": [{ "required": ["declarations"] }, { "required": ["positions"] }],
+      "properties": {
+        "of": { "type": "string", "pattern": "^(base|(variants|sizes|parts)\\.[a-z][a-z0-9-]*)$" },
+        "$doc": { "type": "string" },
+        "declarations": { "$ref": "#/$defs/declarations" },
+        "positions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/position" } }
       }
     },
     "alias": {
@@ -171,7 +211,7 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-        "at": { "enum": ["first"], "$doc": "`first` → `:first-child`. One member, because one block has asked. Add the next one with the block that needs it and not before — the value of a closed vocabulary is what it refuses." },
+        "at": { "enum": ["first", "last"], "$doc": "`first` → `:first-child`, `last` → `:last-child`. Two members, because two shapes have asked: case-body's opening heading drops the rule above it, and entry / fact drop the divider after the last one in a run. Add the next member with the block that needs it and not before — the value of a closed vocabulary is what it refuses." },
         "$doc": { "type": "string" },
         "declarations": { "$ref": "#/$defs/declarations" }
       }
@@ -187,7 +227,7 @@
         "selector": { "$ref": "#/$defs/selector" },
         "within": {
           "$ref": "#/$defs/selector",
-          "$doc": "The ancestor this part is scoped to. STATED here and checked against `root` for the same reason a modifier states its own selector: the CSS stays transcribed rather than assembled, and the two cannot disagree. The root is the only referent — a part scoped to another part would be a two-level descendant chain, which is CSS with more punctuation."
+          "$doc": "The ancestor this part is scoped to. STATED here and checked for the same reason a modifier states its own selector: the CSS stays transcribed rather than assembled, and the two cannot disagree. The referent is the root OR another part of the same definition — `.entry__list li` and `.fact__num small` are the blocks that widened it past the root, and neither is a longer chain: the ancestor is still one selector this definition already declares, so the set of possible values is finite, written down in the same file, and checked. What it still refuses is a chain of its own making: `within` names a rule, never a path."
         },
         "element": {
           "type": "array",
@@ -200,6 +240,7 @@
           "$doc": "A drawn pseudo-element. `::before` is the only one css/components.css uses outside the foundation reset, and it draws the list marker — decoration rather than content, which is exactly why it is here and not in the markup. `::after` is not in the vocabulary because nothing has asked for it."
         },
         "$doc": { "type": "string" },
+        "note": { "$ref": "#/$defs/note" },
         "break": {
           "const": true,
           "$doc": "Emit a blank line before this rule. A stylesheet block has paragraphs — `source` separates the list's chrome from the item that repeats inside it — and a paragraph is a statement about which rules belong together. Without this the emitter would have to either lose the break or invent one, and both are worse than recording it."

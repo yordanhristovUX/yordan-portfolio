@@ -19,6 +19,7 @@ experience and education lists. One entry per position — never one per project
   <h3 class="entry__role">Senior Product Designer</h3>
   <p class="entry__span">Jan 2026 – Present · Sofia</p>
   <p class="entry__org">Green Street <em>— commercial real estate data and analytics</em></p>
+  <p class="entry__lede">Design systems and AI surfaces for professional analysts.</p>
   <ul class="entry__list">
     <li>Redesigned the AI Assistant module and built its design system end to end.</li>
     <li><strong>100% token coverage</strong> across the module.</li>
@@ -32,8 +33,16 @@ screens without changing the DOM.
 
 ## Variants
 
-None. An entry with no bullets simply omits `.entry__list`; an entry with no subtitle omits
-`.entry__org`.
+None. Every part is optional: an entry with no bullets omits `.entry__list`, one with no
+subtitle omits `.entry__org`, and `.entry__lede` — one sentence of context, in column 1 so it
+does not run under the dates — is there when a role needs a line of framing and absent when it
+does not.
+
+`.entry__lede` was missing from this fence until R4 and had a rule the whole time. It surfaced
+when the block became a definition: `scripts/emit-react.mjs` reads the element a part renders
+on out of the canonical HTML rather than being told, so a rule with nowhere to land in the
+pattern stops the build. The class was in `dist/components.json`, in `RELEASED.json` and in a
+generated eval fixture — everywhere except the one place an agent is told to copy from.
 
 ## Tokens
 

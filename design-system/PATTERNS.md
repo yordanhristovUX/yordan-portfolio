@@ -25,7 +25,7 @@ GENERATABLE-SHAPED (5)              HAS A PATTERN FEATURE (19)
   source        8 selectors  ✓ generated    drawer  25 sel   at-rule, combinator, computed, descendant, positional
                                       skeleton 18 sel  at-rule, combinator, computed, descendant, local-prop
                                       menu    16 sel   at-rule, combinator, computed, descendant, positional
-                                      entry   13 sel   at-rule, computed, descendant, positional
+                                      entry   13 sel   ✓ generated (at, positions, scoped parts)
                                       none    14 sel   at-rule
                                       … and ten more
 ```
@@ -108,14 +108,37 @@ than a schema that can express everything and therefore constrains nothing.
   the third shape was not required is the one thing this note measured but did not weigh:
   *descendant* and *positional* are not one feature each with nineteen faces. Each block needs
   exactly one relation, and both relations are closeable at both ends. A scoped part names the
-  ancestor — checked to be the root, so there is one possible referent — and an array of bare
-  tag names, so the emitter supplies the combinator and `.case-body p strong` is sayable while
-  `.band > .rail--l` is not. A position is an enum with one member per block that has asked,
-  so `:first-child` is sayable and `:nth-last-child(-n+3)` is not a value the key accepts.
+  ancestor — a selector the same definition already declares, so the set of referents is
+  finite and written down — and an array of bare tag names, so the emitter supplies the
+  combinator and `.case-body p strong` is sayable while `.band > .rail--l` is not. A position
+  is an enum with one member per block that has asked, so `:first-child` is sayable and
+  `:nth-last-child(-n+3)` is not a value the key accepts.
   The wedge this note refuses is a schema that admits a *selector*; admitting a **relation
   whose vocabulary is finite** is a different thing, and it is checkable in a way a selector
   string never is. Whether that holds for the remaining seventeen is decided one block at a
   time, with the block in front of you — which is the method this note argued for.
+
+### `at-rule` was the wrong half of the mechanical test, and `entry` and `fact` are why
+
+The test above puts a block in the authored column if it needs an at-rule. Both of those
+blocks do, and both generate — so the line needed one more cut, and it is the same cut the
+paragraph above makes.
+
+The reason `@media` looked disqualifying is that a media query can hold *anything*: admit an
+`at-rule` key whose value is a CSS condition string and the schema has admitted arbitrary CSS
+one level down, wearing a bracket. What R4 admitted instead is a **named** condition —
+`{"condition": "below-720"}`, resolved in `tokens.json`'s `$conditions`, with an unknown name
+failing the build — wrapping overrides that each **name a rule the definition already
+declares** rather than writing a selector. Both halves are references into finite sets, and
+neither is a string a definition can invent. `@supports (grid-template-columns: round(down,
+10%, 3px))` is still unsayable, and would still have to be, because its condition is a
+computed value rather than a viewport this system has named.
+
+That is worth stating plainly because it moves a number: **the scan is the right instrument
+and `at-rule` was the wrong reading of it.** The question is never "does this block have a
+feature" but "does the feature have a finite vocabulary here". `skeleton`'s `@supports` does
+not. `fact`'s `@media` does — and the proof it does is that `entry` writes the same query for
+the same reason, which is the drift the construct closes rather than a coincidence it exploits.
 - **`typography` fails on `computed` alone** (its `clamp()` values), which is a token
   question rather than a pattern one: those are `--text-*` steps and the block mostly maps a
   class to a step. It may be the best argument for a fourth value form (a token binding with

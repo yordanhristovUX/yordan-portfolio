@@ -1410,6 +1410,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .idx__go { justify-self: start; }
 }
 
+/* ---- generated:entry — do not edit, source: components/entry/definition.json ---- */
 /* ============ Entry — a dated record ============ @component entry
    Experience, education, anything with a role / org / span and a list of
    what happened. The span sits in its own column on wide screens so the
@@ -1462,6 +1463,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .entry { grid-template-columns: 1fr; gap: var(--space-1); }
   .entry__span { grid-column: 1; grid-row: auto; text-align: left; }
 }
+/* ---- /generated:entry ---- */
 
 /* ============ Row — definition (skills) ============ @component row */
 /* The block root. A `<dl>` stacks its rows in normal flow anyway, so the
@@ -1514,6 +1516,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .profile > div:nth-child(odd) { padding-right: 0; }
 }
 
+/* ---- generated:fact — do not edit, source: components/fact/definition.json ---- */
 /* ============ Facts ============ @component fact */
 .facts {
   display: flex; flex-wrap: wrap; gap: 0;
@@ -1546,6 +1549,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   .fact { border-right: 0; border-bottom: var(--rule); }
   .fact:last-child { border-bottom: 0; }
 }
+/* ---- /generated:fact ---- */
 
 /* ============ Media slot ============ @component media
    Drop an <img> inside a .ph and the frame styling steps aside. */

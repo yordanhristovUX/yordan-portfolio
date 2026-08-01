@@ -429,16 +429,23 @@ const isToken = (v) => v && typeof v === "object" && typeof v.token === "string"
  * @returns {{classes: {cls: string, sets: string[]}[], arbitrary: boolean}}
  */
 export function utilitiesFor(prop, value, keyOf, where) {
+  /* A token with no @theme key has NO utility, and that is a decision this file
+     records rather than an omission — the raw ramps, the `wdth` axis, the two em
+     RATIOS, the border shorthands. The honest rendering is then the arbitrary
+     PROPERTY form at the bottom of this function, `[font-size:var(--text-unit)]`,
+     which THEME_MAP's own `why` fields already describe as the way a component
+     reaches one. So `suffix` returns null and every branch below falls through
+     to it. It used to THROW, with a message telling the author to reach it as an
+     arbitrary value — advice the emitter could take itself, and could not
+     usefully hand to somebody transcribing a stylesheet that already binds the
+     right token. `.fact__num small` is the case: `font-size: var(--text-unit)`
+     is the correct CSS, --text-unit is deliberately not in @theme, and there is
+     nothing for a human to decide. Nothing is dropped and nothing is invented. */
   const suffix = (name) => {
     const key = keyOf(name);
-    if (!key) {
-      throw new Error(
-        `${where}: \`${prop}\` binds \`--${name}\`, which is deliberately NOT in the Tailwind @theme — see PLAIN / ` +
-          `THEME_MAP in scripts/emit-tailwind.mjs. Reach it as an arbitrary value, or give it a namespace there.`
-      );
-    }
-    return utilitySuffix(key);
+    return key ? utilitySuffix(key) : null;
   };
+  const mapped = (v) => !isToken(v) || suffix(v.token) !== null;
   const one = (classes) => ({ classes, arbitrary: false });
   const same = (list, sets) => one(list.map((cls) => ({ cls, sets })));
 
@@ -448,16 +455,16 @@ export function utilitiesFor(prop, value, keyOf, where) {
   }
 
   /* A colour. */
-  if (COLOUR_PROP[prop] && isToken(value)) {
+  if (COLOUR_PROP[prop] && isToken(value) && mapped(value)) {
     const { prefix, sets } = COLOUR_PROP[prop];
     return same([`${prefix}-${suffix(value.token)}`], sets);
   }
 
   /* The four type properties that each have a namespace of their own. */
   if (prop === "font-family" && isToken(value)) return same([`font-${value.token.replace(/^font-/, "")}`], ["font-family"]);
-  if (prop === "font-size" && isToken(value)) return same([`text-${suffix(value.token)}`], ["font-size"]);
-  if (prop === "font-weight" && isToken(value)) return same([`font-${suffix(value.token)}`], ["font-weight"]);
-  if (prop === "letter-spacing" && isToken(value)) return same([`tracking-${suffix(value.token)}`], ["letter-spacing"]);
+  if (prop === "font-size" && isToken(value) && mapped(value)) return same([`text-${suffix(value.token)}`], ["font-size"]);
+  if (prop === "font-weight" && isToken(value) && mapped(value)) return same([`font-${suffix(value.token)}`], ["font-weight"]);
+  if (prop === "letter-spacing" && isToken(value) && mapped(value)) return same([`tracking-${suffix(value.token)}`], ["letter-spacing"]);
 
   /* Padding and margin, per edge. `0` is Tailwind's own zero rather than a
      token. Each class reports only the edges it writes, so a base `py-` and a
@@ -466,26 +473,30 @@ export function utilitiesFor(prop, value, keyOf, where) {
     const parts = Array.isArray(value) ? value : [value];
     const edges = EDGES[parts.length];
     if (!edges) throw new Error(`${where}: \`${prop}\` has ${parts.length} values, and only 1..4 are a CSS shorthand`);
-    return one(
-      parts.map((p, i) => {
-        const head = `${BOX_PROP[prop]}${edges[i]}`;
-        const sets = EDGE_SIDES[edges[i]].map((side) => `${prop}-${side}`);
-        if (isToken(p)) return { cls: `${head}-${suffix(p.token)}`, sets };
-        if (String(p) === "0") return { cls: `${head}-0`, sets };
-        return { cls: `${head}-[${arbitrary(p)}]`, sets };
-      })
-    );
+    if (parts.every(mapped)) {
+      return one(
+        parts.map((p, i) => {
+          const head = `${BOX_PROP[prop]}${edges[i]}`;
+          const sets = EDGE_SIDES[edges[i]].map((side) => `${prop}-${side}`);
+          if (isToken(p)) return { cls: `${head}-${suffix(p.token)}`, sets };
+          if (String(p) === "0") return { cls: `${head}-0`, sets };
+          return { cls: `${head}-[${arbitrary(p)}]`, sets };
+        })
+      );
+    }
   }
 
   /* `gap` takes one value or two — row then column, like the box shorthands. */
   if (prop === "gap") {
     const parts = Array.isArray(value) ? value : [value];
-    if (parts.length === 1 && isToken(parts[0])) return same([`gap-${suffix(parts[0].token)}`], expand("gap"));
-    if (parts.length === 2) {
-      return one([
-        { cls: isToken(parts[0]) ? `gap-y-${suffix(parts[0].token)}` : `gap-y-[${arbitrary(parts[0])}]`, sets: ["row-gap"] },
-        { cls: isToken(parts[1]) ? `gap-x-${suffix(parts[1].token)}` : `gap-x-[${arbitrary(parts[1])}]`, sets: ["column-gap"] },
-      ]);
+    if (parts.every(mapped)) {
+      if (parts.length === 1 && isToken(parts[0])) return same([`gap-${suffix(parts[0].token)}`], expand("gap"));
+      if (parts.length === 2) {
+        return one([
+          { cls: isToken(parts[0]) ? `gap-y-${suffix(parts[0].token)}` : `gap-y-[${arbitrary(parts[0])}]`, sets: ["row-gap"] },
+          { cls: isToken(parts[1]) ? `gap-x-${suffix(parts[1].token)}` : `gap-x-[${arbitrary(parts[1])}]`, sets: ["column-gap"] },
+        ]);
+      }
     }
   }
 
@@ -495,7 +506,7 @@ export function utilitiesFor(prop, value, keyOf, where) {
      while its width and style stay in the base. */
   if (prop === "border") {
     if (isToken(value)) return { classes: [{ cls: `[border:var(--${value.token})]`, sets: expand("border") }], arbitrary: true };
-    if (Array.isArray(value)) {
+    if (Array.isArray(value) && value.every(mapped)) {
       const out = [];
       for (const part of value) {
         if (isToken(part)) { out.push({ cls: `border-${suffix(part.token)}`, sets: ["border-color"] }); continue; }

@@ -106,9 +106,29 @@ const wideVars = pick("wide");
 
 /* ---------- the one breakpoint the token layer knows about ----------
    760px is the site's own grid break — 24 columns to 12 — and it is the number
-   components.css already changes the grid at. It is stated once, here, so a
-   `wide` value and the grid it belongs to cannot drift apart. */
-const WIDE_MIN = "760px";
+   components.css already changes the grid at. It was a constant HERE, with a
+   comment saying it had to be stated once so a `wide` value and the grid it
+   belongs to could not drift apart; R4 gave that sentence somewhere to be true.
+   `$conditions` in tokens.json now holds every media condition the system asks
+   about, a definition's `at` block names one of them, and this reads the same
+   entry — so the token layer and the stylesheet break at one number by
+   construction rather than by vigilance. `$conditions` is behind a `$` and is
+   emitted into no artefact, because CSS cannot use a custom property in a media
+   query and shipping one that looks usable would be a footgun. */
+const conditions = tokens.$conditions ?? {};
+const conditionOf = (name) => {
+  const entry = conditions[name];
+  if (!entry) {
+    console.error(
+      `✗ token check failed — tokens.json's \`$conditions\` has no \`${name}\`. Every media condition this system\n` +
+        `  asks about is named there, once, so the token layer and css/components.css cannot break at two numbers.`
+    );
+    process.exit(1);
+  }
+  return typeof entry === "string" ? entry : entry.value;
+};
+const WIDE_AT = conditionOf("from-760");
+const WIDE_MIN = WIDE_AT.replace(/^\(min-width:\s*|\)$/g, "");
 
 /* A token carrying both `dark` and `wide` would make source order load-bearing
    between two blocks that answer different questions, and nothing would say so.
@@ -151,7 +171,7 @@ if (wideVars.length) {
     `   A step whose size is set by the LEVEL it occupies wants two chosen values\n` +
     `   with a step between them, not a clamp sliding through every size in\n` +
     `   between. Anything without a \`wide\` value simply cascades. */\n` +
-    `@media (min-width: ${WIDE_MIN}) {\n  :root {\n` +
+    `@media ${WIDE_AT} {\n  :root {\n` +
     wideVars.map((v) => `    --${v.name}: ${v.wide};\n`).join("") +
     `  }\n}\n`;
 }
@@ -476,6 +496,8 @@ const packaged = [
   ["dist/react/source.tsx", reactSource("source")],
   ["dist/react/link-grid.tsx", reactSource("link-grid")],
   ["dist/react/case-body.tsx", reactSource("case-body")],
+  ["dist/react/fact.tsx", reactSource("fact")],
+  ["dist/react/entry.tsx", reactSource("entry")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by

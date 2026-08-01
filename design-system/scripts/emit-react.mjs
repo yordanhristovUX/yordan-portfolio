@@ -79,7 +79,7 @@ import { utilitiesFor, STATE_PREFIX } from "./emit-tailwind.mjs";
 /* The selector arithmetic, imported rather than re-derived: pipeline 1 and
    pipeline 2 must agree about what `within` + `element` + `pseudo` names, and
    the only way to guarantee that is for one of them to own it. */
-import { POSITION_SUFFIX } from "./emit-css.mjs";
+import { POSITION_SUFFIX, conditionValues } from "./emit-css.mjs";
 
 /* ---------- names ---------- */
 const pascal = (s) => s.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join("");
@@ -186,13 +186,33 @@ function stateEntriesOf(states, keyOf, where, tally, scope = "") {
 /* A position is a closed enum on both sides, so there is no table to miss:
    pipeline 1 turns `first` into `:first-child` and this turns the same member
    into the same suffix, out of the same object. */
-function positionEntriesOf(positions, keyOf, where, tally, scope = "") {
+function positionEntriesOf(positions, keyOf, where, tally, scope = "", at = "") {
   const out = [];
   for (const p of positions ?? []) {
-    out.push(...entriesOf(p.declarations, keyOf, `${where} @${p.name}`, tally, variantFor(scope, POSITION_SUFFIX[p.at])));
+    out.push(...entriesOf(p.declarations, keyOf, `${where} @${p.name}`, tally, at + variantFor(scope, POSITION_SUFFIX[p.at])));
   }
   return out;
 }
+
+/* ============================================================
+   A CONDITION IS A TAILWIND ARBITRARY VARIANT TOO.
+
+   `@media (max-width: 720px) { .fact { border-right: 0 } }` becomes
+   `max-[720px]:border-r-0`? No — it becomes `[@media(max-width:720px)]:border-r-0`,
+   and the difference is the same one `[&:hover]:` records. Tailwind's `max-*`
+   variants resolve against ITS breakpoint scale, which this system does not
+   have and deliberately has not minted: tokens.json's `$conditions` holds
+   seventeen distinct max-widths with no ramp between them, and naming them `sm`
+   / `md` / `lg` would assert a hierarchy that does not exist. The arbitrary
+   at-rule variant compiles to exactly the media query in tokens.json — nothing
+   is translated, nothing is rounded to the nearest named breakpoint, and the
+   day the owner consolidates the ramp, both pipelines follow the same edit.
+
+   Tailwind's arbitrary variant syntax takes no spaces, so the condition is
+   emitted with them stripped: `(max-width: 720px)` → `[@media(max-width:720px)]:`.
+   That is a lexical requirement of the class name, not a change to the query.
+   ============================================================ */
+const conditionVariant = (condition) => `[@media${String(condition).replace(/\s+/g, "")}]:`;
 
 const keySetOf = (entries) => new Set(entries.flatMap((e) => [...e.keys]));
 const hits = (entry, keys) => [...entry.keys].some((k) => keys.has(k));
@@ -366,10 +386,50 @@ export function renderComponent(def, elements, keyOf) {
        appearance. Its class list is entirely what it does to the prose inside it. */
     ...entriesOf(def.base?.declarations, keyOf, where, tally),
     ...stateEntriesOf(def.base?.states, keyOf, where, tally),
+    ...positionEntriesOf(def.base?.positions, keyOf, where, tally),
   ];
+  /* Every class part's own list, computed HERE rather than in the emission loop
+     below, because two other things write into one: a scoped part hosted by it,
+     and an `at` override that names it. Which list a class lands in is decided
+     by the selector it is a descendant of — never by which component it is in. */
+  const partEntries = new Map(
+    classParts.map((part) => [
+      part.name,
+      [
+        ...entriesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally),
+        ...stateEntriesOf(part.states, keyOf, `${where} → ${part.selector}`, tally),
+        ...positionEntriesOf(part.positions, keyOf, `${where} → ${part.selector}`, tally),
+      ],
+    ])
+  );
+
+  /* ---- where a scoped part's classes go, and why it is not always the root ----
+     `[&_small]:` compiles to "a <small> anywhere inside the element wearing this
+     class". `.fact__num small` is a <small> inside `.fact__num` — so the class
+     belongs on `.fact__num`, and putting it on `.facts` would style every
+     <small> in the block. That is not a smaller mistake than dropping the rule;
+     it is a wider one. `within` names the host, and the host's class list is the
+     sink: the root's base when it is the root, a part's own cva when it is a
+     part. Pipeline 1 has the same fact written as a selector and needs no rule
+     for it, which is exactly the asymmetry this function exists to absorb. */
+  const hostOf = (part) => {
+    if (part.within === def.root) return { sink: base, label: "base" };
+    const host = classParts.find((p) => p.selector === part.within);
+    if (host) return { sink: partEntries.get(host.name), label: `parts.${host.name}` };
+    throw new Error(
+      `${where}: the scoped part \`${part.name}\` is \`within\` \`${part.within}\`, which is neither the root nor a ` +
+        `part with a class of its own. Pipeline 1 renders that as a descendant selector; this tier needs a class ` +
+        `list to put the descendant's utilities ON, and a rule with no host would be emitted against the root — ` +
+        `which is a WIDER selector than the stylesheet's, not a narrower one.`
+    );
+  };
+
+  const scopeByLabel = new Map([["base", ""]]);
   for (const part of scopedParts) {
     const scope = scopeOf(part);
     const sel = `${part.within} ${part.element.join(" ")}${part.pseudo ?? ""}`;
+    const { sink, label } = hostOf(part);
+    scopeByLabel.set(`parts.${part.name}`, { scope, label });
     const entries = [
       ...entriesOf(part.declarations, keyOf, `${where} → ${sel}`, tally, variantFor(scope)),
       ...stateEntriesOf(part.states, keyOf, `${where} → ${sel}`, tally, scope),
@@ -377,7 +437,7 @@ export function renderComponent(def, elements, keyOf) {
     ];
     if (!entries.length) continue;
     entries[0] = { ...entries[0], lead: `\`${sel}\`${part.$doc ? ` — ${part.$doc}` : ""}` };
-    base.push(...entries);
+    sink.push(...entries);
   }
 
   /* One cva axis per kind the definition actually has. Every axis carries a
@@ -396,6 +456,41 @@ export function renderComponent(def, elements, keyOf) {
     }));
   if (def.variants?.length) axes.push({ prop: "variant", branches: branchesOf(def.variants) });
   if (def.sizes?.length) axes.push({ prop: "size", branches: branchesOf(def.sizes) });
+
+  /* The at-rules. An override names a rule, so its classes go wherever that
+     rule's classes went — the root's base, a class part's own list, or an axis
+     branch — wearing the condition as an arbitrary at-rule variant. */
+  const conditions = conditionValues();
+  const branchNamed = (kind, name) =>
+    axes.find((a) => a.prop === (kind === "variants" ? "variant" : "size"))?.branches.find((b) => b.name === name);
+  for (const block of def.at ?? []) {
+    const at = conditionVariant(conditions.get(block.condition));
+    for (const o of block.rules) {
+      /* A scoped part overridden under a condition keeps BOTH its scope and its
+         host: the classes wear `[@media…]:[&_span]:` and land on the host's list. */
+      const scoped = scopeByLabel.get(o.of);
+      const target = scoped?.label ?? o.of;
+      const scope = scoped?.scope ?? "";
+      const [kind, name] = target.split(".");
+      const entries = [
+        ...entriesOf(o.declarations, keyOf, `${where} @${block.condition} ${o.of}`, tally, at + variantFor(scope)),
+        ...positionEntriesOf(o.positions, keyOf, `${where} @${block.condition} ${o.of}`, tally, scope, at),
+      ];
+      if (!entries.length) continue;
+      entries[0] = { ...entries[0], lead: `Under \`@media ${conditions.get(block.condition)}\` (\`${block.condition}\`)${block.$doc ? ` — ${block.$doc}` : ""}` };
+      const sink =
+        kind === "parts" && partEntries.has(name) ? partEntries.get(name)
+        : kind === "variants" || kind === "sizes" ? branchNamed(kind, name)?.entries
+        : base;
+      if (!sink) {
+        throw new Error(
+          `${where}: the \`at\` override \`${o.of}\` names a rule this emitter cannot find a class list for. ` +
+            `Pipeline 1 resolved it, so the two emitters disagree about what a definition declares.`
+        );
+      }
+      sink.push(...entries);
+    }
+  }
 
   base = disjoin(base, axes, where, def.axes?.orthogonal);
 
@@ -487,11 +582,7 @@ export function renderComponent(def, elements, keyOf) {
     const partFn = camel(`${def.id}-${part.name}`);
     const partEls = elementsFor(part.selector, `part \`${part.name}\``);
     const partPoly = partEls.length > 1;
-    const classes = [
-      ...entriesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally),
-      ...stateEntriesOf(part.states, keyOf, `${where} → ${part.selector}`, tally),
-      ...positionEntriesOf(part.positions, keyOf, `${where} → ${part.selector}`, tally),
-    ];
+    const classes = partEntries.get(part.name);
     out += `\n`;
     if (part.$doc) out += tsdoc(part.$doc, "");
     out += `export const ${partFn} = cva([\n${list(classes, "  ")}\n]);\n\n`;

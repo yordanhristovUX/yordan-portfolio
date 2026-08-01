@@ -69,7 +69,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadAll, definitionPath, partSelector, POSITION_SUFFIX } from "./emit-css.mjs";
+import { loadAll, definitionPath, partSelector, selectorOf, POSITION_SUFFIX } from "./emit-css.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -169,6 +169,15 @@ for (const def of defs) {
   /* A scoped part's selector is built, not written — through the same function
      both emitters use, so the contract names the selector that actually ships. */
   for (const p of def.parts ?? []) put(p.within ? "scoped part" : "part", partSelector(p), p);
+  /* A conditional rule is a published rule: it applies to a consumer's markup at
+     a viewport, and the CONDITION is part of its identity — moving the same
+     declarations to a different breakpoint changes what ships without changing
+     any selector, and only the key records that. */
+  for (const block of def.at ?? []) {
+    for (const o of block.rules) {
+      put(`at ${block.condition}`, `${selectorOf(def, o.of)} @${block.condition}`, o);
+    }
+  }
 }
 
 /* ---------- the package surface ----------

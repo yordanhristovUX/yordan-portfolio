@@ -1,0 +1,130 @@
+{
+  "$doc": "Fact's appearance, as data — the source of the `@component fact` block in css/components.css and of dist/react/fact.tsx. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. FACT IS THE FIRST BLOCK WITH AN `at` BLOCK, and it is the smallest possible case for one: below 720px the row of facts stacks, so the divider that was on the right edge has to be on the bottom. The condition is a NAME resolved in tokens.json's `$conditions` rather than the string `(max-width: 720px)`, because `entry` writes the same number for the same reason and nothing said so. It is also where `last` joined the position vocabulary: the divider is drawn by every fact and undrawn by the final one, in both the row and the stack, which is two rules that only a sibling position can write.",
+  "$schema": "../definition.schema.json",
+  "id": "fact",
+  "block": {
+    "title": "Facts"
+  },
+  "root": ".facts",
+  "base": {
+    "$doc": "The frame. `gap: 0` is deliberate and is the reason the dividers work: the facts touch, so one border between two of them is one line rather than two with a gutter.",
+    "declarations": [
+      { "set": { "display": "flex", "flex-wrap": "wrap", "gap": "0" } },
+      { "set": { "border": { "token": "rule-strong" } } },
+      { "set": { "background": { "token": "surface-page" } } }
+    ]
+  },
+  "parts": [
+    {
+      "name": "fact",
+      "selector": ".fact",
+      "$doc": "One figure. `flex: 1 1 14rem` is the whole responsive behaviour above the breakpoint — facts share the row until one would be narrower than 14rem, and then they wrap.",
+      "declarations": [
+        { "set": { "flex": "1 1 14rem" } },
+        { "set": { "padding": { "token": "space-6" } } },
+        { "set": { "border-right": { "token": "rule" } } },
+        {
+          "set": {
+            "display": "flex",
+            "flex-direction": "column",
+            "gap": { "token": "space-2" }
+          }
+        }
+      ],
+      "positions": [
+        {
+          "name": "closing",
+          "at": "last",
+          "$doc": "The last fact drops its divider, so the run of them ends on the frame rather than on a line inside it. A position rather than a modifier, because no fact knows how many siblings it has and the markup should not have to say.",
+          "declarations": [{ "set": { "border-right": "0" } }]
+        }
+      ]
+    },
+    {
+      "name": "num",
+      "selector": ".fact__num",
+      "$doc": "The figure itself, at the display step and the widest step of the display family's width axis. `tabular-nums` so a column of figures lines up on the digit rather than on the glyph.",
+      "declarations": [
+        {
+          "set": {
+            "font-family": { "token": "font-display" },
+            "font-weight": { "token": "weight-black" }
+          }
+        },
+        { "set": { "font-variation-settings": { "token": "width-hero" } } },
+        { "set": { "font-size": { "token": "text-display" } } },
+        { "set": { "line-height": "1" } },
+        { "set": { "color": { "token": "content-primary" } } },
+        { "set": { "font-variant-numeric": "tabular-nums" } }
+      ]
+    },
+    {
+      "name": "unit",
+      "within": ".fact__num",
+      "element": ["small"],
+      "$doc": "The suffix riding on the number — the % or the ×. It binds --text-unit, which is an em RATIO rather than a step: it means \"a fraction of whatever set me\", so it follows the display number through every clamp the number goes through.",
+      "declarations": [
+        {
+          "set": {
+            "font-size": { "token": "text-unit" },
+            "font-weight": { "token": "weight-bold" },
+            "color": { "token": "content-muted" },
+            "margin-left": { "token": "space-1" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "title",
+      "selector": ".fact__title",
+      "$doc": "The mono chrome label above the figure — the same family, case and tracking step as a chip, a plate label and the sources heading.",
+      "declarations": [
+        { "set": { "font-family": { "token": "font-mono" } } },
+        {
+          "set": {
+            "font-size": { "token": "text-2xs" },
+            "font-weight": { "token": "weight-semibold" },
+            "letter-spacing": { "token": "tracking-wide-2xl" },
+            "text-transform": "uppercase"
+          }
+        },
+        { "set": { "color": { "token": "chrome-label-strong" } } }
+      ]
+    },
+    {
+      "name": "label",
+      "selector": ".fact__label",
+      "$doc": "The sentence under the figure. Body prose at the small step, so a fact reads as a claim with a number rather than as a number with a caption.",
+      "declarations": [
+        {
+          "set": {
+            "font-size": { "token": "text-sm" },
+            "color": { "token": "content-body" },
+            "line-height": "1.45"
+          }
+        }
+      ]
+    }
+  ],
+  "at": [
+    {
+      "condition": "below-720",
+      "$doc": "Stacked, the divider turns ninety degrees. It is the same two rules as above — every fact draws one, the last one does not — with the edge changed, which is what makes this an override of a named rule rather than a second definition of it.",
+      "rules": [
+        {
+          "of": "parts.fact",
+          "declarations": [
+            { "set": { "border-right": "0", "border-bottom": { "token": "rule" } } }
+          ],
+          "positions": [
+            {
+              "name": "closing",
+              "at": "last",
+              "declarations": [{ "set": { "border-bottom": "0" } }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

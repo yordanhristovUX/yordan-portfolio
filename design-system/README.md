@@ -14,9 +14,10 @@ before touching any UI.** It is the entry point for humans and AI agents alike.
 2. **Every component is three things**: a CSS block in `css/components.css`, a spec in
    `components/<name>/spec.md`, and a story in `stories/<name>.stories.js`. The build's
    coverage check (`npm run build`) fails if any leg is missing. The same run also fails if
-   the counts the site advertises about itself have gone stale — see below. Three
-   components (button, chip, stat) now have a **fourth** leg, `definition.json`, and their
-   CSS block is generated from it — see "Definitions" below; the other twenty do not.
+   the counts the site advertises about itself have gone stale — see below. A growing
+   number of components have a **fourth** leg, `definition.json`, and their CSS block is
+   generated from it — see "Definitions" below. `PILOT` in `scripts/emit-css.mjs` is the
+   list, and it is the only place that list exists.
 3. **Figma is an output, never a source.** Sync is one-way, repo → Figma, via the MCP
    procedure in `figma/push-guide.md`.
 4. **Themes are tokens, not queries.** A colour that changes between light and dark gets a
@@ -37,13 +38,13 @@ dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to t
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 15 blocks authored, 8 generated)
+css/components.css      every component's styles (an ASSEMBLY: 13 blocks authored, 10 generated)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
-components/*/definition.json  appearance as data — THREE components so far, see "Definitions"
+components/*/definition.json  appearance as data — the `PILOT` list, see "Definitions"
 tokens/typography.json  the type levels table — the typography block is generated from it
-components/definition.schema.json  the schema, EXTRACTED from those three (build.mjs validates)
+components/definition.schema.json  the schema, EXTRACTED block by block (build.mjs validates)
 scripts/validate-json.mjs  the ~150-line JSON Schema subset validator, zero-dep
 PATTERNS.md             the R4 design note: which blocks can be definitions, measured (5 of 24)
 stories/*.stories.js    Storybook (CSF3, vanilla HTML strings)  (npm run storybook → :6006)
@@ -69,16 +70,21 @@ a component rather than to the copy: `avatar.svg` is the portrait
 `../content/assets/`, which stays untouched — content owns the words and the figures inside
 them, the system owns its own chrome.
 
-## Definitions — appearance as data (pilot scope: three components)
+## Definitions — appearance as data
 
-**`css/components.css` is no longer entirely hand-authored.** Three of its blocks —
-**button, chip, stat** — are generated from `components/<id>/definition.json`, which holds
-that component's appearance as structured data: its variants, its sizes, its states, and
-which token each property binds to. The other twenty blocks are authored source and stay
-that way. This is phase R1 of a revision that ends with `components.css` receiving the same
-treatment `dist/tokens.css` already gets; **nothing here is settled beyond these three**, and
-the schema is deliberately not written down yet — it will be *extracted* from these three
-real cases rather than imposed on them.
+**`css/components.css` is no longer entirely hand-authored.** The blocks named in `PILOT`
+(`scripts/emit-css.mjs`) are generated from `components/<id>/definition.json`, which holds
+that component's appearance as structured data: its variants, its sizes, its states, its
+parts, and which token each property binds to. The rest are authored source. This started as
+phase R1 with three blocks and is now R4's migration, which ends with `components.css`
+receiving the same treatment `dist/tokens.css` already gets.
+
+**The schema was extracted and keeps being extracted.** Every construct in
+`components/definition.schema.json` names the block that forced it, and nothing is there
+because a schema felt incomplete. A block is transcribed byte for byte — the whole diff to
+`components.css` when a block joins is the two marker lines — so the visual baselines never
+move, and a definition that renders one byte differently fails the build rather than
+recapturing a screenshot.
 
 The file is therefore an **assembly**. A generated block sits between two markers:
 
@@ -113,7 +119,38 @@ structure while its colour is a token — a fact no parser recovers from the CSS
 are **grouped**, because the authored CSS groups them and the grouping is a decision
 (`font-size / font-weight / letter-spacing` on one line is one thought); one group renders on
 one line, more than one renders as a block. Rendering order is the cascade: base, base
-states, each variant and its states, each size and its states, then parts.
+states and positions, each variant and its states, each size and its states, then parts, then
+the `at` blocks.
+
+### The four constructs R4 added, and the block that forced each
+
+| construct | what it says | forced by |
+| --- | --- | --- |
+| a **scoped part** — `within` + `element[]` + `pseudo?` | a rule on markup that carries no class: `.link-grid a`, `.case-body p strong`, `.entry__list li::before` | `link-grid`, `case-body`, then `entry` and `fact` widened `within` from the root to any earlier part |
+| **`positions`** — `at: first \| last` | where a rule sits among its siblings: `.case-body h3:first-child`, `.entry:last-child` | `case-body` (`first`), `entry` and `fact` (`last`) |
+| **`at`** — `condition` + `rules: [{ of, … }]` | the `@media` blocks at the foot of a stylesheet block, with the condition NAMED in `tokens.json` and the rule NAMED rather than re-selected | `fact` and `entry`, which write the same breakpoint for the same reason |
+| a rule-level **`note`** | a comment above a rule, distinct from a group's note inside the braces | `entry`'s `.entry__span` |
+
+Three of those are closed at both ends on purpose, and that is what keeps them from being the
+wedge `PATTERNS.md` refuses. A scoped part's ancestor must be a selector the same definition
+already declares, and its path is bare tag names with the combinator supplied by the emitter —
+so `.case-body p strong` is sayable and `.band > .rail--l` is not. A position is an enum with
+one member per block that has asked. An `at` condition is a name resolved in
+`tokens/tokens.json`'s `$conditions`, so a definition cannot invent a breakpoint; a new one is
+a decision recorded in the one file where a literal may be written.
+
+**`$conditions` is not a token group and is emitted into nothing.** CSS has no way to use a
+custom property in a media query — `@media var(--below-720)` fails silently — so publishing
+one would be a footgun in `dist/tokens.css`. It sits behind a `$` like `$meta`, which means
+the token, value and dark counts do not move. `build.mjs` reads `from-760` out of it for the
+`wide` block it emits, which is what the old `WIDE_MIN` constant's comment was asking for.
+
+The conditions are **named for their values** (`below-720`, `from-760`) rather than for a
+position on a ramp, because there is no ramp: `components.css` holds seventeen distinct
+max-widths, each chosen for one block. That is the shape the type scale had at 40 values, and
+consolidating it is an *appearance* change, which this migration is not allowed to make — so
+it is on the owner's review list, and a value-derived name records the decision without
+inventing one.
 
 **Behaviour is not in a definition and is not coming.** Which element to use, focus
 management, keyboard, ARIA, "at most one `.btn--solid` per view" — those are judgement, and
@@ -241,20 +278,31 @@ the stylesheet the site actually loads. Deriving it from definitions would make 
 that comparison the same side, including on the day the emitter is wrong. R4 turns the parse
 into a cross-check rather than replacing it.
 
-## The Tailwind + React tier (pilot scope: the same three components)
+## The Tailwind + React tier (the same definitions, in lockstep)
 
-Phase R2a. The three definitions above are read by a **second** emitter and rendered for a
-Next.js consumer: a Tailwind v4 `@theme` file and one typed React component each. Neither
-pipeline is a translation of the other — both are renderings of the same data, which is the
-property two hand-written front ends cannot have.
+Phase R2a. Every definition above is read by a **second** emitter and rendered for a Next.js
+consumer: a Tailwind v4 `@theme` file and one typed React component each. Neither pipeline is
+a translation of the other — both are renderings of the same data, which is the property two
+hand-written front ends cannot have. The two grow together: a block that joins `PILOT` gains
+its `.tsx` and its `exports` subpath in the same commit, and the build fails if it does not.
 
 ```
 dist/tokens.tailwind.css   Tailwind namespaces → the custom properties tokens.css defines
 dist/react/button.tsx      cva map + variant types + the element, per definition
 dist/react/chip.tsx        …and its `.chips` wrapper, because chip has a `part`
-dist/react/stat.tsx
+dist/react/<id>.tsx        one per definition, in PILOT order
 dist/react/index.ts        the barrel
 ```
+
+**A scoped part exports nothing, and that is the honest answer.** `.link-grid a` styles an
+element with no class, so there is no `className` for a component to carry; its rules become
+arbitrary variants on whatever class list the *host* selector owns — `[&_a]:py-space-4` on
+`LinkGrid`, `[&_small]:font-bold` on `FactNum`. Putting a part-scoped rule on the root would
+be a **wider** selector than the stylesheet's, not a narrower one, which is why `within` picks
+the sink rather than the component id doing it. A condition rides the same way:
+`[@media(max-width:720px)]:border-r-0` compiles to exactly the query in `tokens.json`, rather
+than to Tailwind's `max-md:`, which would round it to a breakpoint scale this system has
+deliberately not minted.
 
 ### The mapping, and the one rule under it
 
@@ -430,7 +478,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly fifteen** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly seventeen** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -452,6 +500,8 @@ published.
 "@yordan/design-system/react/source"
 "@yordan/design-system/react/link-grid"
 "@yordan/design-system/react/case-body"
+"@yordan/design-system/react/fact"
+"@yordan/design-system/react/entry"
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —
