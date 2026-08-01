@@ -497,7 +497,7 @@ body.is-locked { overflow: hidden; }
 .band:has(> .term) > .rail--l,
 .band:has(> .term) > .rail--r { grid-row: auto / span 2; }
 
-/* ---- authored:nav — unnamed-condition ---- */
+/* ---- generated:nav — do not edit, source: components/nav/definition.json ---- */
 /* ============ Nav (floating bar) ============ @component nav */
 .bar {
   /* Centred by opposing insets + auto margins, NOT by translateX(-50%). The
@@ -832,6 +832,7 @@ body.is-locked { overflow: hidden; }
 @media (max-width: 480px) {
   .bar__id { padding: var(--space-3) var(--space-2); }
 }
+/* ---- /generated:nav ---- */
 
 /* ---- authored:theme-toggle — unnamed-condition ---- */
 /* ============ Theme toggle ============ @component theme-toggle

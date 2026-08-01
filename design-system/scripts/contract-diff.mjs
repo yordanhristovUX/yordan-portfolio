@@ -212,8 +212,28 @@ for (const def of defs) {
      a viewport, and the CONDITION is part of its identity — moving the same
      declarations to a different breakpoint changes what ships without changing
      any selector, and only the key records that. */
+  /* A KEYFRAMES NAME IS PUBLISHED AND IS NOT A SELECTOR. It lands in
+     dist/keyframes.css, which a consumer imports by subpath, and renaming one
+     silently stops every `animation` that names it — so it is tracked with the
+     rest, keyed by the name rather than by a class, and its declarations are the
+     offsets so that moving a step reads as the patch it is. */
+  for (const kf of def.keyframes ?? []) {
+    definitionSurface[`${def.id} @keyframes ${kf.name}`] = {
+      kind: "keyframes",
+      declarations: Object.fromEntries(kf.steps.map((s) => [s.at, JSON.stringify(declOf(s.declarations))])),
+    };
+  }
   for (const block of def.at ?? []) {
     for (const o of block.rules) {
+      /* A rule DECLARED under the condition rather than overridden there. Its
+         selector exists only inside the query, so the condition is part of its
+         identity in exactly the way an override's is — and the kind says which
+         of the two it is, because a rule that stops being query-only and gains
+         an unconditional twin is an API change rather than nothing. */
+      if (typeof o.kind === "string") {
+        put(`at ${block.condition} ${o.kind}`, `${selectorOf(def, o.name)} @${block.condition}`, o);
+        continue;
+      }
       /* EVERY OVERRIDE PUBLISHES ONE RULE, since `override.positions` retired.
          There used to be a fourth argument here suppressing the entry for an
          override that declared nothing directly and existed only to carry

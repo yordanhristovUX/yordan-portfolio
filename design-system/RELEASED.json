@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -1543,6 +1543,237 @@
       "declarations": {
         "font-size": "{text-md}"
       }
+    },
+    "nav .bar": {
+      "kind": "base",
+      "declarations": {
+        "align-items": "stretch",
+        "background": "{chrome-bg}",
+        "box-shadow": "inset 0 0 0 1px {chrome-border-strong} , 5px 5px 0 {shadow-drop}",
+        "display": "flex",
+        "font-family": "{font-mono}",
+        "font-size": "{text-xs}",
+        "left": "0",
+        "letter-spacing": "{tracking-wide-sm}",
+        "margin-inline": "auto",
+        "max-width": "calc(100vw - 1.5rem)",
+        "position": "fixed",
+        "right": "0",
+        "top": "1rem",
+        "width": "max-content",
+        "z-index": "100"
+      }
+    },
+    "nav .bar__id": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "color": "{content-primary}",
+        "display": "flex",
+        "font-weight": "{weight-semibold}",
+        "min-width": "0",
+        "overflow": "hidden",
+        "padding": "{space-3} {space-5}",
+        "white-space": "nowrap"
+      }
+    },
+    "nav .bar__nav": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "stretch",
+        "display": "flex"
+      }
+    },
+    "nav .bar__nav a": {
+      "kind": "scoped part",
+      "declarations": {
+        "align-items": "center",
+        "box-shadow": "inset 1px 0 0 {chrome-border}",
+        "color": "{chrome-label-strong}",
+        "display": "flex",
+        "padding": "0 {space-5}",
+        "transition": "background-color 0.2s, color 0.2s"
+      }
+    },
+    "nav .bar__nav a:hover": {
+      "kind": "scoped part state",
+      "declarations": {
+        "background": "{primary}",
+        "color": "{content-inverse}"
+      }
+    },
+    "nav .bar__menu": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "box-shadow": "inset 1px 0 0 {chrome-border}",
+        "color": "{chrome-label-strong}",
+        "display": "none",
+        "letter-spacing": "{tracking-wide-sm}",
+        "padding": "0 {space-5}",
+        "transition": "background-color 0.2s, color 0.2s",
+        "white-space": "nowrap"
+      }
+    },
+    "nav .bar__menu:hover,[aria-expanded=\"true\"]": {
+      "kind": "part state",
+      "declarations": {
+        "background": "{primary}",
+        "color": "{content-inverse}"
+      }
+    },
+    "nav .bar__status": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "box-shadow": "inset 1px 0 0 {chrome-border}",
+        "color": "{chrome-label}",
+        "display": "flex",
+        "gap": "{space-2}",
+        "padding": "0 {space-5}"
+      }
+    },
+    "nav .bar__status @below-1199": {
+      "kind": "part at below-1199",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "nav .bar__clock": {
+      "kind": "part",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "nav .bar__clock @from-1280": {
+      "kind": "part at from-1280",
+      "declarations": {
+        "display": "inline"
+      }
+    },
+    "nav .bar__action": {
+      "kind": "part",
+      "declarations": {
+        "align-items": "center",
+        "background": "{accent}",
+        "box-shadow": "inset 1px 0 0 {chrome-border}",
+        "color": "{content-inverse}",
+        "display": "flex",
+        "gap": "{space-2}",
+        "letter-spacing": "{tracking-wide-sm}",
+        "padding": "0 {space-5}",
+        "transition": "background-color 0.2s, color 0.2s",
+        "white-space": "nowrap"
+      }
+    },
+    "nav .bar__action:hover": {
+      "kind": "part state",
+      "declarations": {
+        "background": "{primary}"
+      }
+    },
+    "nav .bar__action[aria-expanded=\"true\"]": {
+      "kind": "part state",
+      "declarations": {
+        "background": "{primary}"
+      }
+    },
+    "nav .bar__face": {
+      "kind": "part",
+      "declarations": {
+        "border-radius": "50%",
+        "box-shadow": "inset 0 0 0 1px {chrome-border-strong}",
+        "display": "block",
+        "flex": "none",
+        "height": "1.25rem",
+        "width": "1.25rem"
+      }
+    },
+    "nav .bar__dot": {
+      "kind": "part",
+      "declarations": {
+        "animation": "blink 2.4s steps(2) infinite",
+        "background": "{accent}",
+        "height": "8px",
+        "width": "8px"
+      }
+    },
+    "nav @keyframes blink": {
+      "kind": "keyframes",
+      "declarations": {
+        "50%": "{\"opacity\":\"0.25\"}"
+      }
+    },
+    "nav .bar @below-699": {
+      "kind": "at below-699",
+      "declarations": {
+        "box-shadow": "inset 0 -1px 0 {chrome-border-strong}",
+        "margin": "0",
+        "max-width": "none",
+        "top": "0",
+        "width": "auto"
+      }
+    },
+    "nav .bar__id @below-699": {
+      "kind": "at below-699",
+      "declarations": {
+        "flex": "1",
+        "font-size": "{text-sm}"
+      }
+    },
+    "nav .bar__nav @below-699": {
+      "kind": "at below-699",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "nav .bar__menu @below-699": {
+      "kind": "at below-699",
+      "declarations": {
+        "display": "flex"
+      }
+    },
+    "nav .bar__action[data-ask] @below-699": {
+      "kind": "at below-699 state",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "nav .bar .theme @below-699": {
+      "kind": "at below-699 part",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "nav .bar__id @below-600": {
+      "kind": "at below-600",
+      "declarations": {
+        "padding": "{space-3} {space-3}"
+      }
+    },
+    "nav .bar__action @below-600": {
+      "kind": "at below-600",
+      "declarations": {
+        "padding": "0 {space-2}"
+      }
+    },
+    "nav .bar__action-label @below-860": {
+      "kind": "at below-860 part",
+      "declarations": {
+        "display": "none"
+      }
+    },
+    "nav .bar__action @below-860": {
+      "kind": "at below-860",
+      "declarations": {
+        "gap": "0"
+      }
+    },
+    "nav .bar__id @below-480": {
+      "kind": "at below-480",
+      "declarations": {
+        "padding": "{space-3} {space-2}"
+      }
     }
   },
   "exports": {
@@ -1566,6 +1797,9 @@
     },
     "./tokens.tailwind.css": {
       "target": "./dist/tokens.tailwind.css"
+    },
+    "./keyframes.css": {
+      "target": "./dist/keyframes.css"
     },
     "./react": {
       "target": "./dist/react/index.ts"
@@ -1611,6 +1845,9 @@
     },
     "./react/definition-row": {
       "target": "./dist/react/definition-row.tsx"
+    },
+    "./react/nav": {
+      "target": "./dist/react/nav.tsx"
     }
   }
 }

@@ -1,0 +1,13 @@
+/* ============================================================
+   GENERATED — every @keyframes declared by a component definition.
+   Source: components/<id>/definition.json. Do not edit.
+
+   An animation's name is a GLOBAL CSS identifier, so it cannot ride in a
+   class attribute the way a declaration can. Import this beside
+   @yordan/design-system/tokens.css and the generated React components'
+   animations resolve; leave it out and they are named animations with no
+   keyframes, which browsers ignore silently.
+   ============================================================ */
+
+/* nav */
+@keyframes blink { 50% { opacity: 0.25; } }

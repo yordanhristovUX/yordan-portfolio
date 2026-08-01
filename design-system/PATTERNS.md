@@ -278,6 +278,53 @@ the same question only while the two are the same thing. Two of the twenty-four 
 `@component none` and belong to no component at all, which is the same seam from the other
 side. Before writing a block off, check what it is a block *of*.
 
+### The sixth finding is that most of what was left is not CSS at all — it is TEXT, and `nav` is why
+
+Five findings in, the instrument had been corrected five times and always in the same
+direction: a feature looked disqualifying, and its vocabulary turned out to be finite. `nav` is
+the largest block in the file — 28 selectors, 334 lines, more prose than declarations — and it
+failed on **seven** things, of which exactly one is a fact about CSS.
+
+The one: three rules that exist only inside a media query. `.bar__action[data-ask]`,
+`.bar .theme` and `.bar__action-label` each have a rule under a condition and no unconditional
+counterpart, and an `at` block could only hold *overrides* — an entry naming a rule declared
+outside it. There was nothing for them to name. The answer is the ordinary rule vocabulary
+nested one level, tagged by `kind`, so a query holds a state or a scoped part exactly as the
+top level does and **nothing is sayable inside a query that is not sayable outside one**. That
+is the same closure every construct in this note has landed with.
+
+The other six are the emitter and the file disagreeing about **where the newlines go**. A value
+written across three lines (`.bar`'s two shadows). A selector list written across two. Two
+comments above one rule. A blank line *inside* a rule. A comment above an override. A comment
+above a state. Every one of them renders identically as CSS and differently as bytes, and this
+migration's whole claim is byte-identity — so each is a key, each is `const true` or an array
+of arrays, and each is refused where there is nothing to record.
+
+**That is worth naming as a finding rather than as seven details, because it changes what the
+remaining blocks are likely to cost.** The scan in this note measures *features*, and the
+fourth finding already showed it cannot see ORDER. It cannot see line breaks either, and by the
+time a block is 334 lines with forty-line banners in it, the prose is most of the file — so the
+distance between "expressible" and "transcribable" stops being about selectors and becomes
+about typography. A reasonable prediction from `button` was that a big block would need a
+freer *grammar*. What it needed was a way to say where the author pressed Return.
+
+The line that keeps this from being a licence: **a formatting key may only RECORD, never
+CHOOSE.** `wrap` is refused on a value with no comma to break at and on a state with one
+suffix; a group `break` is a blank line and not an indent; `note` as an array of arrays is two
+comments and not a layout. Nothing here names a width, a column or a position, and there is no
+combination of them that reflows a declaration the stylesheet does not already write reflowed.
+That is the same test the relational constructs pass — closed at both ends — asked about text.
+
+**And `@keyframes` came off the disqualifying list, which moves a number back.** This note used
+it three times as the archetype of "a condition this system cannot name", and that was the
+wrong at-rule to make the point with: a `@media` needs a condition and a `@keyframes` has none.
+It has a name and a set of offsets, both finite. `@supports (grid-template-columns: round(down,
+10%, 3px))` is still the archetype, and still unsayable, because its condition really is a
+computed value. What `@keyframes` cost instead was a **second published file** — a class
+attribute holds declarations, so pipeline 2 carries it as `dist/keyframes.css` rather than as a
+class, which is the first time the two pipelines have needed different *shapes* of artefact for
+one construct rather than different renderings of one.
+
 - **`typography` fails on `computed` alone** (its `clamp()` values), which is a token
   question rather than a pattern one: those are `--text-*` steps and the block mostly maps a
   class to a step. It may be the best argument for a fourth value form (a token binding with

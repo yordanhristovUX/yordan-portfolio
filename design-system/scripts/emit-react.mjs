@@ -79,7 +79,7 @@ import { utilitiesFor, STATE_PREFIX } from "./emit-tailwind.mjs";
 /* The selector arithmetic, imported rather than re-derived: pipeline 1 and
    pipeline 2 must agree about what `within` + `element` + `pseudo` names, and
    the only way to guarantee that is for one of them to own it. */
-import { POSITION_SUFFIX, conditionValues, selectorsByName, containsArg } from "./emit-css.mjs";
+import { POSITION_SUFFIX, conditionValues, selectorsByName, containsArg, isDeclared } from "./emit-css.mjs";
 
 /* ---------- names ---------- */
 const pascal = (s) => s.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join("");
@@ -407,7 +407,8 @@ export function renderComponent(def, elements, keyOf) {
   /* Two kinds of part. One has a class and becomes a component of its own; the
      other is SCOPED and cannot, because the element it styles carries no class
      — its rules land on the root as arbitrary variants instead. */
-  const classParts = (def.parts ?? []).filter((p) => !p.within);
+  const queryOnlyNames = new Set(queryOnlyOf(def).map(({ entry }) => entry.name));
+  const classParts = classPartsOf(def);
   /* Every selector the definition declares, resolved once by the loader's own
      arithmetic — so this tier names the selector that actually ships. */
   const selectors = selectorsByName(def);
@@ -428,7 +429,7 @@ export function renderComponent(def, elements, keyOf) {
     classParts.map((part) => [
       part.name,
       [
-        ...entriesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally),
+        ...(queryOnlyNames.has(part.name) ? [] : entriesOf(part.declarations, keyOf, `${where} → ${part.selector}`, tally)),
         ...atEntriesOf(part.at, keyOf, `${where} → ${part.selector}`, tally),
         ...stateEntriesOf(part.states, keyOf, `${where} → ${part.selector}`, tally),
         ...positionEntriesOf(part.positions, keyOf, `${where} → ${part.selector}`, tally),
@@ -563,6 +564,50 @@ export function renderComponent(def, elements, keyOf) {
   for (const block of def.at ?? []) {
     const at = conditionVariant(conditions.get(block.condition));
     for (const o of block.rules) {
+      /* A RULE DECLARED INSIDE THE QUERY, rather than an override of one
+         declared outside it. It is the ordinary vocabulary one level in, so it
+         anchors exactly as its top-level twin would — the only difference is
+         that every class it produces wears the condition as well as its scope.
+         `nav` writes three: a state of a part described further down the file,
+         a part scoped to a class another component owns, and a class part with
+         no unconditional rule at all. */
+      if (isDeclared(o)) {
+        const lead = `Under \`@media ${conditions.get(block.condition)}\` (\`${block.condition}\`), declared there and nowhere else — \`${selectors.get(o.name)}\`${o.$doc ? ` — ${o.$doc}` : ""}`;
+        if (o.kind === "part" && !o.within) {
+          const entries = entriesOf(o.declarations, keyOf, `${where} @${block.condition} ${o.name}`, tally, at);
+          if (entries.length) {
+            entries[0] = { ...entries[0], lead };
+            partEntries.get(o.name).push(...entries);
+          }
+          continue;
+        }
+        const parent = anchor(o, o.kind === "part" ? o.within : o.of);
+        const scope =
+          o.kind === "part" ? parent.scope + scopeOf(o)
+          : o.kind === "contains" ? parent.scope + `:has(${containsArg(o)})`
+          : o.kind === "position" ? parent.scope + POSITION_SUFFIX[o.at]
+          : parent.scope;
+        scopeByName.set(o.name, { scope, host: parent.host });
+        const suffixes = o.kind === "state" ? (Array.isArray(o.suffix) ? o.suffix : [o.suffix]) : [null];
+        const entries = suffixes.flatMap((suffix) => {
+          /* The same choice `stateEntriesOf` makes, for the same reason: an
+             unscoped state wears the table's idiomatic prefix, a scoped one
+             wears the whole selector in one bracket. */
+          const prefix = suffix === null ? variantFor(scope) : scope ? variantFor(scope, suffix) : STATE_PREFIX[suffix];
+          if (!prefix) {
+            throw new Error(
+              `${where}: the query-only state \`${o.name}\` appends \`${suffix}\`, which scripts/emit-tailwind.mjs has ` +
+                `no Tailwind variant prefix for. Add it to STATE_PREFIX — a state this emitter cannot name is a state ` +
+                `the React component would silently drop.`
+            );
+          }
+          return entriesOf(o.declarations, keyOf, `${where} @${block.condition} ${o.name}`, tally, at + prefix);
+        });
+        if (!entries.length) continue;
+        entries[0] = { ...entries[0], lead };
+        sinkFor(parent.host).push(...entries);
+        continue;
+      }
       /* A scoped part, a state or a position overridden under a condition keeps
          BOTH its scope and its host: the classes wear `[@media…]:[&_span]:` and
          land on the host's list. */
@@ -711,11 +756,28 @@ export function renderComponent(def, elements, keyOf) {
 /** Every name a component's file exports, in emission order. A SCOPED part
  *  exports nothing: it has no class to hang a className on, so its rules ship
  *  as arbitrary variants in the root's own class list. */
+/** Every rule a query DECLARES rather than overrides, with the block declaring
+ *  it. `nav` writes three; every other definition writes none. */
+export const queryOnlyOf = (def) => (def.at ?? []).flatMap((block) => block.rules.filter(isDeclared).map((entry) => ({ block, entry })));
+
+/** Every part with a class of its own — the ones that become components.
+ *  A QUERY-ONLY RULE IS STILL ONE OF THEM when it has a class: `.bar__action-label`
+ *  is a class the markup wears with no unconditional appearance at all, because
+ *  the label is a plain span until the viewport narrows and it folds away. Its
+ *  cva is filled from the at-rule pass rather than from `declarations`, which
+ *  under a query is not what the element looks like at rest — and dropping it
+ *  would be exactly the silent divergence this tier exists to make impossible.
+ *  Shared with `exportsOf` so the barrel and the module cannot disagree. */
+export const classPartsOf = (def) => [
+  ...(def.parts ?? []).filter((p) => !p.within),
+  ...queryOnlyOf(def).filter(({ entry }) => entry.kind === "part" && !entry.within).map(({ entry }) => entry),
+];
+
 export function exportsOf(def) {
   const Name = pascal(def.id);
   const values = [camel(def.id), Name];
   const types = [`${Name}Props`, `${Name}Variants`];
-  for (const part of (def.parts ?? []).filter((p) => !p.within)) {
+  for (const part of classPartsOf(def)) {
     const PartName = pascal(`${def.id}-${part.name}`);
     values.push(camel(`${def.id}-${part.name}`), PartName);
     types.push(`${PartName}Props`);

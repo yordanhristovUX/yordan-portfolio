@@ -578,7 +578,21 @@ export function utilitiesFor(prop, value, keyOf, where) {
    consumer's version compiles, and to what, is a fact about their Tailwind
    rather than about this definition. The arbitrary variant compiles to exactly
    the attribute selector components.css writes, at every version, which is the
-   only property this emitter is allowed to care about. */
+   only property this emitter is allowed to care about.
+
+   `[aria-expanded="true"]` IS THE THIRD, AND IT CHANGES ITS QUOTES. `nav` added
+   it — the bar's action wears the pressed ink for as long as what it opened is
+   open — and the emitted variant is `[&[aria-expanded='true']]:`, with SINGLE
+   quotes, where components.css writes double. That is the one lexical edit in
+   this table and it is worth stating rather than hiding: a Tailwind class name
+   ends up inside a `class`/`className` attribute, and a double quote inside a
+   double-quoted attribute is not a class, it is a parse error. Single and
+   double quotes are interchangeable in the CSS attribute-selector grammar — the
+   compiled selector is the same selector, character for character after the
+   lexer — so this is not the kind of translation `hover:` would have been.
+   Tailwind's own `aria-expanded:` variant IS that kind, and is refused for the
+   same reason as ever: it is a shorter class that compiles to something the
+   stylesheet did not write. */
 export const STATE_PREFIX = {
   ":hover": "[&:hover]:",
   ":focus": "focus:",
@@ -587,4 +601,6 @@ export const STATE_PREFIX = {
   ":disabled": "disabled:",
   "[disabled]": "disabled:",
   "[data-collapsed]": "[&[data-collapsed]]:",
+  "[data-ask]": "[&[data-ask]]:",
+  '[aria-expanded="true"]': "[&[aria-expanded='true']]:",
 };

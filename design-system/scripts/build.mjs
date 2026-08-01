@@ -61,7 +61,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 /* PIPELINE 1 — the component-CSS emitter. Its header documents the definition
    format and why the WRITE side of it lives there rather than here. */
-import { PILOT, definitionPath, loadAll, renderAll, checkRegions, openMarker, closeMarker } from "./emit-css.mjs";
+import { PILOT, definitionPath, loadAll, renderAll, checkRegions, openMarker, closeMarker, renderKeyframes, keyframesOf } from "./emit-css.mjs";
 /* PIPELINE 2 — the same definitions, rendered for a Tailwind + React consumer.
    Both artefact sets are written through `packaged` below, so both are
    byte-compared by --check rather than regenerated in place. */
@@ -484,10 +484,31 @@ const reactSource = (id) => {
    this array out of this file's source to recompute the root drift gate's
    pathspec list, so a fourth generated component has to be typed here — where
    it is visible in a diff — rather than appearing from a loop. */
+/* A KEYFRAMES NAME IS GLOBAL, so the check that it is unique can only be made
+   where every definition is in scope — here, and nowhere in the loader. Two
+   components declaring `blink` would be one animation with the later one
+   winning, silently, in the stylesheet AND in dist/keyframes.css. */
+{
+  const owners = new Map();
+  for (const { id, kf } of keyframesOf(definitions)) {
+    if (owners.has(kf.name)) {
+      console.error(
+        `✗ two definitions declare \`@keyframes ${kf.name}\` — ${definitionPath(owners.get(kf.name))} and ${definitionPath(id)}.\n` +
+          `  A keyframes name is a global CSS identifier, not a class scoped to a component: two of them are one\n` +
+          `  animation and the later one wins. Rename one.`
+      );
+      process.exit(1);
+    }
+    owners.set(kf.name, id);
+  }
+}
+const keyframesOut = renderKeyframes(definitions);
+
 const packaged = [
   ["dist/tokens.dtcg.json", dtcgOut],
   ["dist/tokens.d.ts", dtsOut],
   ["dist/tokens.tailwind.css", tailwindOut],
+  ["dist/keyframes.css", keyframesOut],
   ["dist/react/index.ts", renderIndex(definitions)],
   ["dist/react/button.tsx", reactSource("button")],
   ["dist/react/chip.tsx", reactSource("chip")],
@@ -503,6 +524,7 @@ const packaged = [
   ["dist/react/profile.tsx", reactSource("profile")],
   ["dist/react/ask-fab.tsx", reactSource("ask-fab")],
   ["dist/react/definition-row.tsx", reactSource("definition-row")],
+  ["dist/react/nav.tsx", reactSource("nav")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by

@@ -29,7 +29,8 @@
           { "$ref": "#/$defs/rule-state" },
           { "$ref": "#/$defs/rule-contains" },
           { "$ref": "#/$defs/rule-position" },
-          { "$ref": "#/$defs/rule-at" }
+          { "$ref": "#/$defs/rule-at" },
+          { "$ref": "#/$defs/rule-keyframes" }
         ]
       },
       "$doc": "EVERY RULE THE BLOCK WRITES, IN STYLESHEET ORDER, EACH TAGGED BY KIND. This replaced five sections — `base`, `variants`, `sizes`, `parts`, `at` — whose order the emitter supplied as a fixed cascade, and `media` and `profile` are the two blocks that proved the cascade was an emitter's opinion rather than the stylesheet's shape. Both group their rules by TOPIC: media writes `.ph:has(img)` four rules after `.ph`, with a part in between, because the has-an-image case is a paragraph of its own; profile writes `.profile > div:nth-child(odd)` at the foot, after every part, because the odd-column padding belongs with the query that undoes it. Under a fixed cascade neither is expressible, and the two ways out were both worse: a `detach` flag on a rule would be an EMITTER HINT — a key that exists to move a line rather than to say something about the component — and this format refuses hints, which is the argument `break`'s own $doc already makes from the other side (a paragraph is a statement, so it is recorded rather than inferred). An ordered list says the same thing about the whole block: source order IS the cascade, so recording it is recording a fact, not accommodating a renderer. It also closes a shape nothing else could reach — a part scoped to a STATE (`.drawer[data-open] .drawer__sheet`, `.ph:has(img) .ph__label`), which needs to name a rule that has no section of its own to live in. THE PRICE, AND IT IS THE POINT: a reference is now a NAME (`of`, `within`) rather than a section path or a selector, so every rule carries one, every name is unique in its definition, and a name may only refer BACKWARDS — a stylesheet reads downwards, and so does this. The build derives `base` / `variants` / `sizes` / `parts` back out of the list for the two consumers that want a set rather than a sequence (the React axes, the contract projection); that is a query over the list, not a second source."
@@ -58,7 +59,7 @@
     },
     "reference": {
       "$ref": "#/$defs/name",
-      "$doc": "A rule this definition declares ABOVE the rule doing the referring. Backwards only, because a stylesheet reads downwards and a rule cannot be scoped to a selector that does not exist yet; and by NAME rather than by selector, so a renamed rule cannot leave an orphan pointing at an element that is gone. `base` is the reserved name of the root's own rule."
+      "$doc": "A rule this definition declares ABOVE the rule doing the referring. Backwards only, because a stylesheet reads downwards and a rule cannot be scoped to a selector that does not exist yet; and by NAME rather than by selector, so a renamed rule cannot leave an orphan pointing at an element that is gone. `base` is the reserved name of the root's own rule. THE ONE EXEMPTION IS A REFERENCE MADE FROM INSIDE AN `at` BLOCK, and `nav` is the block that forced it: the docked-bar paragraph at 699px hides `.bar__action[data-ask]` forty rules before `.bar__action` is described, because the paragraph is about a breakpoint and the stylesheet keeps it whole. An `at` block is not a step in the cascade the list records — it is a set of MODIFICATIONS to rules, wrapped in a query — so requiring its references to point backwards would be requiring the stylesheet to reorder its paragraphs, which is an appearance change this migration is not allowed to make. What is still refused is the thing the order was standing in for: a CYCLE. Selector resolution is checked for one by name, so a rule cannot be scoped within itself however far apart the two sit."
     },
     "binding": {
       "$doc": "A reference to a design token: rendered as var(--token) by pipeline 1 and as the utility bound to that token by pipeline 2. The build checks the token exists.",
@@ -81,7 +82,7 @@
       }
     },
     "term": {
-      "$doc": "One term of a value: a structural literal, a token binding, or a computed expression.",
+      "$doc": "One term of a value: a structural literal, a token binding, or a computed expression. THE ONE TERM WITH A MEANING OF ITS OWN IS `\",\"`, and it is the separator of a comma-separated value — `box-shadow: inset 0 0 0 1px var(--chrome-border-strong), 5px 5px 0 var(--shadow-drop)` is TWO shadows, and the array says so. The emitter joins terms with a space and joins a comma to the term on its left, which is the only punctuation rule in the value forms; it exists because a comma cannot be appended to a `{\"token\"}` object, and because the alternative — writing the whole shadow as one string — would hide two bindings inside a literal, which is the exact thing the value forms exist to prevent. A `wrap`ped group breaks its lines at these commas.",
       "oneOf": [
         { "type": "string" },
         { "$ref": "#/$defs/binding" },
@@ -114,6 +115,14 @@
           "pattern": "^[^\\n]+$",
           "$doc": "A comment emitted at the END of this group's line rather than above it — the form the stylesheet uses for a remark that qualifies one declaration without interrupting the block. Footer's two are the case that added it: `was its own clamp, one 0.5rem cap away from --pad's` sits beside the padding it explains, and hoisting it above would put four lines of preamble in front of a one-line rule. Pipeline 2 drops it: a class list has nowhere to put a comment, and inventing a TSDoc for a remark about a CSS declaration would be a second copy of prose that is already in the definition."
         },
+        "break": {
+          "const": true,
+          "$doc": "Emit a blank line before this group. The same statement a rule's `break` makes, one level in: a rule has paragraphs too, and `nav`'s `.bar__id` is the rule that forced it — five declarations that shape the segment, then a blank line, then the `min-width: 0` / `overflow: hidden` pair with four lines of measured argument explaining which segment gives way when the bar stops fitting. The blank line is what says the pair is a different subject from the padding above it. Recorded rather than inferred, for the reason the rule-level key gives: an emitter that invented a paragraph would be asserting something the file had not said."
+        },
+        "wrap": {
+          "const": true,
+          "$doc": "THE STYLESHEET BREAKS THIS DECLARATION ACROSS LINES, AT ITS COMMAS. `nav`'s `.bar` is the block that forced it: its `box-shadow` is two shadows and is written with the value starting on the line below the property and one shadow per line, because two shadows on one line is a 96-character declaration nobody can scan. The emitter renders one group on one line and had no way to say otherwise, so the alternative was to leave a 28-selector block authored over a line break. IT IS A FACT ABOUT THE TEXT, exactly as `break` and `note` are, and it is closed at both ends: `const true` rather than an indent or a column, ONE declaration in the group, and a value that must be an ARRAY containing at least one `\",\"` term — the build refuses `wrap` on a value with no comma to break at, because then the key would be choosing a rendering rather than recording one. What it deliberately cannot do is control anything else about the output: it names no width, no indent and no position, and there is no shape of it that reflows a value the stylesheet does not already write reflowed."
+        },
         "set": {
           "type": "object",
           "minProperties": 1,
@@ -124,10 +133,11 @@
     },
     "declarations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/group" } },
     "note": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "type": "string", "pattern": "^[^\\n]*$" },
-      "$doc": "A comment emitted ABOVE this rule, at column 0, one array element per line. Distinct from a group's `note`, which is emitted inside the braces above the declaration it justifies — and the distinction is the stylesheet's, not this schema's: `.entry__span`'s \"Column 2, both rows — the dates line up with the role, not the body\" explains the whole rule and sits above it, while a group note explains one line and sits with it. Moving one to the other's place changes the bytes, which is how you know they are two things."
+      "$doc": "A comment emitted ABOVE this rule, at column 0, one array element per line. Distinct from a group's `note`, which is emitted inside the braces above the declaration it justifies — and the distinction is the stylesheet's, not this schema's: `.entry__span`'s \"Column 2, both rows — the dates line up with the role, not the body\" explains the whole rule and sits above it, while a group note explains one line and sits with it. Moving one to the other's place changes the bytes, which is how you know they are two things. AN ARRAY OF ARRAYS IS SEVERAL COMMENTS, and `nav`'s `.bar__action` is the rule that forced the second form: the stylesheet writes a short paragraph describing the segment and then, with no blank line between them, the forty-line banner that states the bar's whole left-to-right hierarchy. They are two comments because they are about two things — one about this rule, one about the row it sits in — and merging them into one would be a rewrite. The second form is DELIBERATELY not a nesting an author reaches for: one comment is a flat array, and a reader who wants two says so by writing two.",
+      "oneOf": [
+        { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[^\\n]*$" } },
+        { "type": "array", "minItems": 2, "items": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[^\\n]*$" } } }
+      ]
     },
     "rule-base": {
       "$doc": "THE ROOT'S OWN RULE. One per definition and OPTIONAL — `case-body` is the block that made it so: its root has no rule at all, because `.case-body` is a scope rather than an appearance, and requiring it would have meant emitting `.case-body { }`, a declaration that the file has a shape it does not have. Its name is `base`, reserved and not written, which is what every `of` and `within` naming the root says. It is first in the list in every block measured so far, and it is IN the list rather than beside it because nothing guarantees that: a rule the base only beats at the foot is a rule the list can hold and a section could not.",
@@ -220,18 +230,23 @@
       "properties": {
         "kind": { "const": "state" },
         "name": { "$ref": "#/$defs/name" },
+        "note": { "$ref": "#/$defs/note", "$doc": "A comment above this state, the same key a part and a base carry. `nav`'s `.bar__action[aria-expanded=\"true\"]` is the state that forced it: fifteen lines about why an open action reads as PRESSED rather than as lit, and why the attribute a screen reader is already being told about is the one thing styled — an argument about the state and not about the segment, which is why it sits here and not on the rule above." },
         "of": { "$ref": "#/$defs/reference" },
         "suffix": {
-          "$doc": "The pseudo-class or attribute appended to the owner's selector. scripts/emit-tailwind.mjs must have a variant prefix for it or the build fails — a state pipeline 2 cannot name is a state it would silently drop. AN ARRAY IS A SELECTOR LIST: `[\":hover\", \":focus-visible\"]` emits ONE rule under two selectors, which is what the stylesheet already writes wherever a pointer and a keyboard should land on the same appearance. Splitting it into two rules would be the same CSS and a different file; pipeline 2 has no selector list, so it emits each class once per prefix, which is the same cascade. A state whose suffix is a LIST cannot be the `within` of a scoped part: a list has no single selector to descend from, and the block that needs one is the block that decides what that would mean.",
+          "$doc": "The pseudo-class or attribute appended to the owner's selector. scripts/emit-tailwind.mjs must have a variant prefix for it or the build fails — a state pipeline 2 cannot name is a state it would silently drop. AN ARRAY IS A SELECTOR LIST: `[\":hover\", \":focus-visible\"]` emits ONE rule under two selectors, which is what the stylesheet already writes wherever a pointer and a keyboard should land on the same appearance. Splitting it into two rules would be the same CSS and a different file; pipeline 2 has no selector list, so it emits each class once per prefix, which is the same cascade. A state whose suffix is a LIST cannot be the `within` of a scoped part: a list has no single selector to descend from, and the block that needs one is the block that decides what that would mean. AN ATTRIBUTE MAY NOW CARRY A VALUE — `[aria-expanded=\"true\"]`, forced by `nav`, where a segment that opens something and leaves it open wears the pressed ink for as long as it is open. The form is CLOSED and stays closed: a bare attribute name, `=`, and a double-quoted value. No operator — no `*=`, `~=`, `^=`, `$=` or `|=` — and no unquoted value, because those are the forms in which an attribute selector starts matching things nobody enumerated. `[data-collapsed]` and `[aria-expanded=\"true\"]` are the two shapes the stylesheet writes, and both are a state a component sets on itself.",
           "oneOf": [
-            { "type": "string", "pattern": "^(:[a-z][a-z-]*(\\([^)]*\\))?|\\[[a-z-]+\\])$" },
+            { "type": "string", "pattern": "^(:[a-z][a-z-]*(\\([^)]*\\))?|\\[[a-z-]+(=\"[^\"\\]]*\")?\\])$" },
             {
               "type": "array",
               "minItems": 2,
               "uniqueItems": true,
-              "items": { "type": "string", "pattern": "^(:[a-z][a-z-]*(\\([^)]*\\))?|\\[[a-z-]+\\])$" }
+              "items": { "type": "string", "pattern": "^(:[a-z][a-z-]*(\\([^)]*\\))?|\\[[a-z-]+(=\"[^\"\\]]*\")?\\])$" }
             }
           ]
+        },
+        "wrap": {
+          "const": true,
+          "$doc": "THE SELECTOR LIST IS WRITTEN ONE SELECTOR PER LINE. The same fact about the text a group's `wrap` records, on the other side of the brace: `nav` writes `.bar__menu:hover,` and `.bar__menu[aria-expanded=\"true\"] { … }` on two lines because the second selector is 34 characters and the pair does not read on one, while `source` writes `.source__link:hover, .source__link:focus-visible { … }` on one because it does. Both are in the file and neither is the emitter's to choose. Refused unless `suffix` is a list — there is nothing to break at otherwise."
         },
         "$doc": { "type": "string" },
         "declarations": { "$ref": "#/$defs/declarations" }
@@ -280,10 +295,23 @@
         "break": { "const": true, "$doc": "Emit a blank line before the at-rule. `entry` separates its overrides from the rules they override; `fact` does not. A paragraph is a statement, and the emitter must not invent one." },
         "inline": {
           "const": true,
-          "$doc": "RENDER ON ONE LINE — `@media (max-width: 640px) { .sec__note { display: none; } }` — because that is how the stylesheet writes this one. ONE override, ONE group, no note and no break: the inline form is one line by construction, and the build refuses a shape that would not fit on one rather than silently choosing a rendering. NEVER INFERRED, and that is the key's reason for existing: a block whose foot query happens to hold one rule is not thereby a footnote, and `media`'s `@media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }` sits at the foot and renders inline, which is the counter-example that would have made an inference wrong.",
+          "$doc": "RENDER ON ONE LINE — `@media (max-width: 640px) { .sec__note { display: none; } }` — because that is how the stylesheet writes this one. ONE override, ONE group, and nothing that would have to go INSIDE the braces: no group note and no group aside. NEVER INFERRED, and that is the key's reason for existing: a block whose foot query happens to hold one rule is not thereby a footnote, and `media`'s `@media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }` sits at the foot and renders inline, which is the counter-example that would have made an inference wrong. A `note` AND A `break` ARE ADMITTED, and `nav` is why the refusal was re-derived: `@media (max-width: 1199px) { .bar__status { display: none; } }` is one line with twenty-five lines of measured argument above it about which viewports may see the availability readout. Both of those render OUTSIDE the line — the note above it at column 0, the break as a blank line before that — so refusing them was refusing a shape the one-line rule never covered, and it would have cost either the argument or the bytes.",
           "$comment": "Absent means the block form."
         },
-        "rules": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/override" } }
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/override" },
+              { "$ref": "#/$defs/rule-state" },
+              { "$ref": "#/$defs/rule-part" },
+              { "$ref": "#/$defs/rule-contains" },
+              { "$ref": "#/$defs/rule-position" }
+            ]
+          },
+          "$doc": "WHAT THE QUERY HOLDS: an OVERRIDE of a rule declared outside it, or a rule DECLARED INSIDE IT and existing nowhere else. The second is R4's addition and `nav` forced it three times over — `.bar__action[data-ask]`, `.bar .theme` and `.bar__action-label` each have a rule under a query and no unconditional counterpart, so there was nothing for an override to name. It is the ordinary rule vocabulary nested one level, discriminated by `kind` (an override has none), so a query-only rule is a state, a scoped part, a contains or a position exactly as it would be at the top level, with the same closed selector arithmetic and the same reference rules. NOTHING NEW IS SAYABLE INSIDE A QUERY THAT IS NOT SAYABLE OUTSIDE ONE — that is the property that keeps this from being a second, freer grammar hiding under a bracket. The one thing that IS different is the direction a reference may point: see `reference`."
+        }
       }
     },
     "override": {
@@ -294,7 +322,40 @@
       "properties": {
         "of": { "$ref": "#/$defs/reference" },
         "$doc": { "type": "string" },
+        "note": { "$ref": "#/$defs/note", "$doc": "A comment above this override, indented one level with the rule it introduces. The same key a top-level rule carries, admitted here because `nav`'s mobile block writes one: `.bar__id`'s docked rule takes the identity one step UP the type ramp, and the eight lines saying why — and saying that the menu sheet's title must take the same step or the two heights drift — belong to that override and to nothing else. Without it the comment would have to become a group note, which the stylesheet renders inside the braces and is therefore different bytes." },
         "declarations": { "$ref": "#/$defs/declarations" }
+      }
+    },
+    "rule-keyframes": {
+      "$doc": "AN ANIMATION'S KEYFRAMES, TRANSCRIBED — `@keyframes blink { 50% { opacity: 0.25; } }`, and `nav` and `theme-toggle` are the two blocks that write one. PATTERNS.md listed `@keyframes` as the archetype of a condition this system cannot name, and that reading was about the WRONG at-rule: a `@media` needs a condition and a `@keyframes` has none. It has a NAME and a set of offsets, both finite, both written down here — so it is the fourth feature to turn out to have a closed vocabulary, and the first that is not a condition at all. WHAT IT DELIBERATELY IS NOT: an at-rule key with a prelude. There is no shape of this that produces `@supports`, `@container` or `@layer`; `kind: \"keyframes\"` says which at-rule it is, and `name` is an identifier rather than a query. The offsets are a closed pattern — `from`, `to`, or a whole percentage — and a step's body is `declarations`, the same groups every other rule carries, so a keyframe cannot smuggle in a nested selector. THE NAME IS GLOBAL AND THAT IS RECORDED: a keyframes name is not scoped to a component, so the build checks that some declaration in the SAME definition animates it, which is the closest a definition can come to owning one. PIPELINE 2 CANNOT CARRY IT AS A CLASS — a class attribute holds declarations, not at-rules — so it rides in `dist/keyframes.css`, a published stylesheet the consumer imports beside `tokens.css`. See design-system/README.md's emission contract for why that is the honest answer rather than an emitter hint.",
+      "type": "object",
+      "required": ["kind", "name", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "keyframes" },
+        "name": { "$ref": "#/$defs/name", "$doc": "The animation name, which is also this rule's handle. A keyframes name is a GLOBAL CSS identifier — two components declaring `blink` would be one animation, last one wins — so it is checked for uniqueness across every definition, not only within this one." },
+        "$doc": { "type": "string" },
+        "note": { "$ref": "#/$defs/note" },
+        "break": { "const": true, "$doc": "Emit a blank line before the at-rule, exactly as an `at` block's `break` does." },
+        "inline": {
+          "const": true,
+          "$doc": "RENDER ON ONE LINE — `@keyframes blink { 50% { opacity: 0.25; } }`, which is how both blocks that have one write it. ONE step, ONE group, no notes: the same construction and the same refusal `at`'s `inline` records, and never inferred for the same reason.",
+          "$comment": "Absent means the block form."
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["at", "declarations"],
+            "additionalProperties": false,
+            "properties": {
+              "at": { "type": "string", "pattern": "^(from|to|100%|[1-9]?[0-9]%)$", "$doc": "The offset: `from`, `to`, or a whole percentage. A CLOSED pattern rather than a free string, for the reason every other vocabulary here is closed — and whole percentages rather than any number because the two real ones are `50%` and `to`, and a fractional offset is a decision the block that needs it should have to write down." },
+              "$doc": { "type": "string" },
+              "declarations": { "$ref": "#/$defs/declarations" }
+            }
+          }
+        }
       }
     },
     "alias": {

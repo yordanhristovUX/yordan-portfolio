@@ -5,6 +5,43 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.1.0 — 2026-08-01
+
+Minor — 30 change(s).
+
+### Added
+
+- definition `nav .bar .theme @below-699` added
+- definition `nav .bar @below-699` added
+- definition `nav .bar__action @below-600` added
+- definition `nav .bar__action @below-860` added
+- definition `nav .bar__action-label @below-860` added
+- definition `nav .bar__action:hover` added
+- definition `nav .bar__action[aria-expanded="true"]` added
+- definition `nav .bar__action[data-ask] @below-699` added
+- definition `nav .bar__action` added
+- definition `nav .bar__clock @from-1280` added
+- definition `nav .bar__clock` added
+- definition `nav .bar__dot` added
+- definition `nav .bar__face` added
+- definition `nav .bar__id @below-480` added
+- definition `nav .bar__id @below-600` added
+- definition `nav .bar__id @below-699` added
+- definition `nav .bar__id` added
+- definition `nav .bar__menu @below-699` added
+- definition `nav .bar__menu:hover,[aria-expanded="true"]` added
+- definition `nav .bar__menu` added
+- definition `nav .bar__nav @below-699` added
+- definition `nav .bar__nav a:hover` added
+- definition `nav .bar__nav a` added
+- definition `nav .bar__nav` added
+- definition `nav .bar__status @below-1199` added
+- definition `nav .bar__status` added
+- definition `nav .bar` added
+- definition `nav @keyframes blink` added
+- export `./keyframes.css` added
+- export `./react/nav` added
+
 ## 2.0.0 — 2026-08-01
 
 Major — 14 change(s).

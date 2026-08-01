@@ -183,7 +183,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */
@@ -358,25 +358,37 @@ export const RULE_FORM = {
   contains: "rule-contains",
   position: "rule-position",
   at: "rule-at",
+  keyframes: "rule-keyframes",
 };
 
 /** What the build calls a rule when it reports one: its name, and `base` for
  *  the root's own. One vocabulary — the same names `of` and `within` use. */
-const labelOf = (r) => (r.kind === "base" ? "base" : r.kind === "at" ? `at ${r.condition}` : r.name);
+const labelOf = (r) => (r.kind === "base" ? "base" : r.kind === "at" ? `at ${r.condition}` : r.kind === "keyframes" ? `keyframes ${r.name}` : r.name);
+
+/** The entries of an `at` block, told apart. An OVERRIDE restates a rule
+ *  declared outside the query; a DECLARED rule exists only inside it and is the
+ *  ordinary vocabulary nested one level, so `kind` is the discriminant. */
+export const isDeclared = (entry) => typeof entry.kind === "string";
 
 /** Walk every declaration in a definition: `fn(prop, value, where)`. Every
- *  declaration, including the ones under a media query — a door the literal
- *  guard and the binding check do not watch is the door a raw value walks in. */
+ *  declaration, including the ones under a media query and the ones inside a
+ *  keyframe — a door the literal guard and the binding check do not watch is the
+ *  door a raw value walks in. */
 function eachDeclaration(def, fn) {
+  const groups = (list, where) => {
+    for (const g of list ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, where);
+  };
   for (const r of def.rules ?? []) {
     const label = labelOf(r);
     if (r.kind === "at") {
-      for (const o of r.rules) {
-        for (const g of o.declarations) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, `${label} ${o.of}`);
-      }
+      for (const o of r.rules) groups(o.declarations, `${label} ${isDeclared(o) ? o.name : o.of}`);
       continue;
     }
-    for (const g of r.declarations ?? []) for (const [prop, value] of Object.entries(g.set)) fn(prop, value, label);
+    if (r.kind === "keyframes") {
+      for (const s of r.steps) groups(s.declarations, `${label} ${s.at}`);
+      continue;
+    }
+    groups(r.declarations, label);
   }
 }
 
@@ -429,9 +441,11 @@ export const containsArg = (r) => r.element ?? r.class;
  *  combinator is supplied THERE and never by an author, in every shape. */
 export const partSelector = (part) => part.selector;
 
-/** A state's selector: one suffix, or a selector LIST when it carries several. */
-export const stateSelector = (owner, suffix) =>
-  (Array.isArray(suffix) ? suffix : [suffix]).map((s) => `${owner}${s}`).join(", ");
+/** A state's selector: one suffix, or a selector LIST when it carries several.
+ *  `wrap` puts the list one selector per line, which is a fact about the
+ *  stylesheet's text and not this function's opinion — see the schema. */
+export const stateSelector = (owner, suffix, wrap = false) =>
+  (Array.isArray(suffix) ? suffix : [suffix]).map((s) => `${owner}${s}`).join(wrap ? ",\n" : ", ");
 
 /** Every selector a definition declares, by the NAME that refers to it —
  *  `base`, `solid`, `span`. One vocabulary, shared by the error messages, by a
@@ -442,8 +456,8 @@ export function selectorsByName(def) {
   /* `base` is the root, declared or not: case-body styles nothing on
      `.case-body` and scopes seven parts within it. */
   const out = new Map([["base", def.root]]);
-  for (const r of def.rules ?? []) {
-    if (r.kind === "base") continue;
+  const put = (r) => {
+    if (r.kind === "base" || r.kind === "at" || r.kind === "keyframes") return;
     else if (r.kind === "variant" || r.kind === "size") out.set(r.name, r.selector);
     else if (r.kind === "part") {
       /* A CHILD combinator reaches a bare tag; everything else is a descendant.
@@ -451,9 +465,23 @@ export function selectorsByName(def) {
          format refuses — cannot be assembled out of the pieces. */
       const step = r.child ? `> ${r.child}` : `${r.element ? r.element.join(" ") : r.class}${r.pseudo ?? ""}`;
       out.set(r.name, r.selector ?? `${out.get(r.within)} ${step}`);
-    } else if (r.kind === "state") out.set(r.name, stateSelector(out.get(r.of), r.suffix));
+    } else if (r.kind === "state") out.set(r.name, stateSelector(out.get(r.of), r.suffix, r.wrap === true));
     else if (r.kind === "contains") out.set(r.name, `${out.get(r.of)}:has(${containsArg(r)})`);
     else if (r.kind === "position") out.set(r.name, `${out.get(r.of)}${POSITION_SUFFIX[r.at]}`);
+  };
+  /* TWO PASSES, AND THE SECOND IS WHY A QUERY-ONLY RULE MAY POINT FORWARDS.
+     Every top-level rule resolves in list order, which is the backwards-only
+     rule doing its own work. A rule DECLARED INSIDE an `at` resolves afterwards,
+     because the query is a set of modifications rather than a step in the
+     cascade — `nav`'s docked paragraph hides `.bar__action[data-ask]` forty
+     rules before `.bar__action` is described, and the paragraph is not the
+     emitter's to reorder. The loader refuses the two shapes this ordering
+     cannot answer for: a top-level rule naming a query-only one, and a
+     query-only rule naming one declared after it. */
+  for (const r of def.rules ?? []) put(r);
+  for (const r of def.rules ?? []) {
+    if (r.kind !== "at") continue;
+    for (const entry of r.rules) if (isDeclared(entry)) put(entry);
   }
   return out;
 }
@@ -642,39 +670,76 @@ export function checkDefinition(def, id, rel) {
      because it names the ROOT — which is a fact about the component whether or
      not the component styles it. `case-body` is the proof: it has no base rule
      at all and every one of its parts is still scoped within `.case-body`. */
-  const declaredAt = new Map([["base", -1]]);
+  /* THE RESOLUTION ORDER, and it is the list's own except for one step. Every
+     top-level rule resolves where it sits; every rule DECLARED INSIDE an `at`
+     resolves after all of them, in the order the queries write them. That is
+     what lets `nav`'s docked paragraph hide `.bar__action[data-ask]` before
+     `.bar__action` is described — a query is a set of modifications, not a step
+     in the cascade — and the two shapes it cannot answer for are refused below:
+     a top-level rule naming a query-only one, and a query-only rule naming one
+     declared after it. Order is checked for acyclicity, not for tidiness. */
+  const declaredAt = new Map([["base", { i: -1, order: -1, inAt: false }]]);
   const bases = (def.rules ?? []).filter((r) => r.kind === "base");
   if (bases.length > 1) {
     bad(`it declares ${bases.length} \`base\` rules, and a component has one root. Everything else is a variant, a size or a part`);
   }
-  (def.rules ?? []).forEach((r, i) => {
-    if (r.kind === "base") return;
+  const declare = (r, i, order, inAt, where) => {
     const name = r.name;
     if (name === undefined) return; /* an `at` block names nothing and is named by nothing */
     if (name === "base") {
-      bad(`rules[${i}] is called \`base\`, which is the reserved name of the root — every \`of\` and \`within\` naming \`base\` means \`${def.root}\``);
+      bad(`${where} is called \`base\`, which is the reserved name of the root — every \`of\` and \`within\` naming \`base\` means \`${def.root}\``);
       return;
     }
     if (declaredAt.has(name)) {
       bad(
-        `two rules are called \`${name}\` — rules[${declaredAt.get(name)}] and rules[${i}]. A name is the handle every ` +
+        `two rules are called \`${name}\` — rules[${declaredAt.get(name).i}] and ${where}. A name is the handle every ` +
           `\`of\` and \`within\` uses, so it is unique across the whole list; button's two hover states are \`hover\` and ` +
           `\`solid-hover\` for exactly this reason, and a state's name reaches no artefact, so renaming one is free`
       );
       return;
     }
-    declaredAt.set(name, i);
+    declaredAt.set(name, { i, order, inAt, rule: r });
+  };
+  (def.rules ?? []).forEach((r, i) => {
+    if (r.kind === "base") return;
+    declare(r, i, i, false, `rules[${i}]`);
+  });
+  let tail = (def.rules ?? []).length;
+  (def.rules ?? []).forEach((r, i) => {
+    if (r.kind !== "at") return;
+    r.rules.forEach((entry, k) => {
+      if (isDeclared(entry)) declare(entry, i, tail++, true, `rules[${i}].rules[${k}]`);
+    });
   });
 
   /** Every reference in the document: who refers, to what, from where. */
   const references = [];
+  const refsOf = (r, order, inAt, label) => {
+    if (r.kind === "part" && r.within !== undefined) references.push([order, inAt, r.within, `${label} is scoped \`within\``]);
+    if (r.kind === "state" || r.kind === "position" || r.kind === "contains") references.push([order, inAt, r.of, `${label} is a ${r.kind} \`of\``]);
+    if ((r.kind === "variant" || r.kind === "size") && r.aliases) references.push([order, inAt, r.aliases.of, `${label} aliases`]);
+  };
   (def.rules ?? []).forEach((r, i) => {
-    if (r.kind === "part" && r.within !== undefined) references.push([i, r.within, `\`${r.name}\` is scoped \`within\``]);
-    if (r.kind === "state" || r.kind === "position" || r.kind === "contains") references.push([i, r.of, `\`${r.name}\` is a ${r.kind} \`of\``]);
-    if ((r.kind === "variant" || r.kind === "size") && r.aliases) references.push([i, r.aliases.of, `\`${r.name}\` aliases`]);
-    if (r.kind === "at") for (const o of r.rules) references.push([i, o.of, `an \`at ${r.condition}\` override names`]);
+    if (r.kind === "at") {
+      for (const entry of r.rules) {
+        /* An override's order is unconstrained — it restates a rule, and the
+           query may sit anywhere relative to the rule it modifies. What it
+           still cannot do is name something this definition never declares. */
+        if (!isDeclared(entry)) references.push([Infinity, true, entry.of, `an \`at ${r.condition}\` override names`]);
+      }
+      return;
+    }
+    refsOf(r, i, false, `\`${r.name}\``);
   });
-  for (const [i, name, who] of references) {
+  (def.rules ?? []).forEach((r) => {
+    if (r.kind !== "at") return;
+    for (const entry of r.rules) {
+      if (!isDeclared(entry)) continue;
+      const me = declaredAt.get(entry.name);
+      refsOf(entry, me?.order ?? Infinity, true, `\`${entry.name}\`, declared under \`at ${r.condition}\`,`);
+    }
+  });
+  for (const [order, inAt, name, who] of references) {
     const at = declaredAt.get(name);
     if (at === undefined) {
       bad(
@@ -682,11 +747,19 @@ export function checkDefinition(def, id, rel) {
           `so that a renamed rule cannot leave an orphan pointing at an element that is gone — the names here are ` +
           `${[...declaredAt.keys()].map((n) => `\`${n}\``).join(", ")}`
       );
-    } else if (at >= i) {
+    } else if (at.inAt && !inAt) {
       bad(
-        `${who} \`${name}\`, which rules[${i}] declares ${at === i ? "itself" : `later, at rules[${at}]`}. A reference ` +
-          `points BACKWARDS only: a stylesheet reads downwards, and the rule being named has to have a selector by the ` +
-          `time the one naming it is emitted`
+        `${who} \`${name}\`, which is declared INSIDE an \`at\` block. A query-only rule exists only under its ` +
+          `condition, so a rule outside the query cannot be scoped to it — the reference would resolve to a selector ` +
+          `that is only sometimes written, which is a different statement from the one the stylesheet makes`
+      );
+    } else if (at.order >= order) {
+      bad(
+        `${who} \`${name}\`, which is declared ${at.order === order ? "by that same rule" : "later"}. A reference ` +
+          `points BACKWARDS: a stylesheet reads downwards, and the rule being named has to have a selector by the ` +
+          `time the one naming it is emitted. The one exemption is a reference made from inside an \`at\` block, ` +
+          `which resolves against every top-level rule — and this one is not that, or names a query-only rule the ` +
+          `queries write after it`
       );
     }
   }
@@ -700,16 +773,25 @@ export function checkDefinition(def, id, rel) {
      scoped part's is BUILT, from a name and a target, which is the difference
      between a rule this component owns and a relation it declares. */
   const seen = new Map([[def.root, "root"]]);
-  for (const r of def.rules) {
+  /* Every rule with a name, top-level and query-only alike — the query-only ones
+     are the same vocabulary one level in, so every check below reads them. */
+  const everyRule = [...def.rules, ...def.rules.filter((r) => r.kind === "at").flatMap((r) => r.rules.filter(isDeclared))];
+  for (const r of everyRule) {
     if (r.kind === "variant" || r.kind === "size") {
       const want = `${def.root}--${r.name}`;
       if (r.selector !== want) bad(`\`${r.name}\` has the selector \`${r.selector}\`, and a ${r.kind} of \`${def.root}\` named \`${r.name}\` is \`${want}\``);
+    }
+    if (r.kind === "state" && r.wrap && !Array.isArray(r.suffix)) {
+      bad(
+        `\`${r.name}\` is a state with \`wrap\` and a single \`suffix\`. \`wrap\` records that the stylesheet writes the ` +
+          `selector LIST one selector per line, and a state with one suffix has no list and nothing to break at`
+      );
     }
     if (r.kind === "part" && r.within !== undefined) {
       /* A state whose suffix is a selector LIST has no single selector to
          descend from, so it cannot host a scoped part. The block that needs one
          is the block that decides what `.a:hover, .a:focus-visible .x` means. */
-      const host = def.rules[declaredAt.get(r.within)];
+      const host = declaredAt.get(r.within)?.rule;
       if (host?.kind === "state" && Array.isArray(host.suffix)) {
         bad(
           `\`${r.name}\` is scoped \`within\` \`${r.within}\`, a state whose \`suffix\` is a selector LIST. A list is two ` +
@@ -740,20 +822,75 @@ export function checkDefinition(def, id, rel) {
     }
     if (!block.inline) continue;
     const groups = block.rules[0]?.declarations ?? [];
+    /* A `note` and a `break` are NOT in this list, and `nav` is why: both render
+       outside the line — the note above it at column 0, the break as a blank
+       line before that — so refusing them was refusing a shape the one-line rule
+       never covered. What is refused is anything that would have to go INSIDE
+       the braces, because that is what cannot fit on one line. */
     const why =
       block.rules.length !== 1 ? `${block.rules.length} overrides`
       : groups.length !== 1 ? `${groups.length} declaration groups`
-      : groups[0].note || groups[0].aside ? "a comment"
-      : block.note ? "a note"
-      : block.break ? "a break"
+      : groups[0].note || groups[0].aside ? "a comment inside its braces"
+      : groups[0].break ? "a paragraph break inside its braces"
+      : groups[0].wrap ? "a value the stylesheet writes across lines"
       : null;
     if (why) {
       bad(
         `its \`at ${block.condition}\` is \`inline\` and carries ${why}. The inline form renders on ONE line — ` +
-          `\`@media … { .sel { … } }\` — because that is how the stylesheet writes it, so it is one override, one group ` +
-          `and no ornament. Drop \`inline\` and it renders as a block; the emitter will not choose between two ` +
-          `renderings of the same data`
+          `\`@media … { .sel { … } }\` — because that is how the stylesheet writes it, so it is one override and one ` +
+          `group with nothing inside the braces but the declaration. Drop \`inline\` and it renders as a block; the ` +
+          `emitter will not choose between two renderings of the same data`
       );
+    }
+  }
+
+  /* ---- @keyframes: a name and a set of offsets, both finite ----
+     A keyframes name is a GLOBAL CSS identifier rather than a class the
+     component owns, so the only thing a definition can honestly claim about one
+     is that it animates it. That is checked here; uniqueness ACROSS definitions
+     is checked in scripts/build.mjs, which is the only place that sees them all. */
+  for (const kf of def.rules.filter((r) => r.kind === "keyframes")) {
+    if (kf.inline && (kf.steps.length !== 1 || kf.steps[0].declarations.length !== 1 || kf.steps[0].declarations[0].note || kf.steps[0].declarations[0].aside)) {
+      bad(
+        `its \`@keyframes ${kf.name}\` is \`inline\` and would not fit on one line. The inline form is one step, one ` +
+          `group and no comment — \`@keyframes ${kf.name} { 50% { … } }\` — which is how both blocks that write one write it`
+      );
+    }
+    let animated = false;
+    eachDeclaration(def, (prop, v) => {
+      if (prop !== "animation" && prop !== "animation-name") return;
+      for (const t of terms(v)) if (typeof t === "string" && new RegExp(`(^|\\s)${kf.name}(\\s|$)`).test(t)) animated = true;
+    });
+    if (!animated) {
+      bad(
+        `it declares \`@keyframes ${kf.name}\` and no \`animation\` in it names \`${kf.name}\`. A keyframes name is a ` +
+          `global CSS identifier, so the closest a definition can come to owning one is using it — an unused ` +
+          `\`@keyframes\` is a name published into every consumer's stylesheet on behalf of nobody`
+      );
+    }
+  }
+
+  /* ---- a wrapped declaration is a fact about the text, and it is checked ----
+     `wrap` records that the stylesheet breaks a value at its commas. A group
+     with no comma to break at would be the key CHOOSING a rendering instead of
+     recording one, which is the line every formatting key here is on the right
+     side of. */
+  for (const r of everyRule) {
+    for (const g of r.declarations ?? []) {
+      if (!g.wrap) continue;
+      const props = Object.entries(g.set);
+      if (props.length !== 1) {
+        bad(`a \`wrap\`ped group of \`${labelOf(r)}\` sets ${props.length} properties. A wrapped declaration is ONE declaration written across lines; two of them on one wrapped group would be a paragraph, which is what a group already is`);
+        continue;
+      }
+      const [prop, v] = props[0];
+      if (!Array.isArray(v) || !v.includes(",")) {
+        bad(
+          `\`${labelOf(r)}\` marks \`${prop}\` as \`wrap\` and its value has no \`","\` term to break at. A wrapped ` +
+            `value is a comma-separated list written one item per line; without a comma the key would be choosing ` +
+            `where to break rather than recording where the stylesheet breaks`
+        );
+      }
     }
   }
 
@@ -770,6 +907,7 @@ export function checkDefinition(def, id, rel) {
   def.sizes = [];
   def.parts = [];
   def.at = [];
+  def.keyframes = [];
   for (const r of def.rules) {
     switch (r.kind) {
       case "base":
@@ -813,15 +951,33 @@ export function checkDefinition(def, id, rel) {
         break;
       }
       case "at":
+        /* A QUERY-ONLY RULE DOES NOT GATHER UNDER ITS OWNER, and that is the
+           whole of what makes it a different thing from a state. `.bar__action`
+           has a `[data-ask]` rule only below 699px, so filing it under the
+           action's `states` would publish it as a rule that always applies —
+           the contract would say the segment hides whenever it carries the
+           attribute, which is false at every width the bar is floating. It
+           stays where the stylesheet puts it: inside the query. Its SELECTOR is
+           resolved here for the same reason a scoped part's is, so both
+           emitters and the contract read one string. */
+        for (const entry of r.rules) {
+          if (!isDeclared(entry)) continue;
+          if (entry.kind === "part") entry.selector = selectors.get(entry.name);
+          byName.set(entry.name, entry);
+        }
         /* An INLINE at is a footnote on one rule, which is how both other
            consumers already see it: a `{condition, declarations}` hanging off
            its owner. A block one is a paragraph of overrides and stays one. */
-        if (r.inline) (byName.get(r.rules[0].of).at ??= []).push({ condition: r.condition, $doc: r.$doc, declarations: r.rules[0].declarations });
+        if (r.inline && !isDeclared(r.rules[0])) (byName.get(r.rules[0].of).at ??= []).push({ condition: r.condition, $doc: r.$doc, declarations: r.rules[0].declarations });
         else def.at.push(r);
+        break;
+      case "keyframes":
+        def.keyframes.push(r);
+        byName.set(r.name, r);
         break;
     }
   }
-  for (const key of ["variants", "sizes", "parts", "at"]) if (!def[key].length) delete def[key];
+  for (const key of ["variants", "sizes", "parts", "at", "keyframes"]) if (!def[key].length) delete def[key];
 
   /* A definition renders a banner and whatever is under it. With `base` optional
      since case-body, "whatever" can be nothing at all — which is a block that
@@ -883,10 +1039,24 @@ function comment(lines, indent) {
   return `${head}\n${lines.slice(1).map((l) => (l === "" ? "" : `${indent}   ${l}`)).join("\n")} */\n`;
 }
 
-/** A declaration value → CSS. The three forms are documented in the header. */
+/** A `note`: one comment, or SEVERAL when its elements are themselves arrays.
+ *  `nav`'s `.bar__action` is the rule that has two — a paragraph about the
+ *  segment and then the banner about the row it sits in, which the stylesheet
+ *  keeps apart because they are about two things. */
+const comments = (note, indent) => (Array.isArray(note[0]) ? note.map((c) => comment(c, indent)).join("") : comment(note, indent));
+
+/** A declaration value → CSS. The forms are documented in the header. A term
+ *  that is exactly `","` is the separator of a comma-separated value and joins
+ *  to the term on its left; it is the only punctuation rule in the value forms,
+ *  and it exists because a comma cannot be appended to a `{"token"}` object. */
 function value(v, where) {
   if (typeof v === "string") return v;
-  if (Array.isArray(v)) return v.map((t) => value(t, where)).join(" ");
+  if (Array.isArray(v)) {
+    return v.reduce((acc, t, i) => {
+      const s = value(t, where);
+      return i === 0 ? s : s === "," ? `${acc},` : `${acc} ${s}`;
+    }, "");
+  }
   if (isExpr(v)) return exprCss(v.expr);
   if (v && typeof v === "object" && typeof v.token === "string") return `var(--${v.token})`;
   throw new Error(
@@ -902,17 +1072,42 @@ function value(v, where) {
 function rule(selector, declarations, where, pad = "") {
   const groups = (declarations ?? []).map((g, i) => {
     if (!g?.set || typeof g.set !== "object") throw new Error(`${where}: group ${i} of \`${selector}\` has no \`set\``);
+    /* A WRAPPED group is one declaration the stylesheet writes across lines,
+       breaking at the commas of its value: the value leaves the property's line
+       and each comma-item is indented one step further in. The loader has
+       already refused a wrap with nothing to break at, so this only unfolds. */
+    const text = g.wrap
+      ? Object.entries(g.set)
+          .map(([p, v]) => {
+            const lines = [];
+            let cur = "";
+            for (const t of v) {
+              const s = value(t, `${where} → ${selector} { ${p} }`);
+              if (s === ",") { lines.push(`${cur},`); cur = ""; continue; }
+              cur = cur ? `${cur} ${s}` : s;
+            }
+            lines.push(`${cur};`);
+            return `${p}:\n${lines.map((l) => `${pad}    ${l}`).join("\n")}`;
+          })
+          .join(" ")
+      : Object.entries(g.set).map(([p, v]) => `${p}: ${value(v, `${where} → ${selector} { ${p} }`)};`).join(" ");
     return {
       note: Array.isArray(g.note) && g.note.length ? g.note : null,
       aside: typeof g.aside === "string" && g.aside ? g.aside : null,
-      text: Object.entries(g.set).map(([p, v]) => `${p}: ${value(v, `${where} → ${selector} { ${p} }`)};`).join(" "),
+      break: g.break === true,
+      text,
     };
   });
   if (!groups.length) throw new Error(`${where}: \`${selector}\` declares nothing`);
-  if (groups.length === 1 && !groups[0].note && !groups[0].aside) return `${pad}${selector} { ${groups[0].text} }\n`;
+  if (groups.length === 1 && !groups[0].note && !groups[0].aside && !groups[0].break && !declarations[0].wrap) {
+    return `${pad}${selector} { ${groups[0].text} }\n`;
+  }
   let out = `${pad}${selector} {\n`;
   for (const g of groups) {
-    if (g.note) out += comment(g.note, `${pad}  `);
+    /* A rule has paragraphs too — `nav`'s `.bar__id` puts a blank line between
+       the segment's shape and the pair that decides which segment gives way. */
+    if (g.break) out += "\n";
+    if (g.note) out += comments(g.note, `${pad}  `);
     out += `${pad}  ${g.text}${g.aside ? ` /* ${g.aside} */` : ""}\n`;
   }
   return `${out}${pad}}\n`;
@@ -941,7 +1136,7 @@ export function renderBlock(def, conditions = {}) {
   const sel = (name) => selectors.get(name);
   /* A rule's own note sits above it at column 0; a group's note sits inside the
      braces. The stylesheet draws that line and this only records it. */
-  const lead = (r, pad) => (r.note?.length ? comment(r.note, pad) : "");
+  const lead = (r, pad) => (r.note?.length ? comments(r.note, pad) : "");
 
   let out = banner(def);
   for (const r of def.rules) {
@@ -971,27 +1166,100 @@ export function renderBlock(def, conditions = {}) {
       case "state":
       case "contains":
       case "position":
+        out += lead(r, "");
         out += rule(sel(r.name), r.declarations, where);
         break;
       /* An INLINE at renders on one line, because that is how the stylesheet
          writes a footnote on one rule. The loader has already refused anything
          that would not fit, so this only unwraps a single-line rule. */
-      case "at":
-        if (r.inline) {
-          out += `@media ${conditions[r.condition]} { ${rule(sel(r.rules[0].of), r.rules[0].declarations, where).trimEnd()} }\n`;
-          break;
-        }
+      case "at": {
+        /* An entry of a query is an OVERRIDE of a rule declared outside it, or a
+           rule DECLARED INSIDE it and existing nowhere else — `nav`'s
+           `.bar__action[data-ask]`, `.bar .theme` and `.bar__action-label` are
+           the three that forced the second. Either way the selector comes out of
+           the same map, so a query says nothing a rule outside one could not. */
+        const entrySelector = (e) => sel(isDeclared(e) ? e.name : e.of);
         if (r.break) out += "\n";
         out += lead(r, "");
+        if (r.inline) {
+          out += `@media ${conditions[r.condition]} { ${rule(entrySelector(r.rules[0]), r.rules[0].declarations, where).trimEnd()} }\n`;
+          break;
+        }
         out += `@media ${conditions[r.condition]} {\n`;
         /* Each override is one rule, and a POSITION is a rule — `.fact:last-child`
            inside the query is an override naming `closing`, not a clause nested
            in the override of `.fact`. Same selector, resolved through the same
            map as every other reference. */
-        for (const o of r.rules) out += rule(sel(o.of), o.declarations, where, "  ");
+        for (const o of r.rules) {
+          out += lead(o, "  ");
+          out += rule(entrySelector(o), o.declarations, where, "  ");
+        }
+        out += `}\n`;
+        break;
+      }
+      /* @keyframes has a NAME and a set of offsets and no condition at all,
+         which is why it is a construct rather than the unnameable at-rule
+         PATTERNS.md took it for. Both blocks that write one write it inline. */
+      case "keyframes":
+        if (r.break) out += "\n";
+        out += lead(r, "");
+        if (r.inline) {
+          out += `@keyframes ${r.name} { ${rule(r.steps[0].at, r.steps[0].declarations, where).trimEnd()} }\n`;
+          break;
+        }
+        out += `@keyframes ${r.name} {\n`;
+        for (const s of r.steps) out += rule(s.at, s.declarations, where, "  ");
         out += `}\n`;
         break;
     }
+  }
+  return out;
+}
+
+/* ============================================================
+   THE KEYFRAMES SIDE-FILE — every `@keyframes` any definition declares, in one
+   published stylesheet.
+
+   PIPELINE 2'S HONEST ANSWER, and it is a file rather than a class because an
+   animation's NAME is a global CSS identifier. A class attribute holds
+   declarations; `@keyframes blink { … }` is not a declaration and there is no
+   arbitrary variant, no `[&…]:` and no `@theme` entry that can carry one
+   without restating it. `.bar__dot`'s `animation: blink 2.4s steps(2) infinite`
+   emits as an arbitrary property in the React tier exactly as it renders in
+   components.css — the same bytes, the same name — and this file is what makes
+   that name resolve on the consumer's side.
+
+   So it joins `tokens.css` in the short list of things a consumer must import
+   rather than being smuggled into a `.tsx` as a CSS module import: a module
+   import would put a bundler requirement inside a source file this package
+   deliberately ships untranspiled, and it would fire once per component rather
+   than once per document. One stylesheet, one `@import`, documented in
+   design-system/README.md's "What a consumer must provide".
+   ============================================================ */
+
+/** Every keyframes rule across every definition, with the component that owns
+ *  it — the ONE place that can see them all, which is why the global-uniqueness
+ *  check lives with the caller (scripts/build.mjs) rather than in the loader. */
+export function keyframesOf(defs) {
+  return defs.flatMap((def) => (def.keyframes ?? []).map((kf) => ({ id: def.id, kf })));
+}
+
+export function renderKeyframes(defs) {
+  const all = keyframesOf(defs);
+  let out = `/* ============================================================\n`;
+  out += `   GENERATED — every @keyframes declared by a component definition.\n`;
+  out += `   Source: components/<id>/definition.json. Do not edit.\n\n`;
+  out += `   An animation's name is a GLOBAL CSS identifier, so it cannot ride in a\n`;
+  out += `   class attribute the way a declaration can. Import this beside\n`;
+  out += `   @yordan/design-system/tokens.css and the generated React components'\n`;
+  out += `   animations resolve; leave it out and they are named animations with no\n`;
+  out += `   keyframes, which browsers ignore silently.\n`;
+  out += `   ============================================================ */\n`;
+  for (const { id, kf } of all) {
+    out += `\n/* ${id} */\n`;
+    out += kf.inline
+      ? `@keyframes ${kf.name} { ${rule(kf.steps[0].at, kf.steps[0].declarations, definitionPath(id)).trimEnd()} }\n`
+      : `@keyframes ${kf.name} {\n${kf.steps.map((s) => rule(s.at, s.declarations, definitionPath(id), "  ")).join("")}}\n`;
   }
   return out;
 }

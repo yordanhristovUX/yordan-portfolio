@@ -35,11 +35,12 @@ dist/tokens.dtcg.json   generated W3C Design Tokens export, aliases KEPT — for
 dist/tokens.d.ts        generated TypeScript union of the token names — types only, no runtime
 dist/components.json    generated component contract (classes, variants, tokens per component)
 dist/tokens.tailwind.css  generated Tailwind v4 @theme — namespaces bound to the vars above
+dist/keyframes.css      generated @keyframes — the one thing a class attribute cannot carry
 dist/react/*.tsx        generated typed React components, one per definition (+ index.ts)
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
-css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 14 generated,
-                        11 authored, 1 SPLIT, each with a marker naming its reason)
+css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 15 generated,
+                        10 authored, 1 SPLIT, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -188,7 +189,7 @@ renderer. Three consequences, and the first is the one that pays for the rest:
   selector), so the loader computes that view from the list. It is a query, not a second
   source.
 
-### The eleven constructs R4 added, and the block that forced each
+### The eighteen constructs R4 added, and the block that forced each
 
 | construct | what it says | forced by |
 | --- | --- | --- |
@@ -203,9 +204,15 @@ renderer. Three consequences, and the first is the one that pays for the rest:
 | a scoped part's **`class`**, beside `element[]` | the descendant has a class and the class belongs to somebody else: `.sec--tint .well` | `section-head` |
 | an **effect-only modifier** — a variant with neither `declarations` nor `aliases` | `.sec--tint` declares nothing; its whole effect is a scoped part on a descendant | `section-head` |
 | **`expr`** — `{"expr": "calc({space-3} - 2px)"}` | computed geometry with its bindings still interpolated rather than written as `var()` | `section-head`'s head padding, which subtracts the two rule widths that bracket it |
+| a **query-only rule** — a full rule entry, tagged by `kind`, inside an `at` | a rule that exists ONLY under a condition and has no unconditional counterpart for an override to name | `nav` ×3 — `.bar__action[data-ask]`, `.bar .theme`, `.bar__action-label` |
+| **`kind: "keyframes"`** — `name` + `steps[{at, declarations}]` | an animation's keyframes, transcribed; the offsets are a closed pattern and the name is checked against an `animation` in the same file | `nav`'s `blink` |
+| an **attribute suffix with a VALUE** — `[aria-expanded="true"]` | a state announced by an attribute the component already sets, quoted value, no operator | `nav`'s pressed action |
+| **`wrap`** on a group, and on a state with a list `suffix` | the stylesheet writes this across lines, breaking at its commas — `.bar`'s two shadows, `.bar__menu`'s two selectors | `nav` |
+| a group's **`break`**, and a **`note` that is an array of arrays** | a paragraph inside a rule; two comments above one rule | `nav`'s `.bar__id` and `.bar__action` |
+| a **`note` on an override and on a state** | a comment above a rule that happens to sit inside a query, or to be a state | `nav`'s docked `.bar__id` and its `[aria-expanded="true"]` |
 
-Eight of those are closed at both ends on purpose, and that is what keeps them from being the
-wedge `PATTERNS.md` refuses. A scoped part's ancestor must **name** a rule the same definition
+The ones that are *relations* are closed at both ends on purpose, and that is what keeps them
+from being the wedge `PATTERNS.md` refuses. A scoped part's ancestor must **name** a rule the same definition
 declares above it, and its target is bare tag names, one class or one child tag, with the
 combinator supplied by the emitter — so `.case-body p strong`, `.sec--tint .well` and
 `.profile > div` are sayable and `.band > .rail--l` is not: `child` and `class` are separate
@@ -221,6 +228,45 @@ would be a binding the census cannot count. `expr` is also the one construct tha
 rather than a relation, which is why admitting computed geometry did not widen what a rule can
 apply to: `@supports (grid-template-columns: round(down, 10%, 3px))` is still unsayable, and its
 condition being a computed value rather than a named viewport is the reason.
+
+**The last seven are `nav`'s, and six of them are facts about the stylesheet's TEXT.** That is
+the shape of the biggest block joining the format: `wrap`, a group's `break`, a `note` that is
+two comments, a `note` on an override and on a state — none of those changes what a rule
+applies to, and each one exists because the emitter rendered one group on one line and the file
+does not. They are the same category `break`, `note`, `aside` and `inline` were already in, and
+each is closed the same way: `const true` rather than an indent or a column, refused where there
+is nothing to record (a `wrap` with no comma in the value, a `wrap` on a state with one suffix).
+The alternative was leaving the file's largest block authored over a line break.
+
+**A query-only rule is the one of the seven that is about rules, and it says nothing new.** An
+`at` entry may now be a full rule tagged by `kind` — a state, a scoped part, a contains, a
+position — instead of an override, because `nav` writes three rules that exist only under a
+media query and have no unconditional counterpart to name. It is the ordinary vocabulary nested
+one level, with the same closed selector arithmetic, so **nothing is sayable inside a query that
+is not sayable outside one**; and a query-only rule does not gather under its owner in the
+derived view, because filing `.bar__action[data-ask]` under the action's states would publish a
+rule that always applies when it applies below 699px only.
+
+It moved one stated rule, and the move is worth knowing. **A reference made from inside an `at`
+block is not order-constrained.** Everywhere else `of`, `within` and an alias's `of` still point
+backwards only; `nav`'s docked-bar paragraph hides `.bar__action[data-ask]` forty rules before
+`.bar__action` is described, because the paragraph is about a breakpoint and the stylesheet keeps
+it whole. A query is a set of *modifications*, not a step in the cascade the list records, so
+requiring it to point backwards would have been requiring the stylesheet to reorder its
+paragraphs — an appearance change this migration may not make. What is still refused is the thing
+the order stood in for: a cycle, and a rule *outside* a query naming one declared inside it.
+
+**`@keyframes` is the construct that needed a file, and that is the emission contract.**
+Pipeline 1 writes it where the list puts it. Pipeline 2 cannot: a class attribute holds
+declarations, and `@keyframes blink { … }` is not one — there is no arbitrary variant and no
+`@theme` entry that carries it without restating it. So every keyframes rule any definition
+declares is rendered into **`dist/keyframes.css`**, published as
+`@yordan/design-system/keyframes.css`, and a consumer imports it beside `tokens.css`. The
+`.tsx` does **not** import it: a CSS-module import inside a source file this package ships
+untranspiled would put a bundler requirement in the consumer's way and would fire once per
+component rather than once per document. An animation *name* is a global CSS identifier, which
+is also why the build refuses two definitions declaring the same one and why a definition must
+`animation:` a name it declares — that is the closest a component can come to owning one.
 
 **Two shapes used to wear the word `at`, and the ordered list dissolved the distinction.** A
 stylesheet block writes a media query in two places: `fact` and `entry` gather theirs in a
@@ -564,8 +610,12 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 ### What a consumer must provide
 
 1. **Tailwind v4**, with the imports in this order: `tailwindcss`, then
-   `@yordan/design-system/tokens.css`, then `@yordan/design-system/tokens.tailwind.css`.
-   **`tokens.css` is not optional** — every `@theme` entry is a reference into it.
+   `@yordan/design-system/tokens.css`, then `@yordan/design-system/tokens.tailwind.css`,
+   then `@yordan/design-system/keyframes.css`.
+   **`tokens.css` is not optional** — every `@theme` entry is a reference into it. Nor is
+   `keyframes.css` if any component animates: an `animation` names its keyframes and a browser
+   ignores a name with no `@keyframes` behind it, silently, which is the one failure in this
+   package that no gate on this side can see.
 2. **`@source`** naming `…/@yordan/design-system/dist/react`. Tailwind does not scan
    `node_modules`, and without this the generated components' classes are never built.
 3. **`class-variance-authority`** and **`react`**, as its own dependencies. This package
@@ -579,7 +629,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly twenty-two** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly twenty-four** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -593,6 +643,7 @@ published.
 "@yordan/design-system/tokens.d.ts"       // `DesignTokenName` — 83 names, as a union
 // phase R2a — the Tailwind + React tier, one entry per definition
 "@yordan/design-system/tokens.tailwind.css"  // Tailwind v4 @theme, all references
+"@yordan/design-system/keyframes.css"        // R4 — the @keyframes a class attribute cannot hold
 "@yordan/design-system/react"                // the barrel
 "@yordan/design-system/react/button"         // .tsx SOURCE — the consumer transpiles it
 "@yordan/design-system/react/chip"
@@ -608,6 +659,8 @@ published.
 "@yordan/design-system/react/profile"
 "@yordan/design-system/react/ask-fab"        // the first SPLIT block — core here, tail authored
 "@yordan/design-system/react/definition-row" // half of `row`; the other half is authored
+"@yordan/design-system/react/nav"            // the largest block in the file, and the one that
+                                             // forced query-only rules and @keyframes
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —

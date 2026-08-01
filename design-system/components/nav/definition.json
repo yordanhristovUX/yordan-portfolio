@@ -1,0 +1,503 @@
+{
+  "$doc": "The floating bar's appearance, as data — the source of the `@component nav` block in css/components.css and of dist/react/nav.tsx. IT IS THE LARGEST BLOCK IN THE FILE TO JOIN THE FORMAT, and it forced more constructs than any other: a declaration whose value the stylesheet writes across lines (`.bar`'s two shadows), a selector list written one per line, a rule with TWO comments above it, a paragraph break inside a rule, an attribute suffix that carries a VALUE, an `@keyframes`, a comment above an override, and — three times over — a rule that exists only inside a media query and has no unconditional counterpart to override. Every one of those is a fact about the stylesheet's text or a closed widening of a vocabulary that was already closed; none of them widens what a selector may say. See components/definition.schema.json for the block that forced each, and design-system/PATTERNS.md for the method. THE BAR'S ARITHMETIC IS IN ITS COMMENTS AND IT IS LOAD-BEARING: five reveal points, each derived from the bar's measured width against the well beneath it, and four of them are `$conditions` entries named for the number they carry. Nothing here was rounded to a friendlier breakpoint on the way in.",
+  "$schema": "../definition.schema.json",
+  "id": "nav",
+  "block": { "title": "Nav (floating bar)" },
+  "root": ".bar",
+  "rules": [
+    {
+      "kind": "base",
+      "declarations": [
+        {
+          "note": [
+            "Centred by opposing insets + auto margins, NOT by translateX(-50%). The",
+            "old transform made the bar the containing block for every `fixed`",
+            "descendant, and the theme puck inside it needs `position: fixed` to reach",
+            "the viewport's bottom corner on narrow screens. Same geometry, no side",
+            "effects: left/right pin the available span, `width: max-content` keeps",
+            "the bar shrink-wrapped, the margins split the difference."
+          ],
+          "set": { "position": "fixed", "top": "1rem", "left": "0", "right": "0", "margin-inline": "auto" }
+        },
+        { "set": { "z-index": "100" } },
+        { "set": { "display": "flex", "align-items": "stretch" } },
+        { "set": { "width": "max-content" } },
+        { "set": { "max-width": "calc(100vw - 1.5rem)" } },
+        { "set": { "background": { "token": "chrome-bg" } } },
+        {
+          "wrap": true,
+          "aside": "an object lying on the sheet",
+          "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "chrome-border-strong" }, ",", "5px 5px 0", { "token": "shadow-drop" }] }
+        },
+        { "set": { "font-family": { "token": "font-mono" } } },
+        { "set": { "font-size": { "token": "text-xs" }, "letter-spacing": { "token": "tracking-wide-sm" } } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "id",
+      "selector": ".bar__id",
+      "note": [
+        "EVERY SEAM IS OWNED BY THE SEGMENT ON ITS RIGHT — one 1px inset line on the",
+        "LEFT edge of everything except `.bar__id`, which is always first. The bar",
+        "used to be drawn the other way round (each segment carried its own right",
+        "edge) and that is a rule which cannot survive a hidden neighbour: whichever",
+        "segment happens to end the row leaves a stray line hanging off the end, so",
+        "`.bar__nav a:last-child` needed a `box-shadow: none` inside the media query",
+        "that hid `.bar__status` — the divider was coupled to a breakpoint. It was",
+        "also wrong wherever no status exists at all: cv, mcp and evals put a nav",
+        "link straight against the toggle, and the link's right edge plus the",
+        "toggle's left edge drew a 2px line on every one of those pages at every",
+        "width above 980px (two of them on cv). Left-owned edges are invariant under",
+        "hiding: the first VISIBLE segment never draws one, and no segment can end",
+        "the row with a line, whatever the breakpoints do."
+      ],
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center" } },
+        { "set": { "padding": [{ "token": "space-3" }, { "token": "space-5" }] } },
+        { "set": { "font-weight": { "token": "weight-semibold" }, "color": { "token": "content-primary" } } },
+        { "set": { "white-space": "nowrap" } },
+        {
+          "break": true,
+          "note": [
+            "The bar is `width: max-content` under a `max-width`, so when its segments",
+            "do not fit, the box stops growing and the segments simply spill out of the",
+            "right-hand end — taking the theme toggle off-screen with them. This is the",
+            "rule that decides WHICH segment gives way: `min-width: 0` lets the",
+            "identity shrink below its own text, so the name is clipped before a",
+            "control is lost. It never binds while the bar fits."
+          ],
+          "set": { "min-width": "0" }
+        },
+        { "set": { "overflow": "hidden" } }
+      ]
+    },
+    { "kind": "part", "name": "nav", "selector": ".bar__nav", "declarations": [{ "set": { "display": "flex", "align-items": "stretch" } }] },
+    {
+      "kind": "part",
+      "name": "nav-link",
+      "within": "nav",
+      "element": ["a"],
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center" } },
+        { "set": { "padding": ["0", { "token": "space-5" }] } },
+        { "set": { "color": { "token": "chrome-label-strong" } } },
+        { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } },
+        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "nav-link-hover",
+      "of": "nav-link",
+      "suffix": ":hover",
+      "declarations": [{ "set": { "background": { "token": "primary" }, "color": { "token": "content-inverse" } } }]
+    },
+    {
+      "kind": "part",
+      "name": "menu",
+      "selector": ".bar__menu",
+      "note": [
+        "---- THE NAV'S MOBILE FORM ----",
+        "Below 700px the row of anchors gives way to ONE segment that summons the",
+        "full-screen menu (see the menu component). The breakpoint is the same one",
+        "that sends the theme puck to the viewport corner, so \"mobile chrome\" is a",
+        "single state rather than two half-states arriving at different widths — and",
+        "it retires cv's old 560px rule, which HID that page's links with nothing in",
+        "their place.",
+        "",
+        "A word, not a hamburger, by the owner's decision: this bar is made of words,",
+        "and an icon would be the only picture in it besides the assistant's face.",
+        "",
+        "Styled as a nav link (it IS the navigation, folded), not as an action —",
+        "the accent block stays unique. `aria-expanded` gets the pressed ink for the",
+        "same reason `.bar__action`'s does: the announcement and the lit state must",
+        "be one fact."
+      ],
+      "declarations": [
+        { "set": { "display": "none" } },
+        { "set": { "align-items": "center" } },
+        { "set": { "padding": ["0", { "token": "space-5" }] } },
+        { "set": { "color": { "token": "chrome-label-strong" } } },
+        { "set": { "letter-spacing": { "token": "tracking-wide-sm" } } },
+        { "set": { "white-space": "nowrap" } },
+        { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } },
+        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "menu-open",
+      "of": "menu",
+      "suffix": [":hover", "[aria-expanded=\"true\"]"],
+      "wrap": true,
+      "$doc": "Hover and the announced open state are ONE appearance, so they are one rule under two selectors — and the stylesheet writes the two selectors on two lines, which `wrap` records. `[aria-expanded=\"true\"]` is the first suffix in the vocabulary to carry a value; the closed form admits a quoted value and no operator, because `[aria-expanded*=\"tru\"]` is a selector nobody enumerated.",
+      "declarations": [{ "set": { "background": { "token": "primary" }, "color": { "token": "content-inverse" } } }]
+    },
+    {
+      "kind": "at",
+      "condition": "below-699",
+      "break": true,
+      "note": [
+        "---- BELOW 700px THE INSTRUMENT DOCKS ----",
+        "The floating pill was a desktop idea that mobile shrank: folding the links",
+        "into Menu left a 203.7px object covering 54% of a 375px viewport, with an",
+        "85.6px open gap either side and content scrolling visibly beneath both.",
+        "Docked, the bar spans edge to edge, nothing slides under its sides, and the",
+        "offset drop shadow gives way to a plain hairline underline — an object",
+        "flush with three edges is not \"lying on\" anything, so it stops pretending.",
+        "",
+        "THE ROW IS: identity (growing), the page's non-chat action if it has one",
+        "(cv's Print), and Menu at the very right — the owner's order. The chat",
+        "action leaves the bar entirely on this side of the breakpoint: chat is",
+        "expected at the bottom corner on a phone, so Ask becomes the ask-fab",
+        "component there, and `[data-ask]` is the marker that says which action",
+        "goes. The theme satellite goes too — its mobile home is the menu sheet",
+        "(see the menu component), because the corner now belongs to the chat."
+      ],
+      "rules": [
+        {
+          "of": "base",
+          "declarations": [
+            { "set": { "top": "0", "margin": "0" } },
+            { "set": { "width": "auto", "max-width": "none" } },
+            { "set": { "box-shadow": ["inset 0 -1px 0", { "token": "chrome-border-strong" }] } }
+          ]
+        },
+        {
+          "of": "id",
+          "note": [
+            "One step up the type ramp for the identity, mobile only — at --text-xs it",
+            "was the smallest text on the screen anchoring its widest element (the",
+            "owner picked this from the study's frame F). Desktop keeps --text-xs, so",
+            "every measured width in the nav spec's table stays true. The menu sheet's",
+            "title takes the same step: its head is a replica of this bar, and the two",
+            "heights must not drift apart."
+          ],
+          "declarations": [{ "set": { "flex": "1", "font-size": { "token": "text-sm" } } }]
+        },
+        { "of": "nav", "declarations": [{ "set": { "display": "none" } }] },
+        { "of": "menu", "declarations": [{ "set": { "display": "flex" } }] },
+        {
+          "kind": "state",
+          "name": "ask",
+          "of": "action",
+          "suffix": "[data-ask]",
+          "$doc": "QUERY-ONLY, AND IT POINTS FORWARDS. `.bar__action[data-ask]` has no unconditional rule for an override to name — the chat action is only ever hidden, and only here — and `.bar__action` itself is described forty rules further down, because this paragraph is about a breakpoint and the stylesheet keeps it whole. Both are the two things this rule forced: a rule declared inside a query, and a reference made from inside one.",
+          "declarations": [{ "set": { "display": "none" } }]
+        },
+        {
+          "kind": "part",
+          "name": "theme-satellite",
+          "within": "base",
+          "class": ".theme",
+          "$doc": "The theme puck, hidden while the bar is docked — a rule this component owns about an element it does not, exactly as `.sec--tint .well` is. It is scoped to `.bar` on purpose: the menu sheet renders the same control inside `.menu__body`, and that second rendering has to survive this. Query-only for the same reason the one above is: the satellite has no other rule in this block.",
+          "declarations": [{ "set": { "display": "none" } }]
+        }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "status",
+      "selector": ".bar__status",
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center", "gap": { "token": "space-2" } } },
+        { "set": { "padding": ["0", { "token": "space-5" }] } },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "clock",
+      "selector": ".bar__clock",
+      "note": [
+        "The clock is the one thing in the bar that moves on its own and the least",
+        "informative token in it — the hour in Sofia is a nicety, the availability is",
+        "the message. It is also 55.9px of a 319.6px segment, so it is the first",
+        "thing to give up when the bar starts crowding the page. `display: none`",
+        "rather than removal from the markup: `#local-time` has to stay in the",
+        "document or js/main.js's 30s Intl.DateTimeFormat interval writes to nothing",
+        "and starts throwing. Hiding is presentation; the words are unchanged."
+      ],
+      "declarations": [{ "set": { "display": "none" } }]
+    },
+    { "kind": "at", "condition": "from-1280", "inline": true, "rules": [{ "of": "clock", "declarations": [{ "set": { "display": "inline" } }] }] },
+    {
+      "kind": "part",
+      "name": "action",
+      "selector": ".bar__action",
+      "note": [
+        [
+          "An action segment — same cell as a nav link, but it does something to the",
+          "page rather than navigating. Styled identically on purpose: the bar is one",
+          "instrument, and a button that announced itself would break the row."
+        ],
+        [
+          "---- THE BAR HAS A HIERARCHY, AND IT IS STATED ----",
+          "Left to right, every page, no exceptions:",
+          "",
+          "  identity → navigation → context → PRIMARY ACTION → utility",
+          "",
+          "The primary action is the one thing a page most wants pressed: `Ask my Bot`",
+          "on the portfolio, `Print / PDF` on the CV. The utility — the theme toggle —",
+          "is always last, because it is the least of them and a reader looking for it",
+          "should always look in the same place.",
+          "",
+          "THIS IS A CORRECTION, and the defect was the same on both pages. The primary",
+          "action was `--chrome-label-strong` on no ground: character-for-character the",
+          "colour and hover of `.bar__nav a`. So the site's most distinctive feature",
+          "read as a fourth navigation link, and on the CV the print control — the",
+          "whole reason a CV page has a bar — sat AFTER the theme toggle, so the",
+          "utility outranked the action.",
+          "",
+          "It is a solid segment now. That is the same idea `.btn--solid` encodes and",
+          "the same rule `scripts/check-css.mjs` enforces for buttons: one primary",
+          "action per view, wearing the primary ink."
+        ]
+      ],
+      "$doc": "TWO COMMENTS ABOVE ONE RULE, which is the second form of `note`. The first describes this segment; the second states the bar's whole left-to-right hierarchy, which is about the row rather than about the cell. Merging them would be a rewrite, and the stylesheet keeps them apart.",
+      "declarations": [
+        { "set": { "display": "flex", "align-items": "center", "gap": { "token": "space-2" } } },
+        { "set": { "padding": ["0", { "token": "space-5" }] } },
+        {
+          "note": [
+            "THE ACCENT, NOT THE INK. A solid ink segment carried the right hierarchy",
+            "and the wrong weight — at this size a near-black block reads as a hole",
+            "punched in the bar rather than as the thing to press. Blue is the site's",
+            "one brand colour and it earns its keep here: it separates the action from",
+            "the ink-coloured identity on the left AND from the chrome-grey navigation",
+            "between them, which no shade of grey could do at once.",
+            "",
+            "Measured, both themes, so the promotion does not cost legibility:",
+            "",
+            "  light   label on accent   6.63:1     accent on the bar   6.60:1",
+            "  dark    label on accent   5.21:1     accent on the bar   5.32:1",
+            "",
+            "Hover and the open state commit to the ink. Blue at rest is an invitation;",
+            "ink is what it looks like once you are in it. 16.74:1 on light."
+          ],
+          "set": { "background": { "token": "accent" } }
+        },
+        { "set": { "color": { "token": "content-inverse" } } },
+        { "set": { "box-shadow": ["inset 1px 0 0", { "token": "chrome-border" }] } },
+        { "set": { "letter-spacing": { "token": "tracking-wide-sm" } } },
+        { "set": { "white-space": "nowrap" } },
+        { "set": { "transition": "background-color 0.2s, color 0.2s" } }
+      ]
+    },
+    { "kind": "state", "name": "action-hover", "of": "action", "suffix": ":hover", "declarations": [{ "set": { "background": { "token": "primary" } } }] },
+    {
+      "kind": "state",
+      "name": "action-open",
+      "of": "action",
+      "suffix": "[aria-expanded=\"true\"]",
+      "note": [
+        "An action that opens something and leaves it open wears a distinct state for",
+        "as long as it is open. This is the segment's ONLY link to the drawer: the",
+        "bar knows a button can be expanded, it does not know what it expanded.",
+        "`aria-expanded` is the state a screen reader is already being told about, so",
+        "styling it costs no new attribute and cannot drift from the announcement —",
+        "which is what a `.is-open` class beside it would eventually do. A plain",
+        "`.bar__action` (cv's Print / PDF) never carries the attribute and is",
+        "unaffected.",
+        "",
+        "It reads as PRESSED rather than as lit, which is the inversion the old rule",
+        "could not express: when the resting state was quiet, \"open\" could be the",
+        "solid one. Now that resting is the accent, open is the ink — the same place",
+        "hover goes, because \"you are in it\" is one state however you got there."
+      ],
+      "declarations": [{ "set": { "background": { "token": "primary" } } }]
+    },
+    {
+      "kind": "part",
+      "name": "face",
+      "selector": ".bar__face",
+      "break": true,
+      "note": [
+        "The assistant's face, in the bar. It is the same drawing as the drawer's",
+        "portrait and it is NOT a portrait here — at 1.25rem the 408 paths collapse",
+        "to a mark, which is the point: it makes the segment recognisable as the",
+        "thing the drawer opens, without pretending to be a likeness at a size that",
+        "cannot carry one. `aria-hidden` because the label beside it already says",
+        "what it is."
+      ],
+      "declarations": [
+        { "set": { "display": "block" } },
+        { "set": { "width": "1.25rem", "height": "1.25rem" } },
+        { "set": { "flex": "none" } },
+        {
+          "note": [
+            "A CIRCLE, which crops the drawing rather than framing it. The tile inside",
+            "the SVG is a rounded square (its corner radius is 14.2387/80 = 17.8%, read",
+            "off the first path), so a 50% radius cuts the four corners off that tile.",
+            "That is the intent: the portrait reads as an avatar here, and an avatar is",
+            "round. The face sits centred in the tile, well inside the crop."
+          ],
+          "set": { "border-radius": "50%" }
+        },
+        { "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "chrome-border-strong" }] } }
+      ]
+    },
+    {
+      "kind": "part",
+      "name": "dot",
+      "selector": ".bar__dot",
+      "declarations": [
+        { "set": { "width": "8px", "height": "8px" } },
+        { "set": { "background": { "token": "accent" } } },
+        { "set": { "animation": "blink 2.4s steps(2) infinite" } }
+      ]
+    },
+    {
+      "kind": "keyframes",
+      "name": "blink",
+      "inline": true,
+      "$doc": "The availability dot's two-step blink. A `@keyframes` has a NAME and a set of offsets and no condition at all, which is why it is a construct rather than the unnameable at-rule PATTERNS.md took it for — and why the name is checked against an `animation` in this same definition, since a keyframes name is global and nothing else could make it this component's.",
+      "steps": [{ "at": "50%", "declarations": [{ "set": { "opacity": "0.25" } }] }]
+    },
+    {
+      "kind": "at",
+      "condition": "below-1199",
+      "inline": true,
+      "note": [
+        "WHEN THE STATUS IS ALLOWED IN, and why it is not 980px — or 1080px — any",
+        "more. The bar is chrome; the `.well` beneath it is the page's content",
+        "column. Once the chrome is as wide as the content it labels, it has stopped",
+        "being an object lying on the sheet and become a header. At the original",
+        "threshold the bar appeared at its proportionally LARGEST: 808px inside an",
+        "817px well at 981px viewport — 98.9% — and shrank relative to the page from",
+        "there, so the wider the screen the better it looked and the narrowest screen",
+        "that showed the status showed the worst version of it. That was the \"gets",
+        "too long\" report, and 1080/1280 fixed it to a measured 84.8% worst case.",
+        "",
+        "THE ASK SEGMENT SPENDS SOME OF THAT BACK. `.bar__action` measures 64.0px",
+        "with the word \"Ask\" in it, which pushes the status-bearing bar from 752.2px",
+        "to 816.2px. Left at 1080 that is 90.7% of a 900px well — most of the way",
+        "back to the defect. So the reveal moves out to where the arithmetic works",
+        "again, rather than the new segment being squeezed to fit an old number:",
+        "",
+        "  bar without status   552.5px   ≤ 1199px:  55.3% of the well at 1199",
+        "  bar + status         816.2px   1200-1279: 81.6% at 1200, 76.6% at 1279",
+        "  bar + status + clock 872.1px   ≥ 1280px:  81.8% at 1280, 72.7% at 1440",
+        "",
+        "Worst case anywhere is 81.8%, which is BETTER than the 83.6% this bar had",
+        "before the Ask segment existed — the reveal points were re-derived rather",
+        "than inherited. The price is paid by the 1080–1199px band, which loses the",
+        "availability line. That is the right thing to lose there: the status is a",
+        "passive readout, and Ask is the only route on the page to the assistant."
+      ],
+      "rules": [{ "of": "status", "declarations": [{ "set": { "display": "none" } }] }]
+    },
+    {
+      "kind": "at",
+      "condition": "below-600",
+      "break": true,
+      "note": [
+        "Identity + links + the toggle have to fit inside `calc(100vw - 1.5rem)`, and",
+        "at the full paddings they do not on a narrow screen: on a 375px viewport the",
+        "bar's content measured 367px inside a 351px box and the toggle ran to x=379 —",
+        "roughly an eighth of the control off the right edge, silently, because a",
+        "fixed element's overflow does not extend the document. These paddings bring",
+        "the content back inside the box.",
+        "",
+        "THE BOUNDARY IS 600px, NOT 480px, and that is the whole point of the rule.",
+        "Tightening only to 480px left a band immediately above it where the padding",
+        "had sprung back but the viewport had not yet grown enough to pay for it, so",
+        "`.bar__id`'s overflow guard engaged and the identity was silently truncated",
+        "on four pages at once:",
+        "",
+        "  index  481-511px  content 488.6 in a 457-487 box   name clipped by up to 32px",
+        "  evals  481-528px  content 511.9                    clipped by up to 31px",
+        "  mcp    481-504px  content 487.9                    clipped by up to  7px",
+        "  cv     561-574px  content 551.8 (its nav returns",
+        "                    at 561 — see css/cv.css)         clipped by up to 15px",
+        "",
+        "600px clears the widest of those (cv's 551.8px needs a 576px viewport) with",
+        "24px to spare. Keep the slack when editing, and note that the steps here are",
+        "the SMALL end of the space ramp precisely because this is the one place where",
+        "4px matters.",
+        "",
+        "SINCE THE MOBILE MENU: everything above 600px in that history still holds,",
+        "but below 700px the links are folded into `.bar__menu`, so the row this",
+        "block tightens is now three segments (identity, Menu, action), not five.",
+        "The step is kept because the identity is the segment that gives way",
+        "(`min-width: 0` + `overflow: hidden`), and at 320px the full paddings would",
+        "still clip it; the measured figures above are the record of the bar this",
+        "rule was derived against."
+      ],
+      "rules": [
+        { "of": "id", "declarations": [{ "set": { "padding": [{ "token": "space-3" }, { "token": "space-3" }] } }] },
+        { "of": "action", "declarations": [{ "set": { "padding": ["0", { "token": "space-2" }] } }] }
+      ]
+    },
+    {
+      "kind": "at",
+      "condition": "below-860",
+      "break": true,
+      "note": [
+        "THE LABEL GOES, THE FACE STAYS. `Ask my Bot` is a far wider segment than the",
+        "`Ask` it replaces, and the arithmetic below was already tight enough that a",
+        "fifth segment had to be paid for out of three neighbours' padding. So below",
+        "860px the words drop and the portrait carries the segment alone — it is a",
+        "20px mark against a solid primary ground, which is legible as a target even",
+        "where it is not legible as a face.",
+        "",
+        "The accessible name does not go with it: the button keeps `aria-label`, so a",
+        "screen reader and a voice-control user still get \"Ask my Bot\" at every width.",
+        "A control whose name disappears with its label is the failure this avoids."
+      ],
+      "rules": [
+        {
+          "kind": "part",
+          "name": "action-label",
+          "selector": ".bar__action-label",
+          "$doc": "The action's words, and the third query-only rule in this block. The label has no unconditional appearance at all — it is a plain span until the viewport narrows and it folds away — so there is nothing outside the query for an override to name.",
+          "declarations": [{ "set": { "display": "none" } }]
+        },
+        { "of": "action", "declarations": [{ "set": { "gap": "0" } }] }
+      ]
+    },
+    {
+      "kind": "at",
+      "condition": "below-480",
+      "break": true,
+      "note": [
+        "THE FIFTH SEGMENT IS PAID FOR HERE, one step down the ramp per neighbour.",
+        "At 375px the bar was already 95.9% full: 336.6px of content in a 351px box.",
+        "An Ask segment at the ≤600px padding is 40.0px, and 336.6 + 40.0 = 376.6 in",
+        "the same 351px box — the identity would have been silently clipped, which is",
+        "the exact failure the 600px block above exists to prevent.",
+        "",
+        "Nothing is hidden to make room. Three paddings each drop one step",
+        "(`.bar__id` space-3 → space-2 horizontally, `.bar__nav a` and `.theme`",
+        "space-2 → space-1), which frees 8 + 24 + 8 = 40.0px — the segment pays for",
+        "itself almost exactly:",
+        "",
+        "  before  135.8 id + 175.8 links +  25.0 toggle              = 336.64px",
+        "  after   127.8 id + 151.8 links +  17.0 toggle + 40.0 ask   = 336.61px",
+        "",
+        "Slack at 375px is 14.39px against 14.36px before — the segment is free at",
+        "the width that matters. `.bar__id`'s VERTICAL padding deliberately stays at",
+        "space-3: it is what sets the bar's height, and dropping it would shrink the",
+        "whole instrument rather than tighten one seam. (The `.theme` figures above",
+        "are the historical record of that trade: the toggle has since left the",
+        "bar's row entirely, and its ≤480px padding rule went with it.)",
+        "",
+        "320px is the one width where this is not quite free, and it is worth stating",
+        "rather than discovering. The bar has been clipping the identity there since",
+        "long before Ask existed — 336.6px of content in a 296px box, which is what",
+        "`.bar__id`'s `overflow: hidden` is for — and the overflow it absorbs is",
+        "40.6px either way. What changes is how much NAME survives it: 95.2px before,",
+        "87.2px after, one monospace character. The clip was already there; it is one",
+        "glyph deeper.",
+        "",
+        "SINCE THE MOBILE MENU that arithmetic is history rather than description:",
+        "the links this step squeezed are folded into `.bar__menu` below 700px, and",
+        "a three-segment bar at these paddings fits inside even a 320px box — the",
+        "identity clip is gone, not deeper. The step stays for the slack."
+      ],
+      "rules": [{ "of": "id", "declarations": [{ "set": { "padding": [{ "token": "space-3" }, { "token": "space-2" }] } }] }]
+    }
+  ]
+}

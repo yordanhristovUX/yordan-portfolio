@@ -1,11 +1,11 @@
 {
   "name": "@yordan/design-system",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "description": "AI-ready, repo-first design system for the blueprint portfolio. Source of truth: tokens/tokens.json + components/*/spec.md + css/components.css. See README.md.",
   "//": "`private: true` and no `publishConfig`: this is consumed by `file:`, never from a registry. `version` is still real — scripts/contract-diff.mjs enforces it against the committed contract in RELEASED.json, so a consumer pinning a range gets a semver promise a publish step would otherwise have to make. `exports` is the same statement the boundary gate makes: dist/ and css/ are published, everything else here is private, and a subpath not listed below is unreachable rather than merely undocumented. `assets/` is in `files` and NOT in `exports` on purpose — avatar.svg is fetched by URL from markup, never resolved as a module.",
-  "//exports": "TWENTY-TWO subpaths. It was six until phase R2a, which added the Tailwind + React tier: tokens.tailwind.css binds Tailwind v4's @theme namespaces to the custom properties tokens.css already defines, and ./react/<id> is one generated, typed component per definition. It grows by one for every block R4 stops hand-authoring, which contract-diff.mjs classifies as additive — so the count here and the version move together or the semver gate goes red. They are ENUMERATED rather than a `./react/*` wildcard for the same reason the first six are: a subpath that is not listed is unreachable, and a wildcard would publish whatever happens to land in the directory. The React entries resolve to .tsx SOURCE — a consumer transpiles them (Next: transpilePackages) and brings class-variance-authority and react itself; this package still declares no dependencies.",
+  "//exports": "TWENTY-FOUR subpaths. It was six until phase R2a, which added the Tailwind + React tier: tokens.tailwind.css binds Tailwind v4's @theme namespaces to the custom properties tokens.css already defines, and ./react/<id> is one generated, typed component per definition. keyframes.css is R4's and is the one entry that is not a token file or a component: an animation's name is a global CSS identifier and a class attribute cannot hold an at-rule, so the @keyframes every definition declares ship as a stylesheet the consumer imports beside tokens.css. It grows by one for every block R4 stops hand-authoring, which contract-diff.mjs classifies as additive — so the count here and the version move together or the semver gate goes red. They are ENUMERATED rather than a `./react/*` wildcard for the same reason the first six are: a subpath that is not listed is unreachable, and a wildcard would publish whatever happens to land in the directory. The React entries resolve to .tsx SOURCE — a consumer transpiles them (Next: transpilePackages) and brings class-variance-authority and react itself; this package still declares no dependencies.",
   "files": [
     "dist",
     "css",
@@ -19,6 +19,7 @@
     "./tokens.dtcg.json": "./dist/tokens.dtcg.json",
     "./tokens.d.ts": "./dist/tokens.d.ts",
     "./tokens.tailwind.css": "./dist/tokens.tailwind.css",
+    "./keyframes.css": "./dist/keyframes.css",
     "./react": "./dist/react/index.ts",
     "./react/button": "./dist/react/button.tsx",
     "./react/chip": "./dist/react/chip.tsx",
@@ -33,7 +34,8 @@
     "./react/media": "./dist/react/media.tsx",
     "./react/profile": "./dist/react/profile.tsx",
     "./react/ask-fab": "./dist/react/ask-fab.tsx",
-    "./react/definition-row": "./dist/react/definition-row.tsx"
+    "./react/definition-row": "./dist/react/definition-row.tsx",
+    "./react/nav": "./dist/react/nav.tsx"
   },
   "scripts": {
     "//emit": "STARTED AS THE R1 PILOT, now the R4 migration. Every id in PILOT (scripts/emit-css.mjs) has its appearance authored as data in components/<id>/definition.json, and its block in css/components.css is a GENERATED region rendered from it. `emit:css` writes them; `build.mjs --check` re-renders them in memory and byte-compares, so a hand-edit inside a region fails the build. It runs first in `build` for the obvious reason — the check that follows would otherwise be comparing against a stale file. It is deliberately NOT a step of the ROOT `npm run build`: see the header of scripts/emit-css.mjs.",
