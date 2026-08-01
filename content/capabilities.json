@@ -2,7 +2,7 @@
   {
     "id": "ai-ready-design-systems",
     "title": "AI-ready design systems",
-    "body": "AI-ready design systems and production-ready component libraries with 1:1 parity to code. Architected so AI agents can understand, compose, and generate interfaces without design drift."
+    "body": "Token and component systems defined once and generated to every surface, at 1:1 Figma-to-code parity. Architected so AI agents can read, compose, and generate real interfaces without drift."
   },
   {
     "id": "platform-scale-ux",

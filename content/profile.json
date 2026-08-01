@@ -116,11 +116,11 @@
   },
 
   "prose": {
-    "heroLede": "I build **AI-ready design systems** with 1:1 code parity and architect the AI workflows that connect product, design, and engineering. Working alongside Technical Product Managers and developers, I help eliminate the traditional handoff by designing systems, optimising processes, and contributing directly to PRDs, prototypes, and production code.",
+    "heroLede": "I build **AI-ready design systems** with 1:1 code parity and architect the AI workflows that connect product, design, and engineering. Working alongside Technical Product Managers and developers, I close the traditional handoff: designing the systems, optimising the processes, and contributing directly to PRDs, prototypes, and production code.",
 
     "contactKicker": "Have a system to build, a surface to audit, or a handoff gap to close?",
 
-    "cvSummary": "I build **AI-ready design systems**: component libraries with 1:1 parity between Figma and code, plus custom Claude skills and MCP setups that let agents assemble UI from the real system without drift. I write and ship the frontend myself, reviewed and merged by engineering. Under the tooling sits seven years of research practice — user interviews, usability testing, and WCAG 2.1 AA auditing.",
+    "cvSummary": "I build **AI-ready design systems**: component libraries with 1:1 parity between Figma and code, plus custom Claude skills and MCP setups that let agents assemble UI from the real system without drift. I write and ship the frontend myself, reviewed and merged by engineering. Under the tooling sits seven years of research practice: user interviews, usability testing, and WCAG 2.1 AA auditing.",
 
     "background": {
       "prose": "Before tech, I spent eleven years helping build and grow a strength and nutrition coaching practice. As the owner's close business partner, I took ownership of many of the systems that defined the business. I led a team of coaches, designed the recruitment and onboarding programme, created the assessment framework used across the practice, conducted hundreds of client interviews, and built a data-driven approach to measuring progress and outcomes.",
