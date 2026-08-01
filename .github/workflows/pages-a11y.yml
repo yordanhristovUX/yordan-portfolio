@@ -1,0 +1,90 @@
+# Axe over the four SHIPPED PAGES — the document-scope half of the a11y story.
+#
+# The design-system workflow runs axe over every story, and five matrix stories
+# there exempt `landmark-no-duplicate-banner` and `landmark-unique` because a
+# variant matrix that renders the bar three times is not a document. That
+# exemption is correct, and its cost is that the single-banner assertion is
+# asserted nowhere at story level. THIS job is where it lives: index.html,
+# cv.html, mcp.html and evals.html, served the way vercel serves them
+# (cleanUrls), scanned in both themes with axe's full default ruleset and no
+# exemptions. Zero violations or the job fails — a violation found here is
+# fixed on the page, never exempted (see design-system/scripts/page-a11y.mjs).
+#
+# A SIBLING of design-system.yml rather than a step in it, because the two
+# gates have different trigger surfaces. Nothing outside design-system/ can
+# change a story's accessibility tree, so that workflow filters on
+# design-system/** — but almost everything can change a *page's* tree: a
+# content build rewrites the generated regions of the html files, js/ injects
+# and mutates DOM, css/ and the design system's tokens decide contrast. Bolting
+# this onto the story workflow would mean either missing page regressions from
+# content commits or running a Storybook build on every one of them.
+#
+# It is not in ci.yml / `npm run check` either: that gate's contract is
+# offline, browser-free and dependency-light, and this needs Chromium. The
+# dependencies are design-system's own (Playwright and axe are devDependencies
+# there), which is why the steps below run in that directory.
+#
+# The generated html files are COMMITTED, so a content commit shows up in this
+# filter as a diff to the html files themselves — content/** does not need to
+# be listed.
+name: pages-a11y
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "cv.html"
+      - "mcp.html"
+      - "evals.html"
+      - "css/**"
+      - "js/**"
+      - "design-system/css/**"
+      - "design-system/dist/**"
+      - "design-system/tokens/**"
+      - "design-system/scripts/page-a11y.mjs"
+      - "design-system/package.json"
+      - "design-system/package-lock.json"
+      - ".github/workflows/pages-a11y.yml"
+  pull_request:
+    paths:
+      - "index.html"
+      - "cv.html"
+      - "mcp.html"
+      - "evals.html"
+      - "css/**"
+      - "js/**"
+      - "design-system/css/**"
+      - "design-system/dist/**"
+      - "design-system/tokens/**"
+      - "design-system/scripts/page-a11y.mjs"
+      - "design-system/package.json"
+      - "design-system/package-lock.json"
+      - ".github/workflows/pages-a11y.yml"
+  # Unfiltered on purpose: re-run a flake or scan after an infra change without
+  # pushing a no-op commit into a filtered path.
+  workflow_dispatch:
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Playwright and axe-playwright are devDependencies of design-system/,
+      # with a lockfile of their own — the root `npm ci` installs neither.
+      - name: "install: the design system's own dependencies"
+        run: npm ci
+        working-directory: design-system
+
+      - name: "install: chromium"
+        run: npx playwright install --with-deps chromium
+        working-directory: design-system
+
+      - name: "a11y: axe over the four shipped pages, both themes"
+        run: npm run test:a11y:pages
+        working-directory: design-system

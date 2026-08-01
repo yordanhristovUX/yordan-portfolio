@@ -587,6 +587,14 @@
        here and nothing else visual. -->
   <div class="drawer" id="ask-panel" data-drawer>
     <div class="drawer__scrim" data-drawer-close></div>
+<<<<<<< HEAD
+=======
+    <!-- Both the sheet and its head are <div>, per the drawer spec — the pair
+         used to be <aside> + <header>, and role="dialog" on the aside stripped
+         the sectioning exemption that kept the head from being a banner, so an
+         open drawer announced a second site header. Do not put the sectioning
+         elements back. See design-system/components/drawer/spec.md. -->
+>>>>>>> origin/claude/exciting-bose-c27c23
     <div class="drawer__sheet" role="dialog" aria-modal="true"
          aria-labelledby="drawer-title" tabindex="-1">
       <div class="drawer__head">
