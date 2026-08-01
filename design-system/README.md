@@ -198,7 +198,7 @@ Four of those rows are decisions worth knowing:
 | `"600"` on `font-weight` | `font-weight: 600` | `font-semibold` |
 | `["1px","solid",{"token":"content-primary"}]` | `border: 1px solid var(--content-primary)` | `border border-solid border-content-primary` |
 | `{ "token": "rule-strong" }` on `border` | `border: var(--rule-strong)` | `[border:var(--rule-strong)]` |
-| a state's `suffix: ":hover"` | `.btn:hover { … }` | `hover:` on each of its classes |
+| a state's `suffix: ":hover"` | `.btn:hover { … }` | `[&:hover]:` on each of its classes |
 
 Anything with no namespace falls through to Tailwind's **arbitrary property** form, which
 emits the declaration exactly as authored, and the build prints how many did so. That
@@ -206,6 +206,79 @@ fallback is why `transition` is `[transition:background-color_0.2s,color_0.2s]` 
 `transition-[…] duration-200`: the shorter pair would also apply Tailwind's default timing
 function, and the authored rule has none. **A shorter class that changes a curve is not a
 translation.**
+
+### `:hover` is emitted as `[&:hover]:`, not as `hover:`
+
+Tailwind v4's `hover:` variant compiles to `@media (hover: hover) { &:hover { … } }`. The
+`:hover` in `components.css` carries no media query. Emitting `hover:` would therefore make
+the two pipelines disagree about **every hover state in the system** on a coarse pointer —
+the vanilla site applying the style on a sticky tap, the React one not.
+
+The media query may well be the better behaviour. **It is still not the emitter's to decide.**
+A definition says `:hover`; rendering it as something else is invention, and this pilot's
+whole claim is that two front ends are two renderings of one source rather than two
+implementations of one idea. So the arbitrary variant `[&:hover]:` is emitted, which compiles
+to a bare `&:hover` and matches the stylesheet exactly.
+
+**The improvement is filed, not dropped.** If `@media (hover: hover)` is right, it is right
+for both pipelines, and the place to decide it is the *definition format* — a state gaining a
+`media` key, emitted as a media query by `emit-css.mjs` and as `hover:` here, in one commit
+that moves both surfaces together. The other five state prefixes keep their idiomatic
+Tailwind variant, because those already compile to a bare selector; only `hover` is wrapped.
+
+### A class attribute has no order
+
+The one place this tier is **not** a straight transcription, and the reason belongs in the
+open. `cva` concatenates the base and the chosen variant into a single `class` attribute — and
+a class attribute has no precedence. CSS resolves the two by **stylesheet** order, which
+Tailwind decides by sorting its utilities. So an override does not win by being written later.
+
+On this tier's first output, every override lost. Measured emission positions:
+`px-space-3` (36) before `px-space-5` (38), `py-space-2` (40) before `py-space-3` (41),
+`text-step-2xs` (45) before `text-step-xs` (47), `text-content-inverse` (55) before
+`text-content-primary` (56), `[&:hover]:bg-action-hover` before `[&:hover]:bg-primary`. A
+solid Button rendered dark ink on a dark fill — an unreadable slab where the hero CTA is — and
+a small Button rendered at base metrics. Chip's solid variant worked, and worked only because
+`border-primary` happens to sort after `border-chrome-border-strong`.
+
+**The fix is disjointness, not weight.** No `!important`, no `tailwind-merge`, and no change
+to the definitions — they stay transcription-faithful. The emitter computes, per axis, which
+CSS *longhands* that axis's branches write; any base class writing one of them **moves into
+that axis's `default` branch**, so exactly one of the two classes is ever in the attribute:
+
+```ts
+export const button = cva(
+  [ /* only what no variant or size overrides */ ],
+  { variants: {
+      variant: { default: ["text-content-primary", "[&:hover]:bg-primary"],
+                 solid:   ["bg-primary", "text-content-inverse", "[&:hover]:bg-action-hover"] },
+      size:    { default: ["text-step-xs", "py-space-3", "px-space-5"],
+                 small:   ["py-space-2", "px-space-3", "text-step-2xs"] } } }
+);
+```
+
+Three details make it correct rather than merely effective:
+
+- **The collision is between properties, not class names.** Chip's base `border: 1px solid
+  var(--chrome-border-strong)` and its solid variant's `border-color: var(--primary)` are
+  different property names and the same declaration, so every emitted class reports the CSS
+  longhands it writes and shorthands expand. Reporting a *wider* set is safe — it duplicates a
+  class; reporting a narrower one is the bug.
+- **The state prefix is part of the key.** A hover declaration and a resting one do not
+  compete: `.x:hover` outspecifies `.y` in Tailwind exactly as it does in `components.css`.
+- **A branch that does not set every property its axis claims inherits the base's class for
+  the rest**, so an axis with two unlike variants still renders completely. With one variant
+  per axis — the pilot — that list is always empty, but the rule is written for the general
+  case because the failure it prevents is invisible.
+
+**What it refuses to do:** two *axes* overriding the same property cannot be made disjoint,
+because both apply at once and cva has no ordering between them. Button's axes are disjoint
+today (variant sets colour and background, size sets padding and font size). If a definition
+ever creates that overlap the **build fails**, naming both branches and the property — which
+of them should win is exactly the decision an emitter must not guess at.
+
+**Pipeline 1 is untouched by all of this.** `components.css` has a real cascade: `.btn--solid`
+genuinely comes after `.btn`, and needs none of it.
 
 ### What is generated, and what never will be
 
@@ -219,9 +292,16 @@ once, so the generated component takes `href` and branches; `chip` and `stat` sh
 element each and get one. If a fence ever shows a pair the emitter has no discriminant for,
 the build fails rather than guessing.
 
+Props are typed from **`ComponentPropsWithRef`**, so `ref` is part of the contract. React 19
+passes a ref to a function component as an ordinary prop, and these components spread the
+rest of their props onto the element — so a `ref` reaches the DOM node with no
+`forwardRef` and no cast at the call site.
+
 `className` is **appended, not merged**. `cx` is clsx; two conflicting utilities resolve by
 stylesheet order, and nothing in a class attribute can change that. A consumer who wants
-last-one-wins adds `tailwind-merge` themselves.
+last-one-wins adds `tailwind-merge` themselves. Note that this is the *consumer's* half of
+the ordering problem the section above solves for the generated classes: the emitter can make
+its own classes disjoint, and it cannot do that for a class it has never seen.
 
 ### What a consumer must provide
 
