@@ -1208,13 +1208,19 @@ addChunk("profile:background", "profile", "context", "Background", profile.prose
 addChunk("profile:background-statement", "profile", "context", "Background", profile.prose.background.statement, {
   page: "/", anchor: "#background", label: "Background",
 });
+/* The heading and the cite label are the CV section's own title, typed here
+   because that `<h2>` is hand-authored markup outside the generated region —
+   so this string is a copy of one the build cannot read, and it went stale the
+   day the owner retitled the section (bd84f7e). It now reads what `#open-source`
+   actually says: an assistant citing this chunk names a heading a reader can
+   find on the page. */
 addChunk(
   "profile:open-source",
   "profile",
   "system",
-  "AI-ready design system",
+  "Portfolio as a product",
   profile.prose.cvOpenSource.join(" ") + " " + profile.prose.cvOpenSourceFacts,
-  { page: "/cv", anchor: "#open-source", label: "AI-ready design system" }
+  { page: "/cv", anchor: "#open-source", label: "Portfolio as a product" }
 );
 addChunk(
   "profile:education",
