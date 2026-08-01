@@ -12,17 +12,18 @@
 
 ## Highlights {#outcome}
 
-- Redesigned the AI Assistant module and built its design system end to end: a Figma library at
-  1:1 parity with the coded components (**~35 and growing**), tokens implemented directly in
-  the frontend component library replacing every hardcoded value for **100% token coverage**,
-  and a living style guide used for visual testing and design-to-code comparison.
-- Wrote custom Claude skills that let AI agents assemble UI from the real design system without
-  drift. The TPM team uses them to generate interactive prototypes.
-- Wrote and shipped the responsive navigation for the Analytics platform — reviewed and merged
-  by engineering, live in production.
-- Audited Green Street News and the Analytics & Research Platform against WCAG 2.1 AA and UX
-  heuristics: **200+ issue instances** catalogued with severity ratings and a prioritised
-  remediation roadmap.
-- Building a design-to-code pipeline that generates frontend pages from Figma with AI
-  assistance. The internal version is under NDA; the open-source system above is the same
-  architecture, public.
+- Built the company's first design system: a two-level token architecture with full colour
+  ramps, and a complete base component library in Figma matching the shadcn/ui inventory.
+- Rebuilt the AI Assistant module on design tokens through one agent-orchestrated PR:
+  **35 components at 1:1 Figma parity, 100% token coverage** in SCSS variables and mixins,
+  functionality preserved, automated tests, and a styleguide rendering the real components.
+- Shipped production frontend: designed and coded the platform's responsive navigation,
+  reviewed by engineering and live.
+- Built the TPM prototype pipeline: a component library and custom Claude skills that
+  assemble interactive feature mocks matching production, removing the design bottleneck
+  from stakeholder approvals.
+- Audited two product surfaces against WCAG 2.1 AA and UX heuristics: **200+ issue
+  instances** catalogued with severity ratings into a prioritised remediation roadmap.
+- Now building the contract-first, git-based design system: tokens, components and design
+  rationales in the repository, verified in CI, every surface generated from one contract.
+  This portfolio runs a personal version of the same architecture, open source.

@@ -5,8 +5,7 @@
 
   "education": [
     { "qualification": "UX/UI Design", "institution": "Telerik Academy" },
-    { "qualification": "UX Web Design", "institution": "Software University (SoftUni)" },
-    { "qualification": "Applied Mathematics (coursework)", "institution": "Sofia University" }
+    { "qualification": "UX Web Design", "institution": "Software University (SoftUni)" }
   ],
 
   "languages": [

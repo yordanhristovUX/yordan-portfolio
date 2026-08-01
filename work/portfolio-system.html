@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>This site — Portfolio as a Product — Yordan Hristov</title>
-  <meta name="description" content="An AI-ready design system that ships itself: repo-first tokens, Storybook, one-way Figma push, auto-deploys — all open source.">
+  <meta name="description" content="A portfolio built as a product: repo-first design system, compiled copy, an MCP server and a chat assistant answering from one corpus, and a published retrieval evaluation. Open source, no build step in the site.">
   <link rel="canonical" href="https://yordan-portfolio.vercel.app/work/portfolio-system">
   <meta property="og:title" content="This site — Portfolio as a Product">
-  <meta property="og:description" content="An AI-ready design system that ships itself: repo-first tokens, Storybook, one-way Figma push, auto-deploys — all open source.">
+  <meta property="og:description" content="A portfolio built as a product: repo-first design system, compiled copy, an MCP server and a chat assistant answering from one corpus, and a published retrieval evaluation. Open source, no build step in the site.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://yordan-portfolio.vercel.app/work/portfolio-system">
   <meta name="twitter:card" content="summary">
 
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CreativeWork","@id":"https://yordan-portfolio.vercel.app/work/portfolio-system#work","name":"Portfolio as a Product","headline":"This site — Portfolio as a Product","abstract":"Every claim on this page is inspectable in the same public repository that renders it. If the system were not real, this page could not exist in the shape it does.","description":"An AI-ready design system that ships itself: repo-first tokens, Storybook, one-way Figma push, auto-deploys — all open source.","keywords":["Designer & Builder","Design system","AI-first","Storybook","Figma push","Open source"],"url":"https://yordan-portfolio.vercel.app/work/portfolio-system","creator":{"@id":"https://yordan-portfolio.vercel.app/#person"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CreativeWork","@id":"https://yordan-portfolio.vercel.app/work/portfolio-system#work","name":"Portfolio as a Product","headline":"This site — Portfolio as a Product","abstract":"Every claim on this page is inspectable in the same public repository that renders it. If the system were not real, this page could not exist in the shape it does.","description":"A portfolio built as a product: repo-first design system, compiled copy, an MCP server and a chat assistant answering from one corpus, and a published retrieval evaluation. Open source, no build step in the site.","keywords":["Designer & Builder","Design system","AI-first","MCP server","Storybook","Figma push","Open source"],"url":"https://yordan-portfolio.vercel.app/work/portfolio-system","creator":{"@id":"https://yordan-portfolio.vercel.app/#person"}}</script>
 
   <!-- Browser chrome. See index.html for why the pinned theme has to win here. -->
   <meta name="theme-color" content="#f5f5f4" media="(prefers-color-scheme: light)" data-theme-color="light">
@@ -89,16 +89,15 @@
       </header>
       <div class="well">
         <p class="t-lead">Every claim on this page is inspectable in the same public repository that renders it. If the system were not real, this page could not exist in the shape it does.</p>
-        <div class="chips"><span class="chip">Designer &amp; Builder</span><span class="chip">Design system</span><span class="chip">AI-first</span><span class="chip">Storybook</span><span class="chip">Figma push</span><span class="chip chip--solid">Open source</span></div>
+        <div class="chips"><span class="chip">Designer &amp; Builder</span><span class="chip">Design system</span><span class="chip">AI-first</span><span class="chip">MCP server</span><span class="chip">Storybook</span><span class="chip">Figma push</span><span class="chip chip--solid">Open source</span></div>
         <div class="case-body">
           <h3>The idea</h3>
-          <p>A designer's portfolio usually <strong>describes</strong> process. This one <strong>demonstrates</strong> it: every button, chip, and square on this page comes from a design system that lives in the same public repository, documents itself for AI agents, and ships automatically. If I claim to build AI-ready systems, the claim should be inspectable.</p>
+          <p>A designer's portfolio usually <strong>describes</strong> process. This one <strong>demonstrates</strong> it: every button and chip on this page comes from a design system that lives in the same public repository, documents itself for AI agents, and ships automatically. If I claim to build AI-ready systems, the claim should be inspectable. And it goes past styling: every word here is compiled from one authored source, so anything an AI assistant says about me on this site is traceable to a sentence I actually wrote.</p>
 
           <h3>The system</h3>
           <ul>
-            <li><strong>Repo-first tokens.</strong> One JSON file is the only place a colour is born. A zero-dependency script generates the CSS variables this very page loads, plus a machine-readable flat file for AI agents and the Figma push.</li>
-            <li><strong>Every component is three things.</strong> A CSS block, an AI spec (canonical HTML pattern + do/don't rules), and a Storybook story. The build fails if any of the three is missing — governance as a 90-line script, not a platform.</li>
-            <li><strong>The skeleton is the concept.</strong> A 24-square sheet whose rails are real square divs sized by the layout's own fr-tracks — and Conway's Game of Life lives on them. Click a square: the life you seed is born blueprint-blue and its lineage fades to stone.</li>
+            <li><strong>Repo-first tokens.</strong> One JSON file is the only place a colour is born. Zero-dependency scripts generate everything downstream: the CSS custom properties the vanilla pages load, the theme the Next.js app builds on, a machine-readable flat file for AI agents, and the Figma push.</li>
+            <li><strong>Every component is defined once.</strong> Its variants, states and token bindings live as data beside the tokens; one pipeline renders them to CSS for the vanilla site, a second generates the typed React components the Next.js site imports. Spec and Storybook story still gate every component: governance as scripts, not a platform.</li>
           </ul>
 
           <h3>The pipeline</h3>
@@ -149,18 +148,30 @@
             <figcaption class="mono" style="font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--chrome-label);margin-top:.75rem">One source of truth, four consumers, no manual steps between commit and production.</figcaption>
           </figure>
           <ul>
-            <li><strong>GitHub → Vercel.</strong> Two deployments from one public repo: this site (pure static, no build) and the Storybook, rebuilt on every push to main.</li>
-            <li><strong>Repo → Figma.</strong> Tokens flow one way — an AI agent pushes them as Figma Variables following a written, idempotent procedure. Figma is an output, never a source.</li>
+            <li><strong>One definition, two renderers.</strong> The component definitions compile twice. The first pipeline emits plain CSS classes, and the vanilla pages consume them with two link tags. The second emits a Tailwind theme that exposes every token as a native utility, then generates one typed React component per definition: the variant map derives from the definition's variants, and the utility classes resolve to the theme's tokens. Only behaviour is written by hand: focus, keyboard, ARIA. Appearance cannot drift between the two sites, because neither of them owns it.</li>
+            <li><strong>GitHub → Vercel.</strong> Three deployments from one public repo, each its own Vercel project, rebuilt on every push to main: the static site, the Storybook, and the statically exported Next.js front end.</li>
+            <li><strong>Repo → Figma.</strong> Tokens flow one way: an AI agent pushes them as Figma Variables following a written, idempotent procedure. Figma is an output, never a source.</li>
             <li><strong>Repo → AI.</strong> CLAUDE.md routes any agent to the system's README and per-component specs; an agent can assemble correct UI from the canonical patterns without seeing the site first.</li>
           </ul>
+
+          <h3>The words are a pipeline too</h3>
+          <p>Every sentence on the site and the CV is authored in one content directory and compiled outward: the page regions, the five case-study pages, a JSON corpus for retrieval, schema.org data, and <code>llms.txt</code>. Copy is moved verbatim, never rewritten by tooling, and a gate byte-compares all ten generated files, so a word of drift fails the build.</p>
+
+          <h3>Ask the site itself</h3>
+          <p>The corpus feeds a retrieval layer: BM25 and embeddings over the shipped chunks, eight tools, and an answer schema whose validation gates reject a claim the corpus cannot support. Two surfaces consume it. An MCP server lets agents install this portfolio as a tool, and the on-page assistant answers with structured blocks resolved against the same corpus. Both draw from what I actually wrote, because nothing else is in the corpus.</p>
+
+          <h3>Measured, not claimed</h3>
+          <p>Retrieval quality is a published number, not a promise. A fixed question set runs against several retrieval arms, the results table and the method live on the evals page, and a committed baseline turns a regression into a failing gate. The eval page's own prose is compiled by the same content pipeline with its figures left as placeholders for the runner to fill, so the page cannot advertise a number the run did not produce.</p>
 
           <h3>Receipts</h3>
           <p><span class="stat">0</span></p>
           <ul>
-            <li><strong>0 accessibility violations</strong> across the component library — axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
-            <li><strong>103 tokens, 167 values, 23 components</strong> — one token carries its light, dark and print values together; each component is enforced as CSS + AI spec + story by the build.</li>
-            <li><strong>Dark mode is 23 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS — the sharpest test a semantic token layer can be put to.</li>
-            <li><strong>No build step in the site.</strong> Two link tags consume the system; view-source shows everything.</li>
+            <li><strong>0 accessibility violations</strong> across the component library: axe-audited per story, WCAG 2.1 AA contrast decisions documented inside the tokens themselves, and verified in <em>both</em> themes.</li>
+            <li><strong>103 tokens, 167 values, 23 components.</strong> One token carries its light, dark and print values together; each component is enforced as definition + spec + story by the build.</li>
+            <li><strong>Dark mode is 23 tokens and zero component rules.</strong> A themed colour carries its dark value beside its light one; the build emits the media query and the pinned-theme override. There is no <code>prefers-color-scheme</code> anywhere in the component CSS: the sharpest test a semantic token layer can be put to.</li>
+            <li><strong>Every boundary crossing is a generated artefact with a schema, never a code import.</strong> A gate asserts the dependency direction and pins each legal crossing, and the whole check runs offline, with no API key and no network.</li>
+            <li><strong>A second front end proves it.</strong> A Next.js + React + TypeScript app renders the same nine pages from the published package and corpus alone. It exists to make the boundaries falsifiable: the moment it needs another slice's source, the architecture has failed.</li>
+            <li><strong>No build step in the vanilla site.</strong> Two link tags consume the system; view-source shows everything.</li>
           </ul>
 
           <div class="ph-grid">
@@ -169,11 +180,13 @@
           </div>
 
           <h3>See for yourself</h3>
+          <p>This is also the personal version of the contract-first system in prototype at Green Street: the same architecture, with one user.</p>
           <p>
             <a class="btn btn--solid" href="https://github.com/yordanhristovUX/yordan-portfolio" target="_blank" rel="noopener" style="margin-right:.6rem">GitHub repo ↗</a>
             <a class="btn" href="https://yordan-design-system.vercel.app" target="_blank" rel="noopener" style="margin-right:.6rem">Storybook ↗</a>
             <a class="btn" href="/evals.html" style="margin-right:.6rem">Retrieval evaluation →</a>
-            <a class="btn" href="/mcp.html">MCP server →</a>
+            <a class="btn" href="/mcp.html" style="margin-right:.6rem">MCP server →</a>
+            <a class="btn" href="/work/greenstreet-ds">The Green Street arc →</a>
           </p>
         </div>
       </div>

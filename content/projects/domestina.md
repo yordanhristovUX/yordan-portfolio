@@ -27,38 +27,48 @@
 
 ## Summary {#summary}
 
-Multi-year, research-led UX. Front page, flows, onboarding, loyalty — bounce rate down 40%,
-retention up.
+Multi-year, research-led UX on Bulgaria's leading cleaning marketplace. Front page, flows,
+onboarding, loyalty: bounce rate down 40%, retention up.
 
 ## Subtitle {#subtitle}
 
-A research-led, multi-year UX engagement on Bulgaria's leading cleaning services marketplace —
-every design change grounded in evidence, not assumption.
+A research-led, multi-year UX engagement on Bulgaria's leading cleaning services marketplace,
+with every design change grounded in evidence rather than assumption.
 
 ## The brief {#problem}
 
-Three user types, three definitions of success: **clients** booking a service and deciding who
-to trust, **service providers** competing on reputation, and **housemaids** needing a
-low-friction onboarding path. The challenge: serve all three without making any of them feel
-second-class.
+Domestina runs as a marketplace: cleaning companies and independent professionals compete for
+clients on reputation, reviews, and pricing. That makes three user types with three
+definitions of success: **clients** booking a service and deciding who to trust, **service
+providers** competing on reputation, and **housemaids** needing a low-friction onboarding
+path. The challenge was to serve all three without making any of them feel second-class.
 
 ## Research {#approach}
 
 Competitor analysis showed Domestina had no direct comprehensive competitor in the Bulgarian
-market — it had to define its own UX standards. Personas built from interviews, support
-tickets, Google Analytics, and Hotjar surfaced the critical insight: **clients were anxious
-about inviting a stranger into their home.** Trust signals weren't nice-to-haves — they were
-the primary conversion driver.
+market; it had to define its own UX standards rather than borrow from a category leader.
+Personas built from user interviews, provider phone interviews, support tickets, Google
+Analytics, and Hotjar surfaced the critical insight: **clients were anxious about inviting a
+stranger into their home.** Trust signals, concretely reviews, profile completeness, response
+time, and verified badges, were the primary conversion driver, and they had to be immediately
+visible rather than buried.
 
 ## What I changed {#approach}
 
-- **Front page redesign** — restructured around the primary client action, trust signals moved
-  above the fold, provider recruitment split into its own entry point.
-- **Domestina Club** — loyalty mechanics designed into existing flows without adding friction
-  to conversion.
-- **Provider workshops** — made performance feedback clear and actionable, improving the whole
-  provider pool.
-- **Housemaid registration** — progressive disclosure with named stages and visible momentum.
+- **Front page redesign.** Hotjar recordings showed users arriving, scrolling briefly, and
+  leaving. The page was doing three jobs at once: marketing the platform, recruiting
+  providers, and helping clients book, all fighting for prominence. I restructured the
+  hierarchy around the primary client action, moved trust signals above the fold, and gave
+  provider recruitment its own entry point.
+- **Domestina Club.** A virtual loyalty card for returning clients, designed into the
+  existing flows so the mechanics reinforced booking behaviour without adding friction to the
+  primary conversion path.
+- **Provider workshops.** Working sessions revealed that providers cared about their ranking
+  but had little idea what affected it. Design changes made performance feedback clear and
+  actionable, and a better-performing provider pool improved outcomes for clients in turn.
+- **Housemaid registration.** The form was long, the value proposition unclear, and nothing
+  showed momentum. I rebuilt it with progressive disclosure: named stages, visible progress,
+  and non-essential fields deferred until after registration.
 
 {{media-grid:before,after}}
 
@@ -66,11 +76,11 @@ the primary conversion driver.
 
 {{metric:0}}
 
-- **40% reduction in front page bounce rate** — from a focused hierarchy redesign, not a full
+- **40% reduction in front page bounce rate** from a focused hierarchy redesign, not a full
   rebuild.
 - Marked increase in completed housemaid registrations.
 - Improved retention following the Domestina Club launch.
 - Stronger provider performance after workshop-driven design changes.
 
-Not a single project — a continuous improvement methodology applied to a live, growing
+Not a single project: a continuous improvement methodology applied to a live, growing
 marketplace over multiple years.
