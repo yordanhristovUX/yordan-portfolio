@@ -130,7 +130,7 @@
     },
 
     "cvOpenSource": [
-      "Tokens are born in the repo, not in Figma. One `tokens.json` builds the CSS variables both front ends load, plus a flat JSON read by AI agents and a one-way repo-to-Figma push: Figma is an output, never the source. Components are defined once, as data; pipelines render them to CSS and to typed React, and **the build fails if a definition, spec, or story is missing**.",
+      "Tokens are born in the repo, not in Figma. One `tokens.json` builds the vanilla site's CSS variables and the Tailwind theme the Next.js site builds on, plus a flat JSON read by AI agents and a one-way repo-to-Figma push: Figma is an output, never the source. Components are defined once, as data; pipelines render them to CSS and to typed React, and **the build fails if a definition, spec, or story is missing**.",
       "Light and dark come from the same token file: a themed colour carries its dark value beside its light one, and the entire theme is {{dark}} re-aliased tokens with zero per-component rules."
     ],
 
