@@ -19,7 +19,9 @@
     "./tokens.d.ts": "./dist/tokens.d.ts"
   },
   "scripts": {
-    "build": "node scripts/build.mjs && node scripts/build.mjs --check",
+    "//emit": "PHASE R1 PILOT. Three components (button, chip, stat) have their appearance authored as data in components/<id>/definition.json, and their blocks in css/components.css are GENERATED regions rendered from it. `emit:css` writes them; `build.mjs --check` re-renders them in memory and byte-compares, so a hand-edit inside a region fails the build. It runs first in `build` for the obvious reason — the check that follows would otherwise be comparing against a stale file. It is deliberately NOT a step of the ROOT `npm run build`: see the header of scripts/emit-css.mjs.",
+    "emit:css": "node scripts/emit-css.mjs",
+    "build": "node scripts/emit-css.mjs && node scripts/build.mjs && node scripts/build.mjs --check",
     "contract": "node scripts/contract-diff.mjs --check",
     "release": "node scripts/contract-diff.mjs --release",
     "storybook": "npm run build && storybook dev -p 6006 --no-open",

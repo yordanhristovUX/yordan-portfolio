@@ -1,0 +1,67 @@
+{
+  "$doc": "Button's appearance, as data. This file is the SOURCE of the `@component button` block in css/components.css — scripts/emit-css.mjs renders it and scripts/build.mjs --check byte-compares the result, so editing the CSS by hand fails the build. Appearance only: what a button LOOKS like in each variant, size and state, and which token each property binds to. Behaviour is not here and is not coming here — `<a>` to navigate and `<button>` to act, the untouchable :focus-visible ring, and the one-solid-per-view rule are judgement, and they live in spec.md where a human wrote them. Values come in three forms and the difference is the whole point of the file: a plain string is a structural literal, {\"token\": \"x\"} is a binding to --x, and an array is a sequence of both — so `border: 1px solid var(--content-primary)` records that its width and style are structure while its colour is a token, which is a fact nobody could recover from the CSS. Every value below was transcribed from the authored block, not chosen.",
+  "id": "button",
+  "block": {
+    "title": "Button"
+  },
+  "root": ".btn",
+  "base": {
+    "declarations": [
+      { "set": { "display": "inline-block" } },
+      { "set": { "font-family": { "token": "font-mono" } } },
+      { "set": { "font-size": { "token": "text-xs" }, "font-weight": "600", "letter-spacing": "0.05em" } },
+      { "set": { "padding": [{ "token": "space-3" }, { "token": "space-5" }] } },
+      { "set": { "border": ["1px", "solid", { "token": "content-primary" }] } },
+      { "set": { "color": { "token": "content-primary" } } },
+      {
+        "note": [
+          "Invisible at natural width (the box hugs the text), load-bearing when a",
+          "layout stretches two buttons to a shared width — the hero's stacked pair",
+          "is the case that added it."
+        ],
+        "set": { "text-align": "center" }
+      },
+      { "set": { "transition": "background-color 0.2s, color 0.2s" } },
+      { "set": { "white-space": "nowrap" } },
+      { "set": { "cursor": "pointer" } }
+    ],
+    "states": [
+      {
+        "name": "hover",
+        "suffix": ":hover",
+        "declarations": [
+          { "set": { "background": { "token": "primary" }, "color": { "token": "content-inverse" } } }
+        ]
+      }
+    ]
+  },
+  "variants": [
+    {
+      "name": "solid",
+      "selector": ".btn--solid",
+      "$doc": "THE primary action, at most one per view — asserted per shipped page by scripts/check-css.mjs rule 5. It is the resting state of the outline button's hover, which is why the two share `primary` and `content-inverse` rather than each naming a colour.",
+      "declarations": [
+        { "set": { "background": { "token": "primary" }, "color": { "token": "content-inverse" } } }
+      ],
+      "states": [
+        {
+          "name": "hover",
+          "suffix": ":hover",
+          "declarations": [
+            { "set": { "background": { "token": "action-hover" } } }
+          ]
+        }
+      ]
+    }
+  ],
+  "sizes": [
+    {
+      "name": "small",
+      "selector": ".btn--small",
+      "$doc": "Chrome contexts — a dialog bar, a dense row. One step down the padding ramp and one step down the type ramp; it changes nothing else, which is why it is a size and not a variant.",
+      "declarations": [
+        { "set": { "padding": [{ "token": "space-2" }, { "token": "space-3" }], "font-size": { "token": "text-2xs" } } }
+      ]
+    }
+  ]
+}

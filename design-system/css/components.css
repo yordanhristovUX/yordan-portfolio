@@ -1,12 +1,24 @@
 /* ============================================================
    Blueprint design system — components.css
-   Hand-authored. Every block here has a matching spec in
-   ../components/<name>/spec.md and a story in ../stories/.
+   An ASSEMBLY: mostly hand-authored, with three GENERATED regions.
+   Every block here has a matching spec in ../components/<name>/spec.md
+   and a story in ../stories/.
    Uses ONLY semantic tokens from dist/tokens.css — raw palette
    values are forbidden outside tokens/tokens.json. That now covers
    TYPE as well as colour: there is not one literal font-size below,
    and `node scripts/check-css.mjs` fails the build if one appears.
    Load order: dist/tokens.css → this file → page stylesheet.
+
+   THE GENERATED REGIONS (phase R1 pilot — button, chip, stat).
+   Three blocks are bracketed by `/* ---- generated:<id> … ---- ` markers
+   and are rendered from ../components/<id>/definition.json, which holds
+   that component's appearance as data: its variants, sizes, states, and
+   which token each property binds to. Do not edit inside a region —
+   `scripts/build.mjs --check` re-renders it in memory and byte-compares,
+   so a hand-edit fails the build naming the region and its definition.
+   Edit the definition and run `npm run build` (or `node
+   scripts/emit-css.mjs`). The other twenty blocks are authored source and
+   stay that way this phase; see ../README.md, "Definitions".
 
    EVERY banner below carries `@component <id>` on its first line.
    That marker is the one fact about this file a parser cannot derive:
@@ -1002,6 +1014,7 @@ body.is-locked { overflow: hidden; }
 
 .sec--tint .well { background: var(--surface-raised); }
 
+/* ---- generated:button — do not edit, source: components/button/definition.json ---- */
 /* ============ Button ============ @component button */
 .btn {
   display: inline-block;
@@ -1022,7 +1035,9 @@ body.is-locked { overflow: hidden; }
 .btn--solid { background: var(--primary); color: var(--content-inverse); }
 .btn--solid:hover { background: var(--action-hover); }
 .btn--small { padding: var(--space-2) var(--space-3); font-size: var(--text-2xs); }
+/* ---- /generated:button ---- */
 
+/* ---- generated:chip — do not edit, source: components/chip/definition.json ---- */
 /* ============ Chip ============ @component chip */
 .chip {
   display: inline-block;
@@ -1035,6 +1050,7 @@ body.is-locked { overflow: hidden; }
 }
 .chip--solid { background: var(--primary); border-color: var(--primary); color: var(--content-inverse); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* ---- /generated:chip ---- */
 
 /* ============ Card ============ @component card */
 .card-grid {
@@ -1558,6 +1574,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
 .ph-grid .ph { margin: 0; }
 @media (max-width: 640px) { .ph-grid { grid-template-columns: 1fr; } }
 
+/* ---- generated:stat — do not edit, source: components/stat/definition.json ---- */
 /* ============ Stat ============ @component stat
    Shares `--text-display` with `.fact__num` and `.t-display--lg`. It used to
    carry its own clamp, one 0.5vw step away from the fact number's — the same
@@ -1572,6 +1589,7 @@ body:has(.peek-sheet[data-open]) { overflow: hidden; }
   padding: var(--space-1) var(--space-4);
   margin: var(--space-2) var(--space-6) var(--space-4) 0;
 }
+/* ---- /generated:stat ---- */
 
 /* ============ Link grid ============ @component link-grid */
 .link-grid {

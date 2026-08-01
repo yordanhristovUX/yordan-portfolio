@@ -22,7 +22,13 @@
                                                  has exactly one source)
 
    `node scripts/build.mjs`          build tokens + system stats
-   `node scripts/build.mjs --check`  build + five gates:
+   `node scripts/build.mjs --check`  build + six gates:
+                                     · assembly — the three GENERATED regions
+                                       of css/components.css (button, chip,
+                                       stat) byte-compare against a fresh
+                                       render of components/<id>/definition.json.
+                                       Phase R1 pilot; scripts/emit-css.mjs is
+                                       the emitter and documents the format.
                                      · package — dist/tokens.dtcg.json and
                                        dist/tokens.d.ts byte-compare against a
                                        fresh generation. These two are a
@@ -51,6 +57,9 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+/* The component-CSS emitter. Its header documents the definition format and
+   why the WRITE side of it lives there rather than here. */
+import { PILOT, definitionPath, renderAll, checkRegions } from "./emit-css.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CHECK = process.argv.includes("--check");
@@ -494,6 +503,71 @@ const uniq = (a) => [...new Set(a)].sort();
 const componentsCssPath = join(root, "css", "components.css");
 const componentsCss = readFileSync(componentsCssPath, "utf8");
 
+/* ============================================================
+   THE ASSEMBLY — phase R1 pilot: button, chip, stat.
+
+   Those three blocks are no longer authored. Their appearance is data in
+   components/<id>/definition.json — variants, sizes, states, and the token
+   each property binds to — and scripts/emit-css.mjs renders that data into the
+   generated regions of css/components.css. The other twenty blocks are
+   authored source and are untouched by any of this.
+
+   TWO ASSERTIONS, in the order a failure is easiest to act on.
+
+   1. COVERAGE. For a pilot id, definition.json is the fourth leg: the trinity
+      of CSS block + spec.md + story becomes a quartet. It is asserted HERE
+      rather than in the coverage gate below, and unconditionally rather than
+      under --check, because the emitter cannot render without it — a plain
+      build that quietly skipped a missing definition would leave the region on
+      disk unverified and call itself a success.
+
+   2. DRIFT. The regions are re-rendered IN MEMORY and byte-compared against
+      what is on disk, which is the same discipline dist/tokens.dtcg.json and
+      dist/tokens.d.ts get, and for the same reason: comparing after writing
+      turns every hand-edit into a pass. Under --check a difference is fatal
+      and names the region, its definition source and the first differing
+      line. On a plain build it is a warning, because `npm run build` in this
+      directory runs emit-css.mjs first and a plain build's job is dist/.
+
+   WHAT DOES NOT CHANGE THIS PHASE: dist/components.json is still DERIVED by
+   parsing css/components.css and each spec's frontmatter, exactly as before.
+   The generated blocks parse identically to the authored ones they replaced —
+   that is the pilot's whole claim — so the contract, the class census and the
+   counts are untouched. R3 decides whether components.json starts reading the
+   definitions instead.
+   ============================================================ */
+const { rendered: generatedRegions, errors: definitionErrors } = renderAll();
+if (definitionErrors.length) {
+  console.error(
+    `✗ coverage check failed — a pilot component's appearance source is missing or unreadable:\n  - ${definitionErrors.join("\n  - ")}\n` +
+      `  ${PILOT.length} components (${PILOT.join(", ")}) have their block in css/components.css GENERATED from\n` +
+      `  ${PILOT.map(definitionPath).join(", ")}. For those three the trinity is a quartet:\n` +
+      `  CSS block + spec.md + story + definition.json.`
+  );
+  process.exit(1);
+}
+{
+  const { drift, errors } = checkRegions(componentsCss, generatedRegions);
+  const all = [...errors, ...drift];
+  if (CHECK) {
+    if (all.length) {
+      console.error(
+        `✗ assembly check failed — css/components.css disagrees with the definitions it is generated from:\n  - ${all.join("\n  - ")}\n` +
+          `  Those regions are generated. Edit the definition.json the marker names and run\n` +
+          `  \`node scripts/emit-css.mjs\` (or \`npm run build\` in design-system/); never edit inside a region.`
+      );
+      process.exit(1);
+    }
+    console.log(
+      `✓ assembly check         (${generatedRegions.size} generated regions in css/components.css byte-identical to a fresh render)`
+    );
+  } else if (all.length) {
+    console.warn(
+      `! css/components.css is behind its definitions (${all.length}) — run \`node scripts/emit-css.mjs\`:\n  - ${all.join("\n  - ")}`
+    );
+  }
+}
+
 const BANNER = /^\/\* =+ (.+?) =+ @component (\S+)/gm;
 const blocks = [];
 {
@@ -657,7 +731,10 @@ console.log(
     `${blocks.length} css blocks)`
 );
 
-/* ---------- coverage gate: every component = spec.md + story ---------- */
+/* ---------- coverage gate: every component = spec.md + story ----------
+   Still all 23, still the trinity. The fourth leg — definition.json for the
+   three pilot ids — is asserted at the assembly block above, unconditionally,
+   because the emitter needs it on a plain build too. */
 if (CHECK) {
   const problems = [];
   for (const c of components) {
@@ -668,7 +745,10 @@ if (CHECK) {
     console.error(`✗ coverage check failed:\n  - ${problems.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`✓ coverage check         (${components.length} components, each with spec.md + story)`);
+  console.log(
+    `✓ coverage check         (${components.length} components, each with spec.md + story; ` +
+      `${generatedRegions.size} of them also with definition.json)`
+  );
 
   /* ---------- counts gate: the generated prose must still quote the truth ----------
      These figures are a claim the site makes about itself. They are no longer

@@ -1,0 +1,45 @@
+{
+  "$doc": "Chip's appearance, as data — the source of the `@component chip` block in css/components.css. Same contract as components/button/definition.json: a plain string is a structural literal, {\"token\": \"x\"} binds --x, and an array is a sequence of both. Chip is the case that made `parts` necessary: `.chips` is not a modifier of `.chip`, it is the flex wrapper a group of them sits in, so it cannot be a variant without the word losing its meaning. Everything here was transcribed from the authored block; that a chip is display-only and never interactive is in spec.md, because it is a rule about markup rather than a fact about appearance.",
+  "id": "chip",
+  "block": {
+    "title": "Chip"
+  },
+  "root": ".chip",
+  "base": {
+    "declarations": [
+      { "set": { "display": "inline-block" } },
+      { "set": { "font-family": { "token": "font-mono" } } },
+      { "set": { "font-size": { "token": "text-2xs" }, "font-weight": "500" } },
+      { "set": { "letter-spacing": "0.06em", "text-transform": "uppercase" } },
+      { "set": { "padding": [{ "token": "space-1" }, { "token": "space-2" }] } },
+      { "set": { "border": ["1px", "solid", { "token": "chrome-border-strong" }] } },
+      { "set": { "color": { "token": "chrome-label-strong" } } }
+    ]
+  },
+  "variants": [
+    {
+      "name": "solid",
+      "selector": ".chip--solid",
+      "$doc": "The ONE emphasised fact in a set. It repaints the border as well as the fill — a solid chip keeping the default border would read as a chip with an outline round its ink.",
+      "declarations": [
+        {
+          "set": {
+            "background": { "token": "primary" },
+            "border-color": { "token": "primary" },
+            "color": { "token": "content-inverse" }
+          }
+        }
+      ]
+    }
+  ],
+  "parts": [
+    {
+      "name": "group",
+      "selector": ".chips",
+      "$doc": "The wrapper a set of chips sits in. It provides wrap and gap and nothing else — no chip knows how many siblings it has, which is what keeps the same chip usable in a work-row's tag list and on a project page.",
+      "declarations": [
+        { "set": { "display": "flex", "flex-wrap": "wrap", "gap": { "token": "space-2" } } }
+      ]
+    }
+  ]
+}
