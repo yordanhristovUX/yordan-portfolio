@@ -21,7 +21,10 @@
    shape as js/main.js. Exposes window.AnswerRender.
    ============================================================ */
 (() => {
-  const CORPUS_URL = "content/dist/content.json";
+  /* Root-relative, not page-relative: the drawer lives on index.html today,
+     but this file cannot assume it always will — a page-relative URL fetched
+     from /work/<id> resolves against /work/ and 404s. */
+  const CORPUS_URL = "/content/dist/content.json";
 
   let corpus = null;
   let loading = null;
@@ -210,6 +213,14 @@
     return n ? wrap : null;
   }
 
+  /* Corpus hrefs are authored for the vanilla index ("evals.html"), where
+     they are also correct on paper and in llms.txt. They are wrong from any
+     page served below the root, so the renderer rebases them — the renderer
+     is the thing that knows where it is serving from. Same rule, same
+     passthrough set as `rootRebase` in scripts/build-content.mjs, which does
+     this at build time for the /work/<id> pages. */
+  const rebaseHref = (raw) => (/^(?:https?:|mailto:|tel:|#|\/)/.test(raw) ? raw : "/" + raw);
+
   /* links — link-grid. Ids are "<projectId>:<index>". */
   function renderLinks(b) {
     const grid = el("div", "link-grid");
@@ -220,7 +231,7 @@
       const link = p?.links?.[Number(String(id).slice(at + 1))];
       if (!link) continue;
       const a = el("a", null, link.label);
-      a.href = link.href;
+      a.href = rebaseHref(link.href);
       if (link.external) {
         a.target = "_blank";
         a.rel = "noopener";
