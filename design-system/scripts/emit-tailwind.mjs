@@ -604,6 +604,8 @@ export const STATE_PREFIX = {
   "[data-ask]": "[&[data-ask]]:",
   "[data-open]": "[&[data-open]]:",
   "[open]": "[&[open]]:",
+  '[data-state="dark"]': "[&[data-state='dark']]:",
+  '[data-state="auto"]': "[&[data-state='auto']]:",
   '[aria-expanded="true"]': "[&[aria-expanded='true']]:",
   '[aria-disabled="true"]': "[&[aria-disabled='true']]:",
 };

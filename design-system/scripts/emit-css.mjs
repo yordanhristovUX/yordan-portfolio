@@ -183,7 +183,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** The pilot. Every id here MUST have a definition.json, and its CSS block in
  *  css/components.css MUST be a generated region. Both are gated in build.mjs. */
-export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer", "chat", "menu"];
+export const PILOT = ["button", "chip", "stat", "footer", "source", "link-grid", "case-body", "fact", "entry", "section-head", "media", "profile", "ask-fab", "definition-row", "nav", "drawer", "chat", "menu", "theme-toggle"];
 
 /** Repo-relative and POSIX, because it is printed in messages and written into
  *  the marker in components.css — a backslash there would differ per platform. */

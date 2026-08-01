@@ -1,0 +1,168 @@
+{
+  "$doc": "The theme puck's appearance, as data — the source of the `@component theme-toggle` regions of css/components.css and of dist/react/theme-toggle.tsx. THREE GAPS, and the first of them minted a census reason. `.menu__body .theme` is this component's own class scoped inside an element the MENU owns, which is the mirror image of `foreign-selector`: the subject is ours and the ancestor is not. No reference here can name it, and none should be able to — the scoped-part closure runs the other way (`within` names a rule this definition declares; the target may be foreign), and a key that could name a foreign ancestor would make every `.a .b` sayable and the closure a comment. The other two gaps are `@media print` and `@media (prefers-reduced-motion: reduce)`, conditions `$conditions` holds no number for, and the second of them carries the block's closing paragraph — sixteen lines about a press-acknowledgement animation that was built once, measured firing at t≈111ms on a cold load with nothing pressed, and removed. A comment with no rule under it has nothing to hang off in this format, and it is worth more where it is than it would be anywhere else.",
+  "$schema": "../definition.schema.json",
+  "id": "theme-toggle",
+  "block": {
+    "title": "Theme toggle",
+    "note": [
+      "A satellite of the nav bar: in the DOM as its last child, positioned just",
+      "off its right edge, falling back to the viewport's bottom corner where the",
+      "bar leaves no room. EVERY PRESS CHANGES THE PAGE — js/theme.js always moves",
+      "to the opposite of whatever is currently rendered, and a press that lands",
+      "on the system's own theme stores auto rather than a pin, so the dead press",
+      "the old three-state ring carried does not exist."
+    ]
+  },
+  "root": ".theme",
+  "rules": [
+    {
+      "kind": "base",
+      "note": [
+        "---- IT IS NOT A SEGMENT OF THE NAV ----",
+        "The theme control used to be the bar's last segment. It is its own floating",
+        "object now: same paper, same hairline, same drop shadow as the bar, sitting",
+        "apart from it.",
+        "",
+        "That is a hierarchy decision rather than a layout one. The bar carries",
+        "identity, navigation and the page's one primary action — things about THIS",
+        "page. The theme is about how you read every page, it is set once and rarely",
+        "touched, and while it sat inside the bar it took a full segment's width from",
+        "a row that was already 95.9% full at 375px. Out of the bar's row it costs",
+        "the nav nothing and stops competing with the accent block beside it.",
+        "",
+        "HANGING OFF THE BAR'S RIGHT EDGE, in the DOM as the bar's last child but",
+        "absolutely positioned outside its box — a satellite, not a segment. The gap",
+        "is what says \"related, not attached\": the puck keeps its own paper and its",
+        "own shadow, and the bar's hairline never touches it. Being a child is what",
+        "makes the anchoring possible at all — the bar is centred and shrink-wrapped,",
+        "so no viewport-anchored rule can know where its right edge is.",
+        "",
+        "BELOW 700px THE SATELLITE HIDES AND THE MENU SHEET CARRIES THE CONTROL.",
+        "There is no room to the right of a docked full-width bar, and the bottom",
+        "corner — the puck's old fallback — now belongs to the chat (see ask-fab):",
+        "messages are expected there, a theme dial is not. The hide rule lives in",
+        "the nav's mobile block (`.bar .theme`), scoped to the bar so the second",
+        "rendering of this control inside `.menu__foot` survives it. One control,",
+        "two renderings, one visible per breakpoint; js/theme.js updates every",
+        "`[data-theme-toggle]` it finds, so the two cannot disagree.",
+        "",
+        "`z-index` sits under the drawer's, so an open panel covers it — a theme",
+        "toggle floating over a modal surface is a control with nothing to act on."
+      ],
+      "declarations": [
+        { "set": { "position": "absolute" } },
+        { "set": { "left": "calc(100% + 0.75rem)" } },
+        {
+          "note": [
+            "Centred on the bar's midline by margin, not transform, so the hover's",
+            "translateY does not have to know about the centring."
+          ],
+          "set": { "top": "50%", "margin-top": "-1.25rem" }
+        },
+        { "set": { "z-index": "90" } },
+        { "set": { "display": "flex", "align-items": "center", "justify-content": "center" } },
+        { "set": { "width": "2.5rem", "height": "2.5rem" } },
+        { "set": { "border-radius": "50%" } },
+        { "set": { "background": { "token": "chrome-bg" } } },
+        { "set": { "color": { "token": "chrome-label" } } },
+        { "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "chrome-border" }, ",", "2px 2px 0", { "token": "shadow-drop" }] } },
+        { "set": { "transition": "background-color 0.2s, transform 0.2s" } }
+      ]
+    },
+    {
+      "kind": "authored",
+      "reason": "foreign-scope",
+      "$doc": "`.menu__body .theme` — the menu sheet's rendering of this same control, sitting alone above the links with no strip and no caption, all the owner's calls. THE SUBJECT IS OURS AND THE ANCESTOR IS NOT, which is the mirror image of `foreign-selector` and the reason that word was the wrong one for it. Every relation this format has is closed on the ancestor side — `within` NAMES a rule this definition declares — and the target side is where a foreign class is allowed (`.drawer .chat`, `.sec--tint .well`). Nothing can name `.menu__body` from here, and nothing should: a key that could would make every `.a .b` sayable and the closure a comment."
+    },
+    {
+      "kind": "state",
+      "name": "hover",
+      "of": "base",
+      "suffix": ":hover",
+      "note": [
+        "A QUIET HOVER, and that is the hierarchy rather than an oversight. The one",
+        "control on the page that is supposed to look pressable is the accent block",
+        "in the bar; this lifts slightly and does not fill."
+      ],
+      "declarations": [{ "set": { "transform": "translateY(-1px)" } }]
+    },
+    {
+      "kind": "authored",
+      "reason": "unnamed-condition",
+      "$doc": "`@media print { .theme { display: none; } }`. Paper has no theme to toggle. `$conditions` holds VIEWPORTS, each named for the number it carries, and a sheet of A4 has none — the same refusal `ask-fab`'s tail records, and the reason print colour is a token's `print` value rather than a query anybody writes."
+    },
+    {
+      "kind": "part",
+      "name": "lamp",
+      "selector": ".theme__lamp",
+      "break": true,
+      "note": [
+        "---- THE DIAL ----",
+        "No text: three words were three widths, and the thing they described is a",
+        "two-sided object that can just show which side it is on.",
+        "",
+        "  dark    a filled ink circle",
+        "  light   an empty paper circle",
+        "  auto    HALF EACH, and turning",
+        "",
+        "A PINNED STATE IS A FILL; AUTO IS THE HALF-AND-HALF. That split is the",
+        "correction, and the version it replaces is worth recording because it looked",
+        "right and was not. Every state was the same half-ink/half-paper circle and",
+        "only the ANGLE changed — but the gradient runs at 90deg, so the halves are",
+        "left and right, and rotating them 180deg produces a mirror image. Dark was",
+        "\"ink on the left\" and light was \"ink on the right\": two states that differ",
+        "only by chirality, which nobody reads as dark versus light. The commentary",
+        "even claimed the halves faced up and down. They never did.",
+        "",
+        "So the pinned states now say what they are by how much ink is in them, which",
+        "needs no convention at all, and the half-and-half is reserved for the one",
+        "state that genuinely is both. Auto still turns, and that is still the whole",
+        "idea: the two pinned states are a decision — the dial has landed — and auto",
+        "is the absence of one, so it never settles.",
+        "",
+        "The two tones are `--content-primary` and `--surface-page`, so the dial is",
+        "literally made of the two themes and inverts with them. No theme query, and",
+        "nothing here knows which theme is live."
+      ],
+      "declarations": [
+        { "set": { "width": "14px", "height": "14px" } },
+        { "set": { "flex-shrink": "0" } },
+        { "set": { "border-radius": "50%" } },
+        { "set": { "background": { "token": "surface-page" } } },
+        { "set": { "box-shadow": ["inset 0 0 0 1px", { "token": "content-primary" }] } },
+        { "set": { "transition": "background 0.3s, box-shadow 0.2s" } }
+      ]
+    },
+    {
+      "kind": "state",
+      "name": "pinned-dark",
+      "of": "base",
+      "suffix": "[data-state=\"dark\"]",
+      "$doc": "A SCOPE, not an appearance: the puck itself looks the same in every state and the LAMP inside it is what changes, so the state exists so the lamp's rule can name it. js/theme.js writes `data-state` and nothing else."
+    },
+    { "kind": "part", "name": "lamp-dark", "within": "pinned-dark", "class": ".theme__lamp", "declarations": [{ "set": { "background": { "token": "content-primary" } } }] },
+    { "kind": "state", "name": "pinned-auto", "of": "base", "suffix": "[data-state=\"auto\"]" },
+    {
+      "kind": "part",
+      "name": "lamp-auto",
+      "within": "pinned-auto",
+      "class": ".theme__lamp",
+      "declarations": [
+        { "set": { "background": ["linear-gradient(90deg,", { "token": "content-primary" }, "0 50%,", { "token": "surface-page" }, "50% 100%)"] } },
+        { "set": { "animation": "theme-dial 9s linear infinite" } }
+      ]
+    },
+    {
+      "kind": "keyframes",
+      "name": "theme-dial",
+      "inline": true,
+      "$doc": "Auto never settles, and that is the whole idea: the two pinned states are a decision and auto is the absence of one. Nine seconds is slow enough to read as drift rather than as a spinner.",
+      "steps": [{ "at": "to", "declarations": [{ "set": { "transform": "rotate(360deg)" } }] }]
+    },
+    {
+      "kind": "authored",
+      "reason": "unnamed-condition",
+      "$doc": "The tail: `@media (prefers-reduced-motion: reduce)`, which stops auto turning and rests it on the diagonal — still the only state that is half of each, so it stays legible without the motion that otherwise carries it. And then the block's closing paragraph, which has no rule under it at all: sixteen lines recording a press-acknowledgement animation that was built, measured firing at t≈111ms on a cold load with nothing stored and nothing pressed, and removed. A comment with nothing beneath it has nothing to hang off in this format — a `note` belongs to a rule — and the reason it is kept is that the mechanism outlives the reason it was wanted."
+    }
+  ]
+}

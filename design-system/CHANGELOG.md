@@ -5,6 +5,20 @@
      newest first. It records WHAT changed in the contract; WHY belongs in the commit message,
      which is the one place prose cannot go stale against a generated file. -->
 
+## 2.5.0 — 2026-08-01
+
+Minor — 7 change(s).
+
+### Added
+
+- definition `theme-toggle .theme__lamp` added
+- definition `theme-toggle .theme:hover` added
+- definition `theme-toggle .theme[data-state="auto"] .theme__lamp` added
+- definition `theme-toggle .theme[data-state="dark"] .theme__lamp` added
+- definition `theme-toggle .theme` added
+- definition `theme-toggle @keyframes theme-dial` added
+- export `./react/theme-toggle` added
+
 ## 2.4.0 — 2026-08-01
 
 Minor — 13 change(s).

@@ -94,6 +94,7 @@ matters:
    | `at-rule` | **`unnamed-condition`** | an `@media` whose query is a *name* in `$conditions` generates — `fact`, `entry` and `section-head` prove it. What disqualifies is a condition this system cannot name: `@keyframes`, `@supports`, `(hover: hover) and (pointer: fine)`, or a breakpoint nobody has named yet. |
    | `computed-geometry` | **gone** | `expr` closed it. `calc({space-3} - 2px)` keeps every binding visible to the census, so the arithmetic was never the problem — an unreadable `var()` inside a string was. |
    | — | **`foreign-selector`** | added by `menu`'s `body:has(.menu[data-open])`: a rule whose subject the component does not own. No closure of the scoped-part vocabulary reaches it, because `within` names a rule the definition declares and `body` never will be. |
+   | — | **`foreign-scope`** | added by `theme-toggle`'s `.menu__body .theme`, and it is the MIRROR of the entry above: the subject is the component's own class and the ANCESTOR is somebody else's. It is a separate reason because the scoped-part closure runs one way round — `within` names a rule this definition declares, and the *target* may be foreign (`.drawer .chat`, `.sec--tint .well`) — so a foreign ancestor is not a missing key, it is the closure. A key that could name one would make every `.a .b` sayable. |
 
    The check asserts the feature is **present**, not that it is disqualifying. Proving the
    second would mean re-implementing the schema inside the census, and then the census would

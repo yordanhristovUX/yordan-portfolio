@@ -1,7 +1,7 @@
 {
   "$generatedBy": "design-system/scripts/contract-diff.mjs --release — do not hand-edit",
   "$doc": "The published contract of @yordan/design-system as of `version`. Every later change is classified against this file: an added name is MINOR, a changed value is PATCH, a removed or renamed one is MAJOR. FOUR SURFACES. Tokens carry their AUTHORED value and mode variants, not the resolved ones, and components carry classes and status — in both cases the omitted fields are pure functions of the kept ones, so recording them would report one chosen edit as fifteen consequential ones. Definitions carry the RESOLVED projection keyed by selector, with `kind` in the signature (a modifier moving between `sizes` and `variants` leaves the CSS identical and changes the React prop) and the property map sorted (regrouping is presentation). Exports carry the subpath map, because that is the contract a consumer actually imports through and until R3 nothing compared it. No prose on any of the four. See scripts/contract-diff.mjs.",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "tokens": {
     "color-stone.stone-50": {
       "cssVar": "--stone-50",
@@ -2437,6 +2437,63 @@
       "declarations": {
         "color": "{accent}"
       }
+    },
+    "theme-toggle .theme": {
+      "kind": "base",
+      "declarations": {
+        "align-items": "center",
+        "background": "{chrome-bg}",
+        "border-radius": "50%",
+        "box-shadow": "inset 0 0 0 1px {chrome-border} , 2px 2px 0 {shadow-drop}",
+        "color": "{chrome-label}",
+        "display": "flex",
+        "height": "2.5rem",
+        "justify-content": "center",
+        "left": "calc(100% + 0.75rem)",
+        "margin-top": "-1.25rem",
+        "position": "absolute",
+        "top": "50%",
+        "transition": "background-color 0.2s, transform 0.2s",
+        "width": "2.5rem",
+        "z-index": "90"
+      }
+    },
+    "theme-toggle .theme:hover": {
+      "kind": "base state",
+      "declarations": {
+        "transform": "translateY(-1px)"
+      }
+    },
+    "theme-toggle .theme__lamp": {
+      "kind": "part",
+      "declarations": {
+        "background": "{surface-page}",
+        "border-radius": "50%",
+        "box-shadow": "inset 0 0 0 1px {content-primary}",
+        "flex-shrink": "0",
+        "height": "14px",
+        "transition": "background 0.3s, box-shadow 0.2s",
+        "width": "14px"
+      }
+    },
+    "theme-toggle .theme[data-state=\"dark\"] .theme__lamp": {
+      "kind": "scoped part",
+      "declarations": {
+        "background": "{content-primary}"
+      }
+    },
+    "theme-toggle .theme[data-state=\"auto\"] .theme__lamp": {
+      "kind": "scoped part",
+      "declarations": {
+        "animation": "theme-dial 9s linear infinite",
+        "background": "linear-gradient(90deg, {content-primary} 0 50%, {surface-page} 50% 100%)"
+      }
+    },
+    "theme-toggle @keyframes theme-dial": {
+      "kind": "keyframes",
+      "declarations": {
+        "to": "{\"transform\":\"rotate(360deg)\"}"
+      }
     }
   },
   "exports": {
@@ -2520,6 +2577,9 @@
     },
     "./react/menu": {
       "target": "./dist/react/menu.tsx"
+    },
+    "./react/theme-toggle": {
+      "target": "./dist/react/theme-toggle.tsx"
     }
   }
 }

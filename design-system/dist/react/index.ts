@@ -50,3 +50,5 @@ export { chat, Chat, chatThread, ChatThread, chatTurn, ChatTurn, chatTurnUser, C
 export type { ChatProps, ChatVariants, ChatThreadProps, ChatTurnProps, ChatTurnUserProps, ChatRoleProps, ChatTurnAssistantProps, ChatBodyProps, ChatAnswerProps, ChatProseProps, ChatWhyProps, ChatMetricProps, ChatErrorProps, ChatNoteProps, ChatStateProps, ChatCellProps, ChatStateLabelProps, ChatTraceProps, ChatTraceToggleProps, ChatTraceListProps, ChatTraceRowProps, ChatTraceNameProps, ChatTraceArgsProps, ChatTraceResultProps, ChatTraceMsProps, ChatFormProps, ChatInputProps, ChatStatusProps, ChatSuggestProps, ChatSendProps } from "./chat";
 export { menu, Menu, menuSheet, MenuSheet, menuHead, MenuHead, menuTitle, MenuTitle, menuClose, MenuClose, menuBody, MenuBody, menuNav, MenuNav } from "./menu";
 export type { MenuProps, MenuVariants, MenuSheetProps, MenuHeadProps, MenuTitleProps, MenuCloseProps, MenuBodyProps, MenuNavProps } from "./menu";
+export { themeToggle, ThemeToggle, themeToggleLamp, ThemeToggleLamp } from "./theme-toggle";
+export type { ThemeToggleProps, ThemeToggleVariants, ThemeToggleLampProps } from "./theme-toggle";

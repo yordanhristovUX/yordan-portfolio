@@ -834,7 +834,7 @@ body.is-locked { overflow: hidden; }
 }
 /* ---- /generated:nav ---- */
 
-/* ---- authored:theme-toggle — unnamed-condition ---- */
+/* ---- generated:theme-toggle — do not edit, source: components/theme-toggle/definition.json ---- */
 /* ============ Theme toggle ============ @component theme-toggle
    A satellite of the nav bar: in the DOM as its last child, positioned just
    off its right edge, falling back to the viewport's bottom corner where the
@@ -887,6 +887,8 @@ body.is-locked { overflow: hidden; }
   box-shadow: inset 0 0 0 1px var(--chrome-border), 2px 2px 0 var(--shadow-drop);
   transition: background-color 0.2s, transform 0.2s;
 }
+/* ---- /generated:theme-toggle ---- */
+/* ---- authored:theme-toggle — foreign-scope ---- */
 /* The menu-sheet rendering: the same puck, sitting alone ABOVE the links —
    no strip, no caption, and on top rather than under, all the owner's calls
    (the first version put it last, the bar's utility-last order; the owner
@@ -898,11 +900,15 @@ body.is-locked { overflow: hidden; }
   position: static; margin: 0 0 var(--space-6);
   align-self: flex-start;
 }
+/* ---- generated:theme-toggle#2 — do not edit, source: components/theme-toggle/definition.json ---- */
 /* A QUIET HOVER, and that is the hierarchy rather than an oversight. The one
    control on the page that is supposed to look pressable is the accent block
    in the bar; this lifts slightly and does not fill. */
 .theme:hover { transform: translateY(-1px); }
+/* ---- /generated:theme-toggle#2 ---- */
+/* ---- authored:theme-toggle — unnamed-condition ---- */
 @media print { .theme { display: none; } }
+/* ---- generated:theme-toggle#3 — do not edit, source: components/theme-toggle/definition.json ---- */
 
 /* ---- THE DIAL ----
    No text: three words were three widths, and the thing they described is a
@@ -944,6 +950,8 @@ body.is-locked { overflow: hidden; }
   animation: theme-dial 9s linear infinite;
 }
 @keyframes theme-dial { to { transform: rotate(360deg); } }
+/* ---- /generated:theme-toggle#3 ---- */
+/* ---- authored:theme-toggle — unnamed-condition ---- */
 
 @media (prefers-reduced-motion: reduce) {
   /* Auto stops turning and rests on the diagonal. It is still the only state

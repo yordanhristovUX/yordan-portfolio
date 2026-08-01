@@ -40,7 +40,7 @@ dist/react/*.tsx        generated typed React components, one per definition (+ 
 scripts/emit-tailwind.mjs  the @theme map + the token→utility translator
 scripts/emit-react.mjs  definition + spec's canonical HTML → a .tsx
 css/components.css      every component's styles (an ASSEMBLY: 26 blocks — 17 generated,
-                        7 authored, 2 SPLIT, each with a marker naming its reason)
+                        6 authored, 3 SPLIT, each with a marker naming its reason)
 scripts/emit-css.mjs    components/<id>/definition.json → the generated regions  (npm run emit:css)
 assets/                 artwork a component ships with, served as-is (avatar.svg)
 components/*/spec.md    per-component: pattern, variants, tokens, a11y, AI do/don't
@@ -102,7 +102,7 @@ The file is therefore an **assembly**. A generated block sits between two marker
 `PATTERNS.md` specified: an authored block carries
 `/* ---- authored:<id> — <reason> ---- */` above its banner, `<reason>` comes from a closed
 vocabulary — `relational-selectors`, `local-custom-property`, `unnamed-condition`,
-`foreign-selector` — and `build.mjs` asserts three things: every block is exactly one of the
+`foreign-selector`, `foreign-scope` — and `build.mjs` asserts three things: every block is exactly one of the
 two kinds, the reason is in the vocabulary, and the scan actually finds that feature in the
 block. A reason that has stopped being true is a block that should now be a definition, and
 the build says so by name. The count is reported on every `--check`, which is how "the file
@@ -657,7 +657,7 @@ its own classes disjoint, and it cannot do that for a class it has never seen.
 The portfolio consumes this directory by relative path, which needs no version. A second
 repo consumes it as `@yordan/design-system` on a `file:` dependency, which does — the
 moment something outside this tree writes `var(--space-6)`, that name is a promise. So
-`package.json` carries a real `version`, an `exports` map naming **exactly twenty-seven** subpaths,
+`package.json` carries a real `version`, an `exports` map naming **exactly twenty-eight** subpaths,
 and `files` listing the three directories that are published. It stays `private: true`:
 nothing here goes to a registry, and the version exists to be *checked*, not to be
 published.
@@ -692,6 +692,7 @@ published.
 "@yordan/design-system/react/drawer"         // nine of its rules are about components it HOSTS
 "@yordan/design-system/react/chat"           // the most rules of any block, and it needed the least
 "@yordan/design-system/react/menu"           // three regions with three authored gaps between them
+"@yordan/design-system/react/theme-toggle"   // the block that minted `foreign-scope`
 ```
 
 **It was six until R2a**, and both `ARCHITECTURE.md` and the root `README.md` still say six —

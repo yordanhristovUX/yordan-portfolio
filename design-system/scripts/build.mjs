@@ -528,6 +528,7 @@ const packaged = [
   ["dist/react/drawer.tsx", reactSource("drawer")],
   ["dist/react/chat.tsx", reactSource("chat")],
   ["dist/react/menu.tsx", reactSource("menu")],
+  ["dist/react/theme-toggle.tsx", reactSource("theme-toggle")],
 ];
 mkdirSync(join(root, "dist", "react"), { recursive: true });
 /* Every rendered component must have a line above; the reverse is checked by
@@ -871,6 +872,33 @@ const AUTHORED_REASONS = {
   "foreign-selector": {
     what: "a rule whose subject is an element or a document this component does not own — `body:has(…)`, the foundation reset",
     found: (b) => b.selectors.some((s) => /^[a-z*]/.test(s)),
+  },
+  /* THE FIFTH REASON, AND `theme-toggle` MINTED IT. `foreign-selector` is about
+     a rule whose SUBJECT the component does not own; this is the mirror image —
+     the subject is ours and the ANCESTOR is somebody else's. `.menu__body .theme`
+     is the menu sheet's second rendering of the theme puck, and it is
+     unreachable from a definition because the scoped-part closure runs the other
+     way round: `within` NAMES a rule this definition declares, and the target
+     may be foreign (`.drawer .chat`, `.sec--tint .well`). There is no reference
+     that can name an ancestor the component does not own, and there must not be
+     — a key that could would make every `.a .b` sayable and the closure a
+     comment. The scan is cross-block on purpose: a leftmost class that ANOTHER
+     block defines is a fact neither this fragment nor a schema could tell you. */
+  "foreign-scope": {
+    what: "a rule scoped inside a class family the subject does not belong to — `.menu__body .theme`, a theme puck inside a menu sheet",
+    found: (b) =>
+      b.selectors.some((s) => {
+        const parts = s.split(/\s+/).filter((p) => !">+~".includes(p));
+        if (parts.length < 2) return false;
+        /* The BEM block of each end: `.menu__body` is `menu`, `.theme` is
+           `theme`. Two different families in one selector is the FEATURE — the
+           check asserts presence, not that it is disqualifying, exactly as
+           every other reason here does. */
+        const family = (p) => /^\.([a-z][\w-]*?)(?:__|--|$)/.exec(p)?.[1];
+        const head = family(parts[0]);
+        const tail = family(parts[parts.length - 1]);
+        return head !== undefined && tail !== undefined && head !== tail;
+      }),
   },
 };
 
