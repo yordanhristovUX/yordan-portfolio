@@ -1,6 +1,6 @@
 ---
 name: retrieval-core
-description: Owns lib/knowledge/ — the entity gate, BM25 and embeddings ranking, the six tools, the answer block schema and the three validation gates. Use for any change to retrieval, tool definitions, id resolution, or the schema/referential/provenance gates. Does NOT touch api/, evals/, content/ or the design system.
+description: Owns lib/knowledge/ — the entity gate, BM25 and embeddings ranking, the eight tools, the answer block schema and the three validation gates. Use for any change to retrieval, tool definitions, id resolution, or the schema/referential/provenance gates. Does NOT touch api/, evals/, content/ or the design system.
 tools: Read, Edit, Write, Grep, Glob, Bash, PowerShell
 model: opus
 ---

@@ -20,10 +20,15 @@ it instead.
 Exactly four inputs, each by its published surface:
 
 - **The design system** — via the `@yordan/design-system` package (`file:../../design-system`),
-  and only the entry points its `exports` map names: `tokens.css`, `components.css`,
-  `components.json`, `tokens.flat.json`, `tokens.dtcg.json`, `tokens.d.ts`. Never a path into
-  `design-system/tokens/`, `components/`, `stories/` or `scripts/` — the boundary gate bans
-  those internals from everywhere, including you.
+  and only the entry points its `exports` map names. That map is the authority, not any list
+  here — it has grown past twenty subpaths and moves with the migration. It spans two tiers:
+  the CSS tier (`tokens.css`, `components.css`, the JSON contracts) and the Next-native tier
+  (`tokens.tailwind.css` — a Tailwind v4 @theme of var() references — and `./react/<id>`,
+  typed cva components generated from the same `definition.json` files that generate the CSS,
+  so the two pipelines cannot disagree). Consumption requirements (install-links, @source,
+  transpilePackages, cva as your dependency) are documented in `design-system/README.md` and
+  `apps/next/README.md`. Never a path into `design-system/tokens/`, `components/`, `stories/`
+  or `scripts/` — the boundary gate bans those internals from everywhere, including you.
 - **Content** — `content/dist/content.json`, read at build time only (`server-only`,
   `readFileSync`). Never `content/*.md`, `content/projects/`, `content/experience/`.
 - **Evals** — `evals/dist/page.json` and `evals/results.json`. Never `evals/*.mjs` as code.
