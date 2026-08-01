@@ -587,9 +587,9 @@
        here and nothing else visual. -->
   <div class="drawer" id="ask-panel" data-drawer>
     <div class="drawer__scrim" data-drawer-close></div>
-    <aside class="drawer__sheet" role="dialog" aria-modal="true"
-           aria-labelledby="drawer-title" tabindex="-1">
-      <header class="drawer__head">
+    <div class="drawer__sheet" role="dialog" aria-modal="true"
+         aria-labelledby="drawer-title" tabindex="-1">
+      <div class="drawer__head">
         <span class="drawer__portrait">
           <!-- alt="" on purpose: the heading beside it carries the meaning and
                the illustration is chrome. Never inlined — 160 KB of path data
@@ -602,7 +602,7 @@
         </span>
         <button class="btn btn--small" type="button" data-drawer-close
                 aria-label="Close the assistant">Close ✕</button>
-      </header>
+      </div>
       <div class="drawer__body">
         <div class="chat" data-chat data-chat-endpoint="/api/chat">
           <!-- tabindex="0" is the same WCAG 2.1.1 fix .case__scroll carries, for the
@@ -630,7 +630,7 @@
           <p class="chat__status mono">Every answer is built from Yordan's own written record, cited to the passage it came from — or it says so.</p>
         </div>
       </div>
-    </aside>
+    </div>
   </div>
 
   <!-- THE PEEK SHEET — the notable cards' detail surface on touch, authored
