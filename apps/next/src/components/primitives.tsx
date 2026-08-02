@@ -14,12 +14,12 @@
    two pipelines delivers it. See src/app/globals.css.
 
    THE IMPORTS NAME `./react/<id>` RATHER THAN THE BARREL, here and in every
-   other file in this app, and the reason is an upstream defect written up in
-   full in src/components/ThemeToggle.tsx: `dist/react/theme-toggle.tsx` at
-   2.6.0 does not parse, and the barrel re-exports it. Both routes are on the
-   package's `exports` map, so nothing about the boundary changes — but a
-   per-component import means one broken artefact costs one component instead
-   of the whole tier. */
+   other file in this app. That began as a workaround — `dist/react/theme-
+   toggle.tsx` did not parse at 2.6.0 and the barrel re-exports it — and the
+   defect is fixed at 2.8.0, so it is now simply the shape this app kept: both
+   routes are on the package's `exports` map, nothing about the boundary
+   differs, and a per-component import means one broken artefact would cost one
+   component rather than the whole tier. */
 import { Button, button } from "@yordan/design-system/react/button";
 import { Chip, ChipGroup } from "@yordan/design-system/react/chip";
 
@@ -63,21 +63,29 @@ export function Term() {
 
    Both branches render the same tag with the same class string; what differs
    is who navigates. Removing the branch and always using <Button href> would
-   ship a second site that full-page-loads its own routes. */
-export function Btn({ link, className, style }: { link: Link; className?: string; style?: React.CSSProperties }) {
+   ship a second site that full-page-loads its own routes.
+
+   THERE IS NO `style` PROP, and the absence is deliberate. One existed for one
+   caller — the case-study link row, which spaced its buttons with
+   `margin-right:.6rem` on every anchor but the last. `actions` owns both gaps
+   now, and `scripts/build-content.mjs` dropped `anchor()`'s matching hook when
+   it adopted the component: a parameter with no caller is the same defect one
+   argument away from returning, so it goes with it. A button that needs
+   spacing needs a layout component around it. */
+export function Btn({ link, className }: { link: Link; className?: string }) {
   const to = href(link.href);
   const variant = link.variant === "solid" ? "solid" : "default";
   const external = link.external ? { target: "_blank", rel: "noopener" } : {};
 
   if (isRoute(to)) {
     return (
-      <AppLink className={[button({ variant }), className].filter(Boolean).join(" ")} href={to} style={style} {...external}>
+      <AppLink className={[button({ variant }), className].filter(Boolean).join(" ")} href={to} {...external}>
         {link.label}
       </AppLink>
     );
   }
   return (
-    <Button variant={variant} className={className} href={to} style={style} {...external}>
+    <Button variant={variant} className={className} href={to} {...external}>
       {link.label}
     </Button>
   );

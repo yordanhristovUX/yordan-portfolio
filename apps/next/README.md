@@ -76,9 +76,13 @@ addresses it by that name**, and `scripts/check-class-hooks.mjs` computes that s
 sources rather than trusting a list: the four synced page stylesheets, the authored
 fragments of `components.css`, this app's ports of `js/` (a copy's selectors are not this
 app's to re-point), the tier's own scoped rules — whose *sink* is named by class even when
-its host is a utility — and two upstream defects the cutover measured, both written up in
-that file's header. It asserts both directions: no class kept without a reason, and no
-required class dropped from a page it used to reach. `npm run check:hooks`.
+its host is a utility — and the sinks of `components.css`'s own descendant rules. It asserts
+both directions: no class kept without a reason, and no required class dropped from a page it
+used to reach, page by page against a committed census. `npm run check:hooks`.
+
+Two of its sources used to be upstream defects, each requiring a class that carried nothing
+but a workaround. Both are fixed at 2.8.0 and both are still *detected* — see "What is still
+absent" below — so the requirement is computed, never asserted, in either direction.
 
 **Two surfaces are deliberately not swapped:** `src/components/evals-regions.tsx`, whose
 markup must stay byte-identical to the regions `evals/run.mjs` writes into `evals.html`, and
@@ -92,7 +96,7 @@ change there first. Both are styled by `components.css`, which is loaded.
 | --- | --- | --- |
 | tokens.css, components.css | the `@yordan/design-system` package's `exports` | `src/app/layout.tsx` |
 | tokens.tailwind.css, keyframes.css | the same `exports` map | `src/app/globals.css` |
-| `react/<id>` × 19 | the same `exports` map — generated TSX, transpiled here | the use sites below |
+| `react/<id>` × 21 | the same `exports` map — generated TSX, transpiled here | the use sites below |
 | `surface-page`'s two values | `@yordan/design-system/tokens.flat.json` | `src/lib/theme-script.ts` |
 | the corpus | a build-time import of `content/dist/content.json` | `src/lib/content.ts` |
 | the corpus, again | copied to `public/corpus/` for the browser | `scripts/sync-artifacts.mjs` |
@@ -207,33 +211,43 @@ attribute, which has no order — and the design system fixed it where it belong
 each axis disjoint from the base. Recorded because the shape recurs: the two defects below
 are the same sentence about a different pair of declarations.
 
-**Three components carry a design-system class they should not need, and each one is an
-upstream defect this app measured rather than worked around.** All three are detected and
-counted by `scripts/check-class-hooks.mjs`, which prints them on every run so the day they
-are fixed is visible rather than guessed at.
+**Three components used to carry a design-system class they should not have needed, and all
+three are fixed at 2.8.0.** Each was an upstream defect this app measured rather than worked
+around; each was reported, landed in the design system, and re-consumed here by re-packing
+the package. `scripts/check-class-hooks.mjs` still detects the first two — it computed the
+requirement rather than being told it, so the count going to zero is what retired the
+classes, and the count coming back is what would return them.
 
-1. **Eighteen scoped rules in the React tier compile to the wrong selector.** Tailwind reads
+1. **Nineteen scoped rules in the React tier compiled to the wrong selector.** Tailwind reads
    `_` in an arbitrary variant as a space — that is how `[&_.card__title]` gets its
-   descendant combinator — and `emit-tailwind.mjs` does not escape the underscores *inside*
-   a BEM class name, so it compiles to `.card title`, a descendant `<title>` element. Every
-   scoped rule whose target is a BEM part is affected: `.card__media`, `.menu__sheet`,
-   `.drawer__sheet`, `.ph__label`, `.chat__role`, `.ask-fab__label`, `.theme__lamp` and the
-   rest. Found by measuring a swapped `.card--ruled` against the vanilla page — 15px short,
-   exactly the ink bar's 12px padding plus 3px rule. `components.css` delivers all eighteen,
-   so **both ends keep their class** until the escape lands.
+   descendant combinator — and `emit-tailwind.mjs` did not escape the underscores *inside*
+   a BEM class name, so it compiled to `.card title`, a descendant `<title>` element. Every
+   scoped rule whose target was a BEM part was affected. Found by measuring a swapped
+   `.card--ruled` against the vanilla page — 15px short, exactly the ink bar's 12px padding
+   plus 3px rule. The emitter escapes them now, so a host wearing its component's utility
+   carries its own scoped rule and **eighteen host classes have left this app's JSX**:
+   `.card--ruled` on `/` and `/mcp`, `.chat__trace` in the drawer, and the rest. The SINK
+   half stays and always would have — a scoped rule names its target by class whichever
+   pipeline compiles it.
 2. **A shorthand and its own longhand in one base list.** `.chat__input` writes
    `font: inherit` then `font-size: var(--text-md)`, which is an ordinary stylesheet
-   sentence; in one class attribute Tailwind's sort puts `[font:inherit]` last and the size
-   resets to the inherited 16px. Measured: 16px against 14.72px, and a composer 4.09px
-   taller. The emitter's disjointness pass covers a base against a *variant axis*, not a
-   shorthand against its own longhand inside the base list.
-3. **`@yordan/design-system/react/theme-toggle` does not parse at 2.6.0.** Three class
-   strings carry an unescaped double quote inside a double-quoted string literal
-   (`"[&[data-state="dark"]_.theme__lamp]:…"`), which is `tsc` TS1005 six times over. The
-   same construct on a rule's own root comes out correctly single-quoted in `nav.tsx`, so it
-   is one of the emitter's two paths. `ThemeToggle` therefore stays on pipeline 1, and every
-   import in this app names `./react/<id>` rather than the barrel — which re-exports the
-   broken file — so one bad artefact costs one component instead of the whole tier.
+   sentence; in one class attribute Tailwind's sort put `[font:inherit]` last and the size
+   reset to the inherited 16px. Measured then: 16px against 14.72px, and a composer 4.09px
+   taller. The emitter now distributes a shorthand over the longhands its rule does not set
+   again, so `chatInput`'s base list carries six `…:inherit` utilities and no `[font:…]`;
+   the composer measures 14.72px with no class defending it.
+3. **`@yordan/design-system/react/theme-toggle` did not parse at 2.6.0.** Three class
+   strings carried an unescaped double quote inside a double-quoted string literal, which is
+   `tsc` TS1005 six times over. It is normalised at 2.8.0, and `ThemeToggle` is the last
+   component to join the tier. Every import in this app still names `./react/<id>` rather
+   than the barrel — that began as the containment for this defect and stays because one bad
+   artefact costing one component is worth having either way.
+
+**One caution the fixes leave behind.** Tailwind scans this app's `.ts`/`.tsx` for class
+candidates and cannot tell a comment from an attribute, so an arbitrary variant *quoted in
+prose* compiles into the stylesheet as a real rule — and is then indistinguishable, to the
+detector above, from the defect returning. Two comments did exactly that. Describe such a
+rule in words rather than quoting it.
 
 **Motion, deliberately.** No GSAP here. On the vanilla site `[data-rise]`/`[data-reveal]` are
 hidden only under the `js` class that a *confirmed* GSAP load adds, so a load failure shows

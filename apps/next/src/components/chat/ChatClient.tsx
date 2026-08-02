@@ -137,16 +137,16 @@ function Trace({ turn }: { turn: AssistantTurn }) {
 
   if (!turn.trace.length) return null;
   return (
-    <ChatTrace className="chat__trace" ref={ref}>
-      {/* BOTH ENDS OF `.chat__trace[open] .chat__trace-toggle::before` stay —
-          the rule that swaps the disclosure caret. The sink because a scoped
-          rule names its sink by class even when its host is a utility; the
-          HOST because pipeline 2's version of this rule does not compile:
-          `[&[open]_.chat__trace-toggle::before]` becomes
-          `.chat trace-toggle:before`, since `_` is a space in an arbitrary
-          variant. Upstream defect, written up in scripts/check-class-hooks.mjs
-          — until it is fixed, components.css is the only surface that draws
-          this caret, and it needs both names. */}
+    <ChatTrace ref={ref}>
+      {/* ONLY THE SINK OF `.chat__trace[open] .chat__trace-toggle::before` is
+          named now — the rule that swaps the disclosure caret. A scoped rule
+          names its sink by class whichever pipeline compiles it, so
+          `.chat__trace-toggle` stays. The HOST's class has gone with the
+          escaping defect that required it: pipeline 2's version of this rule
+          used to compile to a descendant `trace-toggle` element, because an
+          unescaped underscore is a space in an arbitrary variant, and
+          components.css was the only surface drawing the caret. 2.8.0 escapes
+          it and `chatTrace()` carries the rule itself. */}
       <ChatTraceToggle className="chat__trace-toggle mono">
         {count === 0 ? "Trace" : count + (count === 1 ? " tool call" : " tool calls")}
       </ChatTraceToggle>
@@ -302,24 +302,22 @@ export function ChatClient({ endpoint }: { endpoint: string }) {
       </ChatThread>
 
       <ChatForm onSubmit={onSubmit}>
-        {/* `.chat__input` STAYS, and this is the second upstream defect the
-            cutover measured. components.css writes
+        {/* `.chat__input` IS GONE, and the defect it was holding shut is
+            fixed rather than tolerated. components.css writes
 
                 .chat__input { font: inherit; font-size: var(--text-md); … }
 
-            — a SHORTHAND followed by a longhand that overrides it, which is
-            an ordinary and correct thing for a stylesheet to say. cva puts
-            both in one class attribute, a class attribute has no order, and
-            Tailwind sorts `[font:inherit]` AFTER `text-step-md`: the shorthand
-            wins and resets the size to the inherited 16px. Measured against
-            the vanilla composer: 16px against 14.72px, and a form 4.09px
-            taller. The emitter's disjointness pass (design-system/README.md,
-            "A class attribute has no order") makes a BASE and a VARIANT AXIS
-            disjoint; a shorthand and its own longhand inside ONE base list are
-            not analysed. Reported; until it is fixed the class is what puts
-            the two declarations back in the order the stylesheet wrote them. */}
+            — a shorthand and then a longhand that takes one of its properties
+            back, which is an ordinary sentence for a stylesheet and an
+            impossible one for a class attribute, because an attribute has no
+            order: Tailwind sorted `[font:inherit]` after `text-step-md` and
+            the composer set at the inherited 16px instead of 14.72px. The
+            emitter now DISTRIBUTES the shorthand over the longhands the rule
+            does not set again — `chatInput`'s base list has six `…:inherit`
+            utilities and no `[font:…]` at all — so the size survives with no
+            class to defend it. Measured after the swap: 14.72px, the vanilla
+            number. */}
         <ChatInput
-          className="chat__input"
           ref={inputRef}
           rows={2}
           maxLength={MAX_CHARS}

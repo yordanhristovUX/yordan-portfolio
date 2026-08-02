@@ -38,14 +38,17 @@ import { Fragment } from "react";
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Actions } from "@yordan/design-system/react/actions";
 import { CaseBody } from "@yordan/design-system/react/case-body";
 import { Media, MediaGrid, MediaLabel } from "@yordan/design-system/react/media";
 import {
-  SectionHead,
-  SectionHeadHead,
-  SectionHeadNote,
-  sectionHeadTitle,
-} from "@yordan/design-system/react/section-head";
+  PageHead,
+  PageHeadKicker,
+  PageHeadLede,
+  PageHeadMeta,
+  PageHeadTitle,
+} from "@yordan/design-system/react/page-head";
+import { SectionHead } from "@yordan/design-system/react/section-head";
 import { Stat } from "@yordan/design-system/react/stat";
 
 import { AppLink } from "@/components/AppLink";
@@ -55,7 +58,7 @@ import { SiteBar } from "@/components/SiteBar";
 import { SiteMenu } from "@/components/SiteMenu";
 import { caseStudies, neighbours, projectById, siteUrl } from "@/lib/content";
 import { workUrl } from "@/lib/routes";
-import type { Project, ProjectMedia } from "@/lib/types";
+import type { Project, ProjectLink, ProjectMedia } from "@/lib/types";
 import { WORK_BAR, WORK_MENU_NAV, WORK_PAGER } from "@/lib/vanilla-copy";
 
 import "@/styles/site/style.css";
@@ -65,6 +68,11 @@ export function generateStaticParams() {
 }
 
 const label = (p: Project) => `${p.client} — ${p.title}`;
+
+/* The corpus types a link's `variant` as a free string, `Btn` accepts only the
+   one the design system has. Narrowing here rather than at each call site keeps
+   the two link rows below identical apart from their wrapper. */
+const link = (l: ProjectLink) => ({ ...l, variant: l.variant === "solid" ? ("solid" as const) : undefined });
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -91,11 +99,19 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
    by `.ph-grid .ph` — a frame inside the gallery gives up its own vertical
    margin — and `.ph__label` by `.ph:has(img) .ph__label`, the rule that hides
    the caption once real artwork arrives. Both are the media component's own
-   scoped rules, and a scoped rule addresses its SINK by class even when its
-   host is a utility: `[&_.ph]:m-0` on the grid, `[&:has(img)_.ph__label]:hidden`
-   on the frame. That is the one thing about the React tier this cutover had to
+   scoped rules, emitted as arbitrary variants on the grid and on the frame,
+   and a scoped rule addresses its SINK by class even when its host is a
+   utility. That is the one thing about the React tier this cutover had to
    learn — the tier can express the relation but not the name it needs at the
-   other end, so the name is written here. */
+   other end, so the name is written here.
+
+   THE VARIANTS ARE DESCRIBED RATHER THAN QUOTED, here and in the two other
+   places this app talks about one. Tailwind scans this file for class
+   candidates and does not know a comment from an attribute, so a quoted
+   `[&…]:…` in prose compiles into the stylesheet as a real rule — and
+   scripts/check-class-hooks.mjs, which reads the built CSS to watch for the
+   escaping defect, counted two of those phantoms as the defect returning. The
+   words are the fix. */
 function Placeholder({ media }: { media: ProjectMedia }) {
   return (
     <Media className="ph">
@@ -167,24 +183,34 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <AskFab />
 
       <main className="sheet" id="top">
-        <SectionHead className="band sec work" aria-labelledby="work-title">
-          {/* THE TITLE IS AN <h1> HERE AND `SectionHeadTitle` RENDERS AN <h2>,
-              because the canonical HTML in components/section-head/spec.md is
-              the index page's — a section heading under a page heading. A case
-              study's section head IS the page heading, which is a document
-              fact rather than an appearance one, so the class map is applied
-              to this page's own element via `sectionHeadTitle()`. That is the
-              same reconciliation `Btn` makes for `href`, and the cva function
-              is exported beside the component precisely for it. */}
-          <SectionHeadHead className="sec__head">
-            <h1 className={sectionHeadTitle({ className: "t-title" })} id="work-title">
-              {project.title}
-            </h1>
-            {project.client ? <SectionHeadNote>{project.client}</SectionHeadNote> : null}
-          </SectionHeadHead>
+        {/* THE HEAD IS `page-head` — the component 2.8.0 was born for, and the
+            same block work/<id>.html is generated with since 730d105.
+
+            It replaces a section head that was doing a page head's job: the
+            client sat in `.sec__note`, an aside beside a SECTION's title, and
+            the title itself was one type level below the page's own. Both were
+            reconciliations rather than fits — the long note that used to stand
+            here explained why an <h1> wore `sectionHeadTitle()`'s class map,
+            and it retires with the swap, because `PageHeadTitle` IS an <h1> in
+            the definition.
+
+            The four parts moved INSIDE the well, which is where the clearance
+            comes from: `.page-head .well` (and, in this pipeline, PageHead's
+            own `[&_.well]:…` utility) sets `padding-top: var(--space-nav)` and
+            REPLACES the well's own, so the floating bar is cleared exactly
+            once. That is the rule `.work { padding-top: var(--space-nav) }`
+            used to carry in css/style.css; it is deleted upstream, and this
+            band no longer asks for it by name. */}
+        <PageHead className="band" aria-labelledby="work-title">
           <div className="well">
-            <p className="t-lead">{project.subtitle}</p>
-            <Chips tags={project.tags} accent={project.accentTag} />
+            {project.client ? <PageHeadKicker className="t-label">{project.client}</PageHeadKicker> : null}
+            <PageHeadTitle className="t-display t-display--lg" id="work-title">
+              {project.title}
+            </PageHeadTitle>
+            <PageHeadLede className="t-lead">{project.subtitle}</PageHeadLede>
+            <PageHeadMeta>
+              <Chips tags={project.tags} accent={project.accentTag} />
+            </PageHeadMeta>
             <CaseBody>
               {cover ? <Placeholder media={cover} /> : null}
 
@@ -218,23 +244,32 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                     <Diagram key={d.slot} media={d} />
                   ))}
                   {s.text ? <p>{s.text}</p> : null}
+                  {/* THE LINK ROW IS `actions`, AND ONE LINK IS NOT A ROW.
+                      `{{links}}` used to emit a <p> of inline-blocks with
+                      `margin-right:.6rem` on every anchor but the last: a
+                      chosen column gap and whatever row gap the line box
+                      happened to give, which is 1px once the row wraps. The
+                      component owns both gaps now and no child carries a
+                      margin — which is why `Btn` lost its `style` parameter in
+                      the same commit, as `anchor()` did upstream. A lone link
+                      still renders bare, per components/actions/spec.md. */}
                   {s === lastSection && project.links.length ? (
-                    <p>
-                      {project.links.map((l, i) => (
-                        <Btn
-                          key={l.href}
-                          link={{ ...l, variant: l.variant === "solid" ? "solid" : undefined }}
-                          style={i < project.links.length - 1 ? { marginRight: ".6rem" } : undefined}
-                        />
-                      ))}
-                    </p>
+                    project.links.length === 1 ? (
+                      <Btn link={link(project.links[0])} />
+                    ) : (
+                      <Actions>
+                        {project.links.map((l) => (
+                          <Btn key={l.href} link={link(l)} />
+                        ))}
+                      </Actions>
+                    )
                   ) : null}
                 </Fragment>
               ))}
             </CaseBody>
           </div>
           <Term />
-        </SectionHead>
+        </PageHead>
 
         <Strip />
 

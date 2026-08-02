@@ -25,6 +25,12 @@ import { Chip, ChipGroup } from "@yordan/design-system/react/chip";
 import { DefinitionRow, DefinitionRowRow } from "@yordan/design-system/react/definition-row";
 import { LinkGrid } from "@yordan/design-system/react/link-grid";
 import {
+  PageHead,
+  PageHeadKicker,
+  PageHeadLede,
+  PageHeadTitle,
+} from "@yordan/design-system/react/page-head";
+import {
   SectionHead,
   SectionHeadHead,
   SectionHeadNote,
@@ -205,16 +211,32 @@ export default function Page() {
       <SiteMenu nav={MENU_NAV} />
 
       <main id="top" className="sheet">
-        {/* ============ HEAD ============ */}
-        <section className="band mcp-head" aria-label="Introduction">
+        {/* ============ HEAD ============
+            `page-head`, the same component the five work pages use — this page
+            was the pattern before it was a component, and mcp.html moved onto
+            it in f5809c4. The meta slot is OMITTED rather than emptied: it
+            holds chips and this page has none, and the lede's own bottom
+            margin is what spaces the prose below it. The band is labelled BY
+            the title (`mcp-title`, not the work pages' `work-title`), so the
+            accessible name is the visible one.
+
+            `.page-head` KEEPS ITS CLASS, and only here. css/mcp.css positions
+            this page's own composition — the prose and the link grid are not
+            part of the component — with `.page-head .link-grid`, and its print
+            block hides the grid by the same selector. A synced stylesheet is
+            not this app's to re-point, so the host wears the name. The work
+            pages get no such rule and therefore no such class. */}
+        <PageHead className="band page-head" aria-labelledby="mcp-title">
           <div className="well">
-            <p className="mcp-head__kicker t-label">Model Context Protocol</p>
-            <h1 className="mcp-head__title t-display t-display--lg">Ask your own agent</h1>
-            <p className="mcp-head__lede t-lead">
+            <PageHeadKicker className="t-label">Model Context Protocol</PageHeadKicker>
+            <PageHeadTitle className="t-display t-display--lg" id="mcp-title">
+              Ask your own agent
+            </PageHeadTitle>
+            <PageHeadLede className="t-lead">
               This portfolio is also a remote MCP server. Add one line to your client and your
               Claude — not a chat widget on someone else&apos;s website — can read the projects, the
               case studies, the CV and the design system&apos;s own component contract directly.
-            </p>
+            </PageHeadLede>
             <div className="mcp-prose">
               <p>
                 It is <strong>read-only, unauthenticated and stateless</strong>. Eight tools, no
@@ -231,11 +253,9 @@ export default function Page() {
                 class that does not exist.
               </p>
             </div>
-            {/* `.mcp-head` is this page's own band, not a `.sec` — mcp.css
-                gives it its own head. So the section element stays a plain
-                <section>; only the four `.sec` bands below are section-head's.
-                `.link-grid` keeps its class: `.mcp-head .link-grid` spaces it
-                and the print block hides it. */}
+            {/* `.link-grid` keeps its class: `.page-head .link-grid` spaces it
+                and the print block hides it — both in css/mcp.css, both by
+                name. */}
             <LinkGrid className="link-grid">
               <a href="#install">Install it</a>
               <a href="#tools">See the tools</a>
@@ -246,7 +266,7 @@ export default function Page() {
             </LinkGrid>
           </div>
           <Term />
-        </section>
+        </PageHead>
 
         <Strip />
 
@@ -424,15 +444,13 @@ export default function Page() {
                 `:nth-child(3n)` right rule, the orphan-row pair, and the whole
                 two-column restatement at 960px. None of those can be a class
                 attribute, so they come from components.css and need the names.
-                `.card--ruled` rides BESIDE `variant="ruled"` for the reason
-                src/app/page.tsx spells out: the variant is an effect-only
-                modifier whose whole effect is `.card--ruled .card__title`, and
-                Tailwind compiles that arbitrary variant to `.card title`
-                because `_` means a space in one. Upstream defect; the class
-                keeps the ink bar drawn until it is fixed. */}
+                `.card--ruled` has LEFT, at 2.8.0: it rode beside
+                `variant="ruled"` only because the escaping defect stopped the
+                variant drawing its own ink bar. src/app/page.tsx tells that
+                story once, where the same nine cards are. */}
             <CardGrid className="card-grid">
               {LIMITS.map((l) => (
-                <Card variant="ruled" className="card card--ruled" key={l.title}>
+                <Card variant="ruled" className="card" key={l.title}>
                   <CardTitle className="card__title">{l.title}</CardTitle>
                   <p>{l.body}</p>
                 </Card>

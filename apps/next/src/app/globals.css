@@ -79,7 +79,7 @@
             vs  cardGrid()'s base  [grid-template-columns:repeat(3,_1fr)]
           @media (prefers-reduced-motion: reduce) { .menu, .menu__sheet
                                                     { transition: none } }
-            vs  menu()'s base      [transition:visibility_0s_linear_0.28s]
+            vs  menu()'s base      [transition:visibility_0s_linear_var(--motion-arrive)]
           @media print { .theme { display: none } }
             vs  themeToggle()'s    flex
 

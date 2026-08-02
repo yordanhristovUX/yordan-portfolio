@@ -24,28 +24,28 @@
    work it represents. This says "new content", which is the only true thing
    there is to say.
 
-   IT SPEAKS A PHRASE THE SITE ALREADY HAS. The design system uses two motion
-   registers and they mean different things:
+   IT SPEAKS A PHRASE THE SITE ALREADY HAS, AND SINCE 2d2984a IT SPEAKS IT IN
+   TOKENS. The design system carries two motion registers, and they mean
+   different things:
 
-     0.2s, no curve named          a state change — hover, focus, colour
-     0.28s cubic-bezier(0.22,1,0.36,1)  a SURFACE ARRIVING
+     --motion-state   0.2s   a state change — hover, focus, colour
+     --motion-arrive  0.28s  a SURFACE ARRIVING, on --ease-arrive if it
+                             travels and --ease-fade if it only fades
 
    The second is the menu sheet, the peek panel and the drawer — every element
    in components.css that enters the page rather than merely restyling. A page
    arriving is that, so it is said in those words. `.menu__sheet` is the exact
-   model: `opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)`
-   over a 0.75rem offset. The DIRECTION is the page content's rather than the
-   menu's — css/style.css settles `[data-reveal]` upward, so this rises too.
+   model, and it is now the same two tokens this file names.
 
-   THE DURATION AND CURVE ARE LITERALS, AND THAT IS A REPORTED GAP RATHER THAN
-   a preference. tokens.json has no motion tier at all — no duration, no
-   easing — so every one of the values above is a literal in components.css
-   today, and there is nothing to reference. Introducing `--motion-*` is a
-   design-system decision with 20 components' worth of existing literals behind
-   it; inventing the token here would put its source of truth in the consumer,
-   which is exactly backwards. So these mirror the design system's own numbers
-   and the ask goes upstream. THE DISTANCE IS NOT A LITERAL: `--space-3` IS
-   0.75rem, so the one value that has a token uses it.
+   THE DURATION AND CURVE USED TO BE LITERALS, and this file carried the ask
+   upstream: tokens.json had no motion tier, every value in components.css was
+   written out, and inventing `--motion-*` in a consumer would have put the
+   source of truth at the bottom of the graph. The ask was granted — the owner
+   named the registers, tokens.css emits all four, and the note that stood here
+   is replaced by the references. Nothing about the motion changed: 0.28s and
+   cubic-bezier(0.22, 1, 0.36, 1) are the values the tokens hold, which is why
+   this is a rebinding rather than a retune. THE DISTANCE WAS NEVER A LITERAL:
+   `--space-3` is the 0.75rem offset, as before.
 
    REDUCED MOTION GETS NOTHING, WHICH IS THE VANILLA CONTRACT. Motion is an
    enhancement on this site — under reduce, GSAP never runs, `[data-reveal]`
@@ -69,7 +69,7 @@
    animate: this rule simply does not exist yet at that point. */
 @media (prefers-reduced-motion: no-preference) {
   html[data-routed] main.sheet {
-    animation: route-settle 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: route-settle var(--motion-arrive) var(--ease-arrive) both;
   }
 }
 

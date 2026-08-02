@@ -34,51 +34,56 @@
    `.card__media` has no component at all, being a scoped part, so it is
    written by hand and would have to be.
 
-   AND A FIFTH, WHICH IS AN UPSTREAM DEFECT AND IS DETECTED BELOW RATHER THAN
-   ASSUMED. Tailwind reads `_` in an arbitrary variant as a SPACE — that is
-   how `[&_.card__title]` gets its descendant combinator in the first place —
-   and `emit-tailwind.mjs` does not escape the underscores INSIDE a BEM class
-   name. So `[&_.card__title]:[border-top:3px_solid_var(--primary)]` compiles
-   to
+   ── THE FIFTH AND SIXTH SOURCES WERE UPSTREAM DEFECTS, AND ARE FIXED ──────
+
+   Both are kept below as DETECTORS rather than deleted, because each was found
+   by measuring rather than by reading, and a silent regression in either would
+   cost this app a stylesheet's worth of rules again. Each now prints nothing.
+
+   THE FIFTH WAS THE UNESCAPED UNDERSCORE. Tailwind reads `_` in an arbitrary
+   variant as a SPACE — that is how `[&_.card__title]` gets its descendant
+   combinator in the first place — and `emit-tailwind.mjs` did not escape the
+   underscores INSIDE a BEM class name, so
+   `[&_.card__title]:[border-top:3px_solid_var(--primary)]` compiled to
 
        .\[\&_\.card__title\]\:\[…\] .card title { border-top: … }
 
-   a descendant `<title>` ELEMENT, which no page has. NINETEEN scoped rules
-   across eight of the twenty generated components compile to the wrong
-   selector this way — every one whose target is a BEM part. `.card__media`,
-   `.menu__sheet`, `.drawer__sheet`, `.ph__label`, `.chat__role`,
-   `.ask-fab__label`, `.theme__lamp` and the rest. It was found by measuring a
-   swapped `.card--ruled` against the vanilla page: 15px short, exactly the
-   12px padding plus the 3px rule the ink bar is made of.
+   a descendant `<title>` ELEMENT, which no page has. Nineteen scoped rules
+   across eight components compiled to the wrong selector that way, and for
+   each of them pipeline 2 delivered nothing while components.css delivered
+   everything — so BOTH ends had to keep their class, the sink and the HOST.
+   Found by measuring a swapped `.card--ruled` against the vanilla page: 15px
+   short, exactly the 12px padding plus the 3px rule the ink bar is made of.
 
-   The consequence for this app is precise: FOR SUCH A RULE, PIPELINE 2
-   DELIVERS NOTHING AND components.css IS THE ONLY SURFACE THAT DELIVERS IT —
-   so BOTH ends must keep their class, the sink and the HOST. `.card--ruled`
-   and `.chat__trace` are here for that reason and no other. A rule whose sink
-   has no underscore (`.sec--tint .well`, `.ph-grid .ph`, `.profile .is-ok`)
-   compiles correctly and needs no host class, which is why `.sec--tint` and
-   `.ph-grid` did leave.
+   2.8.0 escapes them (`[&_.card\_\_title]:…`, written with String.raw), the
+   count below is zero, and THE HOST HALF OF SOURCE 5 IS RETIRED WITH IT: a
+   host wearing the component's utility now carries its own scoped rule, so
+   `.card--ruled`, `.chat__trace` and the sixteen others go. The SINK half is
+   not a defect and never was — a scoped rule names its sink by class whichever
+   pipeline compiles it — so it stands on its own, as source 4.
 
-   This is reported, not worked around: the fix is one escape in the emitter,
-   it belongs to the design system, and the run below prints the current count
-   so the day it reaches zero is visible rather than guessed at.
-
-   ── AND A SIXTH: A SHORTHAND AND ITS OWN LONGHAND IN ONE BASE LIST ────────
-
-   Same root cause as the fifth's cousin — a class attribute has no order — but
-   a case the emitter's disjointness pass does not cover. components.css writes
+   THE SIXTH WAS A SHORTHAND AND ITS OWN LONGHAND IN ONE BASE LIST. Same root
+   cause as the fifth's cousin — a class attribute has no order — in a case the
+   emitter's disjointness pass did not cover. components.css writes
 
        .chat__input { font: inherit; font-size: var(--text-md); … }
 
    which is an ordinary stylesheet sentence: reset the font, then set the size.
-   cva concatenates both into one attribute; Tailwind sorts `[font:inherit]`
-   after `text-step-md`; the shorthand wins and the size resets to the
-   inherited 16px. Measured: 16px against the vanilla 14.72px, and a composer
-   4.09px taller. design-system/README.md's "A class attribute has no order"
-   solves this BETWEEN a base and a variant axis — "any base class writing one
-   of them moves into that axis's `default` branch" — and a shorthand against
-   its own longhand INSIDE the base list is not analysed. `.chat__input` is
-   here for that, and the detector below finds the shape rather than the name.
+   cva concatenated both into one attribute; Tailwind sorted `[font:inherit]`
+   after `text-step-md`; the shorthand won and the size reset to the inherited
+   16px, measured against the vanilla 14.72px with a composer 4.09px taller.
+   The emitter now DISTRIBUTES a shorthand over the longhands its rule does not
+   set again, so `[font:…]` never reaches a class attribute and `.chat__input`
+   is gone from this app. The detector below still looks for the SHAPE rather
+   than the name, and would name the next one.
+
+   ── AND A NOTE ON HOW THE TIER IS READ ────────────────────────────────────
+
+   Sources 4 and 6 parse the generated .tsx, and the escape above made half of
+   its class strings `String.raw` template literals rather than quoted strings.
+   Both readers accept either delimiter; a reader that only knew `"` would have
+   gone quietly blind on exactly the rules the fix touched, which is the failure
+   mode a gate must not have.
 
    ── WHAT THIS FILE ASSERTS ────────────────────────────────────────────────
 
@@ -224,31 +229,42 @@ for (const f of walk(join(APP, "src", "lib", "vanilla"))) {
   }
 }
 
-// 4. the React tier's own scoped rules — the sink is named even when the host
-//    is a utility, which is the gap this cutover reported upstream
+/* 4. the React tier's own scoped rules — the sink is named even when the host
+      is a utility. EITHER DELIMITER: since 2.8.0 an arbitrary variant whose
+      target is a BEM class is written `String.raw`[&_.card\_\_title]:…``, so a
+      reader that only knew `"` would miss precisely the escaped ones. The
+      backslashes come out before the class names go in — `.card\_\_title` is
+      `.card__title` with two CSS escapes in it, not a class called `card`. */
 for (const f of readdirSync(join(PKG, "dist", "react"))) {
   if (!f.endsWith(".tsx")) continue;
   const src = readFileSync(join(PKG, "dist", "react", f), "utf8");
-  for (const m of src.matchAll(/"\[&([^"]*)\]:/g))
-    for (const c of m[1].matchAll(/\.([a-zA-Z][\w-]*)/g)) need(c[1], `react:${f}`);
+  for (const m of src.matchAll(/["`]\[&([^"`]*)\]:/g))
+    for (const c of m[1].replace(/\\/g, "").matchAll(/\.([a-zA-Z][\w-]*)/g)) need(c[1], `react:${f}`);
 }
 
-// 5. BOTH ends of any descendant rule in components.css whose sink is a BEM
-//    class, because pipeline 2's copy of that rule does not compile (see the
-//    header). Read off the stylesheet rather than the .tsx, so it states the
-//    relation that is actually doing the work rather than a claim about the
-//    emitter. When the emitter escapes its underscores this stops being
-//    necessary for the HOST half; the sink half stands on its own.
+/* 5. THE SINK of any descendant rule in components.css, when that sink is a
+      BEM class. Read off the stylesheet rather than the .tsx, so it states the
+      relation that is actually doing the work rather than a claim about the
+      emitter — and it overlaps source 4 by design: a rule that only
+      components.css carries (an authored gap, a print block, a media query)
+      still needs the name at its far end.
+
+      THE HOST HALF IS GONE, WHICH IS THE 2.8.0 CHANGE. It was here because the
+      escaping defect meant pipeline 2 compiled such a rule to a selector no
+      page matched, leaving components.css the only surface delivering it and
+      the host's class the only way in. The emitter escapes now — the count at
+      the foot of this file is zero — so a host wearing its component's utility
+      carries its own scoped rule and needs no name. Nothing else changed: a
+      sink is a sink under either pipeline. */
 {
   const css = strip(readFileSync(join(PKG, "css", "components.css"), "utf8"));
   for (const m of css.matchAll(/(^|[}\n])\s*([^{}@]+?)\s*\{/g)) {
     for (const sel of m[2].split(",")) {
       const parts = sel.trim().split(/\s+|(?=>)/).filter(Boolean);
       if (parts.length < 2) continue;
-      const sinks = parts.slice(1).flatMap((p) => [...p.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((x) => x[1]));
-      if (!sinks.some((s) => s.includes("__") && DS_CLASSES.has(s))) continue;
-      for (const p of parts)
-        for (const c of p.matchAll(/\.([a-zA-Z][\w-]*)/g)) need(c[1], "bem-descendant");
+      for (const p of parts.slice(1))
+        for (const c of p.matchAll(/\.([a-zA-Z][\w-]*)/g))
+          if (c[1].includes("__")) need(c[1], "bem-descendant");
     }
   }
 }
@@ -283,7 +299,9 @@ for (const f of readdirSync(join(PKG, "dist", "react"))) {
     const before = src.slice(Math.max(0, m.index - 700), m.index);
     const own =
       after.match(/The `\.([\w-]+)` half of the pattern/) ?? before.match(/class map for `\.([\w-]+)`/);
-    const classes = [...body.matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+    /* Either delimiter, for the reason source 4 gives: half the tier's class
+       strings are `String.raw` literals since the escaping fix. */
+    const classes = [...body.matchAll(/"([^"]+)"|`([^`]+)`/g)].map((x) => x[1] ?? x[2]);
     for (const [short, longs] of Object.entries(SHORTHANDS)) {
       if (!classes.some((c) => c.startsWith(`[${short}:`))) continue;
       const clash = classes.find((c) => longs.some((l) => c.startsWith(l)));
@@ -370,13 +388,15 @@ if (!existsSync(OUT)) {
   }
 }
 
-/* ---------- the upstream defect, counted rather than assumed ----------
+/* ---------- the two fixed defects, still counted ----------
    Reads the BUILT css and finds every arbitrary-variant rule whose escaped
    class name holds a BEM target that the compiled descendant selector has
-   turned into a space. Reported, never failed: it is not this app's bug, and a
-   red gate for somebody else's defect is a gate that gets muted. The number
-   going to zero is what says the emitter has been fixed and the host halves of
-   source 5 can be relaxed. */
+   turned into a space. It counted nineteen at 2.6.0 and counts zero at 2.8.0,
+   which is what retired the host half of source 5 — so it stays as the watch
+   on that retirement rather than as a report. Printed, never failed: neither
+   is this app's bug, and a red gate for somebody else's defect is a gate that
+   gets muted. Either line reappearing means a class this app has stopped
+   writing is needed again. */
 {
   const chunks = join(APP, "out", "_next", "static", "chunks");
   let css = "";
@@ -392,15 +412,15 @@ if (!existsSync(OUT)) {
   }
   if (broken.size)
     console.log(
-      `check-class-hooks: UPSTREAM 1 — ${broken.size} scoped rules in @yordan/design-system's React\n` +
-        `  tier compile to the wrong selector, because emit-tailwind.mjs does not escape the "_" in a\n` +
-        `  BEM class name and Tailwind reads it as a space: ${[...broken].sort().slice(0, 4).join(", ")}…\n` +
-        `  components.css delivers each of them instead, which is why both ends keep their class.\n` +
-        `  Not this app's to fix. When this line disappears, source 5 in the header can be relaxed.\n`
+      `check-class-hooks: UPSTREAM 1 HAS REGRESSED — ${broken.size} scoped rules in\n` +
+        `  @yordan/design-system's React tier compile to the wrong selector again, because the "_" in a\n` +
+        `  BEM class name is unescaped and Tailwind reads it as a space: ${[...broken].sort().slice(0, 4).join(", ")}…\n` +
+        `  components.css is then the only surface delivering them, and the HOST half of source 5 —\n` +
+        `  retired at 2.8.0 — has to come back. Not this app's to fix; report it upstream.\n`
     );
   if (orderDependent.length)
     console.log(
-      `check-class-hooks: UPSTREAM 2 — ${orderDependent.length} cva base list(s) put a shorthand and\n` +
+      `check-class-hooks: UPSTREAM 2 HAS REGRESSED — ${orderDependent.length} cva base list(s) put a shorthand and\n` +
         `  its own longhand in one class attribute, which has no order, so Tailwind's sort decides\n` +
         `  instead of the definition's sequence:\n` +
         orderDependent.map((s) => "    " + s).join("\n") +

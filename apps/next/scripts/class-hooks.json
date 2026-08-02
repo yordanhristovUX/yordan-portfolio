@@ -96,12 +96,7 @@
     "cv.html",
     "evals.html",
     "index.html",
-    "mcp.html",
-    "work/domestina.html",
-    "work/greenstreet-audit.html",
-    "work/greenstreet-ds.html",
-    "work/malko-tarnovo.html",
-    "work/portfolio-system.html"
+    "mcp.html"
   ],
   "entry": [
     "cv.html"
@@ -340,17 +335,8 @@
   "is-ok": [
     "index.html"
   ],
-  "card--ruled": [
-    "index.html",
+  "page-head": [
     "mcp.html"
-  ],
-  "chat__input": [
-    "index.html",
-    "work/domestina.html",
-    "work/greenstreet-audit.html",
-    "work/greenstreet-ds.html",
-    "work/malko-tarnovo.html",
-    "work/portfolio-system.html"
   ],
   "ph__label": [
     "work/domestina.html",

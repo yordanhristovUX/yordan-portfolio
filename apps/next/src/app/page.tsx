@@ -189,19 +189,23 @@ export default function Page() {
           <div className="well well--flush">
             <CardGrid className="card-grid">
               {capabilities.map((c) => (
-                /* `.card--ruled` STAYS BESIDE `variant="ruled"`, and the
-                   reason is an upstream defect rather than belt-and-braces —
-                   see scripts/check-class-hooks.mjs. The variant's whole
-                   effect is the scoped rule `.card--ruled .card__title`, and
-                   in pipeline 2 that is the arbitrary variant
-                   `[&_.card__title]:[border-top:...]`. Tailwind reads `_` in
-                   an arbitrary variant as a SPACE, so it compiles to
-                   `.card title` — a descendant <title> element — and the ink
-                   bar above the title simply does not render. Measured
-                   against the vanilla page: the card came out 15px shorter,
-                   which is the 12px padding and the 3px rule. So the class
-                   stays and components.css draws the bar. */
-                <Card variant="ruled" className="card card--ruled" data-reveal="" key={c.id}>
+                /* `.card--ruled` IS GONE, and `variant="ruled"` now draws the
+                   ink bar on its own. It stood here through R5 because of the
+                   escaping defect: the variant's whole effect is the scoped
+                   rule `.card--ruled .card__title`, and pipeline 2 compiled
+                   that arbitrary variant to a descendant <title> ELEMENT,
+                   since an unescaped underscore is a space to Tailwind. The
+                   bar did not render — the card measured 15px shorter than the
+                   vanilla one, which is the 12px padding and the 3px rule —
+                   so components.css drew it and needed the host's name. 2.8.0
+                   escapes the underscore, the utility carries its own rule,
+                   and the count at the foot of check-class-hooks is zero.
+
+                   `.card` and `.card__title` STAY. The first is named by four
+                   of card's seven authored gaps and by cv.css; the second is
+                   the SINK of the rule above, and a sink is named by class
+                   whichever pipeline compiles it. */
+                <Card variant="ruled" className="card" data-reveal="" key={c.id}>
                   <CardTitle className="card__title">{c.title}</CardTitle>
                   <p>{c.body}</p>
                 </Card>
